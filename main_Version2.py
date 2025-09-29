@@ -10,7 +10,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Move the Character!")
 
 # Load character image
-character_img = pygame.image.load("character.png")  # Make sure this file exists!
+character_img = pygame.image.load("8bit.png")  # Make sure this file exists!
 character_rect = character_img.get_rect(center=(WIDTH//2, HEIGHT//2))
 
 # Set up movement speed
