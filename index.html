@@ -20,14 +20,6 @@
     const speed = 10;
     const size = 100;
 
-    // Background image setup
-    let bgReady = false;
-    const bgImg = new Image();
-    bgImg.src = "arcadebg.png";
-    bgImg.onload = function() {
-      bgReady = true;
-    };
-
     // Character image setup (optional)
     const useImage = true;
     const img = new Image();
@@ -39,7 +31,7 @@
       { x: 0, y: 448, width: 640, height: 32 },       // Bottom wall
       { x: 0, y: 0, width: 32, height: 480 },         // Left wall
       { x: 608, y: 0, width: 32, height: 480 },       // Right wall
-      // Example wall: { x: 200, y: 100, width: 100, height: 50 }
+      // Add more walls as needed!
     ];
 
     // Collision detection
@@ -57,31 +49,11 @@
       return false;
     }
 
-    // Draw everything
-   function draw() {
-  if (!bgReady) return; // Only draw after background image is loaded
-  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+    // Draw everything (only after image loads)
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
 
-  // Draw walls and character after background
-  // (leave as in your current code)
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
-  for (const wall of walls) {
-    ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
-  }
-
-  if (useImage && img.complete && img.naturalWidth > 0) {
-    ctx.drawImage(img, x, y, size, size);
-  } else {
-    ctx.fillStyle = "#0090ff";
-    ctx.fillRect(x, y, size, size);
-  }
-}
-
-// Only call draw after the background image is loaded
-bgImg.onload = function() {
-  bgReady = true;
-  draw();
-};
       // Draw walls (semi-transparent, for debugging)
       ctx.fillStyle = "rgba(0,0,0,0.3)";
       for (const wall of walls) {
@@ -97,8 +69,16 @@ bgImg.onload = function() {
       }
     }
 
-    // Handle arrow key movement with collision
+    // Background image setup: ONLY draw and allow movement after it loads
+    const bgImg = new Image();
+    bgImg.src = "arcadebg.png";
+    bgImg.onload = function() {
+      draw(); // Only draw after background loads!
+    };
+
+    // Movement handling (only works after image loads)
     window.addEventListener('keydown', function(e) {
+      if (!bgImg.complete || bgImg.naturalWidth === 0) return; // Wait for image
       let nextX = x, nextY = y;
       if (e.key === 'ArrowLeft') nextX -= speed;
       if (e.key === 'ArrowRight') nextX += speed;
@@ -110,16 +90,6 @@ bgImg.onload = function() {
       }
       draw();
     });
-
-    // Initial draw (when images are loaded, or immediately)
-    function initialDraw() { draw(); }
-    if (useImage) {
-      img.onload = initialDraw;
-    } else {
-      initialDraw();
-    }
-    if (bgReady) draw();
-    else bgImg.onload = draw;
   </script>
 </body>
 </html>
