@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Move the Character!</title>
+  <style>
+    canvas { background: #fff; display: block; margin: 2em auto; }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="640" height="480"></canvas>
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    
+    // Character properties
+    let x = 300, y = 200;
+    const speed = 5;
+    const size = 40;
+    
+    // Optional: Use an image sprite
+    const useImage = false; // Set to true if you have an image
+    let img = new Image();
+    img.src = '8bit.png'; // Your image file
+
+    function drawCharacter() {
+      if (useImage && img.complete) {
+        ctx.drawImage(img, x, y, size, size);
+      } else {
+        // Draw a simple blue square if no image
+        ctx.fillStyle = "#0090ff";
+        ctx.fillRect(x, y, size, size);
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawCharacter();
+    }
+
+    // Handle arrow key movement
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowLeft') x -= speed;
+      if (e.key === 'ArrowRight') x += speed;
+      if (e.key === 'ArrowUp') y -= speed;
+      if (e.key === 'ArrowDown') y += speed;
+      draw();
+    });
+
+    // Initial draw
+    if (useImage) {
+      img.onload = draw;
+    } else {
+      draw();
+    }
+  </script>
+</body>
+</html>
