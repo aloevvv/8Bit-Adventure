@@ -15,12 +15,12 @@
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
 
-    // Character properties
+    // Character setup
     let x = 300, y = 200;
     const speed = 10;
     const size = 100;
 
-    // Background image
+    // Background image setup
     let bgReady = false;
     const bgImg = new Image();
     bgImg.src = "arcadebg.png";
@@ -28,18 +28,18 @@
       bgReady = true;
     };
 
-    // Character image
+    // Character image setup (optional)
     const useImage = true;
     const img = new Image();
     img.src = '8bit.png';
 
-    // Wall definitions
+    // Wall definitions (edit these to match your background art)
     const walls = [
-      { x: 0, y: 0, width: 640, height: 32 },         // Top
-      { x: 0, y: 448, width: 640, height: 32 },       // Bottom
-      { x: 0, y: 0, width: 32, height: 480 },         // Left
-      { x: 608, y: 0, width: 32, height: 480 },       // Right
-      // Add more walls as needed!
+      { x: 0, y: 0, width: 640, height: 32 },         // Top wall
+      { x: 0, y: 448, width: 640, height: 32 },       // Bottom wall
+      { x: 0, y: 0, width: 32, height: 480 },         // Left wall
+      { x: 608, y: 0, width: 32, height: 480 },       // Right wall
+      // Example wall: { x: 200, y: 100, width: 100, height: 50 }
     ];
 
     // Collision detection
@@ -59,22 +59,22 @@
 
     // Draw everything
     function draw() {
-      // Draw background
+      // Draw background (image or fallback color)
       if (bgReady) {
         ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
       } else {
-        ctx.fillStyle = "#444";
+        ctx.fillStyle = "#737373";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Draw walls (semi-transparent for debugging)
+      // Draw walls (semi-transparent, for debugging)
       ctx.fillStyle = "rgba(0,0,0,0.3)";
       for (const wall of walls) {
         ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
       }
 
-      // Draw character
-      if (useImage && img.complete) {
+      // Draw character (image or blue square)
+      if (useImage && img.complete && img.naturalWidth > 0) {
         ctx.drawImage(img, x, y, size, size);
       } else {
         ctx.fillStyle = "#0090ff";
@@ -89,7 +89,6 @@
       if (e.key === 'ArrowRight') nextX += speed;
       if (e.key === 'ArrowUp') nextY -= speed;
       if (e.key === 'ArrowDown') nextY += speed;
-
       if (!isCollidingWithWall(nextX, nextY, size)) {
         x = nextX;
         y = nextY;
@@ -97,7 +96,7 @@
       draw();
     });
 
-    // Initial draw
+    // Initial draw (when images are loaded, or immediately)
     function initialDraw() { draw(); }
     if (useImage) {
       img.onload = initialDraw;
