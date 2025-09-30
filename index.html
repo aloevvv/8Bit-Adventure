@@ -10,9 +10,53 @@
 </head>
 <body>
   <canvas id="game" width="640" height="480"></canvas>
-  <script>
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+let bgReady = false;
+const bgImg = new Image();
+bgImg.src = "arcadebg.png";
+bgImg.onload = function() {
+  bgReady = true;
+};
+
+function draw() {
+  if (bgReady) {
+    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.fillStyle = "#444";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Define walls
+const walls = [
+  { x: 0, y: 0, width: 640, height: 32 },         // Top
+  { x: 0, y: 448, width: 640, height: 32 },       // Bottom
+  { x: 0, y: 0, width: 32, height: 480 },         // Left
+  // Add more walls for doors/obstacles
+];
+
+// Drawing the walls (after drawing the background)
+ctx.fillStyle = "rgba(0,0,0,0.3)";
+for (const wall of walls) {
+  ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+}
+
+// In your movement update logic:
+function isCollidingWithWall(newX, newY, size) {
+  for (const wall of walls) {
+    if (
+      newX < wall.x + wall.width &&
+      newX + size > wall.x &&
+      newY < wall.y + wall.height &&
+      newY + size > wall.y
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
 
     // 1. Load background image
     const bgImg = new Image();
