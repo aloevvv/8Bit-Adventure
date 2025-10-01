@@ -11,6 +11,111 @@
 <body>
   <canvas id="game" width="640" height="480"></canvas>
   <script>
+    <body>
+  <canvas id="game" width="640" height="480"></canvas>
+  </div>
+
+  // The new fixed UI bar at the bottom -->
+  <div id="game-hud">
+    <div class="hud-section" id="stats">
+      <p>Stats</p>
+    </div>
+    <div class="hud-section" id="player-status">
+      <p>Player</p>
+      <div id="hp-bar-container">
+        <div id="hp-bar"></div>
+        <div id="hp-text">8/8</div>
+      </div>
+    </div>
+    <div class="hud-section" id="inventory">
+      <p>Inventory</p>
+    </div>
+  </div>
+    
+#game-hud {
+  position: fixed; /* Fixes the element relative to the viewport */
+  bottom: 0; /* Positions it at the bottom of the screen */
+  left: 0;
+  width: 100%;
+  background-color: #222; /* Dark background color */
+  color: white;
+  display: flex; /* Uses Flexbox for horizontal layout */
+  justify-content: space-around; /* Distributes sections evenly */
+  align-items: center; /* Aligns items vertically */
+  padding: 10px;
+  box-sizing: border-box; /* Includes padding in the total width */
+  font-family: sans-serif;
+  border-top: 2px solid white; /* Adds a border to connect to the canvas visually */
+}
+
+.hud-section {
+  text-align: center;
+  padding: 0 1em;
+}
+
+#player-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#hp-bar-container {
+  width: 150px;
+  height: 20px;
+  background-color: #555;
+  border: 1px solid white;
+  position: relative;
+}
+
+#hp-bar {
+  width: 100%; /* Default width for full health */
+  height: 100%;
+  background-color: green;
+  transition: width 0.5s linear; /* Smooth transition for HP changes */
+}
+
+#hp-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.8em;
+  text-shadow: 1px 1px 2px black; /* Improves readability over the bar */
+}
+
+// Add these variables near the top of your script
+const hpBar = document.getElementById('hp-bar');
+const hpText = document.getElementById('hp-text');
+
+let maxHealth = 8;
+let currentHealth = 8;
+
+function updateHp(newHealth) {
+  if (newHealth < 0) newHealth = 0;
+  if (newHealth > maxHealth) newHealth = maxHealth;
+
+  currentHealth = newHealth;
+
+  // Calculate the new width percentage
+  const newWidth = (currentHealth / maxHealth) * 100;
+  hpBar.style.width = `${newWidth}%`;
+  hpText.textContent = `${currentHealth}/${maxHealth}`;
+}
+
+// Example usage: You can call this function whenever the player takes damage
+function takeDamage(amount) {
+  updateHp(currentHealth - amount);
+}
+
+// You can test it by adding a call to it somewhere, like when the game is over
+window.addEventListener('keydown', function(e) {
+    }
+  }
+  draw();
+});
+
+    
+  <script>
     // Canvas setup
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
