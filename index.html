@@ -104,6 +104,42 @@
     const speed = 10;
     const imageSize = 60;
 
+        // Define your game levels, including backgrounds, walls, and doors
+    const levels = [
+      // Level 0: Arcade Room
+      {
+        bgSrc: "arcadebg.png",
+        walls: [
+          { x: 0, y: 0, width: 640, height: 32 },
+          { x: 0, y: 448, width: 640, height: 32 },
+          { x: 300, y: 150, width: 32, height: 200 },
+          { x: 0, y: 0, width: 32, height: 480 },
+        ],
+        doors: [
+          { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 400 }
+        ]
+      },
+      // Level 1: Another room (You will need to create 'another-room-bg.png')
+      {
+        bgSrc: "arcadeinside.png",
+        walls: [
+          { x: 0, y: 0, width: 640, height: 32 },
+          { x: 0, y: 448, width: 640, height: 32 },
+          { x: 608, y: 0, width: 32, height: 480 },
+          { x: 0, y: 0, width: 32, height: 480 },
+        ],
+        doors: [
+          { x: 300, y: 450, width: 40, height: 12, destLevel: 0, destX: 300, destY: 50 }
+        ]
+      }
+    ];
+
+    let currentLevelIndex = 0;
+    let currentLevel = levels[currentLevelIndex];
+    const bgImg = new Image();
+    bgImg.src = currentLevel.bgSrc;
+
+
     // Hitbox setup (collision box size)
     const hitboxWidth = 30;
     const hitboxHeight = 30;
@@ -133,13 +169,17 @@
     
     updateHp(currentHealth);
 
-    // Wall definitions
-    const walls = [
-      { x: 0, y: 0, width: 640, height: 32 },
-      { x: 0, y: 448, width: 640, height: 32 },
-      { x: 300, y: 150, width: 32, height: 200 },
-      { x: 0, y: 0, width: 32, height: 480 },
-    ];
+        // Function to load a different level
+    function loadLevel(index, newX, newY) {
+      currentLevelIndex = index;
+      currentLevel = levels[currentLevelIndex];
+      bgImg.src = currentLevel.bgSrc;
+      x = newX;
+      y = newY;
+      draw();
+    }
+
+
 
     // Collision detection using the smaller hitbox
     function isCollidingWithWall(newX, newY) {
@@ -159,6 +199,25 @@
       return false;
     }
 
+        // Check for collision with doors
+    function checkDoorCollision(newX, newY) {
+      const newHitboxX = newX + hitboxOffsetX;
+      const newHitboxY = newY + hitboxOffsetY;
+
+      for (const door of currentLevel.doors) {
+        if (
+          newHitboxX < door.x + door.width &&
+          newHitboxX + hitboxWidth > door.x &&
+          newHitboxY < door.y + door.height &&
+          newHitboxY + hitboxHeight > door.y
+        ) {
+          return door;
+        }
+      }
+      return null;
+    }
+
+
     // Draw everything
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -176,12 +235,6 @@
         ctx.fillRect(x, y, imageSize, imageSize);
       }
     }
-
-    const bgImg = new Image();
-    bgImg.src = "arcadebg.png";
-    bgImg.onload = function() {
-      draw();
-    };
 
     // Movement handling
     canvas.addEventListener('keydown', function(e) {
@@ -208,7 +261,16 @@
       if (key === 'arrowup' || key === 'w') nextY -= speed;
       if (key === 'arrowdown' || key === 's') nextY += speed;
 
+      // Check for wall collision first
       if (!isCollidingWithWall(nextX, nextY)) {
+        // If no wall collision, check for door collision
+        const door = checkDoorCollision(nextX, nextY);
+        if (door) {
+          loadLevel(door.destLevel, door.destX, door.destY);
+          return;
+        }
+
+        // If no collision with anything, update the position
         x = nextX;
         y = nextY;
       }
