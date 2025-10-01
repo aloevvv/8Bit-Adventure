@@ -92,19 +92,30 @@
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     
+    // Set focus to the canvas when the page loads
+    canvas.focus();
+    // Add a click event to also focus on the canvas, in case the user clicks elsewhere
     canvas.addEventListener('click', () => {
       canvas.focus();
     });
-    
-    canvas.focus();
 
+    // Character setup (image size)
     let x = 150, y = 50;
     const speed = 10;
-    const size = 60;
+    const imageSize = 60;
+
+    // Hitbox setup (collision box size)
+    const hitboxWidth = 40;
+    const hitboxHeight = 40;
+    const hitboxOffsetX = (imageSize - hitboxWidth) / 2;
+    const hitboxOffsetY = (imageSize - hitboxHeight) / 2;
+
+    // Character image setup
     const useImage = true;
     const img = new Image();
     img.src = '8bit.png';
 
+    // UI elements and health
     const hpBar = document.getElementById('hp-bar');
     const hpText = document.getElementById('hp-text');
     let maxHealth = 8;
@@ -122,6 +133,7 @@
     
     updateHp(currentHealth);
 
+    // Wall definitions
     const walls = [
       { x: 0, y: 0, width: 640, height: 32 },
       { x: 0, y: 448, width: 640, height: 32 },
@@ -129,13 +141,17 @@
       { x: 0, y: 0, width: 32, height: 480 },
     ];
 
-    function isCollidingWithWall(newX, newY, size) {
+    // Collision detection using the smaller hitbox
+    function isCollidingWithWall(newX, newY) {
+      const newHitboxX = newX + hitboxOffsetX;
+      const newHitboxY = newY + hitboxOffsetY;
+
       for (const wall of walls) {
         if (
-          newX < wall.x + wall.width &&
-          newX + size > wall.x &&
-          newY < wall.y + wall.height &&
-          newY + size > wall.y
+          newHitboxX < wall.x + wall.width &&
+          newHitboxX + hitboxWidth > wall.x &&
+          newHitboxY < wall.y + wall.height &&
+          newHitboxY + hitboxHeight > wall.y
         ) {
           return true;
         }
@@ -143,6 +159,7 @@
       return false;
     }
 
+    // Draw everything
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
@@ -153,10 +170,10 @@
       }
 
       if (useImage && img.complete && img.naturalWidth > 0) {
-        ctx.drawImage(img, x, y, size, size);
+        ctx.drawImage(img, x, y, imageSize, imageSize);
       } else {
         ctx.fillStyle = "#0090ff";
-        ctx.fillRect(x, y, size, size);
+        ctx.fillRect(x, y, imageSize, imageSize);
       }
     }
 
@@ -166,6 +183,7 @@
       draw();
     };
 
+    // Movement handling
     canvas.addEventListener('keydown', function(e) {
       if (!bgImg.complete || bgImg.naturalWidth === 0) return;
       
@@ -190,7 +208,7 @@
       if (key === 'arrowup' || key === 'w') nextY -= speed;
       if (key === 'arrowdown' || key === 's') nextY += speed;
 
-      if (!isCollidingWithWall(nextX, nextY, size)) {
+      if (!isCollidingWithWall(nextX, nextY)) {
         x = nextX;
         y = nextY;
       }
