@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -175,6 +176,11 @@
         ctx.fillStyle = "#0090ff";
         ctx.fillRect(x, y, imageSize, imageSize);
       }
+
+      // === START VISIBLE HITBOX ===
+      ctx.fillStyle = "rgba(255,0,0,0.5)"; // A semi-transparent red
+      ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
+      // === END VISIBLE HITBOX ===
     }
 
     const bgImg = new Image();
