@@ -211,33 +211,35 @@ window.addEventListener('keydown', function(e) {
   let nextX = x, nextY = y;
   
   // Prevent default browser behavior (like scrolling) for key presses
-  switch(e.key) {
-    case 'ArrowUp':
-    case 'ArrowDown':
-    case 'ArrowLeft':
-    case 'ArrowRight':
-      e.preventDefault();
-      break;
+  // for both arrow keys and WASD
+  switch(e.key.toLowerCase()) {
+    case 'arrowup':
+    case 'arrowdown':
+    case 'arrowleft':
+    case 'arrowright':
     case 'w':
     case 'a':
     case 's':
     case 'd':
-      // No default browser behavior for these keys
+      e.preventDefault();
       break;
   }
+  
+  // Update position based on WASD or arrow keys, converting to lowercase for comparison
+  const key = e.key.toLowerCase();
+  if (key === 'arrowleft' || key === 'a') nextX -= speed;
+  if (key === 'arrowright' || key === 'd') nextX += speed;
+  if (key === 'arrowup' || key === 'w') nextY -= speed;
+  if (key === 'arrowdown' || key === 's') nextY += speed;
 
-  // Update position based on WASD or arrow keys
-  if (e.key === 'ArrowLeft' || e.key === 'a') nextX -= speed;
-  if (e.key === 'ArrowRight' || e.key === 'd') nextX += speed;
-  if (e.key === 'ArrowUp' || e.key === 'w') nextY -= speed;
-  if (e.key === 'ArrowDown' || e.key === 's') nextY += speed;
+  if (!isCollidingWithWall(nextX, nextY, size)) {
+    x = nextX;
+    y = nextY;
+  }
+  draw();
+});
 
- if (!isCollidingWithWall(nextX, nextY, size)) {
-        x = nextX;
-        y = nextY;
-      }
-      draw();
-    });
+
   </script>
 </body>
 </html>
