@@ -135,7 +135,7 @@
           { x: 0, y: 0, width: 32, height: 480 },
         ],
         doors: [
-          { x: 300, y: 450, width: 40, height: 12, destLevel: 0, destX: 300, destY: 50 }
+          { x: 300, y: 450, width: 40, height: 30, destLevel: 0, destX: 300, destY: 50 }
         ]
       }
     ];
@@ -211,11 +211,6 @@
         ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
       }
 
-      ctx.fillStyle = "green";
-      for (const door of currentLevel.doors) {
-        ctx.fillRect(door.x, door.y, door.width, door.height);
-      }
-
       if (useImage && img.complete && img.naturalWidth > 0) {
         ctx.drawImage(img, x, y, imageSize, imageSize);
       } else {
@@ -223,7 +218,7 @@
         ctx.fillRect(x, y, imageSize, imageSize);
       }
 
-      ctx.fillStyle = "rgba(255,0,0,0.5)";
+      ctx.fillStyle = "rgba(0,0,0,0.0)";
       ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
     }
 
