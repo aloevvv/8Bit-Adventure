@@ -232,12 +232,12 @@ window.addEventListener('keydown', function(e) {
   if (e.key === 'ArrowUp' || e.key === 'w') nextY -= speed;
   if (e.key === 'ArrowDown' || e.key === 's') nextY += speed;
 
-  if (!isCollidingWithWall(nextX, nextY, size)) {
-    x = nextX;
-    y = nextY;
-  }
-  draw();
-});
+ if (!isCollidingWithWall(nextX, nextY, size)) {
+        x = nextX;
+        y = nextY;
+      }
+      draw();
+    });
   </script>
 </body>
 </html>
