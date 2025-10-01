@@ -12,7 +12,7 @@
     body {
       background: #333;
       color: white;
-      font-family: "Press Start 2P", sans-serif; /* Apply the new font globally */
+      font-family: "Press Start 2P", sans-serif;
       text-align: center;
       margin: 0;
     }
@@ -20,46 +20,21 @@
       background: #737373;
       display: block;
       margin: 2em auto;
-      border: 2px solid white; /* Add a border to the canvas */
+      border: 2px solid white;
     }
     
-    #game-over-overlay {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 640px;
-      height: 480px;
-      background-color: rgba(0, 0, 0, 0.7);
-      color: white;
-      display: none; /* Hide by default */
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-    }
-    .game-over-text {
-      font-size: 3em;
-    }
-    #game-over-overlay button {
-      padding: 1em 2em;
-      font-size: 1.5em;
-      cursor: pointer;
-    }
-
     #game-hud {
-      position: fixed; /* Fixes the element relative to the viewport */
-      bottom: 0; /* Positions it at the bottom of the screen */
+      position: fixed;
+      bottom: 0;
       left: 0;
       width: 100%;
-      background-color: #222; /* Dark background color */
+      background-color: #222;
       color: white;
-      display: flex; /* Uses Flexbox for horizontal layout */
-      justify-content: space-around; /* Distributes sections evenly */
-      align-items: center; /* Aligns items vertically */
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
       padding: 10px;
-      box-sizing: border-box; /* Includes padding in the total width */
-      font-family: Press Start 2P;
+      box-sizing: border-box;
       border-top: 2px solid white;
     }
     .hud-section {
@@ -97,11 +72,6 @@
 <body>
   <canvas id="game" width="640" height="480" tabindex="0"></canvas>
 
-  <div id="game-over-overlay">
-    <h1 class="game-over-text">Game Over!</h1>
-    <button onclick="window.location.reload()">Play Again</button>
-  </div>
-
   <div id="game-hud">
     <div class="hud-section" id="stats">
       <p>Stats</p>
@@ -119,22 +89,22 @@
   </div>
   
   <script>
-    // Canvas setup
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
+    
+    canvas.addEventListener('click', () => {
+      canvas.focus();
+    });
+    
     canvas.focus();
 
-    // Character setup
     let x = 150, y = 50;
     const speed = 10;
     const size = 60;
-
-    // Character image setup (optional)
     const useImage = true;
     const img = new Image();
     img.src = '8bit.png';
 
-    // UI elements and health
     const hpBar = document.getElementById('hp-bar');
     const hpText = document.getElementById('hp-text');
     let maxHealth = 8;
@@ -143,7 +113,6 @@
     function updateHp(newHealth) {
       if (newHealth < 0) newHealth = 0;
       if (newHealth > maxHealth) newHealth = maxHealth;
-
       currentHealth = newHealth;
 
       const newWidth = (currentHealth / maxHealth) * 100;
@@ -151,10 +120,8 @@
       hpText.textContent = `${currentHealth}/${maxHealth}`;
     }
     
-    // Set initial health
     updateHp(currentHealth);
 
-    // Wall definitions
     const walls = [
       { x: 0, y: 0, width: 640, height: 32 },
       { x: 0, y: 448, width: 640, height: 32 },
@@ -162,7 +129,6 @@
       { x: 0, y: 0, width: 32, height: 480 },
     ];
 
-    // Collision detection
     function isCollidingWithWall(newX, newY, size) {
       for (const wall of walls) {
         if (
@@ -177,7 +143,6 @@
       return false;
     }
 
-    // Draw everything
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
@@ -195,24 +160,17 @@
       }
     }
 
-    // Background image setup
     const bgImg = new Image();
     bgImg.src = "arcadebg.png";
     bgImg.onload = function() {
       draw();
     };
 
-    // Movement handling
-    window.addEventListener('keydown', function(e) {
+    canvas.addEventListener('keydown', function(e) {
       if (!bgImg.complete || bgImg.naturalWidth === 0) return;
-  
-      const gameOverOverlay = document.getElementById('game-over-overlay');
-      if (gameOverOverlay.style.display !== 'none') return;
-
+      
       let nextX = x, nextY = y;
-  
-      // Prevent default browser behavior (like scrolling) for key presses
-      // for both arrow keys and WASD
+      
       switch(e.key.toLowerCase()) {
         case 'arrowup':
         case 'arrowdown':
@@ -225,8 +183,7 @@
           e.preventDefault();
           break;
       }
-  
-      // Update position based on WASD or arrow keys, converting to lowercase for comparison
+      
       const key = e.key.toLowerCase();
       if (key === 'arrowleft' || key === 'a') nextX -= speed;
       if (key === 'arrowright' || key === 'd') nextX += speed;
@@ -239,6 +196,6 @@
       }
       draw();
     });
-  </script>
+</script>
 </body>
 </html>
