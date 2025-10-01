@@ -202,24 +202,42 @@
     };
 
     // Movement handling
-    window.addEventListener('keydown', function(e) {
-      if (!bgImg.complete || bgImg.naturalWidth === 0) return;
-      
-      const gameOverOverlay = document.getElementById('game-over-overlay');
-      if (gameOverOverlay.style.display !== 'none') return;
+window.addEventListener('keydown', function(e) {
+  if (!bgImg.complete || bgImg.naturalWidth === 0) return;
+  
+  const gameOverOverlay = document.getElementById('game-over-overlay');
+  if (gameOverOverlay.style.display !== 'none') return;
 
-      let nextX = x, nextY = y;
-      if (e.key === 'ArrowLeft') nextX -= speed;
-      if (e.key === 'ArrowRight') nextX += speed;
-      if (e.key === 'ArrowUp') nextY -= speed;
-      if (e.key === 'ArrowDown') nextY += speed;
+  let nextX = x, nextY = y;
+  
+  // Prevent default browser behavior (like scrolling) for key presses
+  switch(e.key) {
+    case 'ArrowUp':
+    case 'ArrowDown':
+    case 'ArrowLeft':
+    case 'ArrowRight':
+      e.preventDefault();
+      break;
+    case 'w':
+    case 'a':
+    case 's':
+    case 'd':
+      // No default browser behavior for these keys
+      break;
+  }
 
-      if (!isCollidingWithWall(nextX, nextY, size)) {
-        x = nextX;
-        y = nextY;
-      }
-      draw();
-    });
+  // Update position based on WASD or arrow keys
+  if (e.key === 'ArrowLeft' || e.key === 'a') nextX -= speed;
+  if (e.key === 'ArrowRight' || e.key === 'd') nextX += speed;
+  if (e.key === 'ArrowUp' || e.key === 'w') nextY -= speed;
+  if (e.key === 'ArrowDown' || e.key === 's') nextY += speed;
+
+  if (!isCollidingWithWall(nextX, nextY, size)) {
+    x = nextX;
+    y = nextY;
+  }
+  draw();
+});
   </script>
 </body>
 </html>
