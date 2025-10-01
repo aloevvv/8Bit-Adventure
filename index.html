@@ -95,7 +95,7 @@
   </style>
 </head>
 <body>
-  <canvas id="game" width="640" height="480"></canvas>
+  <canvas id="game" width="640" height="480" tabindex="0"></canvas>
 
   <div id="game-over-overlay">
     <h1 class="game-over-text">Game Over!</h1>
@@ -122,6 +122,7 @@
     // Canvas setup
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
+    canvas.focus();
 
     // Character setup
     let x = 150, y = 50;
@@ -202,44 +203,42 @@
     };
 
     // Movement handling
-window.addEventListener('keydown', function(e) {
-  if (!bgImg.complete || bgImg.naturalWidth === 0) return;
+    window.addEventListener('keydown', function(e) {
+      if (!bgImg.complete || bgImg.naturalWidth === 0) return;
   
-  const gameOverOverlay = document.getElementById('game-over-overlay');
-  if (gameOverOverlay.style.display !== 'none') return;
+      const gameOverOverlay = document.getElementById('game-over-overlay');
+      if (gameOverOverlay.style.display !== 'none') return;
 
-  let nextX = x, nextY = y;
+      let nextX = x, nextY = y;
   
-  // Prevent default browser behavior (like scrolling) for key presses
-  // for both arrow keys and WASD
-  switch(e.key.toLowerCase()) {
-    case 'arrowup':
-    case 'arrowdown':
-    case 'arrowleft':
-    case 'arrowright':
-    case 'w':
-    case 'a':
-    case 's':
-    case 'd':
-      e.preventDefault();
-      break;
-  }
+      // Prevent default browser behavior (like scrolling) for key presses
+      // for both arrow keys and WASD
+      switch(e.key.toLowerCase()) {
+        case 'arrowup':
+        case 'arrowdown':
+        case 'arrowleft':
+        case 'arrowright':
+        case 'w':
+        case 'a':
+        case 's':
+        case 'd':
+          e.preventDefault();
+          break;
+      }
   
-  // Update position based on WASD or arrow keys, converting to lowercase for comparison
-  const key = e.key.toLowerCase();
-  if (key === 'arrowleft' || key === 'a') nextX -= speed;
-  if (key === 'arrowright' || key === 'd') nextX += speed;
-  if (key === 'arrowup' || key === 'w') nextY -= speed;
-  if (key === 'arrowdown' || key === 's') nextY += speed;
+      // Update position based on WASD or arrow keys, converting to lowercase for comparison
+      const key = e.key.toLowerCase();
+      if (key === 'arrowleft' || key === 'a') nextX -= speed;
+      if (key === 'arrowright' || key === 'd') nextX += speed;
+      if (key === 'arrowup' || key === 'w') nextY -= speed;
+      if (key === 'arrowdown' || key === 's') nextY += speed;
 
-  if (!isCollidingWithWall(nextX, nextY, size)) {
-    x = nextX;
-    y = nextY;
-  }
-  draw();
-});
-
-
+      if (!isCollidingWithWall(nextX, nextY, size)) {
+        x = nextX;
+        y = nextY;
+      }
+      draw();
+    });
   </script>
 </body>
 </html>
