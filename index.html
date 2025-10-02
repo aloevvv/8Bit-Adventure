@@ -209,8 +209,8 @@
         ],
         battleZones: [],
         interactables: [
-          { name: "power_box", x: 40, y: 300, width: 100, height: 100, action: "power_on" },
-          { name: "arcade_machine", x: 380, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] }
+          { name: "power_box", x: 20, y: 260, width: 100, height: 100, action: "power_on" },
+          { name: "arcade_machine", x: 340, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] }
         ]
       }
     ];
@@ -519,7 +519,7 @@
         case 'd':
           e.preventDefault();
           break;
-        case 'enter':
+        case 'x':
           e.preventDefault();
           const interactableObject = checkInteraction(x, y);
           if (interactableObject) {
