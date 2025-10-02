@@ -144,6 +144,10 @@
   text-align: left;
   z-index: 1000; /* Ensure it's on top of other elements */
 }
+    #player-battle-status .hp-bar-container:last-of-type .hp-bar {
+  background-color: #00FFFF; /* Or any color you prefer for stamina */
+}
+
 
     #player-battle-status .hp-text {
       position: absolute;
@@ -194,6 +198,8 @@
     <div id="player-battle-status"></div>
     <div id="battle-controls">
       <button id="attack-button">Attack</button>
+  <button id="special-attack-button-1">Extra Credits(100 STM)</button>
+  <button id="special-attack-button-2">Plasma Blast(200 STM)</button>
     </div>
   </div>
 
@@ -227,6 +233,8 @@
     let defeatedZone = null;
     let enemyAttackIntervalId = null;
     const ENEMY_ATTACK_DELAY = 2000;
+    let staminaRegenIntervalId = null;
+
 
     let playerStats = {
       level: 1,
@@ -234,7 +242,9 @@
       maxHp: 8,
       damage: 2,
       xp: 0,
-      xpToNextLevel: 10
+      xpToNextLevel: 10,
+      currentStamina: 50,
+      maxStamina: 200,
     };
 
     let inBattle = false;
@@ -317,6 +327,13 @@
         draw();
       }, 3000);
     }
+
+    function updateStamina(newStamina) {
+  if (newStamina < 0) newStamina = 0;
+  if (newStamina > playerStats.maxStamina) newStamina = playerStats.maxStamina;
+  playerStats.currentStamina = newStamina;
+  // This will be called by drawPlayerBattleStatus() to update the UI
+}
 
     function updateHp(newHealth) {
       if (newHealth < 0) newHealth = 0;
@@ -427,7 +444,19 @@ function updateStatsPopup() {
       hpContainer.appendChild(hpText);
       playerBattleStatusDiv.appendChild(playerName);
       playerBattleStatusDiv.appendChild(hpContainer);
-    }
+      const staminaContainer = document.createElement('div');
+  staminaContainer.className = 'hp-bar-container'; // Reuse the class for styling
+  const staminaBar = document.createElement('div');
+  staminaBar.className = 'hp-bar'; // Reuse the class for styling
+  staminaBar.style.width = `${(playerStats.currentStamina / playerStats.maxStamina) * 100}%`;
+  staminaBar.style.backgroundColor = '#00FFFF'; // Change color for stamina
+  const staminaText = document.createElement('div');
+  staminaText.className = 'hp-text';
+  staminaText.textContent = `${playerStats.currentStamina}/${playerStats.maxStamina}`;
+  staminaContainer.appendChild(staminaBar);
+  staminaContainer.appendChild(staminaText);
+  playerBattleStatusDiv.appendChild(staminaContainer);
+}
 
     function takeTurn() {
       if (!inBattle) return;
@@ -448,6 +477,46 @@ function updateStatsPopup() {
     if (!targetEnemy) return;
     targetEnemy.currentHp -= playerStats.damage;
     if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+
+      document.getElementById('special-attack-button-1').addEventListener('click', () => {
+  const staminaCost = 100;
+  if (!inBattle || !activeEnemies.length || playerStats.currentStamina < staminaCost) {
+    return;
+  }
+
+  // Deduct stamina
+  updateStamina(playerStats.currentStamina - staminaCost);
+
+  const targetEnemy = activeEnemies[selectedEnemyIndex];
+  if (!targetEnemy) return;
+
+  // Calculate damage (10x player's base damage)
+  targetEnemy.currentHp -= (playerStats.damage * 10);
+  if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+
+  // Logic to handle enemy death and end battle
+  if (targetEnemy.currentHp <= 0) {
+      const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+      if (remainingEnemies.length === 0) {
+          endBattle('win');
+          return;
+      }
+      activeEnemies = remainingEnemies;
+      if (selectedEnemyIndex >= activeEnemies.length) {
+          selectedEnemyIndex = 0;
+      }
+  }
+
+  // Update UI
+  drawBattleUI();
+  drawPlayerBattleStatus();
+});
+
+document.getElementById('special-attack-button-2').addEventListener('click', () => {
+    // Add logic for the second special attack here
+    // e.g., if (playerStats.currentStamina >= COST) { ... }
+});
+
 
     // Filter out defeated enemies to update the UI immediately
     const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
@@ -476,6 +545,10 @@ function updateStatsPopup() {
 function endBattle(outcome) {
     inBattle = false;
     document.getElementById('battle-overlay').style.display = 'none';
+  if (staminaRegenIntervalId) {
+    clearInterval(staminaRegenIntervalId);
+    staminaRegenIntervalId = null;
+  }
     
     // Stop the timed enemy attacks
     if (enemyAttackIntervalId) {
@@ -516,6 +589,11 @@ function endBattle(outcome) {
  function initiateBattle(zoneType, zoneObject) {
   inBattle = true;
   defeatedZone = { type: zoneType, object: zoneObject };
+   staminaRegenIntervalId = setInterval(() => {
+    updateStamina(playerStats.currentStamina + 1); // Increase stamina by 1
+    drawPlayerBattleStatus(); // Redraw battle status to show change
+  }, 100); // 100ms interval for regeneration
+}
   
   // Get the encounter directly from the zoneObject, which now must have an encounter property
   let encounter = zoneObject.encounter;
