@@ -156,26 +156,9 @@
     let selectedEnemyIndex = 0;
     let isPowered = false;
     let tempText = "";
-let tempTextTimeout = null;
+    let tempTextTimeout = null;
 
-// Add this function for showing the text
-function showTemporaryText(message) {
-  tempText = message;
-  if (tempTextTimeout) clearTimeout(tempTextTimeout);
-  tempTextTimeout = setTimeout(() => {
-    tempText = "";
-    draw(); // Redraw to clear the text
-  }, 3000); // Show for 3 seconds
-}
-
-// Modify the draw() function to display the temporary text
-function draw() {
-  if (inBattle) {
-    return;
-  }
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-
+    // Correctly defined global variables
     let playerStats = {
       level: 1,
       currentHp: 8,
@@ -192,6 +175,7 @@ function draw() {
       Sniperbot: { name: "Sniper", maxHp: 5, damage: 1, xpReward: 5 }
     };
     
+    // Correctly defined levels array with interactables
     const levels = [
       {
         bgSrc: "arcadebg.png",
@@ -209,7 +193,8 @@ function draw() {
         battleZones: [
           { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "Dummy" }] },
           { x: 400, y: 250, width: 70, height: 70, encounter: [{ type: "Sniperbot" }] }
-        ]
+        ],
+        interactables: []
       },
       {
         bgSrc: "arcadeinside.png",
@@ -222,11 +207,11 @@ function draw() {
         doors: [
           { x: 300, y: 450, width: 40, height: 60, destLevel: 0, destX: 400, destY: 400 }
         ],
-        battleZones: []
-        ],
-    interactables: [
-        { name: "power_box", x: 40, y: 300, width: 100, height: 100, action: "power_on" },
-        { name: "arcade_machine", x: 380, y: 80, width: 100, height: 100, action: "start_battle" }
+        battleZones: [],
+        interactables: [
+          { name: "power_box", x: 40, y: 300, width: 100, height: 100, action: "power_on" },
+          { name: "arcade_machine", x: 380, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] }
+        ]
       }
     ];
 
@@ -238,47 +223,15 @@ function draw() {
 
     let activeEnemies = [];
 
-    // Add this function near your other helper functions
-function checkInteraction(checkX, checkY) {
-  if (currentLevel.interactables) {
-    const hitboxX = checkX + hitboxOffsetX;
-    const hitboxY = checkY + hitboxOffsetY;
-
-    for (const object of currentLevel.interactables) {
-      if (
-        hitboxX < object.x + object.width &&
-        hitboxX + hitboxWidth > object.x &&
-        hitboxY < object.y + object.height &&
-        hitboxY + hitboxHeight > object.y
-      ) {
-        return object; // Return the object if a collision is detected
-      }
+    function showTemporaryText(message) {
+      tempText = message;
+      if (tempTextTimeout) clearTimeout(tempTextTimeout);
+      tempTextTimeout = setTimeout(() => {
+        tempText = "";
+        draw();
+      }, 3000);
     }
-  }
-  return null; // Return null if no object is found
-}
 
-    // Add this function below your other functions
-function handleInteraction(object) {
-  if (object.name === "power_box") {
-    isPowered = true;
-    showTemporaryText("You pressed something on the box. The lights flicker on.");
-  } else if (object.name === "arcade_machine") {
-    if (isPowered) {
-      initiateBattle(); // Start the tutorial battle
-    } else {
-      showTemporaryText("The machine is turned off...");
-    }
-  }
-}
-  if (tempText) {
-    ctx.fillStyle = "white";
-    ctx.font = "16px 'Press Start 2P'";
-    ctx.textAlign = "center";
-    ctx.fillText(tempText, canvas.width / 2, canvas.height - 100);
-  }
-}
-    
     function updateHp(newHealth) {
       if (newHealth < 0) newHealth = 0;
       if (newHealth > playerStats.maxHp) newHealth = playerStats.maxHp;
@@ -299,10 +252,10 @@ function handleInteraction(object) {
     }
 
     function gainXP(amount) {
-        playerStats.xp += amount;
-        if (playerStats.xp >= playerStats.xpToNextLevel) {
-            levelUp();
-        }
+      playerStats.xp += amount;
+      if (playerStats.xp >= playerStats.xpToNextLevel) {
+        levelUp();
+      }
     }
 
     function scaleEnemyStats(baseStats) {
@@ -313,86 +266,66 @@ function handleInteraction(object) {
       };
     }
     
-// Updated drawBattleUI to correctly handle the selected enemy
-function drawBattleUI() {
-  const battleOverlay = document.getElementById('battle-overlay');
-  battleOverlay.style.display = 'flex';
-  const enemyDisplay = document.getElementById('enemy-display');
-  enemyDisplay.innerHTML = '';
-  
-  activeEnemies.forEach((enemy, index) => {
-    const enemyButton = document.createElement('button');
-    enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
-    enemyButton.className = 'enemy-target';
-    enemyButton.dataset.enemyIndex = index;
-    enemyDisplay.appendChild(enemyButton);
-    if (index === selectedEnemyIndex) {
-      enemyButton.classList.add('selected');
+    function drawBattleUI() {
+      const battleOverlay = document.getElementById('battle-overlay');
+      battleOverlay.style.display = 'flex';
+      const enemyDisplay = document.getElementById('enemy-display');
+      enemyDisplay.innerHTML = '';
+      
+      activeEnemies.forEach((enemy, index) => {
+        const enemyButton = document.createElement('button');
+        enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
+        enemyButton.className = 'enemy-target';
+        enemyButton.dataset.enemyIndex = index;
+        enemyDisplay.appendChild(enemyButton);
+        if (index === selectedEnemyIndex) {
+          enemyButton.classList.add('selected');
+        }
+      });
     }
-  });
-}
 
-// Separate function for handling a battle turn
-function takeTurn() {
-  // If the battle has already ended, do nothing.
-  if (!inBattle) return;
+    function takeTurn() {
+      if (!inBattle) return;
+      activeEnemies.forEach(enemy => {
+        playerStats.currentHp -= enemy.damage;
+      });
+      updateHp(playerStats.currentHp);
+      drawBattleUI();
+      if (playerStats.currentHp <= 0) {
+        endBattle('lose');
+      }
+    }
 
-  // Enemies attack
-  activeEnemies.forEach(enemy => {
-    playerStats.currentHp -= enemy.damage;
-  });
-  updateHp(playerStats.currentHp);
-  drawBattleUI();
+    document.getElementById('attack-button').addEventListener('click', () => {
+      if (!inBattle || !activeEnemies.length) return;
+      const targetEnemy = activeEnemies[selectedEnemyIndex];
+      if (!targetEnemy) return;
+      targetEnemy.currentHp -= playerStats.damage;
+      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+      activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+      if (activeEnemies.length === 0) {
+        endBattle('win');
+        return;
+      }
+      if (selectedEnemyIndex >= activeEnemies.length) {
+        selectedEnemyIndex = 0;
+      }
+      drawBattleUI();
+      setTimeout(takeTurn, 1000);
+    });
 
-  // Check for player lose condition
-  if (playerStats.currentHp <= 0) {
-    endBattle('lose');
-  }
-}
-
-// Updated attack-button event listener to call the new takeTurn function
-document.getElementById('attack-button').addEventListener('click', () => {
-  if (!inBattle || !activeEnemies.length) return;
-
-  const targetEnemy = activeEnemies[selectedEnemyIndex];
-  if (!targetEnemy) {
-    return;
-  }
-  targetEnemy.currentHp -= playerStats.damage;
-  if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-  activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-
-  if (activeEnemies.length === 0) {
-    endBattle('win');
-    return;
-  }
-
-  // Re-select a valid target if the old one was defeated
-  if (selectedEnemyIndex >= activeEnemies.length) {
-    selectedEnemyIndex = 0;
-  }
-  drawBattleUI();
-
-  // Delay for a short time before the enemy attacks
-  setTimeout(takeTurn, 1000);
-});
-
-// Updated endBattle function to correctly set the state
-function endBattle(outcome) {
-  inBattle = false;
-  document.getElementById('battle-overlay').style.display = 'none';
-
-  if (outcome === 'win') {
-    let totalXp = activeEnemies.reduce((sum, enemy) => sum + enemy.xpReward, 0);
-    gainXP(totalXp);
-  } else if (outcome === 'lose') {
-    loadLevel(0, 150, 50);
-  }
-  activeEnemies = [];
-  // Ensure the game board is redrawn immediately after the battle ends
-  draw();
-}
-
+    function endBattle(outcome) {
+      inBattle = false;
+      document.getElementById('battle-overlay').style.display = 'none';
+      if (outcome === 'win') {
+        let totalXp = activeEnemies.reduce((sum, enemy) => sum + enemy.xpReward, 0);
+        gainXP(totalXp);
+      } else if (outcome === 'lose') {
+        loadLevel(0, 150, 50);
+      }
+      activeEnemies = [];
+      draw();
+    }
 
     function getRandomEncounter(levelDifficulty) {
       const possibleEnemies = Object.keys(enemyTypes);
@@ -402,7 +335,16 @@ function endBattle(outcome) {
 
     function initiateBattle() {
       inBattle = true;
-      const encounter = getRandomEncounter(currentLevelIndex + 1);
+      let encounter = [];
+      // Use a specific encounter for the arcade machine
+      const arcadeMachine = levels[1].interactables.find(obj => obj.name === "arcade_machine");
+      if (arcadeMachine) {
+        encounter = arcadeMachine.encounter;
+      } else {
+        // Fallback or handle standard battle zones
+        encounter = getRandomEncounter(currentLevelIndex + 1);
+      }
+
       activeEnemies = encounter.map(enemyData => {
         const baseStats = enemyTypes[enemyData.type];
         const scaledStats = scaleEnemyStats(baseStats);
@@ -412,18 +354,51 @@ function endBattle(outcome) {
           currentHp: scaledStats.maxHp
         };
       });
-      selectedEnemyIndex = 0; // Select first enemy by default
+      selectedEnemyIndex = 0;
       drawBattleUI();
+    }
+
+    function checkInteraction(checkX, checkY) {
+      if (currentLevel.interactables) {
+        const hitboxX = checkX + hitboxOffsetX;
+        const hitboxY = checkY + hitboxOffsetY;
+
+        for (const object of currentLevel.interactables) {
+          if (
+            hitboxX < object.x + object.width &&
+            hitboxX + hitboxWidth > object.x &&
+            hitboxY < object.y + object.height &&
+            hitboxY + hitboxHeight > object.y
+          ) {
+            return object;
+          }
+        }
+      }
+      return null;
+    }
+
+    function handleInteraction(object) {
+      if (object.name === "power_box") {
+        if (!isPowered) {
+          isPowered = true;
+          showTemporaryText("You pressed something on the box. The lights flicker on.");
+          draw(); // Redraw the canvas to show the updated object color
+        } else {
+          showTemporaryText("The power is already on.");
+        }
+      } else if (object.name === "arcade_machine") {
+        if (isPowered) {
+          initiateBattle();
+        } else {
+          showTemporaryText("The machine is turned off...");
+        }
+      }
     }
 
     function checkBattleZone(checkX, checkY) {
       const hitboxX = checkX + hitboxOffsetX;
       const hitboxY = checkY + hitboxOffsetY;
-
-      if (!currentLevel.battleZones) {
-        return false; // Safely exit if battleZones is undefined
-      }
-
+      if (!currentLevel.battleZones) return false;
       for (const zone of currentLevel.battleZones) {
         if (
           hitboxX < zone.x + zone.width &&
@@ -437,45 +412,11 @@ function endBattle(outcome) {
       return false;
     }
 
-    document.getElementById('attack-button').addEventListener('click', () => {
-      if (!inBattle || !activeEnemies.length) return;
-
-      const targetEnemy = activeEnemies[selectedEnemyIndex];
-      if (!targetEnemy) {
-        return;
-      }
-      targetEnemy.currentHp -= playerStats.damage;
-      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-      activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-
-      if (activeEnemies.length === 0) {
-        endBattle('win');
-        return;
-      }
-
-      // Re-select a valid target if the old one was defeated
-      if (selectedEnemyIndex >= activeEnemies.length) {
-        selectedEnemyIndex = 0;
-      }
-      drawBattleUI();
-
-      setTimeout(() => {
-        activeEnemies.forEach(enemy => {
-          playerStats.currentHp -= enemy.damage;
-        });
-        updateHp(playerStats.currentHp);
-        if (playerStats.currentHp <= 0) {
-          endBattle('lose');
-        }
-        drawBattleUI();
-      }, 1000);
-    });
-
     document.getElementById('enemy-display').addEventListener('click', (event) => {
       const button = event.target.closest('.enemy-target');
       if (button) {
         selectedEnemyIndex = parseInt(button.dataset.enemyIndex);
-        drawBattleUI(); // Redraw to apply 'selected' class
+        drawBattleUI();
       }
     });
 
@@ -525,11 +466,17 @@ function endBattle(outcome) {
     }
 
     function draw() {
-      if (inBattle) {
-        return;
-      }
+      if (inBattle) return;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+
+      if (currentLevel.interactables) {
+        currentLevel.interactables.forEach(object => {
+          ctx.fillStyle = object.name === "power_box" ? (isPowered ? "limegreen" : "red") : "blue";
+          ctx.fillRect(object.x, object.y, object.width, object.height);
+        });
+      }
 
       ctx.fillStyle = "rgba(0,0,0,0.0)";
       for (const wall of currentLevel.walls) {
@@ -545,49 +492,62 @@ function endBattle(outcome) {
     
       ctx.fillStyle = "rgba(0,0,0,0.0)";
       ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
-    }
-
-// Modify the existing canvas.addEventListener('keydown', ...) function
-canvas.addEventListener('keydown', function(e) {
-  if (inBattle) return;
-
-  if (!bgImg.complete || bgImg.naturalWidth === 0) return;
-  
-  let nextX = x, nextY = y;
-  const key = e.key.toLowerCase();
-
-  switch(key) {
-    // ... existing cases ...
-    case 'enter': // Handle interaction key
-      e.preventDefault();
-      const interactableObject = checkInteraction(x, y);
-      if (interactableObject) {
-        handleInteraction(interactableObject);
+      
+      if (tempText) {
+        ctx.fillStyle = "white";
+        ctx.font = "16px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText(tempText, canvas.width / 2, canvas.height - 100);
       }
-      return; // Exit after handling interaction
-    // ... rest of the switch statement ...
-  }
-  
-  if (key === 'arrowleft' || key === 'a') nextX -= speed;
-  if (key === 'arrowright' || key === 'd') nextX += speed;
-  if (key === 'arrowup' || key === 'w') nextY -= speed;
-  if (key === 'arrowdown' || key === 's') nextY += speed;
+    }
 
-  if (!isCollidingWithWall(nextX, nextY)) {
-    const door = checkDoorCollision(nextX, nextY);
-    if (door) {
-      loadLevel(door.destLevel, door.destX, door.destY);
-      return;
-    }
-    if (checkBattleZone(nextX, nextY)) {
-      initiateBattle();
-      return;
-    }
-    x = nextX;
-    y = nextY;
-  }
-  draw();
-});
+    canvas.addEventListener('keydown', function(e) {
+      if (inBattle) return;
+      if (!bgImg.complete || bgImg.naturalWidth === 0) return;
+      
+      let nextX = x, nextY = y;
+      const key = e.key.toLowerCase();
+
+      switch(key) {
+        case 'arrowup':
+        case 'arrowdown':
+        case 'arrowleft':
+        case 'arrowright':
+        case 'w':
+        case 'a':
+        case 's':
+        case 'd':
+          e.preventDefault();
+          break;
+        case 'enter':
+          e.preventDefault();
+          const interactableObject = checkInteraction(x, y);
+          if (interactableObject) {
+            handleInteraction(interactableObject);
+          }
+          return;
+      }
+      
+      if (key === 'arrowleft' || key === 'a') nextX -= speed;
+      if (key === 'arrowright' || key === 'd') nextX += speed;
+      if (key === 'arrowup' || key === 'w') nextY -= speed;
+      if (key === 'arrowdown' || key === 's') nextY += speed;
+
+      if (!isCollidingWithWall(nextX, nextY)) {
+        const door = checkDoorCollision(nextX, nextY);
+        if (door) {
+          loadLevel(door.destLevel, door.destX, door.destY);
+          return;
+        }
+        if (checkBattleZone(nextX, nextY)) {
+          initiateBattle();
+          return;
+        }
+        x = nextX;
+        y = nextY;
+      }
+      draw();
+    });
   </script>
 </body>
 </html>
