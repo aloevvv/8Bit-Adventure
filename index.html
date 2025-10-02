@@ -77,7 +77,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      display: none; /* Hide by default */
+      display: none;
     }
     #enemy-display {
       background-color: #555;
@@ -103,44 +103,38 @@
       font-family: "Press Start 2P", sans-serif;
       padding: 10px 20px;
       cursor: pointer;
-      /* Add this new CSS block */
-#player-battle-status {
-  background-color: #002591;
-  color: white;
-  border: 2px solid black;
-  padding: 10px;
-  margin-top: 20px;
-  width: 250px;
-  text-align: left;
-}
-
-#player-battle-status p {
-  margin: 0;
-  font-size: 1em;
-}
-
-#player-battle-status .hp-bar-container {
-  width: 100%;
-  height: 15px;
-  background-color: #555;
-  border: 1px solid white;
-  position: relative;
-}
-
-#player-battle-status .hp-bar {
-  height: 100%;
-  background-color: #00FF00;
-}
-
-#player-battle-status .hp-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 0.7em;
-  text-shadow: 1px 1px 2px black;
-}
-
+    }
+    #player-battle-status {
+      background-color: #002591;
+      color: white;
+      border: 2px solid black;
+      padding: 10px;
+      margin-top: 20px;
+      width: 250px;
+      text-align: left;
+    }
+    #player-battle-status p {
+      margin: 0;
+      font-size: 1em;
+    }
+    #player-battle-status .hp-bar-container {
+      width: 100%;
+      height: 15px;
+      background-color: #555;
+      border: 1px solid white;
+      position: relative;
+    }
+    #player-battle-status .hp-bar {
+      height: 100%;
+      background-color: #00FF00;
+    }
+    #player-battle-status .hp-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.7em;
+      text-shadow: 1px 1px 2px black;
     }
   </style>
 </head>
@@ -164,17 +158,12 @@
   </div>
 
   <div id="battle-overlay" style="display:none;">
-    <div id="enemy-display">
-        <!-- Enemy info will be dynamically generated here -->
-    </div>
-    <div id="player-battle-status">
-        <!-- Player info will be dynamically generated here -->
-    </div>
+    <div id="enemy-display"></div>
+    <div id="player-battle-status"></div>
     <div id="battle-controls">
         <button id="attack-button">Attack</button>
     </div>
-</div>
-
+  </div>
   
   <script>
     const canvas = document.getElementById('game');
@@ -269,8 +258,7 @@
     function wrapText(context, text, x, y, maxWidth, lineHeight) {
       let words = text.split(' ');
       let line = '';
-
-      for(let n = 0; n < words.length; n++) {
+      for (let n = 0; n < words.length; n++) {
         let testLine = line + words[n] + ' ';
         let metrics = context.measureText(testLine);
         let testWidth = metrics.width;
@@ -320,24 +308,20 @@
       }
     }
 
-function removeZone(zone) {
-    if (!zone) return;
-
-    // Check if it's a battle zone or an interactable
-    if (zone.type === 'battleZone') {
-        // Find the index of the zone and remove it
+    function removeZone(zone) {
+      if (!zone) return;
+      if (zone.type === 'battleZone') {
         const index = currentLevel.battleZones.indexOf(zone.object);
         if (index > -1) {
-            currentLevel.battleZones.splice(index, 1);
+          currentLevel.battleZones.splice(index, 1);
         }
-    } else if (zone.type === 'interactable') {
-        // Find the index of the interactable and remove it
+      } else if (zone.type === 'interactable') {
         const index = currentLevel.interactables.indexOf(zone.object);
         if (index > -1) {
-            currentLevel.interactables.splice(index, 1);
+          currentLevel.interactables.splice(index, 1);
         }
+      }
     }
-}
     
     function scaleEnemyStats(baseStats) {
       return {
@@ -347,44 +331,28 @@ function removeZone(zone) {
       };
     }
 
-    // Add this helper function
-function findBattleZone(checkX, checkY) {
-    const hitboxX = checkX + hitboxOffsetX;
-    const hitboxY = checkY + hitboxOffsetY;
-
-    if (!currentLevel.battleZones) return null;
-
-    for (const zone of currentLevel.battleZones) {
+    function findBattleZone(checkX, checkY) {
+      const hitboxX = checkX + hitboxOffsetX;
+      const hitboxY = checkY + hitboxOffsetY;
+      if (!currentLevel.battleZones) return null;
+      for (const zone of currentLevel.battleZones) {
         if (
-            hitboxX < zone.x + zone.width &&
-            hitboxX + hitboxWidth > zone.x &&
-            hitboxY < zone.y + zone.height &&
-            hitboxY + hitboxHeight > zone.y
+          hitboxX < zone.x + zone.width &&
+          hitboxX + hitboxWidth > zone.x &&
+          hitboxY < zone.y + zone.height &&
+          hitboxY + hitboxHeight > zone.y
         ) {
-            return zone;
+          return zone;
         }
+      }
+      return null;
     }
-    return null;
-}
-
-// And update the keydown listener to use it
-if (!isCollidingWithWall(nextX, nextY)) {
-    // ...
-    const battleZone = findBattleZone(nextX, nextY);
-    if (battleZone) {
-      initiateBattle('battleZone', battleZone);
-      return;
-    }
-    // ...
-}
-
     
     function drawBattleUI() {
       const battleOverlay = document.getElementById('battle-overlay');
       battleOverlay.style.display = 'flex';
       const enemyDisplay = document.getElementById('enemy-display');
       enemyDisplay.innerHTML = '';
-      
       activeEnemies.forEach((enemy, index) => {
         const enemyButton = document.createElement('button');
         enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
@@ -397,41 +365,33 @@ if (!isCollidingWithWall(nextX, nextY)) {
       });
     }
 
-    // Add this function near your drawBattleUI function
-function drawPlayerBattleStatus() {
-  const playerBattleStatusDiv = document.getElementById('player-battle-status');
-  playerBattleStatusDiv.innerHTML = ''; // Clear previous content
-
-  const playerName = document.createElement('p');
-  playerName.textContent = `8-Bit`;
-  
-  const hpContainer = document.createElement('div');
-  hpContainer.className = 'hp-bar-container';
-  
-  const hpBar = document.createElement('div');
-  hpBar.className = 'hp-bar';
-  hpBar.style.width = `${(playerStats.currentHp / playerStats.maxHp) * 100}%`;
-  
-  const hpText = document.createElement('div');
-  hpText.className = 'hp-text';
-  hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
-  
-  hpContainer.appendChild(hpBar);
-  hpContainer.appendChild(hpText);
-  
-  playerBattleStatusDiv.appendChild(playerName);
-  playerBattleStatusDiv.appendChild(hpContainer);
-}
-
+    function drawPlayerBattleStatus() {
+      const playerBattleStatusDiv = document.getElementById('player-battle-status');
+      playerBattleStatusDiv.innerHTML = '';
+      const playerName = document.createElement('p');
+      playerName.textContent = `8-Bit`;
+      const hpContainer = document.createElement('div');
+      hpContainer.className = 'hp-bar-container';
+      const hpBar = document.createElement('div');
+      hpBar.className = 'hp-bar';
+      hpBar.style.width = `${(playerStats.currentHp / playerStats.maxHp) * 100}%`;
+      const hpText = document.createElement('div');
+      hpText.className = 'hp-text';
+      hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
+      hpContainer.appendChild(hpBar);
+      hpContainer.appendChild(hpText);
+      playerBattleStatusDiv.appendChild(playerName);
+      playerBattleStatusDiv.appendChild(hpContainer);
+    }
 
     function takeTurn() {
       if (!inBattle) return;
       activeEnemies.forEach(enemy => {
         playerStats.currentHp -= enemy.damage;
       });
-    updateHp(playerStats.currentHp);
-    drawBattleUI();
-    drawPlayerBattleStatus();
+      updateHp(playerStats.currentHp);
+      drawBattleUI();
+      drawPlayerBattleStatus();
       if (playerStats.currentHp <= 0) {
         endBattle('lose');
       }
@@ -452,32 +412,27 @@ function drawPlayerBattleStatus() {
         selectedEnemyIndex = 0;
       }
       drawBattleUI();
+      drawPlayerBattleStatus();
       setTimeout(takeTurn, 1000);
     });
 
-function endBattle(outcome) {
-    inBattle = false;
-    document.getElementById('battle-overlay').style.display = 'none';
-
-    if (outcome === 'win') {
+    function endBattle(outcome) {
+      inBattle = false;
+      document.getElementById('battle-overlay').style.display = 'none';
+      if (outcome === 'win') {
         let totalXp = activeEnemies.reduce((sum, enemy) => sum + enemy.xpReward, 0);
         gainXP(totalXp);
-        
-        // **NEW LOGIC:** Remove the defeated zone/interactable
         if (defeatedZone) {
-            removeZone(defeatedZone);
+          removeZone(defeatedZone);
         }
-
-    } else if (outcome === 'lose') {
+      } else if (outcome === 'lose') {
         loadLevel(0, 150, 50);
+      }
+      activeEnemies = [];
+      defeatedZone = null;
+      draw();
+      document.getElementById('player-battle-status').innerHTML = '';
     }
-    
-    activeEnemies = [];
-    draw();
-}
-  // Clear the player status div when battle ends
-  document.getElementById('player-battle-status').innerHTML = '';
-}
 
     function getRandomEncounter(levelDifficulty) {
       const possibleEnemies = Object.keys(enemyTypes);
@@ -485,20 +440,14 @@ function endBattle(outcome) {
       return [{ type: randomType }];
     }
 
-function initiateBattle(zoneType, zoneObject) { // Pass zone type and object
-    inBattle = true;
-    defeatedZone = { type: zoneType, object: zoneObject }; // Store the zone
-    let encounter = [];
-    if (zoneType === 'interactable' && zoneObject.encounter) {
+    function initiateBattle(zoneType, zoneObject) {
+      inBattle = true;
+      defeatedZone = { type: zoneType, object: zoneObject };
+      let encounter = [];
+      if (zoneType === 'interactable' && zoneObject.encounter) {
         encounter = zoneObject.encounter;
-    } else {
-        encounter = getRandomEncounter(currentLevelIndex + 1);
-    }
-      const arcadeMachine = levels[currentLevelIndex].interactables.find(obj => obj.name === "arcade_machine");
-      if (arcadeMachine && arcadeMachine.encounter) {
-          encounter = arcadeMachine.encounter;
       } else {
-          encounter = getRandomEncounter(currentLevelIndex + 1);
+        encounter = getRandomEncounter(currentLevelIndex + 1);
       }
       activeEnemies = encounter.map(enemyData => {
         const baseStats = enemyTypes[enemyData.type];
@@ -518,7 +467,6 @@ function initiateBattle(zoneType, zoneObject) { // Pass zone type and object
       if (currentLevel.interactables) {
         const hitboxX = checkX + hitboxOffsetX;
         const hitboxY = checkY + hitboxOffsetY;
-
         for (const object of currentLevel.interactables) {
           if (
             hitboxX < object.x + object.width &&
@@ -544,12 +492,12 @@ function initiateBattle(zoneType, zoneObject) { // Pass zone type and object
         }
       } else if (object.name === "arcade_machine") {
         if (isPowered) {
-            initiateBattle('interactable', object); // Pass zone type and object
+          initiateBattle('interactable', object);
         } else {
-            showTemporaryText("The machine is turned off...");
+          showTemporaryText("The machine is turned off...");
         }
+      }
     }
-}
 
     function checkBattleZone(checkX, checkY) {
       const hitboxX = checkX + hitboxOffsetX;
@@ -590,7 +538,6 @@ function initiateBattle(zoneType, zoneObject) { // Pass zone type and object
     function isCollidingWithWall(newX, newY) {
       const newHitboxX = newX + hitboxOffsetX;
       const newHitboxY = newY + hitboxOffsetY;
-
       for (const wall of currentLevel.walls) {
         if (
           newHitboxX < wall.x + wall.width &&
@@ -607,7 +554,6 @@ function initiateBattle(zoneType, zoneObject) { // Pass zone type and object
     function checkDoorCollision(newX, newY) {
       const newHitboxX = newX + hitboxOffsetX;
       const newHitboxY = newY + hitboxOffsetY;
-
       for (const door of currentLevel.doors) {
         if (
           newHitboxX < door.x + door.width &&
@@ -623,10 +569,8 @@ function initiateBattle(zoneType, zoneObject) { // Pass zone type and object
 
     function draw() {
       if (inBattle) return;
-
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-
       if (currentLevel.interactables) {
         currentLevel.interactables.forEach(object => {
           ctx.fillStyle = object.name === "power_box" ? (isPowered ? "limegreen" : "red") : "blue";
@@ -636,22 +580,18 @@ function initiateBattle(zoneType, zoneObject) { // Pass zone type and object
           ctx.fillRect(object.x, object.y, object.width, object.height);
         });
       }
-
       ctx.fillStyle = "rgba(0,0,0,0.0)";
       for (const wall of currentLevel.walls) {
         ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
       }
-      
       if (useImage && img.complete && img.naturalWidth > 0) {
         ctx.drawImage(img, x, y, imageSize, imageSize);
       } else {
         ctx.fillStyle = "#0090ff";
         ctx.fillRect(x, y, imageSize, imageSize);
       }
-    
       ctx.fillStyle = "rgba(0,0,0,0.0)";
       ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
-      
       if (tempText) {
         ctx.fillStyle = "white";
         ctx.font = "12px 'Press Start 2P'";
@@ -666,10 +606,8 @@ function initiateBattle(zoneType, zoneObject) { // Pass zone type and object
     canvas.addEventListener('keydown', function(e) {
       if (inBattle) return;
       if (!bgImg.complete || bgImg.naturalWidth === 0) return;
-      
       let nextX = x, nextY = y;
       const key = e.key.toLowerCase();
-
       switch(key) {
         case 'arrowup':
         case 'arrowdown':
@@ -682,30 +620,28 @@ function initiateBattle(zoneType, zoneObject) { // Pass zone type and object
           e.preventDefault();
           break;
         case 'x':
-    e.preventDefault();
-    const interactableObject = checkInteraction(x, y);
-    if (interactableObject) {
-        handleInteraction(interactableObject);
-    }
-    return;
+          e.preventDefault();
+          const interactableObject = checkInteraction(x, y);
+          if (interactableObject) {
+            handleInteraction(interactableObject);
+          }
+          return;
       }
-      
       if (key === 'arrowleft' || key === 'a') nextX -= speed;
       if (key === 'arrowright' || key === 'd') nextX += speed;
       if (key === 'arrowup' || key === 'w') nextY -= speed;
       if (key === 'arrowdown' || key === 's') nextY += speed;
-
       if (!isCollidingWithWall(nextX, nextY)) {
         const door = checkDoorCollision(nextX, nextY);
         if (door) {
           loadLevel(door.destLevel, door.destX, door.destY);
           return;
         }
-        if (checkBattleZone(nextX, nextY)) {
-    const battleZone = findBattleZone(nextX, nextY); // Create a new helper function for this
-    initiateBattle('battleZone', battleZone);
-    return;
-}
+        const battleZone = findBattleZone(nextX, nextY);
+        if (battleZone) {
+          initiateBattle('battleZone', battleZone);
+          return;
+        }
         x = nextX;
         y = nextY;
       }
