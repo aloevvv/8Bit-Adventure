@@ -123,6 +123,7 @@
     const hpText = document.getElementById('hp-text');
     let maxHealth = 8;
     let currentHealth = 8;
+    let selectedEnemyIndex = 0; // The index of the currently targeted enemy
     // New playerStats structure
 let playerStats = {
     level: 1,
@@ -150,21 +151,28 @@ function levelUp() {
     // For example, display "LEVEL UP!" text for a few seconds
 }
 
-    function drawBattleUI() {
-    const battleOverlay = document.getElementById('battle-overlay');
-    battleOverlay.style.display = 'flex';
-    const enemyDisplay = document.getElementById('enemy-display');
-    enemyDisplay.innerHTML = ''; // Clear previous enemy data
-
-    activeEnemies.forEach((enemy, index) => {
-        const enemyDiv = document.createElement('div');
-        enemyDiv.innerHTML = `
-            <h3>${enemy.name}</h3>
-            <p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>
-        `;
-        enemyDisplay.appendChild(enemyDiv);
-    });
+function drawBattleUI() {
+  const battleOverlay = document.getElementById('battle-overlay');
+  battleOverlay.style.display = 'flex';
+  const enemyDisplay = document.getElementById('enemy-display');
+  enemyDisplay.innerHTML = '';
+  
+  activeEnemies.forEach((enemy, index) => {
+    const enemyButton = document.createElement('button');
+    enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
+    enemyButton.className = 'enemy-target';
+    enemyButton.dataset.enemyIndex = index;
+    enemyDisplay.appendChild(enemyButton);
+  });
 }
+
+document.getElementById('enemy-display').addEventListener('click', (event) => {
+  const button = event.target.closest('.enemy-target');
+  if (button) {
+    selectedEnemyIndex = parseInt(button.dataset.enemyIndex);
+    // You'll need to add code here to visually highlight the selected enemy.
+  }
+});
 
     
     // Add this variable near your other top-level variables
@@ -206,25 +214,36 @@ function initiateBattle() {
 
 // The attack button now handles the whole turn sequence
 document.getElementById('attack-button').addEventListener('click', () => {
-    if (!inBattle || !activeEnemies.length) return;
+  if (!inBattle || !activeEnemies.length) return;
 
-    // Player attacks a random enemy (or add target selection later)
-    const targetIndex = Math.floor(Math.random() * activeEnemies.length);
-    const targetEnemy = activeEnemies[targetIndex];
-    
-    targetEnemy.currentHp -= playerStats.damage;
-    if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+  // Use the selected target instead of a random one
+  const targetEnemy = activeEnemies[selectedEnemyIndex];
+  if (!targetEnemy) {
+    // If the selected target is no longer valid, pick a new one or do nothing
+    return;
+  }
 
-    // Remove defeated enemies
-    activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+  targetEnemy.currentHp -= playerStats.damage;
+  if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
 
-    drawBattleUI();
+  activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
 
-    // Check for win condition
-    if (activeEnemies.length === 0) {
-        endBattle('win');
-        return;
-    }
+  // Re-select a valid target if the old one was defeated
+  if (!activeEnemies[selectedEnemyIndex] && activeEnemies.length > 0) {
+    selectedEnemyIndex = 0;
+  }
+  
+  drawBattleUI();
+
+  if (activeEnemies.length === 0) {
+    endBattle('win');
+    return;
+  }
+
+  // Enemy attacks remain the same
+  // ...
+});
+
 
     // Enemies attack (after a short delay)
     setTimeout(() => {
