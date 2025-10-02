@@ -494,7 +494,8 @@ function endBattle(outcome) {
 }
 
 
-    function initiateBattle(zoneType, zoneObject) {
+  //Get the encounter directly from the zoneObject, which now must have an encounter property
+ function initiateBattle(zoneType, zoneObject) {
   inBattle = true;
   defeatedZone = { type: zoneType, object: zoneObject };
   
