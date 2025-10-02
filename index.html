@@ -157,11 +157,11 @@
     </div>
   </div>
 
-  <div id="battle-overlay" style="display:none;">
+  <div id="battle-overlay">
     <div id="enemy-display"></div>
     <div id="player-battle-status"></div>
     <div id="battle-controls">
-        <button id="attack-button">Attack</button>
+      <button id="attack-button">Attack</button>
     </div>
   </div>
   
@@ -191,6 +191,8 @@
     let tempText = "";
     let tempTextTimeout = null;
     let defeatedZone = null;
+    let enemyAttackIntervalId = null;
+    const ENEMY_ATTACK_DELAY = 2000;
 
     let playerStats = {
       level: 1,
@@ -413,12 +415,15 @@
       }
       drawBattleUI();
       drawPlayerBattleStatus();
-      setTimeout(takeTurn, 1000);
     });
 
     function endBattle(outcome) {
       inBattle = false;
       document.getElementById('battle-overlay').style.display = 'none';
+      if (enemyAttackIntervalId) {
+          clearInterval(enemyAttackIntervalId);
+          enemyAttackIntervalId = null;
+      }
       if (outcome === 'win') {
         let totalXp = activeEnemies.reduce((sum, enemy) => sum + enemy.xpReward, 0);
         gainXP(totalXp);
@@ -461,6 +466,7 @@
       selectedEnemyIndex = 0;
       drawBattleUI();
       drawPlayerBattleStatus();
+      enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
     }
 
     function checkInteraction(checkX, checkY) {
