@@ -103,6 +103,44 @@
       font-family: "Press Start 2P", sans-serif;
       padding: 10px 20px;
       cursor: pointer;
+      /* Add this new CSS block */
+#player-battle-status {
+  background-color: #002591;
+  color: white;
+  border: 2px solid black;
+  padding: 10px;
+  margin-top: 20px;
+  width: 250px;
+  text-align: left;
+}
+
+#player-battle-status p {
+  margin: 0;
+  font-size: 1em;
+}
+
+#player-battle-status .hp-bar-container {
+  width: 100%;
+  height: 15px;
+  background-color: #555;
+  border: 1px solid white;
+  position: relative;
+}
+
+#player-battle-status .hp-bar {
+  height: 100%;
+  background-color: #00FF00;
+}
+
+#player-battle-status .hp-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.7em;
+  text-shadow: 1px 1px 2px black;
+}
+
     }
   </style>
 </head>
@@ -125,12 +163,18 @@
     </div>
   </div>
 
-  <div id="battle-overlay">
-    <div id="enemy-display"></div>
-    <div id="battle-controls">
-      <button id="attack-button">Attack</button>
+  <div id="battle-overlay" style="display:none;">
+    <div id="enemy-display">
+        <!-- Enemy info will be dynamically generated here -->
     </div>
-  </div>
+    <div id="player-battle-status">
+        <!-- Player info will be dynamically generated here -->
+    </div>
+    <div id="battle-controls">
+        <button id="attack-button">Attack</button>
+    </div>
+</div>
+
   
   <script>
     const canvas = document.getElementById('game');
@@ -301,13 +345,41 @@
       });
     }
 
+    // Add this function near your drawBattleUI function
+function drawPlayerBattleStatus() {
+  const playerBattleStatusDiv = document.getElementById('player-battle-status');
+  playerBattleStatusDiv.innerHTML = ''; // Clear previous content
+
+  const playerName = document.createElement('p');
+  playerName.textContent = `Name: 8-Bit`;
+  
+  const hpContainer = document.createElement('div');
+  hpContainer.className = 'hp-bar-container';
+  
+  const hpBar = document.createElement('div');
+  hpBar.className = 'hp-bar';
+  hpBar.style.width = `${(playerStats.currentHp / playerStats.maxHp) * 100}%`;
+  
+  const hpText = document.createElement('div');
+  hpText.className = 'hp-text';
+  hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
+  
+  hpContainer.appendChild(hpBar);
+  hpContainer.appendChild(hpText);
+  
+  playerBattleStatusDiv.appendChild(playerName);
+  playerBattleStatusDiv.appendChild(hpContainer);
+}
+
+
     function takeTurn() {
       if (!inBattle) return;
       activeEnemies.forEach(enemy => {
         playerStats.currentHp -= enemy.damage;
       });
-      updateHp(playerStats.currentHp);
-      drawBattleUI();
+    updateHp(playerStats.currentHp);
+    drawBattleUI();
+    drawPlayerBattleStatus();
       if (playerStats.currentHp <= 0) {
         endBattle('lose');
       }
@@ -342,7 +414,9 @@
       }
       activeEnemies = [];
       draw();
-    }
+  // Clear the player status div when battle ends
+  document.getElementById('player-battle-status').innerHTML = '';
+}
 
     function getRandomEncounter(levelDifficulty) {
       const possibleEnemies = Object.keys(enemyTypes);
@@ -370,6 +444,7 @@
       });
       selectedEnemyIndex = 0;
       drawBattleUI();
+      drawPlayerBattleStatus();
     }
 
     function checkInteraction(checkX, checkY) {
