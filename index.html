@@ -424,11 +424,16 @@
           clearInterval(enemyAttackIntervalId);
           enemyAttackIntervalId = null;
       }
-      if (outcome === 'win') {
+     if (outcome === 'win') {
         let totalXp = activeEnemies.reduce((sum, enemy) => sum + enemy.xpReward, 0);
         gainXP(totalXp);
+        
+        // **NEW LINE:** Reset player HP to max
+        playerStats.currentHp = playerStats.maxHp;
+        updateHp(playerStats.currentHp); // Update the HUD display
+        
         if (defeatedZone) {
-          removeZone(defeatedZone);
+            removeZone(defeatedZone);
         }
       } else if (outcome === 'lose') {
         loadLevel(0, 150, 50);
