@@ -376,7 +376,8 @@
       inBattle = true;
       let encounter = [];
       // Use a specific encounter for the arcade machine
-      const arcadeMachine = levels[currentLevelIndex1].interactables.find(obj => obj.name === "arcade_machine");
+      // This correctly checks the interactables of the current level.
+const arcadeMachine = levels[currentLevelIndex].interactables.find(obj => obj.name === "arcade_machine");
 
       if (arcadeMachine && arcadeMachine.encounter) {
                   encounter = arcadeMachine.encounter;
