@@ -154,7 +154,28 @@
     const hpBar = document.getElementById('hp-bar');
     const hpText = document.getElementById('hp-text');
     let selectedEnemyIndex = 0;
-    
+    let isPowered = false;
+    let tempText = "";
+let tempTextTimeout = null;
+
+// Add this function for showing the text
+function showTemporaryText(message) {
+  tempText = message;
+  if (tempTextTimeout) clearTimeout(tempTextTimeout);
+  tempTextTimeout = setTimeout(() => {
+    tempText = "";
+    draw(); // Redraw to clear the text
+  }, 3000); // Show for 3 seconds
+}
+
+// Modify the draw() function to display the temporary text
+function draw() {
+  if (inBattle) {
+    return;
+  }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+
     let playerStats = {
       level: 1,
       currentHp: 8,
@@ -202,6 +223,10 @@
           { x: 300, y: 450, width: 40, height: 60, destLevel: 0, destX: 400, destY: 400 }
         ],
         battleZones: []
+        ],
+    interactables: [
+        { name: "power_box", x: 40, y: 300, width: 100, height: 100, action: "power_on" },
+        { name: "arcade_machine", x: 380, y: 80, width: 100, height: 100, action: "start_battle" }
       }
     ];
 
@@ -212,6 +237,47 @@
     bgImg.onload = function() { draw(); };
 
     let activeEnemies = [];
+
+    // Add this function near your other helper functions
+function checkInteraction(checkX, checkY) {
+  if (currentLevel.interactables) {
+    const hitboxX = checkX + hitboxOffsetX;
+    const hitboxY = checkY + hitboxOffsetY;
+
+    for (const object of currentLevel.interactables) {
+      if (
+        hitboxX < object.x + object.width &&
+        hitboxX + hitboxWidth > object.x &&
+        hitboxY < object.y + object.height &&
+        hitboxY + hitboxHeight > object.y
+      ) {
+        return object; // Return the object if a collision is detected
+      }
+    }
+  }
+  return null; // Return null if no object is found
+}
+
+    // Add this function below your other functions
+function handleInteraction(object) {
+  if (object.name === "power_box") {
+    isPowered = true;
+    showTemporaryText("You pressed something on the box. The lights flicker on.");
+  } else if (object.name === "arcade_machine") {
+    if (isPowered) {
+      initiateBattle(); // Start the tutorial battle
+    } else {
+      showTemporaryText("The machine is turned off...");
+    }
+  }
+}
+  if (tempText) {
+    ctx.fillStyle = "white";
+    ctx.font = "16px 'Press Start 2P'";
+    ctx.textAlign = "center";
+    ctx.fillText(tempText, canvas.width / 2, canvas.height - 100);
+  }
+}
     
     function updateHp(newHealth) {
       if (newHealth < 0) newHealth = 0;
@@ -432,47 +498,47 @@
       ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
     }
 
-    canvas.addEventListener('keydown', function(e) {
-      if (inBattle) return;
+// Modify the existing canvas.addEventListener('keydown', ...) function
+canvas.addEventListener('keydown', function(e) {
+  if (inBattle) return;
 
-      if (!bgImg.complete || bgImg.naturalWidth === 0) return;
-      
-      let nextX = x, nextY = y;
-      const key = e.key.toLowerCase();
+  if (!bgImg.complete || bgImg.naturalWidth === 0) return;
+  
+  let nextX = x, nextY = y;
+  const key = e.key.toLowerCase();
 
-      switch(key) {
-        case 'arrowup':
-        case 'arrowdown':
-        case 'arrowleft':
-        case 'arrowright':
-        case 'w':
-        case 'a':
-        case 's':
-        case 'd':
-          e.preventDefault();
-          break;
+  switch(key) {
+    // ... existing cases ...
+    case 'enter': // Handle interaction key
+      e.preventDefault();
+      const interactableObject = checkInteraction(x, y);
+      if (interactableObject) {
+        handleInteraction(interactableObject);
       }
-      
-      if (key === 'arrowleft' || key === 'a') nextX -= speed;
-      if (key === 'arrowright' || key === 'd') nextX += speed;
-      if (key === 'arrowup' || key === 'w') nextY -= speed;
-      if (key === 'arrowdown' || key === 's') nextY += speed;
+      return; // Exit after handling interaction
+    // ... rest of the switch statement ...
+  }
+  
+  if (key === 'arrowleft' || key === 'a') nextX -= speed;
+  if (key === 'arrowright' || key === 'd') nextX += speed;
+  if (key === 'arrowup' || key === 'w') nextY -= speed;
+  if (key === 'arrowdown' || key === 's') nextY += speed;
 
-      if (!isCollidingWithWall(nextX, nextY)) {
-        const door = checkDoorCollision(nextX, nextY);
-        if (door) {
-          loadLevel(door.destLevel, door.destX, door.destY);
-          return;
-        }
-        if (checkBattleZone(nextX, nextY)) {
-          initiateBattle();
-          return;
-        }
-        x = nextX;
-        y = nextY;
-      }
-      draw();
-    });
+  if (!isCollidingWithWall(nextX, nextY)) {
+    const door = checkDoorCollision(nextX, nextY);
+    if (door) {
+      loadLevel(door.destLevel, door.destX, door.destY);
+      return;
+    }
+    if (checkBattleZone(nextX, nextY)) {
+      initiateBattle();
+      return;
+    }
+    x = nextX;
+    y = nextY;
+  }
+  draw();
+});
   </script>
 </body>
 </html>
