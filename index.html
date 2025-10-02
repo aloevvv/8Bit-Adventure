@@ -443,22 +443,35 @@ function updateStatsPopup() {
     }
 
     document.getElementById('attack-button').addEventListener('click', () => {
-      if (!inBattle || !activeEnemies.length) return;
-      const targetEnemy = activeEnemies[selectedEnemyIndex];
-      if (!targetEnemy) return;
-      targetEnemy.currentHp -= playerStats.damage;
-      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-      activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-      if (activeEnemies.length === 0) {
+    if (!inBattle || !activeEnemies.length) return;
+    const targetEnemy = activeEnemies[selectedEnemyIndex];
+    if (!targetEnemy) return;
+    targetEnemy.currentHp -= playerStats.damage;
+    if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+
+    // Filter out defeated enemies to update the UI immediately
+    const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+    
+    if (remainingEnemies.length === 0) {
+        // All enemies defeated, end the battle.
+        // The activeEnemies array at this point still has all enemies (including the defeated one)
+        // so the endBattle() function can calculate the XP correctly.
         endBattle('win');
         return;
-      }
-      if (selectedEnemyIndex >= activeEnemies.length) {
+    }
+
+    // Update the activeEnemies array with only the remaining enemies for targeting purposes
+    activeEnemies = remainingEnemies;
+    
+    // Re-select a valid target if the current one was defeated
+    if (selectedEnemyIndex >= activeEnemies.length) {
         selectedEnemyIndex = 0;
-      }
-      drawBattleUI();
-      drawPlayerBattleStatus();
-    });
+    }
+
+    drawBattleUI();
+    drawPlayerBattleStatus();
+});
+
 
 function endBattle(outcome) {
     inBattle = false;
@@ -471,58 +484,32 @@ function endBattle(outcome) {
     }
 
     if (outcome === 'win') {
-        // Collect XP rewards from all enemies that were in the battle
-        // *before* the activeEnemies array is cleared.
+        // Step 1: Calculate XP rewards from all enemies that were in the battle.
+        // This must happen BEFORE the activeEnemies array is cleared.
         let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
         gainXP(totalXp);
         
-        // Reset player HP to max
+        // Step 2: Reset player HP to max.
         playerStats.currentHp = playerStats.maxHp;
         updateHp(playerStats.currentHp);
         
+        // Step 3: Remove the battle zone if applicable.
         if (defeatedZone) {
             removeZone(defeatedZone);
         }
+
     } else if (outcome === 'lose') {
-        loadLevel(0, 150, 50);
+        loadLevel(0, 150, 50); // Or whatever your lose condition is
     }
     
-    // The activeEnemies array must be cleared here, *after* the XP is gathered.
+    // Step 4: Reset the battle state.
+    // The activeEnemies array is cleared here, AFTER the XP has been gathered.
     activeEnemies = [];
     defeatedZone = null;
     draw();
     document.getElementById('player-battle-status').innerHTML = '';
 }
 
-document.getElementById('attack-button').addEventListener('click', () => {
-    if (!inBattle || !activeEnemies.length) return;
-    const targetEnemy = activeEnemies[selectedEnemyIndex];
-    if (!targetEnemy) return;
-    targetEnemy.currentHp -= playerStats.damage;
-    if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-
-    // The logic to remove defeated enemies needs to be separated from the XP calculation.
-    if (targetEnemy.currentHp <= 0) {
-        // If the targeted enemy is defeated, filter the list.
-        activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-    }
-
-    if (activeEnemies.length === 0) {
-        endBattle('win');
-        return;
-    }
-    if (selectedEnemyIndex >= activeEnemies.length) {
-        selectedEnemyIndex = 0;
-    }
-    drawBattleUI();
-    drawPlayerBattleStatus();
-});
-    
-    activeEnemies = [];
-    defeatedZone = null;
-    draw();
-    document.getElementById('player-battle-status').innerHTML = '';
-}
 
 
   //Get the encounter directly from the zoneObject, which now must have an encounter property
