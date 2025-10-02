@@ -601,30 +601,49 @@
     });
 
     document.getElementById('special-attack-button-2').addEventListener('click', () => {
-      const staminaCost = 200;
-      if (!inBattle || !activeEnemies.length || playerStats.currentStamina < staminaCost) {
-        showTemporaryText("Not enough stamina!");
-        return;
-      }
-      updateStamina(playerStats.currentStamina - staminaCost);
-      const targetEnemy = activeEnemies[selectedEnemyIndex];
-      if (!targetEnemy) return;
+  const staminaCost = 200;
+  if (!inBattle || playerStats.currentStamina < staminaCost) {
+    showTemporaryText("Not enough stamina!");
+    return;
+  }
+  
+  // Deduct stamina
+  updateStamina(playerStats.currentStamina - staminaCost);
+  
+  // Create a new array to hold the enemies that survive the attack
+  let remainingEnemies = [];
+  
+  // Iterate over all active enemies
+  activeEnemies.forEach(enemy => {
+    // Calculate and apply damage (20x player's base damage)
+    enemy.currentHp -= (playerStats.damage * 20);
+    if (enemy.currentHp < 0) enemy.currentHp = 0;
+    
+    // Add the enemy to the remainingEnemies array if they survive
+    if (enemy.currentHp > 0) {
+      remainingEnemies.push(enemy);
+    }
+  });
 
-      targetEnemy.currentHp -= (playerStats.damage * 20);
-      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-      
-      const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-      if (remainingEnemies.length === 0) {
-        endBattle('win');
-        return;
-      }
-      activeEnemies = remainingEnemies;
-      if (selectedEnemyIndex >= activeEnemies.length) {
-        selectedEnemyIndex = 0;
-      }
-      drawBattleUI();
-      drawPlayerBattleStatus();
-    });
+  // Check if all enemies were defeated
+  if (remainingEnemies.length === 0) {
+    endBattle('win');
+    return;
+  }
+  
+  // Update the activeEnemies array with only the remaining enemies
+  activeEnemies = remainingEnemies;
+  
+  // Reset target selection if needed
+  if (selectedEnemyIndex >= activeEnemies.length) {
+    selectedEnemyIndex = 0;
+  }
+  
+  // Update the UI
+  drawBattleUI();
+  drawPlayerBattleStatus();
+});
+
 
     document.getElementById('enemy-display').addEventListener('click', (event) => {
       const button = event.target.closest('.enemy-target');
