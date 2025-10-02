@@ -128,6 +128,23 @@
       height: 100%;
       background-color: #00FF00;
     }
+    #stats {
+  position: relative; /* This is key for positioning the popup */
+}
+
+.stats-popup {
+  position: absolute;
+  bottom: 100%; /* Position above the parent element */
+  left: 0;
+  width: 200px;
+  background-color: #002591;
+  border: 2px solid black;
+  padding: 10px;
+  color: white;
+  text-align: left;
+  z-index: 1000; /* Ensure it's on top of other elements */
+}
+
     #player-battle-status .hp-text {
       position: absolute;
       top: 50%;
@@ -136,15 +153,30 @@
       font-size: 0.7em;
       text-shadow: 1px 1px 2px black;
     }
+    </style>
   </style>
 </head>
 <body>
   <canvas id="game" width="640" height="480" tabindex="0"></canvas>
 
   <div id="game-hud">
+    <!-- Replace this existing stats block with the new one -->
+    <!--
     <div class="hud-section" id="stats">
       <p>Stats</p>
     </div>
+    -->
+
+    <div class="hud-section" id="stats">
+      <p id="stats-button">Stats</p>
+      <div id="stats-popup" class="stats-popup" style="display: none;">
+        <h4>Player Stats</h4>
+        <p>Level: <span id="popup-level"></span></p>
+        <p>XP: <span id="popup-xp"></span></p>
+        <p>Damage: <span id="popup-damage"></span></p>
+      </div>
+    </div>
+    
     <div class="hud-section" id="player-status">
       <p>Player</p>
       <div id="hp-bar-container">
@@ -164,6 +196,8 @@
       <button id="attack-button">Attack</button>
     </div>
   </div>
+
+
   
   <script>
     const canvas = document.getElementById('game');
@@ -534,6 +568,23 @@
         drawBattleUI();
       }
     });
+
+    // Add this new listener below your existing ones
+document.getElementById('stats-button').addEventListener('click', () => {
+  const statsPopup = document.getElementById('stats-popup');
+  
+  if (statsPopup.style.display === 'none') {
+    // Show and update the popup
+    document.getElementById('popup-level').textContent = playerStats.level;
+    document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
+    document.getElementById('popup-damage').textContent = playerStats.damage;
+    statsPopup.style.display = 'block';
+  } else {
+    // Hide the popup
+    statsPopup.style.display = 'none';
+  }
+});
+
 
     updateHp(playerStats.currentHp);
 
