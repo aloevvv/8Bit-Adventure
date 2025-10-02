@@ -214,8 +214,8 @@
     let inBattle = false;
 
     const enemyTypes = {
-      Dummy: { name: "Dummy", maxHp: 3, damage: 1, xpReward: 0 },
-      Sniperbot: { name: "Sniper", maxHp: 5, damage: 1, xpReward: 5 }
+      Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 0 },
+      Sniperbot: { name: "Sniper", maxHp: 20, damage: 1, xpReward: 5 }
     };
     
     const levels = [
@@ -351,7 +351,7 @@ function drawPlayerBattleStatus() {
   playerBattleStatusDiv.innerHTML = ''; // Clear previous content
 
   const playerName = document.createElement('p');
-  playerName.textContent = `Name: 8-Bit`;
+  playerName.textContent = `8-Bit`;
   
   const hpContainer = document.createElement('div');
   hpContainer.className = 'hp-bar-container';
