@@ -158,7 +158,6 @@
     let tempText = "";
     let tempTextTimeout = null;
 
-    // Correctly defined global variables
     let playerStats = {
       level: 1,
       currentHp: 8,
@@ -175,27 +174,6 @@
       Sniperbot: { name: "Sniper", maxHp: 5, damage: 1, xpReward: 5 }
     };
     
-    function wrapText(context, text, x, y, maxWidth, lineHeight) {
-  let words = text.split(' ');
-  let line = '';
-
-  for(let n = 0; n < words.length; n++) {
-    let testLine = line + words[n] + ' ';
-    let metrics = context.measureText(testLine);
-    let testWidth = metrics.width;
-    if (testWidth > maxWidth && n > 0) {
-      context.fillText(line, x, y);
-      line = words[n] + ' ';
-      y += lineHeight;
-    } else {
-      line = testLine;
-    }
-  }
-  context.fillText(line, x, y);
-}
-
-    
-    // Correctly defined levels array with interactables
     const levels = [
       {
         bgSrc: "arcadebg.png",
@@ -375,17 +353,12 @@
     function initiateBattle() {
       inBattle = true;
       let encounter = [];
-      // Use a specific encounter for the arcade machine
-      // This correctly checks the interactables of the current level.
-const arcadeMachine = levels[currentLevelIndex].interactables.find(obj => obj.name === "arcade_machine");
-
+      const arcadeMachine = levels[currentLevelIndex].interactables.find(obj => obj.name === "arcade_machine");
       if (arcadeMachine && arcadeMachine.encounter) {
-                  encounter = arcadeMachine.encounter;
+          encounter = arcadeMachine.encounter;
       } else {
-                  // Fallback or handle standard battle zones
-        encounter = getRandomEncounter(currentLevelIndex + 1);
+          encounter = getRandomEncounter(currentLevelIndex + 1);
       }
-      
       activeEnemies = encounter.map(enemyData => {
         const baseStats = enemyTypes[enemyData.type];
         const scaledStats = scaleEnemyStats(baseStats);
@@ -423,7 +396,7 @@ const arcadeMachine = levels[currentLevelIndex].interactables.find(obj => obj.na
         if (!isPowered) {
           isPowered = true;
           showTemporaryText("You pressed something on the box. The lights flicker on.");
-          draw(); // Redraw the canvas to show the updated object color
+          draw();
         } else {
           showTemporaryText("The power is already on.");
         }
@@ -516,7 +489,7 @@ const arcadeMachine = levels[currentLevelIndex].interactables.find(obj => obj.na
         currentLevel.interactables.forEach(object => {
           ctx.fillStyle = object.name === "power_box" ? (isPowered ? "limegreen" : "red") : "blue";
           if (object.name === "arcade_machine" && isPowered) {
-            ctx.fillStyle = "yellow"; // Color change when powered
+            ctx.fillStyle = "yellow";
           }
           ctx.fillRect(object.x, object.y, object.width, object.height);
         });
@@ -537,19 +510,14 @@ const arcadeMachine = levels[currentLevelIndex].interactables.find(obj => obj.na
       ctx.fillStyle = "rgba(0,0,0,0.0)";
       ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
       
-      
-if (tempText) {
-          ctx.fillStyle = "white";
-          ctx.font = "12px 'Press Start 2P'";
-         // Set a smaller font size here
-  ctx.textAlign = "center";
-          const maxWidth = canvas.width - 40;
+      if (tempText) {
+        ctx.fillStyle = "white";
+        ctx.font = "12px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        const maxWidth = canvas.width - 40;
         const lineHeight = 15;
-         // Set maximum width of the text box
-  const lineHeight = 15; // Set the height of each line
-  const startY = canvas.height - 100;
-        
-  wrapText(ctx, tempText, canvas.width / 2, startY, maxWidth, lineHeight);
+        const startY = canvas.height - 100;
+        wrapText(ctx, tempText, canvas.width / 2, startY, maxWidth, lineHeight);
       }
     }
 
