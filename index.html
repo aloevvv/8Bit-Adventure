@@ -200,14 +200,10 @@
 
   
   <script>
+    // 1. Global Variable and Constant Declarations
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     
-    canvas.focus();
-    canvas.addEventListener('click', () => {
-      canvas.focus();
-    });
-
     let x = 150, y = 50;
     const speed = 10;
     const imageSize = 60;
@@ -240,7 +236,7 @@
     let inBattle = false;
 
     const enemyTypes = {
-      Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 0 },
+      Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 3 },
       Sniperbot: { name: "Sniper", maxHp: 20, damage: 1, xpReward: 5 }
     };
     
@@ -259,7 +255,7 @@
           { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 }
         ],
         battleZones: [
-          { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "Dummy" }] },
+          { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "Sniperbot" }] },
           { x: 400, y: 250, width: 70, height: 70, encounter: [{ type: "Sniperbot" }] }
         ],
         interactables: []
@@ -291,6 +287,8 @@
 
     let activeEnemies = [];
 
+
+    // 2. Helper Function Definitions
     function wrapText(context, text, x, y, maxWidth, lineHeight) {
       let words = text.split(' ');
       let line = '';
@@ -326,36 +324,23 @@
       hpBar.style.width = `${newWidth}%`;
       hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
     }
-    // Add this function near your other helper functions
-function updateStatsPopup() {
-    // Only update if the popup is visible
-    const statsPopup = document.getElementById('stats-popup');
-    if (statsPopup && statsPopup.style.display !== 'none') {
-        document.getElementById('popup-level').textContent = playerStats.level;
-        document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
-        document.getElementById('popup-damage').textContent = playerStats.damage;
-    }
-}
 
-    
     function levelUp() {
-    playerStats.level++;
-    playerStats.xp -= playerStats.xpToNextLevel;
-    playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
-    playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
-    playerStats.damage += Math.floor(1 + (playerStats.level / 3));
-    playerStats.currentHp = playerStats.maxHp;
-    updateHp(playerStats.currentHp);
-    updateStatsPopup(); // Call here to update all stats
-}
+      playerStats.level++;
+      playerStats.xp -= playerStats.xpToNextLevel;
+      playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
+      playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
+      playerStats.damage += Math.floor(1 + (playerStats.level / 3));
+      playerStats.currentHp = playerStats.maxHp;
+      updateHp(playerStats.currentHp);
+    }
 
     function gainXP(amount) {
-    playerStats.xp += amount;
-    if (playerStats.xp >= playerStats.xpToNextLevel) {
+      playerStats.xp += amount;
+      if (playerStats.xp >= playerStats.xpToNextLevel) {
         levelUp();
+      }
     }
-    updateStatsPopup(); // Call here to update the XP display
-}
 
     function removeZone(zone) {
       if (!zone) return;
@@ -446,57 +431,40 @@ function updateStatsPopup() {
       }
     }
 
-    document.getElementById('attack-button').addEventListener('click', () => {
-      if (!inBattle || !activeEnemies.length) return;
-      const targetEnemy = activeEnemies[selectedEnemyIndex];
-      if (!targetEnemy) return;
-      targetEnemy.currentHp -= playerStats.damage;
-      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-      activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-      if (activeEnemies.length === 0) {
-        endBattle('win');
-        return;
+    function updateStatsPopup() {
+      const statsPopup = document.getElementById('stats-popup');
+      if (statsPopup && statsPopup.style.display !== 'none') {
+          document.getElementById('popup-level').textContent = playerStats.level;
+          document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
+          document.getElementById('popup-damage').textContent = playerStats.damage;
       }
-      if (selectedEnemyIndex >= activeEnemies.length) {
-        selectedEnemyIndex = 0;
-      }
-      drawBattleUI();
-      drawPlayerBattleStatus();
-    });
-
-function endBattle(outcome) {
-    inBattle = false;
-    document.getElementById('battle-overlay').style.display = 'none';
-    
-    // Stop the timed enemy attacks
-    if (enemyAttackIntervalId) {
-        clearInterval(enemyAttackIntervalId);
-        enemyAttackIntervalId = null;
     }
 
-    if (outcome === 'win') {
-        // Fix the reduce function to handle potential missing xpReward
-        let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
+    // 3. Main Game Functions
+    function endBattle(outcome) {
+      inBattle = false;
+      document.getElementById('battle-overlay').style.display = 'none';
+      if (enemyAttackIntervalId) {
+          clearInterval(enemyAttackIntervalId);
+          enemyAttackIntervalId = null;
+      }
+      if (outcome === 'win') {
+        let totalXp = activeEnemies.reduce((sum, enemy) => sum + enemy.xpReward, 0);
         gainXP(totalXp);
-        
-        // Reset player HP to max
         playerStats.currentHp = playerStats.maxHp;
         updateHp(playerStats.currentHp);
-        
         if (defeatedZone) {
-            removeZone(defeatedZone);
+          removeZone(defeatedZone);
         }
-
-    } else if (outcome === 'lose') {
+      } else if (outcome === 'lose') {
         loadLevel(0, 150, 50);
+      }
+      activeEnemies = [];
+      defeatedZone = null;
+      draw();
+      document.getElementById('player-battle-status').innerHTML = '';
+      updateStatsPopup();
     }
-    
-    activeEnemies = [];
-    defeatedZone = null;
-    draw();
-    document.getElementById('player-battle-status').innerHTML = '';
-}
-
 
     function getRandomEncounter(levelDifficulty) {
       const possibleEnemies = Object.keys(enemyTypes);
@@ -581,30 +549,6 @@ function endBattle(outcome) {
       return false;
     }
 
-    document.getElementById('enemy-display').addEventListener('click', (event) => {
-      const button = event.target.closest('.enemy-target');
-      if (button) {
-        selectedEnemyIndex = parseInt(button.dataset.enemyIndex);
-        drawBattleUI();
-      }
-    });
-
-    // Add this new listener below your existing ones
-document.getElementById('stats-button').addEventListener('click', () => {
-    const statsPopup = document.getElementById('stats-popup');
-    
-    if (statsPopup.style.display === 'none') {
-        updateStatsPopup(); // Update before showing
-        statsPopup.style.display = 'block';
-    } else {
-        statsPopup.style.display = 'none';
-    }
-});
-
-
-
-    updateHp(playerStats.currentHp);
-
     function loadLevel(index, newX, newY) {
       currentLevelIndex = index;
       currentLevel = levels[currentLevelIndex];
@@ -673,6 +617,8 @@ document.getElementById('stats-button').addEventListener('click', () => {
       }
     }
 
+
+    // 4. Event Listeners
     canvas.addEventListener('keydown', function(e) {
       if (inBattle) return;
       if (!bgImg.complete || bgImg.naturalWidth === 0) return;
@@ -717,6 +663,28 @@ document.getElementById('stats-button').addEventListener('click', () => {
       }
       draw();
     });
-  </script>
+
+    document.getElementById('enemy-display').addEventListener('click', (event) => {
+      const button = event.target.closest('.enemy-target');
+      if (button) {
+        selectedEnemyIndex = parseInt(button.dataset.enemyIndex);
+        drawBattleUI();
+      }
+    });
+
+    document.getElementById('stats-button').addEventListener('click', () => {
+      const statsPopup = document.getElementById('stats-popup');
+      if (statsPopup.style.display === 'none') {
+          updateStatsPopup();
+          statsPopup.style.display = 'block';
+      } else {
+          statsPopup.style.display = 'none';
+      }
+    });
+    
+    // 5. Initial Setup Call
+    updateHp(playerStats.currentHp);
+    canvas.focus();
+</script>
 </body>
 </html>
