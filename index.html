@@ -328,13 +328,9 @@
     }
     // Add this function near your other helper functions
 function updateStatsPopup() {
-    // Only update if the popup is visible
-    const statsPopup = document.getElementById('stats-popup');
-    if (statsPopup && statsPopup.style.display !== 'none') {
-        document.getElementById('popup-level').textContent = playerStats.level;
-        document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
-        document.getElementById('popup-damage').textContent = playerStats.damage;
-    }
+    document.getElementById('popup-level').textContent = playerStats.level;
+    document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
+    document.getElementById('popup-damage').textContent = playerStats.damage;
 }
 
     
@@ -594,7 +590,7 @@ document.getElementById('stats-button').addEventListener('click', () => {
     const statsPopup = document.getElementById('stats-popup');
     
     if (statsPopup.style.display === 'none') {
-        updateStatsPopup(); // Update before showing
+        updateStatsPopup(); // Update stats before showing
         statsPopup.style.display = 'block';
     } else {
         statsPopup.style.display = 'none';
