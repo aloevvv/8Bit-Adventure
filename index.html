@@ -4,320 +4,6 @@
   <meta charset="UTF-8">
   <title>8Bit’s Adventure</title>
   <link rel="icon" type="image/png" href="favicon.png">
-   <!-- Google Font: Press Start 2P -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <style>
-    body {
-      background: #333;
-      color: white;
-      font-family: "Press Start 2P", sans-serif;
-      text-align: center;
-      margin: 0;
-    }
-    canvas {
-      background: #737373;
-      display: block;
-      margin: 2em auto;
-      border: 2px solid white;
-    }
-    
-    #game-hud {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background-color: #002591;
-      color: white;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 10px;
-      box-sizing: border-box;
-      border-top: 2px solid black;
-    }
-    .hud-section {
-      text-align: center;
-      padding: 0 1em;
-    }
-    #player-status {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    #hp-bar-container {
-      width: 150px;
-      height: 20px;
-      background-color: #555;
-      border: 1px solid white;
-      position: relative;
-    }
-    #hp-bar {
-      width: 100%;
-      height: 100%;
-      background-color: #00FF00;
-      transition: width 0.5s linear;
-    }
-    #hp-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 0.8em;
-      text-shadow: 1px 1px 2px black;
-    }
-  </style>
-</head>
-<body>
-  <canvas id="game" width="640" height="480" tabindex="0"></canvas>
-
-  <div id="game-hud">
-    <div class="hud-section" id="stats">
-      <p>Stats</p>
-    </div>
-    <div class="hud-section" id="player-status">
-      <p>Player</p>
-      <div id="hp-bar-container">
-        <div id="hp-bar"></div>
-        <div id="hp-text">8/8</div>
-      </div>
-    </div>
-    <div class="hud-section" id="inventory">
-      <p>Inventory</p>
-    </div>
-  </div>
-<!-- Update your battle UI overlay -->
-<div id="battle-overlay" style="display:none;">
-    <div id="enemy-display">
-        <!-- Enemy info will be dynamically generated here -->
-    </div>
-    <div id="battle-controls">
-        <button id="attack-button">Attack</button>
-        <!-- A button to select a target can be added later -->
-    </div>
-</div>
-
-
-  
-  <script>
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-    
-    canvas.focus();
-    canvas.addEventListener('click', () => {
-      canvas.focus();
-    });
-
-    let x = 150, y = 50;
-    const speed = 10;
-    const imageSize = 60;
-    const hitboxWidth = 30;
-    const hitboxHeight = 30;
-    const hitboxOffsetX = (imageSize - hitboxWidth) / 2;
-    const hitboxOffsetY = (imageSize - hitboxHeight) / 2;
-    const useImage = true;
-    const img = new Image();
-    img.src = '8bit.png';
-    const hpBar = document.getElementById('hp-bar');
-    const hpText = document.getElementById('hp-text');
-    let maxHealth = 8;
-    let currentHealth = 8;
-    let selectedEnemyIndex = 0; // The index of the currently targeted enemy
-    // New playerStats structure
-let playerStats = {
-    level: 1,
-    currentHp: 8,
-    maxHp: 8,
-    damage: 2,
-    xp: 0,
-    xpToNextLevel: 10
-};
-
-function levelUp() {
-    playerStats.level++;
-    playerStats.xp -= playerStats.xpToNextLevel;
-    playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
-
-    // Dynamic stat growth
-    // Example: HP increases by 2 + (level / 2), Damage by 1 + (level / 3)
-    playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
-    playerStats.damage += Math.floor(1 + (playerStats.level / 3));
-
-    playerStats.currentHp = playerStats.maxHp;
-    updateHp(playerStats.currentHp);
-
-    // Optional: add visual feedback on the canvas
-    // For example, display "LEVEL UP!" text for a few seconds
-}
-
-function drawBattleUI() {
-  const battleOverlay = document.getElementById('battle-overlay');
-  battleOverlay.style.display = 'flex';
-  const enemyDisplay = document.getElementById('enemy-display');
-  enemyDisplay.innerHTML = '';
-  
-  activeEnemies.forEach((enemy, index) => {
-    const enemyButton = document.createElement('button');
-    enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
-    enemyButton.className = 'enemy-target';
-    enemyButton.dataset.enemyIndex = index;
-    enemyDisplay.appendChild(enemyButton);
-  });
-}
-
-document.getElementById('enemy-display').addEventListener('click', (event) => {
-  const button = event.target.closest('.enemy-target');
-  if (button) {
-    selectedEnemyIndex = parseInt(button.dataset.enemyIndex);
-    // You'll need to add code here to visually highlight the selected enemy.
-  }
-});
-
-    
-    // Add this variable near your other top-level variables
-let inBattle = false;
-
-  const enemyTypes = {
-  Dummy: {
-    name: "Dummy",
-    maxHp: 3,
-    damage: 1,
-    xpReward: 0
-  },
-  Sniperbot: {
-    name: "Sniper",
-    maxHp: 5,
-    damage: 1,
-    xpReward: 5
-  }
-  // Add more enemy types here
-};
-
-   let activeEnemies = [];
-
-function initiateBattle() {
-    inBattle = true;
-    const encounter = getRandomEncounter(currentLevelIndex + 1); // Levels are 1-based
-    activeEnemies = encounter.map(enemyData => {
-        const baseStats = enemyTypes[enemyData.type];
-        const scaledStats = scaleEnemyStats(baseStats);
-        return {
-            ...enemyData,
-            ...scaledStats,
-            currentHp: scaledStats.maxHp
-        };
-    });
-    
-    drawBattleUI();
-}
-
-// The attack button now handles the whole turn sequence
-document.getElementById('attack-button').addEventListener('click', () => {
-  if (!inBattle || !activeEnemies.length) return;
-
-  // Use the selected target instead of a random one
-  const targetEnemy = activeEnemies[selectedEnemyIndex];
-  if (!targetEnemy) {
-    // If the selected target is no longer valid, pick a new one or do nothing
-    return;
-  }
-
-  targetEnemy.currentHp -= playerStats.damage;
-  if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-
-  activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-
-  // Re-select a valid target if the old one was defeated
-  if (!activeEnemies[selectedEnemyIndex] && activeEnemies.length > 0) {
-    selectedEnemyIndex = 0;
-  }
-  
-  drawBattleUI();
-
-  if (activeEnemies.length === 0) {
-    endBattle('win');
-    return;
-  }
-
-  // Enemy attacks remain the same
-  // ...
-});
-
-
-    // Enemies attack (after a short delay)
-    setTimeout(() => {
-        activeEnemies.forEach(enemy => {
-            playerStats.currentHp -= enemy.damage;
-        });
-        updateHp(playerStats.currentHp); // Update HUD HP
-        drawBattleUI();
-
-        // Check for lose condition
-        if (playerStats.currentHp <= 0) {
-            endBattle('lose');
-        }
-    }, 1000);
-});
-
-    function endBattle(outcome) {
-    inBattle = false;
-    document.getElementById('battle-overlay').style.display = 'none';
-
-    if (outcome === 'win') {
-        gainXP(enemy.xpReward);
-        // Reset enemy HP for next encounter
-        enemy.currentHp = enemy.maxHp;
-    } else if (outcome === 'lose') {
-        // Handle consequences of losing (e.g., reset player to start of level)
-        loadLevel(0, 150, 50);
-    }
-    draw(); // Return to exploration view
-}
-
-    
-    // Level data
-    const levels = [
-      {
-        bgSrc: "arcadebg.png",
-        walls: [
-          { x: 0, y: 0, width: 640, height: 20 },
-          { x: 0, y: 460, width: 640, height: 20 },
-          { x: 290, y: 150, width: 32, height: 200 },
-          { x: 290, y: 150, width: 220, height: 20 },
-          { x: 500, y: 150, width: 20, height: 200 },
-          { x: 0, y: 0, width: 20, height: 480 },
-        ],
-        doors: [
-          { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 }
-        ]
-      },
-      {
-        bgSrc: "arcadeinside.png",
-        walls: [
-          { x: 0, y: 0, width: 640, height: 32 },
-          { x: 0, y: 460, width: 640, height: 20 },
-          { x: 608, y: 0, width: 32, height: 480 },
-          { x: 0, y: 0, width: 50, height: 480 },
-        ],
-        doors: [
-          { x: 300, y: 450, width: 40, height: 60, destLevel: 0, destX: 400, destY: 400 }
-        ]
-      }
-    ];
-
-    let currentLevelIndex = 0;
-    let currentLevel = levels[currentLevelIndex];
-    const bgImg = new Image();
-    bgImg.src = currentLevel.bgSrc;
-    bgImg.onload = function() { draw(); };
-
-   <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>8Bit’s Adventure</title>
-  <link rel="icon" type="image/png" href="favicon.png">
   <!-- Google Font: Press Start 2P -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -336,7 +22,6 @@ document.getElementById('attack-button').addEventListener('click', () => {
       margin: 2em auto;
       border: 2px solid white;
     }
-    
     #game-hud {
       position: fixed;
       bottom: 0;
@@ -399,6 +84,20 @@ document.getElementById('attack-button').addEventListener('click', () => {
       padding: 20px;
       border: 2px solid white;
       margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    #enemy-display button {
+      background-color: #333;
+      color: white;
+      border: 1px solid white;
+      cursor: pointer;
+      padding: 10px;
+      font-family: "Press Start 2P", sans-serif;
+    }
+    #enemy-display button.selected {
+      border: 2px solid yellow;
+      background-color: #555;
     }
     #battle-controls button {
       font-family: "Press Start 2P", sans-serif;
@@ -454,6 +153,7 @@ document.getElementById('attack-button').addEventListener('click', () => {
     img.src = '8bit.png';
     const hpBar = document.getElementById('hp-bar');
     const hpText = document.getElementById('hp-text');
+    let selectedEnemyIndex = 0;
     
     let playerStats = {
       level: 1,
@@ -466,23 +166,11 @@ document.getElementById('attack-button').addEventListener('click', () => {
 
     let inBattle = false;
 
-    // Enemy types with base stats
     const enemyTypes = {
-      Dummy: {
-        name: "Dummy",
-        maxHp: 3,
-        damage: 1,
-        xpReward: 0
-      },
-      Sniperbot: {
-        name: "Sniper",
-        maxHp: 5,
-        damage: 1,
-        xpReward: 5
-      }
+      Dummy: { name: "Dummy", maxHp: 3, damage: 1, xpReward: 0 },
+      Sniperbot: { name: "Sniper", maxHp: 5, damage: 1, xpReward: 5 }
     };
     
-    // Level data
     const levels = [
       {
         bgSrc: "arcadebg.png",
@@ -524,13 +212,11 @@ document.getElementById('attack-button').addEventListener('click', () => {
     bgImg.onload = function() { draw(); };
 
     let activeEnemies = [];
-
-    // Functions
+    
     function updateHp(newHealth) {
       if (newHealth < 0) newHealth = 0;
       if (newHealth > playerStats.maxHp) newHealth = playerStats.maxHp;
       playerStats.currentHp = newHealth;
-
       const newWidth = (playerStats.currentHp / playerStats.maxHp) * 100;
       hpBar.style.width = `${newWidth}%`;
       hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
@@ -540,14 +226,10 @@ document.getElementById('attack-button').addEventListener('click', () => {
       playerStats.level++;
       playerStats.xp -= playerStats.xpToNextLevel;
       playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
-
       playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
       playerStats.damage += Math.floor(1 + (playerStats.level / 3));
-
       playerStats.currentHp = playerStats.maxHp;
       updateHp(playerStats.currentHp);
-
-      // TODO: Add visual feedback for level up
     }
 
     function gainXP(amount) {
@@ -558,7 +240,6 @@ document.getElementById('attack-button').addEventListener('click', () => {
     }
 
     function scaleEnemyStats(baseStats) {
-      // This is a placeholder. You'll want more complex scaling logic.
       return {
         ...baseStats,
         maxHp: baseStats.maxHp + Math.floor(currentLevelIndex / 2),
@@ -571,14 +252,16 @@ document.getElementById('attack-button').addEventListener('click', () => {
       battleOverlay.style.display = 'flex';
       const enemyDisplay = document.getElementById('enemy-display');
       enemyDisplay.innerHTML = '';
-    
-      activeEnemies.forEach((enemy) => {
-        const enemyDiv = document.createElement('div');
-        enemyDiv.innerHTML = `
-          <h3>${enemy.name}</h3>
-          <p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>
-        `;
-        enemyDisplay.appendChild(enemyDiv);
+      
+      activeEnemies.forEach((enemy, index) => {
+        const enemyButton = document.createElement('button');
+        enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
+        enemyButton.className = 'enemy-target';
+        enemyButton.dataset.enemyIndex = index;
+        enemyDisplay.appendChild(enemyButton);
+        if (index === selectedEnemyIndex) {
+          enemyButton.classList.add('selected');
+        }
       });
     }
 
@@ -590,7 +273,6 @@ document.getElementById('attack-button').addEventListener('click', () => {
         let totalXp = activeEnemies.reduce((sum, enemy) => sum + enemy.xpReward, 0);
         gainXP(totalXp);
       } else if (outcome === 'lose') {
-        // Reset player to start of level
         loadLevel(0, 150, 50);
       }
       activeEnemies = [];
@@ -598,7 +280,6 @@ document.getElementById('attack-button').addEventListener('click', () => {
     }
 
     function getRandomEncounter(levelDifficulty) {
-      // Logic for random encounters based on level
       const possibleEnemies = Object.keys(enemyTypes);
       const randomType = possibleEnemies[Math.floor(Math.random() * possibleEnemies.length)];
       return [{ type: randomType }];
@@ -616,13 +297,17 @@ document.getElementById('attack-button').addEventListener('click', () => {
           currentHp: scaledStats.maxHp
         };
       });
+      selectedEnemyIndex = 0; // Select first enemy by default
       drawBattleUI();
     }
 
-    // New function to check for battle zone collision
     function checkBattleZone(checkX, checkY) {
       const hitboxX = checkX + hitboxOffsetX;
       const hitboxY = checkY + hitboxOffsetY;
+
+      if (!currentLevel.battleZones) {
+        return false; // Safely exit if battleZones is undefined
+      }
 
       for (const zone of currentLevel.battleZones) {
         if (
@@ -640,32 +325,43 @@ document.getElementById('attack-button').addEventListener('click', () => {
     document.getElementById('attack-button').addEventListener('click', () => {
       if (!inBattle || !activeEnemies.length) return;
 
-      const targetIndex = Math.floor(Math.random() * activeEnemies.length);
-      const targetEnemy = activeEnemies[targetIndex];
-      
+      const targetEnemy = activeEnemies[selectedEnemyIndex];
+      if (!targetEnemy) {
+        return;
+      }
       targetEnemy.currentHp -= playerStats.damage;
       if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-
       activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-
-      drawBattleUI();
 
       if (activeEnemies.length === 0) {
         endBattle('win');
         return;
       }
 
+      // Re-select a valid target if the old one was defeated
+      if (selectedEnemyIndex >= activeEnemies.length) {
+        selectedEnemyIndex = 0;
+      }
+      drawBattleUI();
+
       setTimeout(() => {
         activeEnemies.forEach(enemy => {
           playerStats.currentHp -= enemy.damage;
         });
         updateHp(playerStats.currentHp);
-        drawBattleUI();
-
         if (playerStats.currentHp <= 0) {
           endBattle('lose');
         }
+        drawBattleUI();
       }, 1000);
+    });
+
+    document.getElementById('enemy-display').addEventListener('click', (event) => {
+      const button = event.target.closest('.enemy-target');
+      if (button) {
+        selectedEnemyIndex = parseInt(button.dataset.enemyIndex);
+        drawBattleUI(); // Redraw to apply 'selected' class
+      }
     });
 
     updateHp(playerStats.currentHp);
@@ -736,9 +432,8 @@ document.getElementById('attack-button').addEventListener('click', () => {
       ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
     }
 
-    // Event listeners
     canvas.addEventListener('keydown', function(e) {
-      if (inBattle) return; // Ignore movement keys during battle
+      if (inBattle) return;
 
       if (!bgImg.complete || bgImg.naturalWidth === 0) return;
       
@@ -769,7 +464,6 @@ document.getElementById('attack-button').addEventListener('click', () => {
           loadLevel(door.destLevel, door.destX, door.destY);
           return;
         }
-
         if (checkBattleZone(nextX, nextY)) {
           initiateBattle();
           return;
