@@ -129,26 +129,23 @@
       background-color: #00FF00;
     }
     #stats {
-  position: relative; /* This is key for positioning the popup */
-}
-
-.stats-popup {
-  position: absolute;
-  bottom: 100%; /* Position above the parent element */
-  left: 0;
-  width: 200px;
-  background-color: #002591;
-  border: 2px solid black;
-  padding: 10px;
-  color: white;
-  text-align: left;
-  z-index: 1000; /* Ensure it's on top of other elements */
-}
+      position: relative;
+    }
+    .stats-popup {
+      position: absolute;
+      bottom: 100%;
+      left: 0;
+      width: 200px;
+      background-color: #002591;
+      border: 2px solid black;
+      padding: 10px;
+      color: white;
+      text-align: left;
+      z-index: 1000;
+    }
     #player-battle-status .hp-bar-container:last-of-type .hp-bar {
-  background-color: #00FFFF; /* Or any color you prefer for stamina */
-}
-
-
+      background-color: #00FFFF;
+    }
     #player-battle-status .hp-text {
       position: absolute;
       top: 50%;
@@ -157,20 +154,12 @@
       font-size: 0.7em;
       text-shadow: 1px 1px 2px black;
     }
-    </style>
   </style>
 </head>
 <body>
   <canvas id="game" width="640" height="480" tabindex="0"></canvas>
 
   <div id="game-hud">
-    <!-- Replace this existing stats block with the new one -->
-    <!--
-    <div class="hud-section" id="stats">
-      <p>Stats</p>
-    </div>
-    -->
-
     <div class="hud-section" id="stats">
       <p id="stats-button">Stats</p>
       <div id="stats-popup" class="stats-popup" style="display: none;">
@@ -180,7 +169,6 @@
         <p>Damage: <span id="popup-damage"></span></p>
       </div>
     </div>
-    
     <div class="hud-section" id="player-status">
       <p>Player</p>
       <div id="hp-bar-container">
@@ -198,12 +186,10 @@
     <div id="player-battle-status"></div>
     <div id="battle-controls">
       <button id="attack-button">Attack</button>
-  <button id="special-attack-button-1">Extra Credits(100 STM)</button>
-  <button id="special-attack-button-2">Plasma Blast(200 STM)</button>
+      <button id="special-attack-button-1">Extra Credits (100 STM)</button>
+      <button id="special-attack-button-2">Plasma Blast (200 STM)</button>
     </div>
   </div>
-
-
   
   <script>
     const canvas = document.getElementById('game');
@@ -234,7 +220,6 @@
     let enemyAttackIntervalId = null;
     const ENEMY_ATTACK_DELAY = 2000;
     let staminaRegenIntervalId = null;
-
 
     let playerStats = {
       level: 1,
@@ -270,7 +255,7 @@
         ],
         battleZones: [
           { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "Sniperbot" }] },
-          { x: 400, y: 250, width: 70, height: 70, encounter: [{ type: "Sniperbot" }] }
+          { x: 400, y: 250, width: 70, height: 70, encounter: [{ type: "Sniperbot" }, { type: "Sniperbot" }] }
         ],
         interactables: []
       },
@@ -329,11 +314,10 @@
     }
 
     function updateStamina(newStamina) {
-  if (newStamina < 0) newStamina = 0;
-  if (newStamina > playerStats.maxStamina) newStamina = playerStats.maxStamina;
-  playerStats.currentStamina = newStamina;
-  // This will be called by drawPlayerBattleStatus() to update the UI
-}
+      if (newStamina < 0) newStamina = 0;
+      if (newStamina > playerStats.maxStamina) newStamina = playerStats.maxStamina;
+      playerStats.currentStamina = newStamina;
+    }
 
     function updateHp(newHealth) {
       if (newHealth < 0) newHealth = 0;
@@ -343,32 +327,31 @@
       hpBar.style.width = `${newWidth}%`;
       hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
     }
-    // Add this function near your other helper functions
-function updateStatsPopup() {
-    document.getElementById('popup-level').textContent = playerStats.level;
-    document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
-    document.getElementById('popup-damage').textContent = playerStats.damage;
-}
 
+    function updateStatsPopup() {
+      document.getElementById('popup-level').textContent = playerStats.level;
+      document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
+      document.getElementById('popup-damage').textContent = playerStats.damage;
+    }
     
     function levelUp() {
-    playerStats.level++;
-    playerStats.xp -= playerStats.xpToNextLevel;
-    playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
-    playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
-    playerStats.damage += Math.floor(1 + (playerStats.level / 3));
-    playerStats.currentHp = playerStats.maxHp;
-    updateHp(playerStats.currentHp);
-    updateStatsPopup(); // Call here to update all stats
-}
+      playerStats.level++;
+      playerStats.xp -= playerStats.xpToNextLevel;
+      playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
+      playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
+      playerStats.damage += Math.floor(1 + (playerStats.level / 3));
+      playerStats.currentHp = playerStats.maxHp;
+      updateHp(playerStats.currentHp);
+      updateStatsPopup();
+    }
 
     function gainXP(amount) {
-    playerStats.xp += amount;
-    if (playerStats.xp >= playerStats.xpToNextLevel) {
+      playerStats.xp += amount;
+      if (playerStats.xp >= playerStats.xpToNextLevel) {
         levelUp();
+      }
+      updateStatsPopup();
     }
-    updateStatsPopup(); // Call here to update the XP display
-}
 
     function removeZone(zone) {
       if (!zone) return;
@@ -432,6 +415,7 @@ function updateStatsPopup() {
       playerBattleStatusDiv.innerHTML = '';
       const playerName = document.createElement('p');
       playerName.textContent = `8-Bit`;
+      
       const hpContainer = document.createElement('div');
       hpContainer.className = 'hp-bar-container';
       const hpBar = document.createElement('div');
@@ -444,19 +428,20 @@ function updateStatsPopup() {
       hpContainer.appendChild(hpText);
       playerBattleStatusDiv.appendChild(playerName);
       playerBattleStatusDiv.appendChild(hpContainer);
+      
       const staminaContainer = document.createElement('div');
-  staminaContainer.className = 'hp-bar-container'; // Reuse the class for styling
-  const staminaBar = document.createElement('div');
-  staminaBar.className = 'hp-bar'; // Reuse the class for styling
-  staminaBar.style.width = `${(playerStats.currentStamina / playerStats.maxStamina) * 100}%`;
-  staminaBar.style.backgroundColor = '#00FFFF'; // Change color for stamina
-  const staminaText = document.createElement('div');
-  staminaText.className = 'hp-text';
-  staminaText.textContent = `${playerStats.currentStamina}/${playerStats.maxStamina}`;
-  staminaContainer.appendChild(staminaBar);
-  staminaContainer.appendChild(staminaText);
-  playerBattleStatusDiv.appendChild(staminaContainer);
-}
+      staminaContainer.className = 'hp-bar-container';
+      const staminaBar = document.createElement('div');
+      staminaBar.className = 'hp-bar';
+      staminaBar.style.width = `${(playerStats.currentStamina / playerStats.maxStamina) * 100}%`;
+      staminaBar.style.backgroundColor = '#00FFFF';
+      const staminaText = document.createElement('div');
+      staminaText.className = 'hp-text';
+      staminaText.textContent = `${playerStats.currentStamina}/${playerStats.maxStamina}`;
+      staminaContainer.appendChild(staminaBar);
+      staminaContainer.appendChild(staminaText);
+      playerBattleStatusDiv.appendChild(staminaContainer);
+    }
 
     function takeTurn() {
       if (!inBattle) return;
@@ -471,148 +456,65 @@ function updateStatsPopup() {
       }
     }
 
-    document.getElementById('attack-button').addEventListener('click', () => {
-    if (!inBattle || !activeEnemies.length) return;
-    const targetEnemy = activeEnemies[selectedEnemyIndex];
-    if (!targetEnemy) return;
-    targetEnemy.currentHp -= playerStats.damage;
-    if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-
-      document.getElementById('special-attack-button-1').addEventListener('click', () => {
-  const staminaCost = 100;
-  if (!inBattle || !activeEnemies.length || playerStats.currentStamina < staminaCost) {
-    return;
-  }
-
-  // Deduct stamina
-  updateStamina(playerStats.currentStamina - staminaCost);
-
-  const targetEnemy = activeEnemies[selectedEnemyIndex];
-  if (!targetEnemy) return;
-
-  // Calculate damage (10x player's base damage)
-  targetEnemy.currentHp -= (playerStats.damage * 10);
-  if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-
-  // Logic to handle enemy death and end battle
-  if (targetEnemy.currentHp <= 0) {
-      const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-      if (remainingEnemies.length === 0) {
-          endBattle('win');
-          return;
+    function endBattle(outcome) {
+      inBattle = false;
+      document.getElementById('battle-overlay').style.display = 'none';
+      
+      if (staminaRegenIntervalId) {
+        clearInterval(staminaRegenIntervalId);
+        staminaRegenIntervalId = null;
       }
-      activeEnemies = remainingEnemies;
-      if (selectedEnemyIndex >= activeEnemies.length) {
-          selectedEnemyIndex = 0;
-      }
-  }
-
-  // Update UI
-  drawBattleUI();
-  drawPlayerBattleStatus();
-});
-
-document.getElementById('special-attack-button-2').addEventListener('click', () => {
-    // Add logic for the second special attack here
-    // e.g., if (playerStats.currentStamina >= COST) { ... }
-});
-
-
-    // Filter out defeated enemies to update the UI immediately
-    const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-    
-    if (remainingEnemies.length === 0) {
-        // All enemies defeated, end the battle.
-        // The activeEnemies array at this point still has all enemies (including the defeated one)
-        // so the endBattle() function can calculate the XP correctly.
-        endBattle('win');
-        return;
-    }
-
-    // Update the activeEnemies array with only the remaining enemies for targeting purposes
-    activeEnemies = remainingEnemies;
-    
-    // Re-select a valid target if the current one was defeated
-    if (selectedEnemyIndex >= activeEnemies.length) {
-        selectedEnemyIndex = 0;
-    }
-
-    drawBattleUI();
-    drawPlayerBattleStatus();
-});
-
-
-function endBattle(outcome) {
-    inBattle = false;
-    document.getElementById('battle-overlay').style.display = 'none';
-  if (staminaRegenIntervalId) {
-    clearInterval(staminaRegenIntervalId);
-    staminaRegenIntervalId = null;
-  }
-    
-    // Stop the timed enemy attacks
-    if (enemyAttackIntervalId) {
+      
+      if (enemyAttackIntervalId) {
         clearInterval(enemyAttackIntervalId);
         enemyAttackIntervalId = null;
-    }
+      }
 
-    if (outcome === 'win') {
-        // Step 1: Calculate XP rewards from all enemies that were in the battle.
-        // This must happen BEFORE the activeEnemies array is cleared.
+      if (outcome === 'win') {
         let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
         gainXP(totalXp);
         
-        // Step 2: Reset player HP to max.
         playerStats.currentHp = playerStats.maxHp;
         updateHp(playerStats.currentHp);
         
-        // Step 3: Remove the battle zone if applicable.
         if (defeatedZone) {
-            removeZone(defeatedZone);
+          removeZone(defeatedZone);
         }
-
-    } else if (outcome === 'lose') {
-        loadLevel(0, 150, 50); // Or whatever your lose condition is
+      } else if (outcome === 'lose') {
+        loadLevel(0, 150, 50);
+      }
+      
+      activeEnemies = [];
+      defeatedZone = null;
+      draw();
+      document.getElementById('player-battle-status').innerHTML = '';
     }
-    
-    // Step 4: Reset the battle state.
-    // The activeEnemies array is cleared here, AFTER the XP has been gathered.
-    activeEnemies = [];
-    defeatedZone = null;
-    draw();
-    document.getElementById('player-battle-status').innerHTML = '';
-}
 
+    function initiateBattle(zoneType, zoneObject) {
+      inBattle = true;
+      defeatedZone = { type: zoneType, object: zoneObject };
+      
+      staminaRegenIntervalId = setInterval(() => {
+        updateStamina(playerStats.currentStamina + 1);
+        drawPlayerBattleStatus();
+      }, 100);
+      
+      let encounter = zoneObject.encounter;
 
-
-  //Get the encounter directly from the zoneObject, which now must have an encounter property
- function initiateBattle(zoneType, zoneObject) {
-  inBattle = true;
-  defeatedZone = { type: zoneType, object: zoneObject };
-   staminaRegenIntervalId = setInterval(() => {
-    updateStamina(playerStats.currentStamina + 1); // Increase stamina by 1
-    drawPlayerBattleStatus(); // Redraw battle status to show change
-  }, 100); // 100ms interval for regeneration
-}
-  
-  // Get the encounter directly from the zoneObject, which now must have an encounter property
-  let encounter = zoneObject.encounter;
-
-  activeEnemies = encounter.map(enemyData => {
-    const baseStats = enemyTypes[enemyData.type];
-    const scaledStats = scaleEnemyStats(baseStats);
-    return {
-      ...enemyData,
-      ...scaledStats,
-      currentHp: scaledStats.maxHp
-    };
-  });
-  selectedEnemyIndex = 0;
-  drawBattleUI();
-  drawPlayerBattleStatus();
-  enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
-}
-
+      activeEnemies = encounter.map(enemyData => {
+        const baseStats = enemyTypes[enemyData.type];
+        const scaledStats = scaleEnemyStats(baseStats);
+        return {
+          ...enemyData,
+          ...scaledStats,
+          currentHp: scaledStats.maxHp
+        };
+      });
+      selectedEnemyIndex = 0;
+      drawBattleUI();
+      drawPlayerBattleStatus();
+      enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+    }
 
     function checkInteraction(checkX, checkY) {
       if (currentLevel.interactables) {
@@ -650,22 +552,79 @@ function endBattle(outcome) {
       }
     }
 
-    function checkBattleZone(checkX, checkY) {
-      const hitboxX = checkX + hitboxOffsetX;
-      const hitboxY = checkY + hitboxOffsetY;
-      if (!currentLevel.battleZones) return false;
-      for (const zone of currentLevel.battleZones) {
-        if (
-          hitboxX < zone.x + zone.width &&
-          hitboxX + hitboxWidth > zone.x &&
-          hitboxY < zone.y + zone.height &&
-          hitboxY + hitboxHeight > zone.y
-        ) {
-          return true;
-        }
+    document.getElementById('attack-button').addEventListener('click', () => {
+      if (!inBattle || !activeEnemies.length) return;
+      const targetEnemy = activeEnemies[selectedEnemyIndex];
+      if (!targetEnemy) return;
+      targetEnemy.currentHp -= playerStats.damage;
+      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+
+      const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+      
+      if (remainingEnemies.length === 0) {
+        endBattle('win');
+        return;
       }
-      return false;
-    }
+      activeEnemies = remainingEnemies;
+      if (selectedEnemyIndex >= activeEnemies.length) {
+        selectedEnemyIndex = 0;
+      }
+      drawBattleUI();
+      drawPlayerBattleStatus();
+    });
+
+    document.getElementById('special-attack-button-1').addEventListener('click', () => {
+      const staminaCost = 100;
+      if (!inBattle || !activeEnemies.length || playerStats.currentStamina < staminaCost) {
+        showTemporaryText("Not enough stamina!");
+        return;
+      }
+
+      updateStamina(playerStats.currentStamina - staminaCost);
+      const targetEnemy = activeEnemies[selectedEnemyIndex];
+      if (!targetEnemy) return;
+
+      targetEnemy.currentHp -= (playerStats.damage * 10);
+      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+
+      const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+      if (remainingEnemies.length === 0) {
+        endBattle('win');
+        return;
+      }
+      activeEnemies = remainingEnemies;
+      if (selectedEnemyIndex >= activeEnemies.length) {
+        selectedEnemyIndex = 0;
+      }
+      drawBattleUI();
+      drawPlayerBattleStatus();
+    });
+
+    document.getElementById('special-attack-button-2').addEventListener('click', () => {
+      const staminaCost = 200;
+      if (!inBattle || !activeEnemies.length || playerStats.currentStamina < staminaCost) {
+        showTemporaryText("Not enough stamina!");
+        return;
+      }
+      updateStamina(playerStats.currentStamina - staminaCost);
+      const targetEnemy = activeEnemies[selectedEnemyIndex];
+      if (!targetEnemy) return;
+
+      targetEnemy.currentHp -= (playerStats.damage * 20);
+      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+      
+      const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+      if (remainingEnemies.length === 0) {
+        endBattle('win');
+        return;
+      }
+      activeEnemies = remainingEnemies;
+      if (selectedEnemyIndex >= activeEnemies.length) {
+        selectedEnemyIndex = 0;
+      }
+      drawBattleUI();
+      drawPlayerBattleStatus();
+    });
 
     document.getElementById('enemy-display').addEventListener('click', (event) => {
       const button = event.target.closest('.enemy-target');
@@ -675,19 +634,15 @@ function endBattle(outcome) {
       }
     });
 
-    // Add this new listener below your existing ones
-document.getElementById('stats-button').addEventListener('click', () => {
-    const statsPopup = document.getElementById('stats-popup');
-    
-    if (statsPopup.style.display === 'none') {
-        updateStatsPopup(); // Update stats before showing
+    document.getElementById('stats-button').addEventListener('click', () => {
+      const statsPopup = document.getElementById('stats-popup');
+      if (statsPopup.style.display === 'none') {
+        updateStatsPopup();
         statsPopup.style.display = 'block';
-    } else {
+      } else {
         statsPopup.style.display = 'none';
-    }
-});
-
-
+      }
+    });
 
     updateHp(playerStats.currentHp);
 
@@ -806,3 +761,4 @@ document.getElementById('stats-button').addEventListener('click', () => {
   </script>
 </body>
 </html>
+
