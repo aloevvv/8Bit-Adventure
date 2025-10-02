@@ -494,35 +494,28 @@ function endBattle(outcome) {
 }
 
 
-    function getRandomEncounter(levelDifficulty) {
-      const possibleEnemies = Object.keys(enemyTypes);
-      const randomType = possibleEnemies[Math.floor(Math.random() * possibleEnemies.length)];
-      return [{ type: randomType }];
-    }
-
     function initiateBattle(zoneType, zoneObject) {
-      inBattle = true;
-      defeatedZone = { type: zoneType, object: zoneObject };
-      let encounter = [];
-      if (zoneType === 'interactable' && zoneObject.encounter) {
-        encounter = zoneObject.encounter;
-      } else {
-        encounter = getRandomEncounter(currentLevelIndex + 1);
-      }
-      activeEnemies = encounter.map(enemyData => {
-        const baseStats = enemyTypes[enemyData.type];
-        const scaledStats = scaleEnemyStats(baseStats);
-        return {
-          ...enemyData,
-          ...scaledStats,
-          currentHp: scaledStats.maxHp
-        };
-      });
-      selectedEnemyIndex = 0;
-      drawBattleUI();
-      drawPlayerBattleStatus();
-      enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
-    }
+  inBattle = true;
+  defeatedZone = { type: zoneType, object: zoneObject };
+  
+  // Get the encounter directly from the zoneObject, which now must have an encounter property
+  let encounter = zoneObject.encounter;
+
+  activeEnemies = encounter.map(enemyData => {
+    const baseStats = enemyTypes[enemyData.type];
+    const scaledStats = scaleEnemyStats(baseStats);
+    return {
+      ...enemyData,
+      ...scaledStats,
+      currentHp: scaledStats.maxHp
+    };
+  });
+  selectedEnemyIndex = 0;
+  drawBattleUI();
+  drawPlayerBattleStatus();
+  enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+}
+
 
     function checkInteraction(checkX, checkY) {
       if (currentLevel.interactables) {
