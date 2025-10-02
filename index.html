@@ -326,23 +326,36 @@
       hpBar.style.width = `${newWidth}%`;
       hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
     }
-
-    function levelUp() {
-      playerStats.level++;
-      playerStats.xp -= playerStats.xpToNextLevel;
-      playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
-      playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
-      playerStats.damage += Math.floor(1 + (playerStats.level / 3));
-      playerStats.currentHp = playerStats.maxHp;
-      updateHp(playerStats.currentHp);
+    // Add this function near your other helper functions
+function updateStatsPopup() {
+    // Only update if the popup is visible
+    const statsPopup = document.getElementById('stats-popup');
+    if (statsPopup && statsPopup.style.display !== 'none') {
+        document.getElementById('popup-level').textContent = playerStats.level;
+        document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
+        document.getElementById('popup-damage').textContent = playerStats.damage;
     }
+}
+
+    
+    function levelUp() {
+    playerStats.level++;
+    playerStats.xp -= playerStats.xpToNextLevel;
+    playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
+    playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
+    playerStats.damage += Math.floor(1 + (playerStats.level / 3));
+    playerStats.currentHp = playerStats.maxHp;
+    updateHp(playerStats.currentHp);
+    updateStatsPopup(); // Call here to update all stats
+}
 
     function gainXP(amount) {
-      playerStats.xp += amount;
-      if (playerStats.xp >= playerStats.xpToNextLevel) {
+    playerStats.xp += amount;
+    if (playerStats.xp >= playerStats.xpToNextLevel) {
         levelUp();
-      }
     }
+    updateStatsPopup(); // Call here to update the XP display
+}
 
     function removeZone(zone) {
       if (!zone) return;
@@ -451,32 +464,39 @@
       drawPlayerBattleStatus();
     });
 
-    function endBattle(outcome) {
-      inBattle = false;
-      document.getElementById('battle-overlay').style.display = 'none';
-      if (enemyAttackIntervalId) {
-          clearInterval(enemyAttackIntervalId);
-          enemyAttackIntervalId = null;
-      }
-     if (outcome === 'win') {
-        let totalXp = activeEnemies.reduce((sum, enemy) => sum + enemy.xpReward, 0);
+function endBattle(outcome) {
+    inBattle = false;
+    document.getElementById('battle-overlay').style.display = 'none';
+    
+    // Stop the timed enemy attacks
+    if (enemyAttackIntervalId) {
+        clearInterval(enemyAttackIntervalId);
+        enemyAttackIntervalId = null;
+    }
+
+    if (outcome === 'win') {
+        // Fix the reduce function to handle potential missing xpReward
+        let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
         gainXP(totalXp);
         
-        // **NEW LINE:** Reset player HP to max
+        // Reset player HP to max
         playerStats.currentHp = playerStats.maxHp;
-        updateHp(playerStats.currentHp); // Update the HUD display
+        updateHp(playerStats.currentHp);
         
         if (defeatedZone) {
             removeZone(defeatedZone);
         }
-      } else if (outcome === 'lose') {
+
+    } else if (outcome === 'lose') {
         loadLevel(0, 150, 50);
-      }
-      activeEnemies = [];
-      defeatedZone = null;
-      draw();
-      document.getElementById('player-battle-status').innerHTML = '';
     }
+    
+    activeEnemies = [];
+    defeatedZone = null;
+    draw();
+    document.getElementById('player-battle-status').innerHTML = '';
+}
+
 
     function getRandomEncounter(levelDifficulty) {
       const possibleEnemies = Object.keys(enemyTypes);
@@ -571,19 +591,16 @@
 
     // Add this new listener below your existing ones
 document.getElementById('stats-button').addEventListener('click', () => {
-  const statsPopup = document.getElementById('stats-popup');
-  
-  if (statsPopup.style.display === 'none') {
-    // Show and update the popup
-    document.getElementById('popup-level').textContent = playerStats.level;
-    document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
-    document.getElementById('popup-damage').textContent = playerStats.damage;
-    statsPopup.style.display = 'block';
-  } else {
-    // Hide the popup
-    statsPopup.style.display = 'none';
-  }
+    const statsPopup = document.getElementById('stats-popup');
+    
+    if (statsPopup.style.display === 'none') {
+        updateStatsPopup(); // Update before showing
+        statsPopup.style.display = 'block';
+    } else {
+        statsPopup.style.display = 'none';
+    }
 });
+
 
 
     updateHp(playerStats.currentHp);
