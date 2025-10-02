@@ -240,7 +240,7 @@
     let inBattle = false;
 
     const enemyTypes = {
-      Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 0 },
+      Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 3 },
       Sniperbot: { name: "Sniper", maxHp: 20, damage: 1, xpReward: 5 }
     };
     
@@ -259,7 +259,7 @@
           { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 }
         ],
         battleZones: [
-          { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "Dummy" }] },
+          { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "Sniperbot" }] },
           { x: 400, y: 250, width: 70, height: 70, encounter: [{ type: "Sniperbot" }] }
         ],
         interactables: []
