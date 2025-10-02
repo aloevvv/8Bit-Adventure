@@ -174,7 +174,7 @@
       Dummy: { name: "Dummy", maxHp: 3, damage: 1, xpReward: 0 },
       Sniperbot: { name: "Sniper", maxHp: 5, damage: 1, xpReward: 5 }
     };
-
+    
     function wrapText(context, text, x, y, maxWidth, lineHeight) {
   let words = text.split(' ');
   let line = '';
@@ -243,6 +243,25 @@
 
     let activeEnemies = [];
 
+    function wrapText(context, text, x, y, maxWidth, lineHeight) {
+      let words = text.split(' ');
+      let line = '';
+
+      for(let n = 0; n < words.length; n++) {
+        let testLine = line + words[n] + ' ';
+        let metrics = context.measureText(testLine);
+        let testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+          context.fillText(line, x, y);
+          line = words[n] + ' ';
+          y += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      context.fillText(line, x, y);
+    }
+    
     function showTemporaryText(message) {
       tempText = message;
       if (tempTextTimeout) clearTimeout(tempTextTimeout);
@@ -357,14 +376,15 @@
       inBattle = true;
       let encounter = [];
       // Use a specific encounter for the arcade machine
-      const arcadeMachine = levels[1].interactables.find(obj => obj.name === "arcade_machine");
-      if (arcadeMachine) {
-        encounter = arcadeMachine.encounter;
+      const arcadeMachine = levels[currentLevelIndex1].interactables.find(obj => obj.name === "arcade_machine");
+
+      if (arcadeMachine && arcadeMachine.encounter) {
+                  encounter = arcadeMachine.encounter;
       } else {
-        // Fallback or handle standard battle zones
+                  // Fallback or handle standard battle zones
         encounter = getRandomEncounter(currentLevelIndex + 1);
       }
-
+      
       activeEnemies = encounter.map(enemyData => {
         const baseStats = enemyTypes[enemyData.type];
         const scaledStats = scaleEnemyStats(baseStats);
@@ -494,6 +514,9 @@
       if (currentLevel.interactables) {
         currentLevel.interactables.forEach(object => {
           ctx.fillStyle = object.name === "power_box" ? (isPowered ? "limegreen" : "red") : "blue";
+          if (object.name === "arcade_machine" && isPowered) {
+            ctx.fillStyle = "yellow"; // Color change when powered
+          }
           ctx.fillRect(object.x, object.y, object.width, object.height);
         });
       }
@@ -513,18 +536,21 @@
       ctx.fillStyle = "rgba(0,0,0,0.0)";
       ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
       
-
+      
 if (tempText) {
-  ctx.fillStyle = "white";
-  ctx.font = "12px 'Press Start 2P'"; // Set a smaller font size here
+          ctx.fillStyle = "white";
+          ctx.font = "12px 'Press Start 2P'";
+         // Set a smaller font size here
   ctx.textAlign = "center";
-  const maxWidth = canvas.width - 40; // Set maximum width of the text box
+          const maxWidth = canvas.width - 40;
+        const lineHeight = 15;
+         // Set maximum width of the text box
   const lineHeight = 15; // Set the height of each line
   const startY = canvas.height - 100;
-
+        
   wrapText(ctx, tempText, canvas.width / 2, startY, maxWidth, lineHeight);
-}
-
+      }
+    }
 
     canvas.addEventListener('keydown', function(e) {
       if (inBattle) return;
