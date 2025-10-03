@@ -433,9 +433,9 @@ const levels = [
 
 let currentLevelIndex = 0;
 let currentLevel = levels[currentLevelIndex];
-const bgImg = new Image();
-bgImg.src = currentLevel.bgSrc;
-bgImg.onload = function() { draw(); };
+let bgImg = new Image();
+bgImg.onload = () => draw();
+
 
 const stoneImg = new Image();
 stoneImg.src = "stone.png"; // 64x64 graphic of a rock
@@ -1061,12 +1061,23 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// Load level and update background
 function loadLevel(index, newX = x, newY = y) {
   currentLevelIndex = index;
   currentLevel = levels[currentLevelIndex];
+
+  // create a fresh Image so onload fires for the new source
+  bgImg = new Image();
+  bgImg.onload = () => draw();
+  bgImg.src = currentLevel.bgSrc;
+
+  x = newX;
+  y = newY;
+  // draw will be called by bgImg.onload when the image is ready
+  // call draw once now to update non-background visuals (player/hud)
   draw();
 }
+
+
 
 // Wall collision detection
 function isCollidingWithWall(newX, newY) {
