@@ -266,6 +266,14 @@
   </style>
 </head>
 <body>
+  <!-- Title screen overlay -->
+<div id="title-screen" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#001a33;z-index:3000;">
+  <div style="text-align:center;color:white;">
+    <h1 style="font-family:'Press Start 2P',sans-serif;margin-bottom:20px;">8-Bit's Adventure</h1>
+    <button id="play-button" style="font-family:'Press Start 2P',sans-serif;padding:12px 20px;font-size:14px;cursor:pointer;">Play</button>
+  </div>
+</div>
+
   <canvas id="game" width="640" height="480" tabindex="0"></canvas>
 
   <div id="game-hud">
@@ -433,55 +441,53 @@ const levels = [
 
 let currentLevelIndex = 0;
 let currentLevel = levels[currentLevelIndex];
+
+  const titleScreen = document.getElementById('title-screen');
+const playBtn = document.getElementById('play-button');
+  
 // Preload and spawn background + player at game start
 let bgImg = new Image();
 bgImg.src = 'arcade.png';
 const playerImg = new Image();
 playerImg.src = '8bit.png'; // keep your existing player path
 
-// helper to track readiness
-let _bgReady = false;
-let _playerReady = false;
 
-bgImg.onload = () => { _bgReady = true; startDrawIfReady(); };
-playerImg.onload = () => { _playerReady = true; startDrawIfReady(); };
-
-// start loading the current level background
-function preloadLevelBackground() {
+function preloadImagesForLevel(levelIndex, onComplete) {
+  const level = levels[levelIndex];
+  // preload bg
   bgImg = new Image();
-  _bgReady = false;
-  bgImg.onload = () => { _bgReady = true; startDrawIfReady(); };
-  bgImg.src = currentLevel.bgSrc;
+  bgImg.onload = () => {
+    // preload player sprite after bg (optional parallel)
+    if (img && img.complete) return onComplete();
+    img = img || new Image();
+    img.onload = () => onComplete();
+    img.src = img.src || '8bit.png';
+  };
+  bgImg.src = level.bgSrc;
 }
 
-// draw only when at least player is ready; background drawn if ready
-function startDrawIfReady() {
-  // ensure x,y are set to spawn if not already
-  if (typeof x !== 'number') x = 150;
-  if (typeof y !== 'number') y = 50;
+// Play button handler
+playBtn.addEventListener('click', () => {
+  // Hide title screen
+  titleScreen.style.display = 'none';
 
-  // immediate draw that always paints player and a fallback background
-  draw();
-}
-
-// call this once after levels are defined to start the game
-function startGame() {
-  // ensure player image variable matches code that draws the sprite
-  // if your code expects `img` as the player image, alias it
-  window.img = playerImg;
-
-  // set initial level and preload its background
+  // Set starting level and spawn coordinates (adjust if different)
   currentLevelIndex = 0;
   currentLevel = levels[currentLevelIndex];
-  preloadLevelBackground();
+  x = typeof x === 'number' ? x : 150;
+  y = typeof y === 'number' ? y : 50;
 
-  // make sure player spawn coords exist
-  x = x || 150;
-  y = y || 50;
+  // Preload necessary images then draw/start
+  preloadImagesForLevel(currentLevelIndex, () => {
+    // show background and player immediately after preload
+    draw();
+    // If your game uses loadLevel to handle more than just draw, call it:
+    // loadLevel(currentLevelIndex, x, y);
+  });
 
-  // perform an initial draw immediately (player will appear even if bg is still loading)
+  // If you want an immediate blank/fallback draw while loading, call draw() here too
   draw();
-}
+});
 
 
 
