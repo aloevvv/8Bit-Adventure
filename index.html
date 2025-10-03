@@ -528,6 +528,12 @@ function useItem(itemName) {
 
     // Decrement the item count
     inventory.set(itemName, inventory.get(itemName) - 1);
+
+    drawInventoryBattlePopup(); // This call will refresh the list with the new quantity.
+    drawBattleUI();
+    drawPlayerBattleStatus();
+  }
+}
   
     
     function drawBattleUI() {
