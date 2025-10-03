@@ -165,12 +165,11 @@
 
 /* Update the inventory-item to no longer use flex for vertical spacing */
 .inventory-item {
-  /* Remove display: flex; if it exists here */
-  /* Remove justify-content: space-between; if it exists here */
-  flex-direction: column; /* Optional: keeps the item name and button stacked vertically */
+  display: flex; /* Keep this to arrange the item name and button */
+  flex-direction: column;
   padding: 5px;
-  border: 1px solid #555; /* Use a border instead of border-bottom for a cleaner look */
-  border-radius: 3px; /* Optional: adds rounded corners */
+  border: 1px solid #555; /* Use a full border instead of border-bottom */
+  border-radius: 3px;
 }
 
 
