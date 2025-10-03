@@ -163,24 +163,14 @@
   justify-content: flex-start; /* Aligns items to the left side */
 }
 
-#inventory-list {
-  display: flex; /* Key change: Enables Flexbox for the container */
-  flex-direction: row; /* Key change: Arranges the items horizontally */
-  flex-wrap: wrap; /* Allows items to wrap to a new line if needed */
-  gap: 10px; /* Provides consistent spacing between items */
-  justify-content: flex-start; /* Aligns items to the left side */
-}
-
+/* Update the inventory-item to no longer use flex for vertical spacing */
 .inventory-item {
-  display: flex;
-  flex-direction: column; /* Stacks the item name and button vertically */
-  align-items: center; /* Centers the item name and button */
+  display: flex; /* Keep this to arrange the item name and button */
+  flex-direction: column;
   padding: 5px;
-  border: 1px solid #555; /* Use a full border for each item */
+  border: 1px solid #555; /* Use a full border instead of border-bottom */
   border-radius: 3px;
-  text-align: center; /* Ensures text is centered within the item box */
 }
-
 
 
 .inventory-popup {
@@ -961,4 +951,3 @@ function useItem(itemName) {
   </script>
 </body>
 </html>
-
