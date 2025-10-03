@@ -1072,8 +1072,8 @@ function loadLevel(index, newX = x, newY = y) {
 
   x = newX;
   y = newY;
-  // draw will be called by bgImg.onload when the image is ready
-  // call draw once now to update non-background visuals (player/hud)
+
+  // immediate draw to show player/hud while background loads
   draw();
 }
 
@@ -1116,9 +1116,18 @@ function checkDoorCollision(newX, newY) {
 // Draw game world and player
 function draw() {
   if (inBattle || isGameOver) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (bgImg.complete && bgImg.naturalWidth > 0) ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
 
+  // clear canvas first
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // draw background only when the image is ready
+  if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
+    ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+  } else {
+    // optional: fill a temporary background so canvas isn't visually stale
+    ctx.fillStyle = "#737373";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
   ctx.fillStyle = "rgba(0,0,0,0.0)";
   for (const wall of currentLevel.walls) {
     ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
