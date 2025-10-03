@@ -528,13 +528,7 @@ function useItem(itemName) {
 
     // Decrement the item count
     inventory.set(itemName, inventory.get(itemName) - 1);
-    
-    // Close the inventory and redraw
-    document.getElementById('inventory-battle-popup').style.display = 'none';
-    drawBattleUI();
-    drawPlayerBattleStatus();
-  }
-}
+  
     
     function drawBattleUI() {
       const battleOverlay = document.getElementById('battle-overlay');
