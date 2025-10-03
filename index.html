@@ -39,7 +39,6 @@
     .hud-section {
       text-align: center;
       padding: 0 1em;
-      user-select: none;
     }
     #player-status {
       display: flex;
@@ -110,7 +109,6 @@
       padding: 10px 20px;
       cursor: pointer;
       margin: 5px;
-      user-select: none;
     }
     #player-battle-status {
       background-color: #002591;
@@ -120,11 +118,11 @@
       margin-top: 20px;
       width: 250px;
       text-align: left;
-      user-select: none;
     }
     #player-battle-status p {
       margin: 0;
       font-size: 1em;
+      user-select: none;
     }
     #player-battle-status .hp-bar-container {
       width: 100%;
@@ -140,6 +138,7 @@
     }
     #stats {
       position: relative;
+      user-select: none;
     }
     .stats-popup {
       position: absolute;
@@ -156,18 +155,17 @@
       line-height: 1.2em;
     }
     .enemy-target.stunned {
-      filter: grayscale(100%);
-      opacity: 0.6;
-      border-color: #888;
-    }
+  filter: grayscale(100%);
+  opacity: 0.6;
+}
     .enemy-target.shielded {
-      box-shadow: 0 0 10px 10px rgba(0, 150, 255, 0.8);
-      border-color: #0096ff;
-    }
+  box-shadow: 0 0 10px 10px rgba(0, 150, 255, 0.8);
+  border-color: #0096ff;
+}
     .enemy-target.poisoned {
-      box-shadow: 0 0 10px 10px rgba(0, 120, 0, 0.8);
-      border-color: #007800;
-    }
+  box-shadow: 0 0 10px 10px rgba(0, 120, 0, 0.8);
+  border-color: ##007800;
+}
     #player-battle-status .hp-bar-container:last-of-type .hp-bar {
       background-color: #00FFFF;
     }
@@ -178,6 +176,7 @@
       transform: translate(-50%, -50%);
       font-size: 0.7em;
       text-shadow: 1px 1px 2px black;
+      user-select: none;
     }
     /* Inventory styling */
     #inventory-list {
@@ -199,13 +198,6 @@
       color: white;
       min-width: 90px;
       user-select: none;
-    }
-    .inventory-item-general {
-      padding: 5px;
-      border-bottom: 1px solid #555;
-    }
-    .inventory-item-general:last-child {
-      border-bottom: none;
     }
     .inventory-popup {
       position: absolute;
@@ -238,23 +230,24 @@
       background-color: #555;
     }
     #game-over-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.8);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      z-index: 2000;
-      display: none; /* Hide initially */
-    }
-    .game-over-content {
-      color: white;
-      font-family: "Press Start 2P", sans-serif;
-    }
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 2000;
+}
+
+.game-over-content {
+  color: white;
+  font-family: "Press Start 2P", sans-serif;
+}
+
     /* Save and Load buttons styling */
     #game-hud button {
       font-family: "Press Start 2P", sans-serif;
@@ -268,10 +261,6 @@
     }
     #game-hud button:hover {
       background-color: #0060ff;
-    }
-    #general-inventory-list {
-        max-height: 200px;
-        overflow-y: auto;
     }
   </style>
 </head>
@@ -318,18 +307,20 @@
       <h4>Inventory</h4>
       <div id="inventory-list"></div>
     </div>
+    <div id="game-over-overlay" style="display: none;">
+  <div class="game-over-content">
+    <h1>Game Over</h1>
+    <p>Press 'R' to Restart</p>
   </div>
-  
-  <div id="game-over-overlay">
-    <div class="game-over-content">
-      <h1>Game Over</h1>
-      <p>Press 'R' to Restart</p>
-    </div>
+</div>
+
   </div>
 
   <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
 
-        // Focus canvas for keyboard input
+    // Focus canvas for keyboard input
     canvas.focus();
     canvas.addEventListener('click', () => {
       canvas.focus();
@@ -356,14 +347,17 @@
     let tempText = "";
     let tempTextTimeout = null;
     let defeatedZone = null;
+    let enemyAttackIntervalId = null;
     const ENEMY_ATTACK_DELAY = 2000;
-    let lastFrameTime = performance.now();
-    let enemyAttackTimers = new Map();
-
+    let staminaRegenIntervalId = null;
     let inventory = new Map();
-
     let extraLifeTimerId = null;
-    let extraLifeEndTime = 0;
+
+    // Initialize inventory with items
+    inventory.set("bandaid", 1);
+    inventory.set("emp_grenade", 1);
+    inventory.set("poison_vial", 1);
+    inventory.set("extra_life", 1);
 
     let playerStats = {
       level: 1,
@@ -377,16 +371,11 @@
     };
 
     let inBattle = false;
-    let battleState = {
-        lastAttackTime: 0,
-        lastStaminaTime: 0,
-        poisonedEnemies: new Map(), // New map to track poison effects per enemy
-    };
 
     const enemyTypes = {
-      Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 3, behavior: "normalAttack", baseDamage: 1 },
-      Sniperbot: { name: "Sniper", maxHp: 20, damage: 1, xpReward: 5, behavior: "sniperAttack", baseDamage: 1 },
-      BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior", baseDamage: 4 }
+      Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 3, behavior: "normalAttack" },
+      Sniperbot: { name: "Sniper", maxHp: 20, damage: 1, xpReward: 5, behavior: "sniperAttack" },
+      BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior" }
     };
 
     const levels = [
@@ -436,257 +425,6 @@
 
     let activeEnemies = [];
 
-        // === NEW CENTRAL GAME LOOP ===
-    function gameLoop(currentTime) {
-      if (isGameOver) {
-        return;
-      }
-      
-      if (inBattle) {
-        const deltaTime = (currentTime - lastFrameTime) / 1000; // Time in seconds
-
-        // --- Update Battle State ---
-        battleState.lastStaminaTime += deltaTime;
-        if (battleState.lastStaminaTime >= 0.1) {
-            updateStamina(playerStats.currentStamina + (10 * battleState.lastStaminaTime));
-            battleState.lastStaminaTime = 0;
-        }
-
-        battleState.lastAttackTime += deltaTime;
-        if (battleState.lastAttackTime >= ENEMY_ATTACK_DELAY / 1000) {
-            takeTurn();
-            battleState.lastAttackTime = 0;
-        }
-
-        // --- Poison Effect ---
-        battleState.poisonedEnemies.forEach((effect, enemyName) => {
-            effect.timeRemaining -= deltaTime;
-            if (effect.timeRemaining <= 0) {
-                const enemy = activeEnemies.find(e => e.name === enemyName);
-                if(enemy) enemy.poisoned = false;
-                battleState.poisonedEnemies.delete(enemyName);
-            } else {
-                const enemy = activeEnemies.find(e => e.name === enemyName);
-                if(enemy) {
-                    enemy.currentHp -= (effect.damagePerTick * deltaTime);
-                }
-            }
-        });
-
-        // --- Check Game Over ---
-        if (!canGoBelow1Hp() && playerStats.currentHp <= 1) {
-            playerStats.currentHp = 1;
-        } else if (playerStats.currentHp <= 0) {
-            endBattle('lose');
-            showGameOver();
-            return; // Exit the loop
-        }
-
-        drawBattleUI();
-        drawPlayerBattleStatus();
-      }
-
-      lastFrameTime = currentTime;
-      requestAnimationFrame(gameLoop);
-    }
-
-    // === BATTLE LOGIC ===
-    function normalAttack(enemy) {
-      playerStats.currentHp -= enemy.damage;
-      showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
-    }
-
-    function sniperAttack(enemy) {
-      const isCritical = Math.random() < 0.3;
-      const damage = isCritical ? enemy.damage * 3 : enemy.damage;
-      playerStats.currentHp -= damage;
-      showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
-    }
-
-    function bossBehavior(enemy) {
-        const bossTimer = enemyAttackTimers.get(enemy.name);
-        if (!bossTimer) return;
-
-        // Shield logic
-        if (enemy.shieldActive) {
-            const timeSinceActivation = performance.now() - bossTimer.shieldActivatedAt;
-            if (timeSinceActivation >= 2000) {
-                enemy.shieldActive = false;
-                bossTimer.shieldCooldownEnd = performance.now() + 3000;
-                showTemporaryText(`${enemy.name}'s shield fades.`);
-            }
-        } else if (performance.now() >= bossTimer.shieldCooldownEnd) {
-            enemy.shieldActive = true;
-            bossTimer.shieldActivatedAt = performance.now();
-            showTemporaryText(`${enemy.name} activates a shield!`);
-        }
-
-        // Rocket attack logic
-        if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
-            if (performance.now() - bossTimer.lastRocketTick >= 500) {
-                const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
-                playerStats.currentHp -= rocketTickDamage;
-                enemy.rocketTicksLeft--;
-                showTemporaryText(`${enemy.name}'s rocket hits you for ${rocketTickDamage} damage!`);
-                bossTimer.lastRocketTick = performance.now();
-            }
-            if (enemy.rocketTicksLeft === 0) {
-                enemy.rocketActive = false;
-                showTemporaryText(`The rocket damage ends.`);
-            }
-        } else if (!enemy.rocketActive && !enemy.shieldActive && Math.random() < 0.25) {
-            enemy.rocketActive = true;
-            enemy.rocketTicksLeft = 4;
-            bossTimer.lastRocketTick = performance.now();
-            showTemporaryText(`${enemy.name} launches a rocket!`);
-        }
-
-        // Normal attack
-        if (!enemy.shieldActive && !enemy.rocketActive) {
-            playerStats.currentHp -= enemy.damage;
-            showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
-        }
-    }
-
-    function takeTurn() {
-      activeEnemies.forEach(enemy => {
-        if (!enemy.stunned) {
-          const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
-          if (behavior === 'normalAttack') normalAttack(enemy);
-          else if (behavior === 'sniperAttack') sniperAttack(enemy);
-          else if (behavior === 'bossBehavior') bossBehavior(enemy);
-        }
-      });
-    }
-
-    function endBattle(outcome) {
-      inBattle = false;
-      document.getElementById('battle-overlay').style.display = 'none';
-      
-      if (outcome === 'win') {
-        let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
-        gainXP(totalXp);
-        playerStats.currentHp = playerStats.maxHp;
-        updateHp(playerStats.currentHp);
-        if (defeatedZone) {
-          removeZone(defeatedZone);
-        }
-      } else if (outcome === 'lose') {
-        // No need to call loadLevel, showGameOver handles this.
-      }
-
-      activeEnemies = [];
-      defeatedZone = null;
-      document.getElementById('player-battle-status').innerHTML = '';
-      draw();
-    }
-
-    function initiateBattle(zoneType, zoneObject) {
-      inBattle = true;
-      defeatedZone = { type: zoneType, object: zoneObject };
-
-      let encounter = zoneObject.encounter;
-      activeEnemies = encounter.map(enemyData => {
-        const baseStats = enemyTypes[enemyData.type];
-        const scaledStats = scaleEnemyStats(baseStats);
-        return {
-          ...enemyData,
-          ...scaledStats,
-          currentHp: scaledStats.maxHp,
-          shieldActive: false,
-          stunned: false,
-          poisoned: false,
-          rocketActive: false,
-          rocketTicksLeft: 0,
-        };
-      });
-
-      selectedEnemyIndex = 0;
-      drawBattleUI();
-      drawPlayerBattleStatus();
-      requestAnimationFrame(gameLoop); // Start the new game loop
-    }
-    
-    function checkInteraction(checkX, checkY) {
-      if (currentLevel.interactables) {
-        const hitboxX = checkX + hitboxOffsetX;
-        const hitboxY = checkY + hitboxOffsetY;
-        for (const object of currentLevel.interactables) {
-          if (
-            hitboxX < object.x + object.width &&
-            hitboxX + hitboxWidth > object.x &&
-            hitboxY < object.y + object.height &&
-            hitboxY + hitboxHeight > object.y
-          ) {
-            return object;
-          }
-        }
-      }
-      return null;
-    }
-
-    function handleInteraction(object) {
-      if (object.name === "power_box") {
-        if (!isPowered) {
-          isPowered = true;
-          showTemporaryText("You pressed something on the box. The lights flicker on.");
-          draw();
-        } else {
-          showTemporaryText("The power is already on.");
-        }
-      } else if (object.name === "arcade_machine") {
-        if (isPowered) {
-          initiateBattle('interactable', object);
-        } else {
-          showTemporaryText("The machine is turned off...");
-        }
-      }
-    }
-
-    // === ITEM USAGE LOGIC ===
-    function useItem(itemName) {
-        if (inventory.get(itemName) > 0) {
-            const selectedEnemy = activeEnemies[selectedEnemyIndex];
-            
-            if (itemName === 'bandaid') {
-                const healAmount = Math.ceil(playerStats.maxHp * 0.33);
-                updateHp(playerStats.currentHp + healAmount);
-                showTemporaryText(`Used a Bandage to heal for ${healAmount} HP!`);
-            } else if (itemName === 'emp_grenade') {
-                activeEnemies.forEach(enemy => {
-                    if (!enemy.isBoss) {
-                        enemy.stunned = true;
-                        setTimeout(() => enemy.stunned = false, 4000);
-                    }
-                });
-                showTemporaryText(`Used an EMP Grenade! Some enemies stunned for 4 seconds!`);
-            } else if (itemName === 'poison_vial') {
-                if(selectedEnemy && !selectedEnemy.isBoss) {
-                    const poisonDamagePerTick = Math.ceil(5 * selectedEnemy.maxHp / 100);
-                    const effectDuration = 3000;
-                    selectedEnemy.poisoned = true;
-                    battleState.poisonedEnemies.set(selectedEnemy.name, {
-                        damagePerTick: poisonDamagePerTick / 1000, // damage per millisecond
-                        timeRemaining: effectDuration / 1000,
-                    });
-                    showTemporaryText(`Used a Poison Vial on ${selectedEnemy.name}!`);
-                } else {
-                    showTemporaryText(`That enemy cannot be poisoned!`);
-                    return;
-                }
-            } else if (itemName === 'extra_life') {
-                extraLifeEndTime = performance.now() + 3000;
-                showTemporaryText(`Used an Extra Life! You have 3 seconds of invincibility!`);
-            }
-            
-            inventory.set(itemName, inventory.get(itemName) - 1);
-            drawInventoryBattlePopup();
-            drawBattleUI();
-            drawPlayerBattleStatus();
-        }
-    }
-
-
     // Utility: text wrapping for canvas
     function wrapText(context, text, x, y, maxWidth, lineHeight) {
       let words = text.split(' ');
@@ -718,7 +456,7 @@
 
     // Check if player can go below 1 HP (used with extra life item)
     function canGoBelow1Hp() {
-        return performance.now() >= extraLifeEndTime;
+      return extraLifeTimerId === null;
     }
 
     // Update stamina and clamp between 0 and max
@@ -787,14 +525,29 @@
     function scaleEnemyStats(baseStats) {
       return {
         ...baseStats,
-        damage: baseStats.baseDamage + Math.floor(currentLevelIndex / 3),
-        maxHp: baseStats.maxHp + Math.floor(currentLevelIndex / 2)
+        maxHp: baseStats.maxHp + Math.floor(currentLevelIndex / 2),
+        damage: baseStats.damage + Math.floor(currentLevelIndex / 3)
       };
     }
 
-    // Draw general inventory
+    // Inventory popup toggle and drawing
+    const inventoryButton = document.getElementById('inventory-button');
+    const inventoryPopup = document.getElementById('inventory-popup');
+    const statsPopup = document.getElementById('stats-popup');
+    const inventoryList = document.getElementById('general-inventory-list');
+
+    inventoryButton.addEventListener('click', () => {
+      if (inBattle) return; // Prevent during battle
+      if (inventoryPopup.style.display === 'none' || inventoryPopup.style.display === '') {
+        drawGeneralInventory();
+        inventoryPopup.style.display = 'block';
+        statsPopup.style.display = 'none';
+      } else {
+        inventoryPopup.style.display = 'none';
+      }
+    });
+
     function drawGeneralInventory() {
-      const inventoryList = document.getElementById('general-inventory-list');
       inventoryList.innerHTML = '';
       if (inventory.size === 0 || Array.from(inventory.values()).every(q => q === 0)) {
         inventoryList.innerHTML = '<p>Your inventory is empty.</p>';
@@ -826,14 +579,18 @@
       }
       return null;
     }
-    
-    // Show game over overlay
-    function showGameOver() {
-      isGameOver = true;
-      document.getElementById('battle-overlay').style.display = 'none';
-      document.getElementById('game-over-overlay').style.display = 'flex';
-      cancelAnimationFrame(lastFrameTime); // Stop the main game loop
-    }
+function showGameOver() {
+  isGameOver = true;
+  // Stop all game loops
+  if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+  if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
+
+  // Hide battle UI
+  document.getElementById('battle-overlay').style.display = 'none';
+
+  // Show game over overlay
+  document.getElementById('game-over-overlay').style.display = 'flex';
+}
 
     // Battle inventory popup draw
     function drawInventoryBattlePopup() {
@@ -860,32 +617,413 @@
       });
     }
 
-    // Stats popup toggle
-    document.getElementById('stats-button').addEventListener('click', () => {
-        const inventoryPopup = document.getElementById('inventory-popup');
-        const statsPopup = document.getElementById('stats-popup');
-
-        if (statsPopup.style.display === 'none') {
-            updateStatsPopup();
-            statsPopup.style.display = 'block';
-            inventoryPopup.style.display = 'none';
-        } else {
-            statsPopup.style.display = 'none';
+    // Use inventory item logic
+    function useItem(itemName) {
+      if (inventory.get(itemName) > 0) {
+        if (itemName === 'bandaid') {
+          const healAmount = Math.ceil(playerStats.maxHp * 0.33);
+          updateHp(playerStats.currentHp + healAmount);
+          showTemporaryText(`Used a Bandage to heal for ${healAmount} HP!`);
+        } else if (itemName === 'emp_grenade') {
+          activeEnemies.forEach(enemy => {
+            if (!enemy.isBoss) {
+              enemy.stunned = true;
+            }
+          });
+          setTimeout(() => {
+            activeEnemies.forEach(enemy => enemy.stunned = false);
+          }, 4000);
+          showTemporaryText(`Used an EMP Grenade! Some enemies stunned for 4 seconds!`);
+        } else if (itemName === 'poison_vial') {
+          const poisonDamagePerTick = Math.ceil(5 * playerStats.damage / 100);
+          activeEnemies.forEach(enemy => {
+            if (!enemy.isBoss) {
+              enemy.poisoned = true;
+              let poisonTimer = 0;
+              const poisonInterval = setInterval(() => {
+                if (poisonTimer >= 3000) {
+                  clearInterval(poisonInterval);
+                  enemy.poisoned = false;
+                } else {
+                  enemy.currentHp -= poisonDamagePerTick;
+                  if (enemy.currentHp < 0) enemy.currentHp = 0;
+                  drawBattleUI();
+                }
+                poisonTimer += 500;
+              }, 500);
+            }
+          });
+          showTemporaryText(`Used a Poison Vial! Enemies are taking poison damage!`);
+        } else if (itemName === 'extra_life') {
+          if (extraLifeTimerId) {
+            clearTimeout(extraLifeTimerId);
+            extraLifeTimerId = null;
+          }
+          showTemporaryText(`Used an Extra Life! You have 3 seconds of invincibility!`);
+          extraLifeTimerId = setTimeout(() => {
+            extraLifeTimerId = null;
+          }, 3000);
         }
+
+        inventory.set(itemName, inventory.get(itemName) - 1);
+
+        drawInventoryBattlePopup();
+        drawBattleUI();
+        drawPlayerBattleStatus();
+      }
+    }
+
+    // Draw battle enemies UI
+    function drawBattleUI() {
+  const battleOverlay = document.getElementById('battle-overlay');
+  battleOverlay.style.display = 'flex';
+  const enemyDisplay = document.getElementById('enemy-display');
+  enemyDisplay.innerHTML = '';
+  activeEnemies.forEach((enemy, index) => {
+    const enemyButton = document.createElement('button');
+    enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
+    enemyButton.className = 'enemy-target';
+
+    if (enemy.shieldActive) {
+      enemyButton.classList.add('shielded');
+    }
+    if (enemy.stunned) {
+      enemyButton.classList.add('stunned');
+    }
+    if (enemy.poisoned) {
+      enemyButton.classList.add('poisoned');
+    }
+
+    enemyButton.dataset.enemyIndex = index;
+    enemyDisplay.appendChild(enemyButton);
+    if (index === selectedEnemyIndex) {
+      enemyButton.classList.add('selected');
+    }
+  });
+}
+
+    // Draw player status in battle UI
+    function drawPlayerBattleStatus() {
+      const playerBattleStatusDiv = document.getElementById('player-battle-status');
+      playerBattleStatusDiv.innerHTML = '';
+      const playerName = document.createElement('p');
+      playerName.textContent = `8-Bit`;
+
+      const hpContainer = document.createElement('div');
+      hpContainer.className = 'hp-bar-container';
+      const hpBar = document.createElement('div');
+      hpBar.className = 'hp-bar';
+      hpBar.style.width = `${(playerStats.currentHp / playerStats.maxHp) * 100}%`;
+      const hpText = document.createElement('div');
+      hpText.className = 'hp-text';
+      hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
+      hpContainer.appendChild(hpBar);
+      hpContainer.appendChild(hpText);
+      playerBattleStatusDiv.appendChild(playerName);
+      playerBattleStatusDiv.appendChild(hpContainer);
+
+      const staminaContainer = document.createElement('div');
+      staminaContainer.className = 'hp-bar-container';
+      const staminaBar = document.createElement('div');
+      staminaBar.className = 'hp-bar';
+      staminaBar.style.width = `${(playerStats.currentStamina / playerStats.maxStamina) * 100}%`;
+      staminaBar.style.backgroundColor = '#00FFFF';
+      const staminaText = document.createElement('div');
+      staminaText.className = 'hp-text';
+      staminaText.textContent = `${playerStats.currentStamina}/${playerStats.maxStamina}`;
+      staminaContainer.appendChild(staminaBar);
+      staminaContainer.appendChild(staminaText);
+      playerBattleStatusDiv.appendChild(staminaContainer);
+    }
+
+    // Normal attack behavior for enemies
+    function normalAttack(enemy) {
+      playerStats.currentHp -= enemy.damage;
+      showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
+    }
+
+    // Sniperbot special attack
+    function sniperAttack(enemy) {
+      const isCritical = Math.random() < 0.3; // 30% chance crit
+      const damage = isCritical ? enemy.damage * 3 : enemy.damage;
+      playerStats.currentHp -= damage;
+      showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
+    }
+
+    // Boss behavior with shield and rocket attack
+    function bossBehavior(enemy) {
+      const now = Date.now();
+
+      // Initialize timer tracking if undefined
+      if (!enemy.shieldActivatedAt) enemy.shieldActivatedAt = 0;
+      if (!enemy.shieldCooldownEnd) enemy.shieldCooldownEnd = 0;
+
+      // If shield is active, check if duration expired (2 seconds)
+      if (enemy.shieldActive) {
+        if (now >= enemy.shieldActivatedAt + 2000) {
+          enemy.shieldActive = false;
+          enemy.shieldCooldownEnd = now + 3000; // Shield cooldown 3 sec after shield ends
+          showTemporaryText(`${enemy.name}'s shield fades.`);
+        }
+      } else {
+        // Try to activate shield if cooldown expired
+        if (now >= enemy.shieldCooldownEnd) {
+          enemy.shieldActive = true;
+          enemy.shieldActivatedAt = now;
+          showTemporaryText(`${enemy.name} activates a shield!`);
+        }
+      }
+
+      // Handle rocket attack damage over time ticks
+      if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
+        const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
+        playerStats.currentHp -= rocketTickDamage;
+        enemy.rocketTicksLeft--;
+        showTemporaryText(`${enemy.name}'s rocket hits you for ${rocketTickDamage} damage!`);
+        if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+        if (enemy.rocketTicksLeft === 0) {
+          enemy.rocketActive = false;
+          showTemporaryText(`The rocket damage ends.`);
+        }
+      }
+
+      // If shield active, boss does not do normal attack this turn
+      if (enemy.shieldActive) return;
+
+      // 25% chance to start rocket attack if not active
+      if (!enemy.rocketActive && Math.random() < 0.25) {
+        enemy.rocketActive = true;
+        enemy.rocketTicksLeft = 4; // 4 ticks
+        showTemporaryText(`${enemy.name} launches a rocket!`);
+      }
+
+      // Normal attack damage
+      playerStats.currentHp -= enemy.damage;
+      showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
+    }
+
+    // Take enemy turn actions
+    function takeTurn() {
+      if (!inBattle) return;
+      activeEnemies.forEach(enemy => {
+        if (!enemy.stunned) {
+          const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
+          if (behavior === 'normalAttack') normalAttack(enemy);
+          else if (behavior === 'sniperAttack') sniperAttack(enemy);
+          else if (behavior === 'bossBehavior') bossBehavior(enemy);
+        }
+      });
+
+      if (!canGoBelow1Hp() && playerStats.currentHp <= 1) {
+        playerStats.currentHp = 1;
+      }
+      updateHp(playerStats.currentHp);
+      drawBattleUI();
+      drawPlayerBattleStatus();
+      if (playerStats.currentHp <= 0) {
+    endBattle('lose');
+    // Call the game over function here
+    showGameOver(); 
+  }
+}
+
+    // End battle and clean up
+    function endBattle(outcome) {
+      inBattle = false;
+      document.getElementById('battle-overlay').style.display = 'none';
+
+      if (staminaRegenIntervalId) {
+        clearInterval(staminaRegenIntervalId);
+        staminaRegenIntervalId = null;
+      }
+
+      if (enemyAttackIntervalId) {
+        clearInterval(enemyAttackIntervalId);
+        enemyAttackIntervalId = null;
+      }
+
+      if (outcome === 'win') {
+        let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
+        gainXP(totalXp);
+
+        playerStats.currentHp = playerStats.maxHp;
+        updateHp(playerStats.currentHp);
+
+        if (defeatedZone) {
+          removeZone(defeatedZone);
+        }
+      } else if (outcome === 'lose') {
+        loadLevel(0, 150, 50);
+      }
+
+      activeEnemies = [];
+      defeatedZone = null;
+      draw();
+      document.getElementById('player-battle-status').innerHTML = '';
+    }
+
+    // Initialize battle from zone or interactable
+    function initiateBattle(zoneType, zoneObject) {
+      inBattle = true;
+      defeatedZone = { type: zoneType, object: zoneObject };
+
+      staminaRegenIntervalId = setInterval(() => {
+        updateStamina(playerStats.currentStamina + 1);
+        drawPlayerBattleStatus();
+      }, 100);
+
+      let encounter = zoneObject.encounter;
+
+      activeEnemies = encounter.map(enemyData => {
+        const baseStats = enemyTypes[enemyData.type];
+        const scaledStats = scaleEnemyStats(baseStats);
+        const enemy = {
+          ...enemyData,
+          ...scaledStats,
+          currentHp: scaledStats.maxHp,
+          shieldActive: false,
+          shieldCooldownEnd: 0,
+          rocketActive: false,
+          rocketTicksLeft: 0,
+        };
+        if (enemy.isBoss) {
+          enemy.shieldActivatedAt = 0;
+          enemy.shieldCooldownEnd = 0;
+          enemy.rocketActive = false;
+          enemy.rocketTicksLeft = 0;
+        }
+        return enemy;
+      });
+
+      selectedEnemyIndex = 0;
+      drawBattleUI();
+      drawPlayerBattleStatus();
+      enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+    }
+
+    // Check collision with interactables
+    function checkInteraction(checkX, checkY) {
+      if (currentLevel.interactables) {
+        const hitboxX = checkX + hitboxOffsetX;
+        const hitboxY = checkY + hitboxOffsetY;
+        for (const object of currentLevel.interactables) {
+          if (
+            hitboxX < object.x + object.width &&
+            hitboxX + hitboxWidth > object.x &&
+            hitboxY < object.y + object.height &&
+            hitboxY + hitboxHeight > object.y
+          ) {
+            return object;
+          }
+        }
+      }
+      return null;
+    }
+
+    // Handle interaction actions
+    function handleInteraction(object) {
+      if (object.name === "power_box") {
+        if (!isPowered) {
+          isPowered = true;
+          showTemporaryText("You pressed something on the box. The lights flicker on.");
+          draw();
+        } else {
+          showTemporaryText("The power is already on.");
+        }
+      } else if (object.name === "arcade_machine") {
+        if (isPowered) {
+          initiateBattle('interactable', object);
+        } else {
+          showTemporaryText("The machine is turned off...");
+        }
+      }
+    }
+
+    // Attack buttons event listeners
+    document.getElementById('attack-button').addEventListener('click', () => {
+  if (!inBattle || !activeEnemies.length) return;
+  const targetEnemy = activeEnemies[selectedEnemyIndex];
+  if (!targetEnemy) return;
+
+  // Check shield before applying damage
+  if (targetEnemy.shieldActive) {
+    showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
+  } else {
+    targetEnemy.currentHp -= playerStats.damage;
+    if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+  }
+
+  // Then check for defeated enemies, redraw UI, etc.
+  const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+  if (remainingEnemies.length === 0) {
+    endBattle('win');
+    return;
+  }
+  activeEnemies = remainingEnemies;
+  if (selectedEnemyIndex >= activeEnemies.length) {
+    selectedEnemyIndex = 0;
+  }
+  drawBattleUI();
+  drawPlayerBattleStatus();
+});
+
+    document.getElementById('special-attack-button-1').addEventListener('click', () => {
+      const staminaCost = 100;
+      if (!inBattle || !activeEnemies.length || playerStats.currentStamina < staminaCost) {
+        showTemporaryText("Not enough stamina!");
+        return;
+      }
+
+      updateStamina(playerStats.currentStamina - staminaCost);
+      const targetEnemy = activeEnemies[selectedEnemyIndex];
+      if (!targetEnemy) return;
+
+      targetEnemy.currentHp -= (playerStats.damage * 10);
+      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+
+      const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+      if (remainingEnemies.length === 0) {
+        endBattle('win');
+        return;
+      }
+      activeEnemies = remainingEnemies;
+      if (selectedEnemyIndex >= activeEnemies.length) {
+        selectedEnemyIndex = 0;
+      }
+      drawBattleUI();
+      drawPlayerBattleStatus();
     });
 
-    // Inventory button (HUD) toggle
-    document.getElementById('inventory-button').addEventListener('click', () => {
-        const inventoryPopup = document.getElementById('inventory-popup');
-        const statsPopup = document.getElementById('stats-popup');
+    document.getElementById('special-attack-button-2').addEventListener('click', () => {
+      const staminaCost = 200;
+      if (!inBattle || playerStats.currentStamina < staminaCost) {
+        showTemporaryText("Not enough stamina!");
+        return;
+      }
 
-        if (inventoryPopup.style.display === 'none') {
-            drawGeneralInventory();
-            inventoryPopup.style.display = 'block';
-            statsPopup.style.display = 'none';
-        } else {
-            inventoryPopup.style.display = 'none';
-        }
+      updateStamina(playerStats.currentStamina - staminaCost);
+
+      let remainingEnemies = [];
+
+      activeEnemies.forEach(enemy => {
+        enemy.currentHp -= (playerStats.damage * 20);
+        if (enemy.currentHp < 0) enemy.currentHp = 0;
+        if (enemy.currentHp > 0) remainingEnemies.push(enemy);
+      });
+
+      if (remainingEnemies.length === 0) {
+        endBattle('win');
+        return;
+      }
+
+      activeEnemies = remainingEnemies;
+
+      if (selectedEnemyIndex >= activeEnemies.length) {
+        selectedEnemyIndex = 0;
+      }
+
+      drawBattleUI();
+      drawPlayerBattleStatus();
     });
 
     // Handle enemy selection click
@@ -897,9 +1035,24 @@
       }
     });
 
+    // Stats popup toggle
+    document.getElementById('stats-button').addEventListener('click', () => {
+      if (statsPopup.style.display === 'none') {
+        updateStatsPopup();
+        statsPopup.style.display = 'block';
+      } else {
+        statsPopup.style.display = 'none';
+      }
+    });
+
+    // Inventory button event handled above
+
+    updateHp(playerStats.currentHp);
+
     // Inventory button in battle toggle
     document.getElementById('inventory-battle-button').addEventListener('click', () => {
       const inventoryPopup = document.getElementById('inventory-battle-popup');
+
       if (inventoryPopup.style.display === 'none') {
         drawInventoryBattlePopup();
         inventoryPopup.style.display = 'block';
@@ -908,11 +1061,12 @@
       }
     });
 
-    document.addEventListener('keydown', function(e) {
-      if (isGameOver && e.key.toLowerCase() === 'r') {
-        location.reload(); // Reloads the page to restart the game
-      }
-    });
+        document.addEventListener('keydown', function(e) {
+  if (isGameOver && e.key.toLowerCase() === 'r') {
+    location.reload(); // Reloads the page to restart the game
+  }
+});
+
 
     // Load level and update background
     function loadLevel(index, newX, newY) {
@@ -961,6 +1115,7 @@
     // Draw game world and player
     function draw() {
       if (inBattle || isGameOver) return;
+      if (inBattle) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "rgba(0,0,0,0.0)";
@@ -1047,6 +1202,7 @@
     // Keyboard movement and interaction
     canvas.addEventListener('keydown', function(e) {
       if (inBattle || isGameOver) return;
+      if (inBattle) return;
       if (!bgImg.complete || bgImg.naturalWidth === 0) return;
       let nextX = x, nextY = y;
       const key = e.key.toLowerCase();
@@ -1089,6 +1245,7 @@
       }
       draw();
     });
-    </script>
+
+  </script>
 </body>
 </html>
