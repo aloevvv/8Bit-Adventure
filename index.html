@@ -580,14 +580,10 @@
     }
 function showGameOver() {
   isGameOver = true;
-  // Stop all game loops
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
   if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
 
-  // Hide battle UI
-  document.getElementById('battle-overlay').style.display = 'none';
-
-  // Show game over overlay
+  document.getElementById('battle-overlay').style.display    = 'none';
   document.getElementById('game-over-overlay').style.display = 'flex';
 }
 
@@ -821,27 +817,17 @@ function showGameOver() {
       drawPlayerBattleStatus();
       if (playerStats.currentHp <= 0) {
     endBattle('lose');
-    // Call the game over function here
-    showGameOver(); 
   }
 }
 
     // End battle and clean up
     function endBattle(outcome) {
-      inBattle = false;
-      document.getElementById('battle-overlay').style.display = 'none';
+  inBattle = false;
+  document.getElementById('battle-overlay').style.display = 'none';
+  if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
+  if (enemyAttackIntervalId)    clearInterval(enemyAttackIntervalId);
 
-      if (staminaRegenIntervalId) {
-        clearInterval(staminaRegenIntervalId);
-        staminaRegenIntervalId = null;
-      }
-
-      if (enemyAttackIntervalId) {
-        clearInterval(enemyAttackIntervalId);
-        enemyAttackIntervalId = null;
-      }
-
-      if (outcome === 'win') {
+  if (outcome === 'win') {
         let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
         gainXP(totalXp);
 
@@ -851,15 +837,14 @@ function showGameOver() {
         if (defeatedZone) {
           removeZone(defeatedZone);
         }
-      } else if (outcome === 'lose') {
-        loadLevel(0, 150, 50);
-      }
+      else if (outcome === 'lose') {
+    showGameOver();
+  }
 
-      activeEnemies = [];
-      defeatedZone = null;
-      draw();
-      document.getElementById('player-battle-status').innerHTML = '';
-    }
+  activeEnemies = [];
+  defeatedZone   = null;
+  draw();
+}
 
     // Initialize battle from zone or interactable
     function initiateBattle(zoneType, zoneObject) {
