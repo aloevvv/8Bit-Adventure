@@ -154,6 +154,18 @@
       font-size: 0.75em;
       line-height: 1.2em;
     }
+    .enemy-target.stunned {
+  filter: grayscale(100%);
+  opacity: 0.6;
+}
+    .enemy-target.shielded {
+  box-shadow: 0 0 10px 3px rgba(0, 150, 255, 0.8);
+  border-color: #0096ff;
+}
+    .enemy-target.poisoned {
+  box-shadow: 0 0 10px 3px rgba(0, 120, 0, 0.8);
+  border-color: ##007800;
+}
     #player-battle-status .hp-bar-container:last-of-type .hp-bar {
       background-color: #00FFFF;
     }
@@ -624,21 +636,32 @@
 
     // Draw battle enemies UI
     function drawBattleUI() {
-      const battleOverlay = document.getElementById('battle-overlay');
-      battleOverlay.style.display = 'flex';
-      const enemyDisplay = document.getElementById('enemy-display');
-      enemyDisplay.innerHTML = '';
-      activeEnemies.forEach((enemy, index) => {
-        const enemyButton = document.createElement('button');
-        enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
-        enemyButton.className = 'enemy-target';
-        enemyButton.dataset.enemyIndex = index;
-        enemyDisplay.appendChild(enemyButton);
-        if (index === selectedEnemyIndex) {
-          enemyButton.classList.add('selected');
-        }
-      });
+  const battleOverlay = document.getElementById('battle-overlay');
+  battleOverlay.style.display = 'flex';
+  const enemyDisplay = document.getElementById('enemy-display');
+  enemyDisplay.innerHTML = '';
+  activeEnemies.forEach((enemy, index) => {
+    const enemyButton = document.createElement('button');
+    enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
+    enemyButton.className = 'enemy-target';
+
+    if (enemy.shieldActive) {
+      enemyButton.classList.add('shielded');
     }
+    if (enemy.stunned) {
+      enemyButton.classList.add('stunned');
+    }
+    if (enemy.poisoned) {
+      enemyButton.classList.add('poisoned');
+    }
+
+    enemyButton.dataset.enemyIndex = index;
+    enemyDisplay.appendChild(enemyButton);
+    if (index === selectedEnemyIndex) {
+      enemyButton.classList.add('selected');
+    }
+  });
+}
 
     // Draw player status in battle UI
     function drawPlayerBattleStatus() {
