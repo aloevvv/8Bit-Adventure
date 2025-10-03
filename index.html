@@ -229,6 +229,25 @@
     .item-use-button:hover {
       background-color: #555;
     }
+    #game-over-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 2000;
+}
+
+.game-over-content {
+  color: white;
+  font-family: "Press Start 2P", sans-serif;
+}
+
     /* Save and Load buttons styling */
     #game-hud button {
       font-family: "Press Start 2P", sans-serif;
@@ -288,6 +307,13 @@
       <h4>Inventory</h4>
       <div id="inventory-list"></div>
     </div>
+    <div id="game-over-overlay" style="display: none;">
+  <div class="game-over-content">
+    <h1>Game Over</h1>
+    <p>Press 'R' to Restart</p>
+  </div>
+</div>
+
   </div>
 
   <script>
@@ -301,6 +327,7 @@
     });
 
     // Player and game variables
+    let isGameOver = false;
     let x = 150, y = 50;
     const speed = 20;
     const imageSize = 60;
@@ -552,6 +579,18 @@
       }
       return null;
     }
+function showGameOver() {
+  isGameOver = true;
+  // Stop all game loops
+  if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+  if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
+
+  // Hide battle UI
+  document.getElementById('battle-overlay').style.display = 'none';
+
+  // Show game over overlay
+  document.getElementById('game-over-overlay').style.display = 'flex';
+}
 
     // Battle inventory popup draw
     function drawInventoryBattlePopup() {
@@ -782,9 +821,11 @@
       drawBattleUI();
       drawPlayerBattleStatus();
       if (playerStats.currentHp <= 0) {
-        endBattle('lose');
-      }
-    }
+    endBattle('lose');
+    // Call the game over function here
+    showGameOver(); 
+  }
+}
 
     // End battle and clean up
     function endBattle(outcome) {
@@ -1020,6 +1061,13 @@
       }
     });
 
+        document.addEventListener('keydown', function(e) {
+  if (isGameOver && e.key.toLowerCase() === 'r') {
+    location.reload(); // Reloads the page to restart the game
+  }
+});
+
+
     // Load level and update background
     function loadLevel(index, newX, newY) {
       currentLevelIndex = index;
@@ -1066,6 +1114,7 @@
 
     // Draw game world and player
     function draw() {
+      if (inBattle || isGameOver) return;
       if (inBattle) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
@@ -1152,6 +1201,7 @@
 
     // Keyboard movement and interaction
     canvas.addEventListener('keydown', function(e) {
+      if (inBattle || isGameOver) return;
       if (inBattle) return;
       if (!bgImg.complete || bgImg.naturalWidth === 0) return;
       let nextX = x, nextY = y;
