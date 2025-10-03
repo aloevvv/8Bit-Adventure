@@ -320,251 +320,246 @@
 
   </div>
 
+<script>
+console.log('script loaded');
 
-  <script>
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
 
-    // Focus canvas for keyboard input
-    canvas.focus();
-    canvas.addEventListener('click', () => {
-      canvas.focus();
-    });
+// Focus canvas for keyboard input
+canvas.tabIndex = 0;
+canvas.focus();
+canvas.addEventListener('click', () => canvas.focus());
 
-    // Player and game variables
-    let isGameOver = false;
-    let x = 150, y = 50;
-    const speed = 20;
-    const imageSize = 60;
-    const hitboxWidth = 30;
-    const hitboxHeight = 30;
-    const hitboxOffsetX = (imageSize - hitboxWidth) / 2;
-    const hitboxOffsetY = (imageSize - hitboxHeight) / 2;
-    const useImage = true;
-    const img = new Image();
-    img.src = '8bit.png';
+// Player and game variables
+let isGameOver = false;
+let x = 150, y = 50;
+const speed = 20;
+const imageSize = 60;
+const hitboxWidth = 30;
+const hitboxHeight = 30;
+const hitboxOffsetX = (imageSize - hitboxWidth) / 2;
+const hitboxOffsetY = (imageSize - hitboxHeight) / 2;
+const useImage = true;
+const img = new Image();
+img.src = '8bit.png';
 
-    const hpBar = document.getElementById('hp-bar');
-    const hpText = document.getElementById('hp-text');
+const hpBar = document.getElementById('hp-bar');
+const hpText = document.getElementById('hp-text');
 
-    let selectedEnemyIndex = 0;
-    let isPowered = false;
-    let tempText = "";
-    let tempTextTimeout = null;
-    let defeatedZone = null;
-    let enemyAttackIntervalId = null;
-    const ENEMY_ATTACK_DELAY = 2000;
-    let staminaRegenIntervalId = null;
-    let inventory = new Map();
-    let extraLifeTimerId = null;
+let selectedEnemyIndex = 0;
+let isPowered = false;
 
-    // Initialize inventory with items
-    inventory.set("bandaid", 1);
-    inventory.set("emp_grenade", 1);
-    inventory.set("poison_vial", 1);
-    inventory.set("extra_life", 1);
-    inventory.set("hammer", 0);
+let tempText = "";
+let tempTextTimeout = null;
+let defeatedZone = null;
+let enemyAttackIntervalId = null;
+const ENEMY_ATTACK_DELAY = 2000;
+let staminaRegenIntervalId = null;
+let inventory = new Map();
+let extraLifeTimerId = null;
 
-    let playerStats = {
-      level: 1,
-      currentHp: 8,
-      maxHp: 8,
-      damage: 2,
-      xp: 0,
-      xpToNextLevel: 10,
-      currentStamina: 50,
-      maxStamina: 200,
-    };
+// Initialize inventory with items
+inventory.set("bandaid", 1);
+inventory.set("emp_grenade", 1);
+inventory.set("poison_vial", 1);
+inventory.set("extra_life", 1);
+inventory.set("hammer", 0);
 
-    let inBattle = false;
+let playerStats = {
+  level: 1,
+  currentHp: 8,
+  maxHp: 8,
+  damage: 2,
+  xp: 0,
+  xpToNextLevel: 10,
+  currentStamina: 50,
+  maxStamina: 200,
+};
 
-    const enemyTypes = {
-      Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 3, behavior: "normalAttack" },
-      Sniperbot: { name: "Sniper", maxHp: 20, damage: 1, xpReward: 5, behavior: "sniperAttack" },
-      Puncherbot: { name: "Puncher", maxHp: 36, damage: 1, xpReward: 5, behavior: "normalAttack"},
-      Mousebot: { name: "Quickbot", maxHp: 30, damage: 2, xpReward: 5, behavior: "normalAttack"},
-      BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior" }
-    };
+let inBattle = false;
 
-    const levels = [
-      {
-        bgSrc: "arcadebg.png",
-        walls: [
-          { x: 0, y: 0, width: 640, height: 20 },
-          { x: 0, y: 460, width: 640, height: 20 },
-          { x: 290, y: 150, width: 32, height: 200 },
-          { x: 290, y: 150, width: 220, height: 20 },
-          { x: 500, y: 150, width: 20, height: 200 },
-          { x: 0, y: 0, width: 20, height: 480 },
-          { x: 290, y: 350, width: 85, height: 15},
-          { x: 450, y: 350, width: 50, height: 15},
-        ],
-        doors: [
-          { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 }
-        ],
-        battleZones: [
-          { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "BossBot" }] },
-          { x: 400, y: 250, width: 70, height: 70, encounter: [{ type: "Sniperbot" }, { type: "Sniperbot" }] }
-        ],
-        interactables: []
-      },
-      {
-        bgSrc: "arcadeinside.png",
-        walls: [
-          { x: 0, y: 0, width: 640, height: 32 },
-          { x: 0, y: 460, width: 640, height: 20 },
-          { x: 608, y: 0, width: 32, height: 480 },
-          { x: 0, y: 0, width: 50, height: 480 },
-          { x: 300, y: 200, width: 64, height: 64 },
-        ],
-        doors: [
-          { x: 300, y: 450, width: 40, height: 60, destLevel: 0, destX: 400, destY: 400 }
-        ],
-        battleZones: [],
-        interactables: [
-          { name: "power_box", x: 20, y: 260, width: 100, height: 100, action: "power_on" },
-          { name: "arcade_machine", x: 340, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] },
-          { name: "big_stone",      x: 300, y: 200, width: 64,  height: 64,  action: "break", requiredItem: "hammer" }
-        ]
-      }
-    ];
+const enemyTypes = {
+  Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 3, behavior: "normalAttack" },
+  Sniperbot: { name: "Sniper", maxHp: 20, damage: 1, xpReward: 5, behavior: "sniperAttack" },
+  Puncherbot: { name: "Puncher", maxHp: 36, damage: 1, xpReward: 5, behavior: "normalAttack" },
+  Mousebot: { name: "Quickbot", maxHp: 30, damage: 2, xpReward: 5, behavior: "normalAttack" },
+  BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior" }
+};
 
-    let currentLevelIndex = 0;
-    let currentLevel = levels[currentLevelIndex];
-    const bgImg = new Image();
-    bgImg.src = currentLevel.bgSrc;
-    bgImg.onload = function() { draw(); };
+const levels = [
+  {
+    bgSrc: "arcadebg.png",
+    walls: [
+      { x: 0, y: 0, width: 640, height: 20 },
+      { x: 0, y: 460, width: 640, height: 20 },
+      { x: 290, y: 150, width: 32, height: 200 },
+      { x: 290, y: 150, width: 220, height: 20 },
+      { x: 500, y: 150, width: 20, height: 200 },
+      { x: 0, y: 0, width: 20, height: 480 },
+      { x: 290, y: 350, width: 85, height: 15 },
+      { x: 450, y: 350, width: 50, height: 15 },
+    ],
+    doors: [
+      { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 }
+    ],
+    battleZones: [
+      { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "BossBot" }] },
+      { x: 400, y: 250, width: 70, height: 70, encounter: [{ type: "Sniperbot" }, { type: "Sniperbot" }] }
+    ],
+    interactables: []
+  },
+  {
+    bgSrc: "arcadeinside.png",
+    walls: [
+      { x: 0, y: 0, width: 640, height: 32 },
+      { x: 0, y: 460, width: 640, height: 20 },
+      { x: 608, y: 0, width: 32, height: 480 },
+      { x: 0, y: 0, width: 50, height: 480 },
+      { x: 300, y: 200, width: 64, height: 64 },
+    ],
+    doors: [
+      { x: 300, y: 450, width: 40, height: 60, destLevel: 0, destX: 400, destY: 400 }
+    ],
+    battleZones: [],
+    interactables: [
+      { name: "power_box", x: 20, y: 260, width: 100, height: 100, action: "power_on" },
+      { name: "arcade_machine", x: 340, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] },
+      { name: "big_stone", x: 300, y: 200, width: 64, height: 64, action: "break", requiredItem: "hammer" }
+    ]
+  }
+];
 
-    const stoneImg = new Image();
-stoneImg.src = "stone.png";   // 64×64 graphic of a rock
+let currentLevelIndex = 0;
+let currentLevel = levels[currentLevelIndex];
+const bgImg = new Image();
+bgImg.src = currentLevel.bgSrc;
+bgImg.onload = function() { draw(); };
 
+const stoneImg = new Image();
+stoneImg.src = "stone.png"; // 64x64 graphic of a rock
 
+const hammerImg = new Image();
+hammerImg.src = "hammer.png";
 
-    let activeEnemies = [];
+let activeEnemies = [];
 
-    // Utility: text wrapping for canvas
-    function wrapText(context, text, x, y, maxWidth, lineHeight) {
-      let words = text.split(' ');
-      let line = '';
-      for (let n = 0; n < words.length; n++) {
-        let testLine = line + words[n] + ' ';
-        let metrics = context.measureText(testLine);
-        let testWidth = metrics.width;
-        if (testWidth > maxWidth && n > 0) {
-          context.fillText(line, x, y);
-          line = words[n] + ' ';
-          y += lineHeight;
-        } else {
-          line = testLine;
-        }
-      }
-      context.fillText(line, x, y);
+// Utility: text wrapping for canvas
+function wrapText(context, text, x, y, maxWidth, lineHeight) {
+  let words = text.split(' ');
+  let line = "";
+  for (let n = 0; n < words.length; n++) {
+    let testLine = line + words[n] + ' ';
+    let metrics = context.measureText(testLine);
+    let testWidth = metrics.width;
+    if (testWidth > maxWidth && n > 0) {
+      context.fillText(line.trim(), x, y);
+      line = words[n] + ' ';
+      y += lineHeight;
+    } else {
+      line = testLine;
     }
+  }
+  context.fillText(line.trim(), x, y);
+}
 
-    // Show temporary text on screen for 3 seconds
-    function showTemporaryText(message) {
-      tempText = message;
-      if (tempTextTimeout) clearTimeout(tempTextTimeout);
-      tempTextTimeout = setTimeout(() => {
-        tempText = "";
-        draw();
-      }, 3000);
-    }
+// Show temporary text on screen for 3 seconds
+function showTemporaryText(message) {
+  tempText = message;
+  if (tempTextTimeout) clearTimeout(tempTextTimeout);
+  tempTextTimeout = setTimeout(() => {
+    tempText = "";
+    draw();
+  }, 3000);
+}
 
-    // Check if player can go below 1 HP (used with extra life item)
-    function canGoBelow1Hp() {
-      return extraLifeTimerId === null;
-    }
+// Check if player can go below 1 HP (used with extra life item)
+function canGoBelow1Hp() {
+  return extraLifeTimerId === null;
+}
 
-    // Update stamina and clamp between 0 and max
-    function updateStamina(newStamina) {
-      if (newStamina < 0) newStamina = 0;
-      if (newStamina > playerStats.maxStamina) newStamina = playerStats.maxStamina;
-      playerStats.currentStamina = newStamina;
-    }
+// Update stamina and clamp between 0 and max
+function updateStamina(newStamina) {
+  if (newStamina < 0) newStamina = 0;
+  if (newStamina > playerStats.maxStamina) newStamina = playerStats.maxStamina;
+  playerStats.currentStamina = newStamina;
+}
 
-    // Update HP and UI bar
-    function updateHp(newHealth) {
-      if (newHealth < 0) newHealth = 0;
-      if (newHealth > playerStats.maxHp) newHealth = playerStats.maxHp;
-      playerStats.currentHp = newHealth;
-      const newWidth = (playerStats.currentHp / playerStats.maxHp) * 100;
-      hpBar.style.width = `${newWidth}%`;
-      hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
-    }
+// Update HP and UI bar
+function updateHp(newHealth) {
+  if (newHealth < 0) newHealth = 0;
+  if (newHealth > playerStats.maxHp) newHealth = playerStats.maxHp;
+  playerStats.currentHp = newHealth;
+  const newWidth = (playerStats.currentHp / playerStats.maxHp) * 100;
+  hpBar.style.width = `${newWidth}%`;
+  hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
+}
 
-    // Update stats popup UI
-    function updateStatsPopup() {
-      document.getElementById('popup-level').textContent = playerStats.level;
-      document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
-      document.getElementById('popup-damage').textContent = playerStats.damage;
-    }
+// Update stats popup UI
+function updateStatsPopup() {
+  document.getElementById('popup-level').textContent = playerStats.level;
+  document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
+  document.getElementById('popup-damage').textContent = playerStats.damage;
+}
 
-    // Level up player
-    function levelUp() {
-      playerStats.level++;
-      playerStats.xp -= playerStats.xpToNextLevel;
-      playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
-      playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
-      playerStats.damage += Math.floor(1 + (playerStats.level / 6));
-      playerStats.currentHp = playerStats.maxHp;
-      updateHp(playerStats.currentHp);
-      updateStatsPopup();
-      showTemporaryText(`Leveled up to ${playerStats.level}!`);
-    }
+// Level up player
+function levelUp() {
+  playerStats.level++;
+  playerStats.xp -= playerStats.xpToNextLevel;
+  playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
+  playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
+  playerStats.damage += Math.floor(1 + (playerStats.level / 6));
+  playerStats.currentHp = playerStats.maxHp;
+  updateHp(playerStats.currentHp);
+  updateStatsPopup();
+  showTemporaryText(`Leveled up to ${playerStats.level}!`);
+}
 
-    // Gain XP and check level up
-    function gainXP(amount) {
-      playerStats.xp += amount;
-      if (playerStats.xp >= playerStats.xpToNextLevel) {
-        levelUp();
-      }
-      updateStatsPopup();
-    }
+// Gain XP and check level up
+function gainXP(amount) {
+  playerStats.xp += amount;
+  if (playerStats.xp >= playerStats.xpToNextLevel) {
+    levelUp();
+  }
+  updateStatsPopup();
+}
 
-    // Remove battle or interactable zone after clearing
-    function removeZone(zone) {
-      if (!zone) return;
-      if (zone.type === 'battleZone') {
-        const index = currentLevel.battleZones.indexOf(zone.object);
-        if (index > -1) {
-          currentLevel.battleZones.splice(index, 1);
-        }
-      } else if (zone.type === 'interactable') {
-        const index = currentLevel.interactables.indexOf(zone.object);
-        if (index > -1) {
-          currentLevel.interactables.splice(index, 1);
-        }
-      }
-    }
+// Remove battle or interactable zone after clearing
+function removeZone(zone) {
+  if (!zone) return;
+  if (zone.type === 'battleZone') {
+    const index = currentLevel.battleZones.indexOf(zone.object);
+    if (index > -1) currentLevel.battleZones.splice(index, 1);
+  } else if (zone.type === 'interactable') {
+    const index = currentLevel.interactables.indexOf(zone.object);
+    if (index > -1) currentLevel.interactables.splice(index, 1);
+  }
+}
 
-    // Scale enemy stats with level
-    function scaleEnemyStats(baseStats) {
-      return {
-        ...baseStats,
-        maxHp: baseStats.maxHp + Math.floor(currentLevelIndex / 2),
-        damage: baseStats.damage + Math.floor(currentLevelIndex / 3)
-      };
-    }
+// Scale enemy stats with level
+function scaleEnemyStats(baseStats) {
+  return {
+    ...baseStats,
+    maxHp: baseStats.maxHp + Math.floor(currentLevelIndex / 2),
+    damage: baseStats.damage + Math.floor(currentLevelIndex / 3)
+  };
+}
 
-    // Inventory popup toggle and drawing
-    const inventoryButton = document.getElementById('inventory-button');
-    const inventoryPopup = document.getElementById('inventory-popup');
-    const statsPopup = document.getElementById('stats-popup');
-    const inventoryList = document.getElementById('general-inventory-list');
+// Inventory popup toggle and drawing
+const inventoryButton = document.getElementById('inventory-button');
+const inventoryPopup = document.getElementById('inventory-popup');
+const statsPopup = document.getElementById('stats-popup');
+const inventoryList = document.getElementById('general-inventory-list');
 
-    inventoryButton.addEventListener('click', () => {
-  // don’t open during battle
-  if (inBattle) return;
+inventoryButton.addEventListener('click', () => {
+  // don't open during battle or after game over
+  if (inBattle || isGameOver) return;
 
   // Hide stats popup whenever opening inventory
-  statsPopup.style.display = 'none';
+  if (statsPopup) statsPopup.style.display = 'none';
 
-  // Detect if it’s currently hidden (either none or default empty)
-  const isHidden =
-    inventoryPopup.style.display === 'none' ||
-    inventoryPopup.style.display === '';
-
+  // Detect if it's currently hidden (using computed style)
+  const isHidden = window.getComputedStyle(inventoryPopup).display === 'none';
   if (isHidden) {
     drawGeneralInventory();
     inventoryPopup.style.display = 'block';
@@ -573,382 +568,340 @@ stoneImg.src = "stone.png";   // 64×64 graphic of a rock
   }
 });
 
-
-    function drawGeneralInventory() {
-      inventoryList.innerHTML = '';
-      if (inventory.size === 0 || Array.from(inventory.values()).every(q => q === 0)) {
-        inventoryList.innerHTML = '<p>Your inventory is empty.</p>';
-        return;
-      }
-      inventory.forEach((quantity, itemName) => {
-        if (quantity > 0) {
-          const p = document.createElement('p');
-          p.textContent = `${itemName.replace(/_/g, ' ')}: ${quantity}`;
-          inventoryList.appendChild(p);
-        }
-      });
-    }
-
-    // Find battle zone for given player position
-    function findBattleZone(checkX, checkY) {
-      const hitboxX = checkX + hitboxOffsetX;
-      const hitboxY = checkY + hitboxOffsetY;
-      if (!currentLevel.battleZones) return null;
-      for (const zone of currentLevel.battleZones) {
-        if (
-          hitboxX < zone.x + zone.width &&
-          hitboxX + hitboxWidth > zone.x &&
-          hitboxY < zone.y + zone.height &&
-          hitboxY + hitboxHeight > zone.y
-        ) {
-          return zone;
-        }
-      }
-      return null;
-    }
-function showGameOver() {
-  isGameOver = true;
-  // Stop all game loops
-  if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
-  if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
-
-  // Hide battle UI
-  document.getElementById('battle-overlay').style.display = 'none';
-
-  // Show game over overlay
-  document.getElementById('game-over-overlay').style.display = 'flex';
-}
-
-    // Battle inventory popup draw
-    function drawInventoryBattlePopup() {
-      const inventoryList = document.getElementById('inventory-list');
-      inventoryList.innerHTML = '';
-      if (inventory.size === 0 || Array.from(inventory.values()).every(q => q === 0)) {
-        inventoryList.innerHTML = '<p>Inventory is empty.</p>';
-        return;
-      }
-      inventory.forEach((quantity, itemName) => {
-        if (quantity > 0) {
-          const itemElement = document.createElement('div');
-          itemElement.className = 'inventory-item';
-          itemElement.innerHTML = `<span>${itemName.replace(/_/g, ' ')} (${quantity})</span>`;
-
-          const useButton = document.createElement('button');
-          useButton.textContent = 'Use';
-          useButton.className = 'item-use-button';
-          useButton.onclick = () => useItem(itemName);
-
-          itemElement.appendChild(useButton);
-          inventoryList.appendChild(itemElement);
-        }
-      });
-    }
-
-    // Use inventory item logic
-    function useItem(itemName) {
-      if (inventory.get(itemName) > 0) {
-        if (itemName === 'bandaid') {
-          const healAmount = Math.ceil(playerStats.maxHp * 0.33);
-          updateHp(playerStats.currentHp + healAmount);
-          showTemporaryText(`Used a Bandage to heal for ${healAmount} HP!`);
-        } else if (itemName === 'emp_grenade') {
-          activeEnemies.forEach(enemy => {
-            if (!enemy.isBoss) {
-              enemy.stunned = true;
-            }
-          });
-          setTimeout(() => {
-            activeEnemies.forEach(enemy => enemy.stunned = false);
-          }, 4000);
-          showTemporaryText(`Used an EMP Grenade! Some enemies stunned for 4 seconds!`);
-        } else if (itemName === 'poison_vial') {
-          const poisonDamagePerTick = Math.ceil(5 * playerStats.damage / 100);
-          activeEnemies.forEach(enemy => {
-            if (!enemy.isBoss) {
-              enemy.poisoned = true;
-              let poisonTimer = 0;
-              const poisonInterval = setInterval(() => {
-                if (poisonTimer >= 3000) {
-                  clearInterval(poisonInterval);
-                  enemy.poisoned = false;
-                } else {
-                  enemy.currentHp -= poisonDamagePerTick;
-                  if (enemy.currentHp < 0) enemy.currentHp = 0;
-                  drawBattleUI();
-                }
-                poisonTimer += 500;
-              }, 500);
-            }
-          });
-          showTemporaryText(`Used a Poison Vial! Enemies are taking poison damage!`);
-        } else if (itemName === 'extra_life') {
-          if (extraLifeTimerId) {
-            clearTimeout(extraLifeTimerId);
-            extraLifeTimerId = null;
-          }
-          showTemporaryText(`Used an Extra Life! You have 3 seconds of invincibility!`);
-          extraLifeTimerId = setTimeout(() => {
-            extraLifeTimerId = null;
-          }, 3000);
-        }
-
-        inventory.set(itemName, inventory.get(itemName) - 1);
-
-        drawInventoryBattlePopup();
-        drawBattleUI();
-        drawPlayerBattleStatus();
-      }
-    }
-
-    // Draw battle enemies UI
-    function drawBattleUI() {
-  const battleOverlay = document.getElementById('battle-overlay');
-  battleOverlay.style.display = 'flex';
-  const enemyDisplay = document.getElementById('enemy-display');
-  enemyDisplay.innerHTML = '';
-  activeEnemies.forEach((enemy, index) => {
-    const enemyButton = document.createElement('button');
-    enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
-    enemyButton.className = 'enemy-target';
-
-    if (enemy.shieldActive) {
-      enemyButton.classList.add('shielded');
-    }
-    if (enemy.stunned) {
-      enemyButton.classList.add('stunned');
-    }
-    if (enemy.poisoned) {
-      enemyButton.classList.add('poisoned');
-    }
-
-    enemyButton.dataset.enemyIndex = index;
-    enemyDisplay.appendChild(enemyButton);
-    if (index === selectedEnemyIndex) {
-      enemyButton.classList.add('selected');
+function drawGeneralInventory() {
+  inventoryList.innerHTML = "";
+  const allZero = inventory.size === 0 || Array.from(inventory.values()).every(q => q === 0);
+  if (allZero) {
+    inventoryList.innerHTML = '<p>Your inventory is empty.</p>';
+    return;
+  }
+  inventory.forEach((quantity, itemName) => {
+    if (quantity > 0) {
+      const p = document.createElement('p');
+      p.textContent = `${itemName.replace(/_/g, ' ')}: ${quantity}`;
+      inventoryList.appendChild(p);
     }
   });
 }
 
-    // Draw player status in battle UI
-    function drawPlayerBattleStatus() {
-      const playerBattleStatusDiv = document.getElementById('player-battle-status');
-      playerBattleStatusDiv.innerHTML = '';
-      const playerName = document.createElement('p');
-      playerName.textContent = `8-Bit`;
-
-      const hpContainer = document.createElement('div');
-      hpContainer.className = 'hp-bar-container';
-      const hpBar = document.createElement('div');
-      hpBar.className = 'hp-bar';
-      hpBar.style.width = `${(playerStats.currentHp / playerStats.maxHp) * 100}%`;
-      const hpText = document.createElement('div');
-      hpText.className = 'hp-text';
-      hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
-      hpContainer.appendChild(hpBar);
-      hpContainer.appendChild(hpText);
-      playerBattleStatusDiv.appendChild(playerName);
-      playerBattleStatusDiv.appendChild(hpContainer);
-
-      const staminaContainer = document.createElement('div');
-      staminaContainer.className = 'hp-bar-container';
-      const staminaBar = document.createElement('div');
-      staminaBar.className = 'hp-bar';
-      staminaBar.style.width = `${(playerStats.currentStamina / playerStats.maxStamina) * 100}%`;
-      staminaBar.style.backgroundColor = '#00FFFF';
-      const staminaText = document.createElement('div');
-      staminaText.className = 'hp-text';
-      staminaText.textContent = `${playerStats.currentStamina}/${playerStats.maxStamina}`;
-      staminaContainer.appendChild(staminaBar);
-      staminaContainer.appendChild(staminaText);
-      playerBattleStatusDiv.appendChild(staminaContainer);
+// Find battle zone for given player position
+function findBattleZone(checkX, checkY) {
+  const hitboxX = checkX + hitboxOffsetX;
+  const hitboxY = checkY + hitboxOffsetY;
+  if (!currentLevel.battleZones) return null;
+  for (const zone of currentLevel.battleZones) {
+    if (
+      hitboxX < zone.x + zone.width &&
+      hitboxX + hitboxWidth > zone.x &&
+      hitboxY < zone.y + zone.height &&
+      hitboxY + hitboxHeight > zone.y
+    ) {
+      return zone;
     }
+  }
+  return null;
+}
 
-    // Normal attack behavior for enemies
-    function normalAttack(enemy) {
-      playerStats.currentHp -= enemy.damage;
-      showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
+function showGameOver() {
+  isGameOver = true;
+  if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+  if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
+  document.getElementById('battle-overlay').style.display = 'none';
+  document.getElementById('game-over-overlay').style.display = 'flex';
+}
+
+// Battle inventory popup draw
+function drawInventoryBattlePopup() {
+  const battleInventoryList = document.getElementById('inventory-list');
+  battleInventoryList.innerHTML = "";
+  const allZero = inventory.size === 0 || Array.from(inventory.values()).every(q => q === 0);
+  if (allZero) {
+    battleInventoryList.innerHTML = '<p>Inventory is empty.</p>';
+    return;
+  }
+  inventory.forEach((quantity, itemName) => {
+    if (quantity > 0) {
+      const itemElement = document.createElement('div');
+      itemElement.className = 'inventory-item';
+      itemElement.innerHTML = `<span>${itemName.replace(/_/g, ' ')} (${quantity})</span>`;
+      const useButton = document.createElement('button');
+      useButton.textContent = 'Use';
+      useButton.className = 'item-use-button';
+      useButton.onclick = () => useItem(itemName);
+      itemElement.appendChild(useButton);
+      battleInventoryList.appendChild(itemElement);
     }
+  });
+}
 
-    // Sniperbot special attack
-    function sniperAttack(enemy) {
-      const isCritical = Math.random() < 0.3; // 30% chance crit
-      const damage = isCritical ? enemy.damage * 3 : enemy.damage;
-      playerStats.currentHp -= damage;
-      showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
-    }
-
-    // Boss behavior with shield and rocket attack
-    function bossBehavior(enemy) {
-      const now = Date.now();
-
-      // Initialize timer tracking if undefined
-      if (!enemy.shieldActivatedAt) enemy.shieldActivatedAt = 0;
-      if (!enemy.shieldCooldownEnd) enemy.shieldCooldownEnd = 0;
-
-      // If shield is active, check if duration expired (2 seconds)
-      if (enemy.shieldActive) {
-        if (now >= enemy.shieldActivatedAt + 2000) {
-          enemy.shieldActive = false;
-          enemy.shieldCooldownEnd = now + 3000; // Shield cooldown 3 sec after shield ends
-          showTemporaryText(`${enemy.name}'s shield fades.`);
-        }
-      } else {
-        // Try to activate shield if cooldown expired
-        if (now >= enemy.shieldCooldownEnd) {
-          enemy.shieldActive = true;
-          enemy.shieldActivatedAt = now;
-          showTemporaryText(`${enemy.name} activates a shield!`);
-        }
-      }
-
-      // Handle rocket attack damage over time ticks
-      if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
-        const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
-        playerStats.currentHp -= rocketTickDamage;
-        enemy.rocketTicksLeft--;
-        showTemporaryText(`${enemy.name}'s rocket hits you for ${rocketTickDamage} damage!`);
-        if (playerStats.currentHp < 0) playerStats.currentHp = 0;
-        if (enemy.rocketTicksLeft === 0) {
-          enemy.rocketActive = false;
-          showTemporaryText(`The rocket damage ends.`);
-        }
-      }
-
-      // If shield active, boss does not do normal attack this turn
-      if (enemy.shieldActive) return;
-
-      // 25% chance to start rocket attack if not active
-      if (!enemy.rocketActive && Math.random() < 0.25) {
-        enemy.rocketActive = true;
-        enemy.rocketTicksLeft = 4; // 4 ticks
-        showTemporaryText(`${enemy.name} launches a rocket!`);
-      }
-
-      // Normal attack damage
-      playerStats.currentHp -= enemy.damage;
-      showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
-    }
-
-    // Take enemy turn actions
-    function takeTurn() {
-      if (!inBattle) return;
+// Use inventory item logic
+function useItem(itemName) {
+  if ((inventory.get(itemName) || 0) > 0) {
+    if (itemName === 'bandaid') {
+      const healAmount = Math.ceil(playerStats.maxHp * 0.33);
+      updateHp(playerStats.currentHp + healAmount);
+      showTemporaryText(`Used a Bandage to heal for ${healAmount} HP!`);
+    } else if (itemName === 'emp_grenade') {
       activeEnemies.forEach(enemy => {
-        if (!enemy.stunned) {
-          const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
-          if (behavior === 'normalAttack') normalAttack(enemy);
-          else if (behavior === 'sniperAttack') sniperAttack(enemy);
-          else if (behavior === 'bossBehavior') bossBehavior(enemy);
+        if (!enemy.isBoss) enemy.stunned = true;
+      });
+      setTimeout(() => activeEnemies.forEach(enemy => enemy.stunned = false), 4000);
+      showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
+    } else if (itemName === 'poison_vial') {
+      const poisonDamagePerTick = Math.max(1, Math.ceil(5 * playerStats.damage / 100));
+      activeEnemies.forEach(enemy => {
+        if (!enemy.isBoss) {
+          enemy.poisoned = true;
+          let poisonTimer = 0;
+          const poisonInterval = setInterval(() => {
+            if (poisonTimer >= 3000) {
+              clearInterval(poisonInterval);
+              enemy.poisoned = false;
+            } else {
+              enemy.currentHp -= poisonDamagePerTick;
+              if (enemy.currentHp < 0) enemy.currentHp = 0;
+              drawBattleUI();
+            }
+            poisonTimer += 500;
+          }, 500);
         }
       });
-
-      if (!canGoBelow1Hp() && playerStats.currentHp <= 1) {
-        playerStats.currentHp = 1;
+      showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
+    } else if (itemName === 'extra_life') {
+      if (extraLifeTimerId) {
+        clearTimeout(extraLifeTimerId);
+        extraLifeTimerId = null;
       }
-      updateHp(playerStats.currentHp);
-      drawBattleUI();
-      drawPlayerBattleStatus();
-      if (playerStats.currentHp <= 0) {
-    endBattle('lose');
-    // Call the game over function here
-    showGameOver(); 
+      showTemporaryText('Used an Extra Life! You have 3 seconds of invincibility!');
+      extraLifeTimerId = setTimeout(() => { extraLifeTimerId = null; }, 3000);
+    }
+
+    inventory.set(itemName, (inventory.get(itemName) || 0) - 1);
+    drawInventoryBattlePopup();
+    drawBattleUI();
+    drawPlayerBattleStatus();
   }
 }
 
-    // End battle and clean up
-    function endBattle(outcome) {
-      inBattle = false;
-      document.getElementById('battle-overlay').style.display = 'none';
+// Draw battle enemies UI
+function drawBattleUI() {
+  const battleOverlay = document.getElementById('battle-overlay');
+  battleOverlay.style.display = 'flex';
+  const enemyDisplay = document.getElementById('enemy-display');
+  enemyDisplay.innerHTML = "";
+  activeEnemies.forEach((enemy, index) => {
+    const enemyButton = document.createElement('button');
+    enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
+    enemyButton.className = 'enemy-target';
+    if (enemy.shieldActive) enemyButton.classList.add('shielded');
+    if (enemy.stunned) enemyButton.classList.add('stunned');
+    if (enemy.poisoned) enemyButton.classList.add('poisoned');
+    enemyButton.dataset.enemyIndex = index;
+    enemyDisplay.appendChild(enemyButton);
+    if (index === selectedEnemyIndex) enemyButton.classList.add('selected');
+  });
+}
 
-      if (staminaRegenIntervalId) {
-        clearInterval(staminaRegenIntervalId);
-        staminaRegenIntervalId = null;
-      }
+// Draw player status in battle UI
+function drawPlayerBattleStatus() {
+  const playerBattleStatusDiv = document.getElementById('player-battle-status');
+  playerBattleStatusDiv.innerHTML = "";
+  const playerName = document.createElement('p');
+  playerName.textContent = '8-Bit';
 
-      if (enemyAttackIntervalId) {
-        clearInterval(enemyAttackIntervalId);
-        enemyAttackIntervalId = null;
-      }
+  const hpContainer = document.createElement('div');
+  hpContainer.className = 'hp-bar-container';
+  const innerHpBar = document.createElement('div');
+  innerHpBar.className = 'hp-bar';
+  innerHpBar.style.width = `${(playerStats.currentHp / playerStats.maxHp) * 100}%`;
+  const hpTxt = document.createElement('div');
+  hpTxt.className = 'hp-text';
+  hpTxt.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
+  hpContainer.appendChild(innerHpBar);
+  hpContainer.appendChild(hpTxt);
 
-      if (outcome === 'win') {
-        let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
-        gainXP(totalXp);
+  playerBattleStatusDiv.appendChild(playerName);
+  playerBattleStatusDiv.appendChild(hpContainer);
 
-        playerStats.currentHp = playerStats.maxHp;
-        updateHp(playerStats.currentHp);
+  const staminaContainer = document.createElement('div');
+  staminaContainer.className = 'hp-bar-container';
+  const staminaBar = document.createElement('div');
+  staminaBar.className = 'hp-bar';
+  staminaBar.style.width = `${(playerStats.currentStamina / playerStats.maxStamina) * 100}%`;
+  staminaBar.style.backgroundColor = "#00FFFF";
+  const staminaText = document.createElement('div');
+  staminaText.className = 'hp-text';
+  staminaText.textContent = `${playerStats.currentStamina}/${playerStats.maxStamina}`;
+  staminaContainer.appendChild(staminaBar);
+  staminaContainer.appendChild(staminaText);
+  playerBattleStatusDiv.appendChild(staminaContainer);
+}
 
-        if (defeatedZone) {
-          removeZone(defeatedZone);
-        }
-      } else if (outcome === 'lose') {
-        loadLevel(0, 150, 50);
-      }
+// Enemy behaviors
+function normalAttack(enemy) {
+  playerStats.currentHp -= enemy.damage;
+  showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
+}
+function sniperAttack(enemy) {
+  const isCritical = Math.random() < 0.3;
+  const damage = isCritical ? enemy.damage * 3 : enemy.damage;
+  playerStats.currentHp -= damage;
+  showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
+}
+function bossBehavior(enemy) {
+  const now = Date.now();
+  if (!enemy.shieldActivatedAt) enemy.shieldActivatedAt = 0;
+  if (!enemy.shieldCooldownEnd) enemy.shieldCooldownEnd = 0;
 
-      activeEnemies = [];
-      defeatedZone = null;
-      draw();
-      document.getElementById('player-battle-status').innerHTML = '';
+  if (enemy.shieldActive) {
+    if (now >= enemy.shieldActivatedAt + 2000) {
+      enemy.shieldActive = false;
+      enemy.shieldCooldownEnd = now + 3000;
+      showTemporaryText(`${enemy.name}'s shield fades.`);
     }
-
-    // Initialize battle from zone or interactable
-    function initiateBattle(zoneType, zoneObject) {
-      inBattle = true;
-      defeatedZone = { type: zoneType, object: zoneObject };
-
-      staminaRegenIntervalId = setInterval(() => {
-        updateStamina(playerStats.currentStamina + 1);
-        drawPlayerBattleStatus();
-      }, 100);
-
-      let encounter = zoneObject.encounter;
-
-      activeEnemies = encounter.map(enemyData => {
-        const baseStats = enemyTypes[enemyData.type];
-        const scaledStats = scaleEnemyStats(baseStats);
-        const enemy = {
-          ...enemyData,
-          ...scaledStats,
-          currentHp: scaledStats.maxHp,
-          shieldActive: false,
-          shieldCooldownEnd: 0,
-          rocketActive: false,
-          rocketTicksLeft: 0,
-        };
-        if (enemy.isBoss) {
-          enemy.shieldActivatedAt = 0;
-          enemy.shieldCooldownEnd = 0;
-          enemy.rocketActive = false;
-          enemy.rocketTicksLeft = 0;
-        }
-        return enemy;
-      });
-
-      selectedEnemyIndex = 0;
-      drawBattleUI();
-      drawPlayerBattleStatus();
-      enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+  } else {
+    if (now >= enemy.shieldCooldownEnd) {
+      enemy.shieldActive = true;
+      enemy.shieldActivatedAt = now;
+      showTemporaryText(`${enemy.name} activates a shield!`);
     }
+  }
 
-    // Check collision with interactables
-    function checkInteraction(checkX, checkY) {
-      if (currentLevel.interactables) {
-        const hitboxX = checkX + hitboxOffsetX;
-        const hitboxY = checkY + hitboxOffsetY;
-        for (const object of currentLevel.interactables) {
-          if (
-            hitboxX < object.x + object.width &&
-            hitboxX + hitboxWidth > object.x &&
-            hitboxY < object.y + object.height &&
-            hitboxY + hitboxHeight > object.y
-          ) {
-            return object;
-          }
-        }
-      }
-      return null;
+  if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
+    const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
+    playerStats.currentHp -= rocketTickDamage;
+    enemy.rocketTicksLeft--;
+    showTemporaryText(`${enemy.name}'s rocket hits you for ${rocketTickDamage} damage!`);
+    if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+    if (enemy.rocketTicksLeft === 0) {
+      enemy.rocketActive = false;
+      showTemporaryText("The rocket damage ends.");
     }
+  }
 
-    // Handle interaction actions
-    function handleInteraction(object) {
+  if (enemy.shieldActive) return;
+
+  if (!enemy.rocketActive && Math.random() < 0.25) {
+    enemy.rocketActive = true;
+    enemy.rocketTicksLeft = 4;
+    showTemporaryText(`${enemy.name} launches a rocket!`);
+  }
+
+  playerStats.currentHp -= enemy.damage;
+  showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
+}
+
+// Take enemy turn actions
+function takeTurn() {
+  if (!inBattle) return;
+  activeEnemies.forEach(enemy => {
+    if (!enemy.stunned) {
+      const behavior = (enemyTypes[enemy.type] && enemyTypes[enemy.type].behavior) || 'normalAttack';
+      if (behavior === 'normalAttack') normalAttack(enemy);
+      else if (behavior === 'sniperAttack') sniperAttack(enemy);
+      else if (behavior === 'bossBehavior') bossBehavior(enemy);
+    }
+  });
+
+  if (!canGoBelow1Hp() && playerStats.currentHp <= 1) {
+    playerStats.currentHp = 1;
+  }
+  updateHp(playerStats.currentHp);
+  drawBattleUI();
+  drawPlayerBattleStatus();
+  if (playerStats.currentHp <= 0) {
+    endBattle('lose');
+  }
+}
+
+// End battle and clean up
+function endBattle(outcome) {
+  inBattle = false;
+  document.getElementById('battle-overlay').style.display = 'none';
+
+  if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
+  if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
+
+  if (outcome === 'win') {
+    let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
+    gainXP(totalXp);
+    playerStats.currentHp = playerStats.maxHp;
+    updateHp(playerStats.currentHp);
+    if (defeatedZone) removeZone(defeatedZone);
+  } else if (outcome === 'lose') {
+    showGameOver();
+  }
+
+  activeEnemies = [];
+  defeatedZone = null;
+  draw();
+  const pbs = document.getElementById('player-battle-status');
+  if (pbs) pbs.innerHTML = "";
+}
+
+// Initialize battle from zone or interactable
+function initiateBattle(zoneType, zoneObject) {
+  inBattle = true;
+  defeatedZone = { type: zoneType, object: zoneObject };
+  staminaRegenIntervalId = setInterval(() => {
+    updateStamina(playerStats.currentStamina + 1);
+    drawPlayerBattleStatus();
+  }, 100);
+
+  let encounter = zoneObject.encounter || [];
+  activeEnemies = encounter.map(enemyData => {
+    const baseStats = enemyTypes[enemyData.type];
+    const scaledStats = scaleEnemyStats(baseStats);
+    const enemy = {
+      ...enemyData,
+      type: enemyData.type,
+      name: baseStats ? baseStats.name : enemyData.type,
+      maxHp: scaledStats.maxHp,
+      currentHp: scaledStats.maxHp,
+      damage: scaledStats.damage,
+      xpReward: baseStats ? baseStats.xpReward : 0,
+      shieldActive: false,
+      shieldCooldownEnd: 0,
+      rocketActive: false,
+      rocketTicksLeft: 0,
+      stunned: false,
+      poisoned: false
+    };
+    if (enemy.isBoss) {
+      enemy.shieldActivatedAt = 0;
+      enemy.shieldCooldownEnd = 0;
+      enemy.rocketActive = false;
+      enemy.rocketTicksLeft = 0;
+    }
+    return enemy;
+  });
+
+  selectedEnemyIndex = 0;
+  drawBattleUI();
+  drawPlayerBattleStatus();
+  enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+}
+
+// Check collision with interactables
+function checkInteraction(checkX, checkY) {
+  if (!currentLevel.interactables) return null;
+  const hitboxX = checkX + hitboxOffsetX;
+  const hitboxY = checkY + hitboxOffsetY;
+  for (const object of currentLevel.interactables) {
+    if (
+      hitboxX < object.x + object.width &&
+      hitboxX + hitboxWidth > object.x &&
+      hitboxY < object.y + object.height &&
+      hitboxY + hitboxHeight > object.y
+    ) {
+      return object;
+    }
+  }
+  return null;
+}
+
+// Handle interaction actions
+function handleInteraction(object) {
   if (!object) return;
 
   if (object.name === "power_box") {
@@ -972,7 +925,7 @@ function showGameOver() {
   }
 
   if (object.action === "break") {
-    const tool = object.requiredItem; // e.g. "hammer"
+    const tool = object.requiredItem;
     if ((inventory.get(tool) || 0) > 0) {
       currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
       currentLevel.walls = currentLevel.walls.filter(w =>
@@ -998,14 +951,12 @@ function showGameOver() {
   }
 }
 
-
-    // Attack buttons event listeners
-    document.getElementById('attack-button').addEventListener('click', () => {
+// Attack buttons event listeners
+document.getElementById('attack-button').addEventListener('click', () => {
   if (!inBattle || !activeEnemies.length) return;
   const targetEnemy = activeEnemies[selectedEnemyIndex];
   if (!targetEnemy) return;
 
-  // Check shield before applying damage
   if (targetEnemy.shieldActive) {
     showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
   } else {
@@ -1013,317 +964,279 @@ function showGameOver() {
     if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
   }
 
-  // Then check for defeated enemies, redraw UI, etc.
-  const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+  let remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
   if (remainingEnemies.length === 0) {
     endBattle('win');
     return;
   }
   activeEnemies = remainingEnemies;
-  if (selectedEnemyIndex >= activeEnemies.length) {
-    selectedEnemyIndex = 0;
-  }
+  if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
 });
 
-    document.getElementById('special-attack-button-1').addEventListener('click', () => {
-      const staminaCost = 100;
-      if (!inBattle || !activeEnemies.length || playerStats.currentStamina < staminaCost) {
-        showTemporaryText("Not enough stamina!");
-        return;
-      }
+document.getElementById('special-attack-button-1').addEventListener('click', () => {
+  const staminaCost = 100;
+  if (!inBattle || !activeEnemies.length || playerStats.currentStamina < staminaCost) {
+    showTemporaryText("Not enough stamina!");
+    return;
+  }
+  updateStamina(playerStats.currentStamina - staminaCost);
+  const targetEnemy = activeEnemies[selectedEnemyIndex];
+  if (!targetEnemy) return;
+  targetEnemy.currentHp -= (playerStats.damage * 10);
+  if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
 
-      updateStamina(playerStats.currentStamina - staminaCost);
-      const targetEnemy = activeEnemies[selectedEnemyIndex];
-      if (!targetEnemy) return;
+  let remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+  if (remainingEnemies.length === 0) {
+    endBattle('win');
+    return;
+  }
+  activeEnemies = remainingEnemies;
+  if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
+  drawBattleUI();
+  drawPlayerBattleStatus();
+});
 
-      targetEnemy.currentHp -= (playerStats.damage * 10);
-      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+document.getElementById('special-attack-button-2').addEventListener('click', () => {
+  const staminaCost = 200;
+  if (!inBattle || playerStats.currentStamina < staminaCost) {
+    showTemporaryText("Not enough stamina!");
+    return;
+  }
+  updateStamina(playerStats.currentStamina - staminaCost);
+  let remainingEnemies = [];
+  activeEnemies.forEach(enemy => {
+    enemy.currentHp -= (playerStats.damage * 20);
+    if (enemy.currentHp < 0) enemy.currentHp = 0;
+    if (enemy.currentHp > 0) remainingEnemies.push(enemy);
+  });
 
-      const remainingEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-      if (remainingEnemies.length === 0) {
-        endBattle('win');
-        return;
-      }
-      activeEnemies = remainingEnemies;
-      if (selectedEnemyIndex >= activeEnemies.length) {
-        selectedEnemyIndex = 0;
-      }
-      drawBattleUI();
-      drawPlayerBattleStatus();
-    });
+  if (remainingEnemies.length === 0) {
+    endBattle('win');
+    return;
+  }
+  activeEnemies = remainingEnemies;
+  if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
+  drawBattleUI();
+  drawPlayerBattleStatus();
+});
 
-    document.getElementById('special-attack-button-2').addEventListener('click', () => {
-      const staminaCost = 200;
-      if (!inBattle || playerStats.currentStamina < staminaCost) {
-        showTemporaryText("Not enough stamina!");
-        return;
-      }
+// Handle enemy selection click
+document.getElementById('enemy-display').addEventListener('click', (event) => {
+  const button = event.target.closest('.enemy-target');
+  if (button) {
+    selectedEnemyIndex = parseInt(button.dataset.enemyIndex);
+    drawBattleUI();
+  }
+});
 
-      updateStamina(playerStats.currentStamina - staminaCost);
+// Stats popup toggle
+document.getElementById('stats-button').addEventListener('click', () => {
+  if (statsPopup.style.display === 'none') {
+    updateStatsPopup();
+    statsPopup.style.display = 'block';
+  } else {
+    statsPopup.style.display = 'none';
+  }
+});
 
-      let remainingEnemies = [];
+updateHp(playerStats.currentHp);
 
-      activeEnemies.forEach(enemy => {
-        enemy.currentHp -= (playerStats.damage * 20);
-        if (enemy.currentHp < 0) enemy.currentHp = 0;
-        if (enemy.currentHp > 0) remainingEnemies.push(enemy);
-      });
+// Inventory button in battle toggle
+document.getElementById('inventory-battle-button').addEventListener('click', () => {
+  const inventoryPopupBattle = document.getElementById('inventory-battle-popup');
+  if (inventoryPopupBattle.style.display === 'none') {
+    drawInventoryBattlePopup();
+    inventoryPopupBattle.style.display = 'block';
+  } else {
+    inventoryPopupBattle.style.display = 'none';
+  }
+});
 
-      if (remainingEnemies.length === 0) {
-        endBattle('win');
-        return;
-      }
-
-      activeEnemies = remainingEnemies;
-
-      if (selectedEnemyIndex >= activeEnemies.length) {
-        selectedEnemyIndex = 0;
-      }
-
-      drawBattleUI();
-      drawPlayerBattleStatus();
-    });
-
-    // Handle enemy selection click
-    document.getElementById('enemy-display').addEventListener('click', (event) => {
-      const button = event.target.closest('.enemy-target');
-      if (button) {
-        selectedEnemyIndex = parseInt(button.dataset.enemyIndex);
-        drawBattleUI();
-      }
-    });
-
-    // Stats popup toggle
-    document.getElementById('stats-button').addEventListener('click', () => {
-      if (statsPopup.style.display === 'none') {
-        updateStatsPopup();
-        statsPopup.style.display = 'block';
-      } else {
-        statsPopup.style.display = 'none';
-      }
-    });
-
-    // Inventory button event handled above
-
-    updateHp(playerStats.currentHp);
-
-    // Inventory button in battle toggle
-    document.getElementById('inventory-battle-button').addEventListener('click', () => {
-      const inventoryPopup = document.getElementById('inventory-battle-popup');
-
-      if (inventoryPopup.style.display === 'none') {
-        drawInventoryBattlePopup();
-        inventoryPopup.style.display = 'block';
-      } else {
-        inventoryPopup.style.display = 'none';
-      }
-    });
-
-        document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function(e) {
   if (isGameOver && e.key.toLowerCase() === 'r') {
-    location.reload(); // Reloads the page to restart the game
+    location.reload();
   }
 });
 
+// Load level and update background
+function loadLevel(index, newX, newY) {
+  currentLevelIndex = index;
+  currentLevel = levels[currentLevelIndex];
+  bgImg.src = currentLevel.bgSrc;
+  x = newX;
+  y = newY;
+  draw();
+}
 
-    // Load level and update background
-    function loadLevel(index, newX, newY) {
-      currentLevelIndex = index;
-      currentLevel = levels[currentLevelIndex];
-      bgImg.src = currentLevel.bgSrc;
-      x = newX;
-      y = newY;
-      draw();
-    }
-
-    // Wall collision detection
-    function isCollidingWithWall(newX, newY) {
-      const newHitboxX = newX + hitboxOffsetX;
-      const newHitboxY = newY + hitboxOffsetY;
-      for (const wall of currentLevel.walls) {
-        if (
-          newHitboxX < wall.x + wall.width &&
-          newHitboxX + hitboxWidth > wall.x &&
-          newHitboxY < wall.y + wall.height &&
-          newHitboxY + hitboxHeight > wall.y
-        ) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    // Door collision detection
-    function checkDoorCollision(newX, newY) {
-      const newHitboxX = newX + hitboxOffsetX;
-      const newHitboxY = newY + hitboxOffsetY;
-      for (const door of currentLevel.doors) {
-        if (
-          newHitboxX < door.x + door.width &&
-          newHitboxX + hitboxWidth > door.x &&
-          newHitboxY < door.y + door.height &&
-          newHitboxY + hitboxHeight > door.y
-        ) {
-          return door;
-        }
-      }
-      return null;
-    }
-
-    // Draw game world and player
-    function draw() {
-      if (inBattle || isGameOver) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "rgba(0,0,0,0.0)";
-      for (const wall of currentLevel.walls) {
-        ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
-      }
-      if (useImage && img.complete && img.naturalWidth > 0) {
-        ctx.drawImage(img, x, y, imageSize, imageSize);
-      } else {
-        ctx.fillStyle = "#0090ff";
-        ctx.fillRect(x, y, imageSize, imageSize);
-      }
-      ctx.fillStyle = "rgba(0,0,0,0.0)";
-      ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
-
-      if (tempText) {
-        ctx.fillStyle = "white";
-        ctx.font = "12px 'Press Start 2P'";
-        ctx.textAlign = "center";
-        const maxWidth = canvas.width - 40;
-        const lineHeight = 15;
-        const startY = canvas.height - 100;
-        wrapText(ctx, tempText, canvas.width / 2, startY, maxWidth, lineHeight);
-      }
-      currentLevel.interactables.forEach(obj => {
-  if (obj.action === "pickup" && obj.name === "hammer_pickup") {
-    if (hammerImg.complete) {
-      ctx.drawImage(hammerImg, obj.x, obj.y, obj.width, obj.height);
-    } else {
-      ctx.fillStyle = "#cc9900";
-      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+// Wall collision detection
+function isCollidingWithWall(newX, newY) {
+  const newHitboxX = newX + hitboxOffsetX;
+  const newHitboxY = newY + hitboxOffsetY;
+  for (const wall of currentLevel.walls) {
+    if (
+      newHitboxX < wall.x + wall.width &&
+      newHitboxX + hitboxWidth > wall.x &&
+      newHitboxY < wall.y + wall.height &&
+      newHitboxY + hitboxHeight > wall.y
+    ) {
+      return true;
     }
   }
-      // In your draw() **after** walls:
-currentLevel.interactables.forEach(obj => {
-  if (obj.name === "bigStone") {
-    if (stoneImg.complete) {
-      ctx.drawImage(stoneImg, obj.x, obj.y, obj.width, obj.height);
-    } else {
-      ctx.fillStyle = "#888";
-      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+  return false;
+}
+
+// Door collision detection
+function checkDoorCollision(newX, newY) {
+  const newHitboxX = newX + hitboxOffsetX;
+  const newHitboxY = newY + hitboxOffsetY;
+  for (const door of currentLevel.doors) {
+    if (
+      newHitboxX < door.x + door.width &&
+      newHitboxX + hitboxWidth > door.x &&
+      newHitboxY < door.y + door.height &&
+      newHitboxY + hitboxHeight > door.y
+    ) {
+      return door;
     }
   }
+  return null;
+}
+
+// Draw game world and player
+function draw() {
+  if (inBattle || isGameOver) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (bgImg.complete && bgImg.naturalWidth > 0) ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "rgba(0,0,0,0.0)";
+  for (const wall of currentLevel.walls) {
+    ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+  }
+  if (useImage && img.complete && img.naturalWidth > 0) {
+    ctx.drawImage(img, x, y, imageSize, imageSize);
+  } else {
+    ctx.fillStyle = "#0090ff";
+    ctx.fillRect(x, y, imageSize, imageSize);
+  }
+  ctx.fillStyle = "rgba(0,0,0,0.0)";
+  ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
+
+  if (tempText) {
+    ctx.fillStyle = "white";
+    ctx.font = "12px 'Press Start 2P'";
+    ctx.textAlign = "center";
+    const maxWidth = canvas.width - 40;
+    const lineHeight = 15;
+    const startY = canvas.height - 100;
+    wrapText(ctx, tempText, canvas.width / 2, startY, maxWidth, lineHeight);
+  }
+
+  currentLevel.interactables.forEach(obj => {
+    if (obj.action === "pickup" && obj.name === "hammer_pickup") {
+      if (hammerImg.complete) ctx.drawImage(hammerImg, obj.x, obj.y, obj.width, obj.height);
+      else { ctx.fillStyle = "#cc9900"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
+    }
+  });
+
+  // draw smashable stones (name matches what you added earlier)
+  currentLevel.interactables.forEach(obj => {
+    if (obj.name === "big_stone" || obj.name === "bigStone") {
+      if (stoneImg.complete) ctx.drawImage(stoneImg, obj.x, obj.y, obj.width, obj.height);
+      else { ctx.fillStyle = "#888"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
+    }
+  });
+}
+
+// Save game state to localStorage
+function saveGame() {
+  const saveData = {
+    playerStats,
+    inventory: Array.from(inventory.entries()),
+    currentLevelIndex,
+    playerPosition: { x, y },
+  };
+  localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
+  showTemporaryText('Game saved!');
+  console.log('Game saved:', saveData);
+}
+
+// Load game state from localStorage
+function loadGame() {
+  const saved = localStorage.getItem('8bitsAdventureSave');
+  if (!saved) {
+    showTemporaryText('No saved game found.');
+    console.log('No saved game found.');
+    return;
+  }
+
+  try {
+    const saveData = JSON.parse(saved);
+    Object.assign(playerStats, saveData.playerStats);
+    inventory.clear();
+    saveData.inventory.forEach(([key, value]) => inventory.set(key, value));
+    loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
+    updateHp(playerStats.currentHp);
+    updateStatsPopup();
+    showTemporaryText('Game loaded!');
+    console.log('Game loaded:', saveData);
+  } catch (e) {
+    console.error('Failed to load save:', e);
+    showTemporaryText('Failed to load save.');
+  }
+}
+
+// Create Save and Load buttons after DOM is ready (script at bottom so safe)
+const gameHud = document.getElementById('game-hud');
+if (gameHud) {
+  const saveButton = document.createElement('button');
+  saveButton.textContent = 'Save Game';
+  saveButton.style.fontFamily = "'Press Start 2P', sans-serif";
+  saveButton.style.margin = '0 10px';
+  saveButton.onclick = saveGame;
+  gameHud.appendChild(saveButton);
+
+  const loadButton = document.createElement('button');
+  loadButton.textContent = 'Load Game';
+  loadButton.style.fontFamily = "'Press Start 2P', sans-serif";
+  loadButton.style.margin = '0 10px';
+  loadButton.onclick = loadGame;
+  gameHud.appendChild(loadButton);
+}
+
+// Keyboard movement and interaction
+canvas.addEventListener('keydown', function(e) {
+  if (inBattle || isGameOver) return;
+  let nextX = x, nextY = y;
+  const key = e.key.toLowerCase();
+
+  // movement keys: prevent default for arrows/wasd
+  if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(key)) {
+    e.preventDefault();
+  }
+
+  if (key === 'x') {
+    e.preventDefault();
+    const interactableObject = checkInteraction(x, y);
+    if (interactableObject) handleInteraction(interactableObject);
+    return;
+  }
+
+  if (key === 'arrowleft' || key === 'a') nextX -= speed;
+  if (key === 'arrowright' || key === 'd') nextX += speed;
+  if (key === 'arrowup' || key === 'w') nextY -= speed;
+  if (key === 'arrowdown' || key === 's') nextY += speed;
+
+  if (!isCollidingWithWall(nextX, nextY)) {
+    const door = checkDoorCollision(nextX, nextY);
+    if (door) { loadLevel(door.destLevel, door.destX, door.destY); return; }
+    const battleZone = findBattleZone(nextX, nextY);
+    if (battleZone) { initiateBattle('battleZone', battleZone); return; }
+    x = nextX; y = nextY;
+  }
+  draw();
 });
-
-    // Save game state to localStorage
-    function saveGame() {
-      const saveData = {
-        playerStats,
-        inventory: Array.from(inventory.entries()),
-        currentLevelIndex,
-        playerPosition: { x, y },
-      };
-      localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
-      showTemporaryText('Game saved!');
-      console.log('Game saved:', saveData);
-    }
-
-    // Load game state from localStorage
-    function loadGame() {
-      const saved = localStorage.getItem('8bitsAdventureSave');
-      if (!saved) {
-        showTemporaryText('No saved game found.');
-        console.log('No saved game found.');
-        return;
-      }
-      try {
-        const saveData = JSON.parse(saved);
-        Object.assign(playerStats, saveData.playerStats);
-        inventory.clear();
-        saveData.inventory.forEach(([key, value]) => {
-          inventory.set(key, value);
-        });
-        loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
-        updateHp(playerStats.currentHp);
-        updateStatsPopup();
-        showTemporaryText('Game loaded!');
-        console.log('Game loaded:', saveData);
-      } catch (e) {
-        console.error('Failed to load save:', e);
-        showTemporaryText('Failed to load save.');
-      }
-    }
-
-    // Create Save and Load buttons after DOM is ready (script at bottom so safe)
-    const gameHud = document.getElementById('game-hud');
-    if (gameHud) {
-      const saveButton = document.createElement('button');
-      saveButton.textContent = 'Save Game';
-      saveButton.style.fontFamily = '"Press Start 2P", sans-serif';
-      saveButton.style.margin = '0 10px';
-      saveButton.onclick = saveGame;
-      gameHud.appendChild(saveButton);
-
-      const loadButton = document.createElement('button');
-      loadButton.textContent = 'Load Game';
-      loadButton.style.fontFamily = '"Press Start 2P", sans-serif';
-      loadButton.style.margin = '0 10px';
-      loadButton.onclick = loadGame;
-      gameHud.appendChild(loadButton);
-    }
-
-    // Keyboard movement and interaction
-    canvas.addEventListener('keydown', function(e) {
-      if (inBattle || isGameOver) return;
-      if (inBattle) return;
-      if (!bgImg.complete || bgImg.naturalWidth === 0) return;
-      let nextX = x, nextY = y;
-      const key = e.key.toLowerCase();
-      switch(key) {
-        case 'arrowup':
-        case 'arrowdown':
-        case 'arrowleft':
-        case 'arrowright':
-        case 'w':
-        case 'a':
-        case 's':
-        case 'd':
-          e.preventDefault();
-          break;
-        case 'x':
-          e.preventDefault();
-          const interactableObject = checkInteraction(x, y);
-          if (interactableObject) {
-            handleInteraction(interactableObject);
-          }
-          return;
-      }
-      if (key === 'arrowleft' || key === 'a') nextX -= speed;
-      if (key === 'arrowright' || key === 'd') nextX += speed;
-      if (key === 'arrowup' || key === 'w') nextY -= speed;
-      if (key === 'arrowdown' || key === 's') nextY += speed;
-      if (!isCollidingWithWall(nextX, nextY)) {
-        const door = checkDoorCollision(nextX, nextY);
-        if (door) {
-          loadLevel(door.destLevel, door.destX, door.destY);
-          return;
-        }
-        const battleZone = findBattleZone(nextX, nextY);
-        if (battleZone) {
-          initiateBattle('battleZone', battleZone);
-          return;
-        }
-        x = nextX;
-        y = nextY;
-      }
-      draw();
-    });
-
   </script>
 </body>
 </html>
