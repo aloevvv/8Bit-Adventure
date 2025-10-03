@@ -445,6 +445,41 @@ inventory.set("extra_life", 1);
       };
     }
 
+    // Toggle general inventory popup on inventory button click
+const inventoryButton = document.getElementById('inventory-button');
+const inventoryPopup = document.getElementById('inventory-popup');
+const statsPopup = document.getElementById('stats-popup');
+const inventoryList = document.getElementById('general-inventory-list');
+
+inventoryButton.addEventListener('click', () => {
+  if (inBattle) return; // Prevent during battle
+
+  if (inventoryPopup.style.display === 'none' || inventoryPopup.style.display === '') {
+    drawGeneralInventory();
+    inventoryPopup.style.display = 'block';
+    statsPopup.style.display = 'none';
+  } else {
+    inventoryPopup.style.display = 'none';
+  }
+});
+
+function drawGeneralInventory() {
+  inventoryList.innerHTML = '';
+
+  if (inventory.size === 0 || Array.from(inventory.values()).every(q => q === 0)) {
+    inventoryList.innerHTML = '<p>Your inventory is empty.</p>';
+    return;
+  }
+
+  inventory.forEach((quantity, itemName) => {
+    if (quantity > 0) {
+      const p = document.createElement('p');
+      p.textContent = `${itemName.replace(/_/g, ' ')}: ${quantity}`;
+      inventoryList.appendChild(p);
+    }
+  });
+}
+
     function findBattleZone(checkX, checkY) {
       const hitboxX = checkX + hitboxOffsetX;
       const hitboxY = checkY + hitboxOffsetY;
