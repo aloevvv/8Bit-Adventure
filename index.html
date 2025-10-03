@@ -986,29 +986,8 @@
       if (inventoryPopup.style.display === 'none') {
         drawInventoryBattlePopup();
         inventoryPopup.style.display = 'block';
-
-        // Pause enemy attacks and stamina regen while inventory open
-        if (staminaRegenIntervalId) {
-          clearInterval(staminaRegenIntervalId);
-          staminaRegenIntervalId = null;
-        }
-        if (enemyAttackIntervalId) {
-          clearInterval(enemyAttackIntervalId);
-          enemyAttackIntervalId = null;
-        }
       } else {
         inventoryPopup.style.display = 'none';
-
-        // Resume enemy attacks and stamina regen
-        if (!staminaRegenIntervalId) {
-          staminaRegenIntervalId = setInterval(() => {
-            updateStamina(playerStats.currentStamina + 1);
-            drawPlayerBattleStatus();
-          }, 100);
-        }
-        if (!enemyAttackIntervalId) {
-          enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
-        }
       }
     });
 
