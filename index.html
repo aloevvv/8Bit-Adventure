@@ -658,15 +658,15 @@ function useItem(itemName) {
   if (!inBattle) return;
   activeEnemies.forEach(enemy => {
     if (!enemy.stunned) {
-      playerStats.currentHp -= enemy.damage;
+      const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
+      if (behavior === 'normalAttack') normalAttack(enemy);
+      else if (behavior === 'bossBehavior') bossBehavior(enemy);
     }
   });
 
-  // Check for Extra Life invincibility
   if (!canGoBelow1Hp() && playerStats.currentHp <= 1) {
-      playerStats.currentHp = 1;
+    playerStats.currentHp = 1;
   }
-  
   updateHp(playerStats.currentHp);
   drawBattleUI();
   drawPlayerBattleStatus();
@@ -708,6 +708,61 @@ function useItem(itemName) {
       draw();
       document.getElementById('player-battle-status').innerHTML = '';
     }
+    function bossBehavior(enemy) {
+  const now = Date.now();
+
+  // Manage shield cooldown and duration
+  if (!enemy.shieldActive) {
+    if (enemy.shieldCooldown <= 0) {
+      // Activate shield for 2 seconds
+      enemy.shieldActive = true;
+      enemy.shieldActivatedAt = now;
+      enemy.shieldCooldown = 5000; // 5 seconds cooldown after shield ends
+      showTemporaryText(`${enemy.name} activates a shield!`);
+    }
+  } else {
+    // Shield is active, check duration (2 seconds)
+    if (now - enemy.shieldActivatedAt >= 2000) {
+      enemy.shieldActive = false;
+      showTemporaryText(`${enemy.name}'s shield fades.`);
+    }
+  }
+
+  // Decrease shield cooldown timer when shield is inactive
+  if (!enemy.shieldActive && enemy.shieldCooldown > 0) {
+    enemy.shieldCooldown -= 1000; // reduce by 1 second each turn roughly
+    if (enemy.shieldCooldown < 0) enemy.shieldCooldown = 0;
+  }
+
+  // Handle rocket attack damage over time ticks
+  if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
+    const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05); // 5% max HP per tick
+    playerStats.currentHp -= rocketTickDamage;
+    enemy.rocketTicksLeft--;
+    showTemporaryText(`${enemy.name}'s rocket hits you for ${rocketTickDamage} damage!`);
+    if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+    if (enemy.rocketTicksLeft === 0) {
+      enemy.rocketActive = false;
+      showTemporaryText(`The rocket damage ends.`);
+    }
+  }
+
+  // If shield active, boss does not do normal attack this turn
+  if (enemy.shieldActive) {
+    return;
+  }
+
+  // 25% chance to start rocket attack on this turn if not already active
+  if (!enemy.rocketActive && Math.random() < 0.25) {
+    enemy.rocketActive = true;
+    enemy.rocketTicksLeft = 4; // lasts 4 turns (2 seconds if turns every 500ms)
+    showTemporaryText(`${enemy.name} launches a rocket!`);
+  }
+
+  // Normal attack damage (only if shield not active)
+  playerStats.currentHp -= enemy.damage;
+  showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
+}
 
     function initiateBattle(zoneType, zoneObject) {
       inBattle = true;
@@ -721,13 +776,25 @@ function useItem(itemName) {
       let encounter = zoneObject.encounter;
 
       activeEnemies = encounter.map(enemyData => {
-        const baseStats = enemyTypes[enemyData.type];
-        const scaledStats = scaleEnemyStats(baseStats);
-        return {
-          ...enemyData,
-          ...scaledStats,
-          currentHp: scaledStats.maxHp
-        };
+  const baseStats = enemyTypes[enemyData.type];
+  const scaledStats = scaleEnemyStats(baseStats);
+  const enemy = {
+    ...enemyData,
+    ...scaledStats,
+    currentHp: scaledStats.maxHp,
+    shieldActive: false,
+    shieldCooldown: 0,
+    rocketActive: false,
+    rocketTicksLeft: 0,
+  };
+  if (enemy.isBoss) {
+    // Initialize shield and rocket timers
+    enemy.shieldCooldown = 0;
+    enemy.rocketActive = false;
+    enemy.rocketTicksLeft = 0;
+  }
+  return enemy;
+});
       });
       selectedEnemyIndex = 0;
       drawBattleUI();
