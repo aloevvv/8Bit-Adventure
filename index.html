@@ -204,6 +204,13 @@
     <div class="hud-section" id="stats">
       <p id="stats-button">Stats</p>
       <div id="stats-popup" class="stats-popup" style="display: none;">
+<div id="inventory-popup" class="stats-popup" style="display: none;">
+  <h4>Inventory</h4>
+  <div id="general-inventory-list">
+    <!-- Item list will be populated here -->
+  </div>
+</div>
+
         <h4>Player Stats</h4>
         <p>Level: <span id="popup-level"></span></p>
         <p>XP: <span id="popup-xp"></span></p>
@@ -449,6 +456,27 @@ inventory.set("extra_life", 1);
       }
       return null;
     }
+    
+    function drawGeneralInventory() {
+  const inventoryList = document.getElementById('general-inventory-list');
+  inventoryList.innerHTML = ''; // Clear previous content
+
+  // Check if inventory is empty
+  if (inventory.size === 0 || Array.from(inventory.values()).every(q => q === 0)) {
+    inventoryList.innerHTML = '<p>Your inventory is empty.</p>';
+    return;
+  }
+
+  // Populate the list with items
+  inventory.forEach((quantity, itemName) => {
+    if (quantity > 0) {
+      const itemElement = document.createElement('p');
+      itemElement.textContent = `${itemName.replace('_', ' ')}: ${quantity}`;
+      inventoryList.appendChild(itemElement);
+    }
+  });
+}
+
 
 function drawInventoryBattlePopup() {
   const inventoryList = document.getElementById('inventory-list');
@@ -702,6 +730,26 @@ function useItem(itemName) {
         }
       }
     }
+
+    document.getElementById('inventory').addEventListener('click', () => {
+  // Do nothing if a battle is in progress
+  if (inBattle) return;
+  
+  const inventoryPopup = document.getElementById('inventory-popup');
+  
+  if (inventoryPopup.style.display === 'none') {
+    // Populate the list and show the pop-up
+    drawGeneralInventory();
+    inventoryPopup.style.display = 'block';
+    
+    // Hide the stats popup if it's open to prevent overlap
+    document.getElementById('stats-popup').style.display = 'none';
+  } else {
+    // Hide the pop-up
+    inventoryPopup.style.display = 'none';
+  }
+});
+
 
     document.getElementById('attack-button').addEventListener('click', () => {
       if (!inBattle || !activeEnemies.length) return;
