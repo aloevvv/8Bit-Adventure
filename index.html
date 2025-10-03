@@ -363,6 +363,7 @@
     inventory.set("emp_grenade", 1);
     inventory.set("poison_vial", 1);
     inventory.set("extra_life", 1);
+    inventory.set("hammer", 0);
 
     let playerStats = {
       level: 1,
@@ -380,6 +381,8 @@
     const enemyTypes = {
       Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 3, behavior: "normalAttack" },
       Sniperbot: { name: "Sniper", maxHp: 20, damage: 1, xpReward: 5, behavior: "sniperAttack" },
+      Puncherbot: { name: "Puncher", maxHp: 36, damage: 1, xpReward: 5, behavior: "normalAttack"},
+      Mousebot: { name: "Quickbot", max Hp: 30, damage: 2, xpReward: 5, behavior: "normalAttack"},
       BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior" }
     };
 
@@ -393,6 +396,8 @@
           { x: 290, y: 150, width: 220, height: 20 },
           { x: 500, y: 150, width: 20, height: 200 },
           { x: 0, y: 0, width: 20, height: 480 },
+          { x: 290, y: 350, width: 85, height: 15},
+          { x: 450, y: 350, width: 50, height: 15},
         ],
         doors: [
           { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 }
@@ -410,6 +415,7 @@
           { x: 0, y: 460, width: 640, height: 20 },
           { x: 608, y: 0, width: 32, height: 480 },
           { x: 0, y: 0, width: 50, height: 480 },
+          { x: 300, y: 200, width: 64, height: 64 },
         ],
         doors: [
           { x: 300, y: 450, width: 40, height: 60, destLevel: 0, destX: 400, destY: 400 }
@@ -417,7 +423,8 @@
         battleZones: [],
         interactables: [
           { name: "power_box", x: 20, y: 260, width: 100, height: 100, action: "power_on" },
-          { name: "arcade_machine", x: 340, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] }
+          { name: "arcade_machine", x: 340, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] },
+          { name: "big_stone",      x: 300, y: 200, width: 64,  height: 64,  action: "break", requiredItem: "hammer" }
         ]
       }
     ];
@@ -427,6 +434,11 @@
     const bgImg = new Image();
     bgImg.src = currentLevel.bgSrc;
     bgImg.onload = function() { draw(); };
+
+    const stoneImg = new Image();
+stoneImg.src = "stone.png";   // 64×64 graphic of a rock
+
+
 
     let activeEnemies = [];
 
@@ -937,22 +949,52 @@ function showGameOver() {
 
     // Handle interaction actions
     function handleInteraction(object) {
-      if (object.name === "power_box") {
-        if (!isPowered) {
-          isPowered = true;
-          showTemporaryText("You pressed something on the box. The lights flicker on.");
-          draw();
-        } else {
-          showTemporaryText("The power is already on.");
-        }
-      } else if (object.name === "arcade_machine") {
-        if (isPowered) {
-          initiateBattle('interactable', object);
-        } else {
-          showTemporaryText("The machine is turned off...");
-        }
-      }
+  if (!object) return;
+
+  if (object.name === "power_box") {
+    if (!isPowered) {
+      isPowered = true;
+      showTemporaryText("You pressed something on the box. The lights flicker on.");
+      draw();
+    } else {
+      showTemporaryText("The power is already on.");
     }
+    return;
+  }
+
+  if (object.name === "arcade_machine") {
+    if (isPowered) initiateBattle('interactable', object);
+    else showTemporaryText("The machine is turned off ...");
+    return;
+  }
+
+  if (object.action === "break") {
+    const tool = object.requiredItem; // "hammer"
+    if ((inventory.get(tool) || 0) > 0) {
+      currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
+      currentLevel.walls = currentLevel.walls.filter(w =>
+        !(w.x === object.x && w.y === object.y && w.width === object.width && w.height === object.height)
+      );
+      showTemporaryText("You smashed the stone!");
+    } else {
+      showTemporaryText("You need a hammer to break this rock.");
+    }
+    return;
+  }
+
+  if (object.action === "pickup") {
+    const key = object.itemName;
+    const current = inventory.get(key) || 0;
+    inventory.set(key, current + 1);
+    currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
+    currentLevel.walls = currentLevel.walls.filter(w =>
+      !(w.x === object.x && w.y === object.y && w.width === object.width && w.height === object.height)
+    );
+    showTemporaryText(`Picked up a ${key}!`);
+    return;
+  }
+}
+
 
     // Attack buttons event listeners
     document.getElementById('attack-button').addEventListener('click', () => {
@@ -1155,7 +1197,26 @@ function showGameOver() {
         const startY = canvas.height - 100;
         wrapText(ctx, tempText, canvas.width / 2, startY, maxWidth, lineHeight);
       }
+      currentLevel.interactables.forEach(obj => {
+  if (obj.action === "pickup" && obj.name === "hammer_pickup") {
+    if (hammerImg.complete) {
+      ctx.drawImage(hammerImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#cc9900";
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
     }
+  }
+      // In your draw() **after** walls:
+currentLevel.interactables.forEach(obj => {
+  if (obj.name === "bigStone") {
+    if (stoneImg.complete) {
+      ctx.drawImage(stoneImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#888";
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
 
     // Save game state to localStorage
     function saveGame() {
