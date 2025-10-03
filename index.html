@@ -154,6 +154,42 @@
       font-size: 0.7em;
       text-shadow: 1px 1px 2px black;
     }
+    /* ...existing CSS... */
+
+.inventory-popup {
+  position: absolute;
+  bottom: 120px;
+  right: 10px;
+  width: 250px;
+  max-height: 300px;
+  background-color: #002591;
+  border: 2px solid black;
+  color: white;
+  padding: 10px;
+  text-align: left;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  border-bottom: 1px solid #555;
+}
+
+.inventory-item:last-child {
+  border-bottom: none;
+}
+
+.item-use-button {
+  font-family: "Press Start 2P", sans-serif;
+  font-size: 0.7em;
+  padding: 2px 5px;
+  cursor: pointer;
+}
+
   </style>
 </head>
 <body>
@@ -188,7 +224,12 @@
       <button id="attack-button">Attack</button>
       <button id="special-attack-button-1">Extra Credits (100 STM)</button>
       <button id="special-attack-button-2">Plasma Blast (200 STM)</button>
+      <button id="inventory-battle-button">Inventory</button>
     </div>
+    <div id="inventory-battle-popup" class="inventory-popup" style="display: none;">
+  <h4>Inventory</h4>
+  <div id="inventory-list"></div>
+</div>
   </div>
   
   <script>
@@ -220,6 +261,12 @@
     let enemyAttackIntervalId = null;
     const ENEMY_ATTACK_DELAY = 2000;
     let staminaRegenIntervalId = null;
+    let inventory = new Map();
+let extraLifeTimerId = null;
+    inventory.set("bandaid", 2);
+inventory.set("emp_grenade", 1);
+inventory.set("poison_vial", 1);
+inventory.set("extra_life", 1);
 
     let playerStats = {
       level: 1,
@@ -313,6 +360,10 @@
       }, 3000);
     }
 
+    function canGoBelow1Hp() {
+  return extraLifeTimerId === null;
+}
+
     function updateStamina(newStamina) {
       if (newStamina < 0) newStamina = 0;
       if (newStamina > playerStats.maxStamina) newStamina = playerStats.maxStamina;
@@ -392,6 +443,93 @@
       }
       return null;
     }
+
+function drawInventoryBattlePopup() {
+  const inventoryList = document.getElementById('inventory-list');
+  inventoryList.innerHTML = ''; // Clear previous list
+
+  if (inventory.size === 0 || Array.from(inventory.values()).every(q => q === 0)) {
+    inventoryList.innerHTML = '<p>Inventory is empty.</p>';
+    return;
+  }
+
+  inventory.forEach((quantity, itemName) => {
+    if (quantity > 0) {
+      const itemElement = document.createElement('div');
+      itemElement.className = 'inventory-item';
+      itemElement.innerHTML = `<span>${itemName.replace('_', ' ')} (${quantity})</span>`;
+
+      const useButton = document.createElement('button');
+      useButton.textContent = 'Use';
+      useButton.className = 'item-use-button';
+      useButton.onclick = () => useItem(itemName);
+
+      itemElement.appendChild(useButton);
+      inventoryList.appendChild(itemElement);
+    }
+  });
+}
+
+// New function to handle item usage
+function useItem(itemName) {
+  if (inventory.get(itemName) > 0) {
+    if (itemName === 'bandaid') {
+      const healAmount = Math.ceil(playerStats.maxHp * 0.33);
+      updateHp(playerStats.currentHp + healAmount);
+      showTemporaryText(`Used a Bandage to heal for ${healAmount} HP!`);
+    } else if (itemName === 'emp_grenade') {
+      // Logic for stunning enemies
+      activeEnemies.forEach(enemy => {
+        if (enemy.name !== "Dummy") { // Exclude bosses and dummies
+          enemy.stunned = true;
+        }
+      });
+      setTimeout(() => {
+        activeEnemies.forEach(enemy => enemy.stunned = false);
+      }, 4000); // Stun for 4 seconds
+      showTemporaryText(`Used an EMP Grenade! All enemies stunned for 4 seconds!`);
+    } else if (itemName === 'poison_vial') {
+      // Logic for poisoning enemies
+      const poisonDamagePerTick = Math.ceil(5 * playerStats.damage / 100);
+      activeEnemies.forEach(enemy => {
+        if (enemy.name !== "Dummy") {
+          enemy.poisoned = true;
+          let poisonTimer = 0;
+          const poisonInterval = setInterval(() => {
+            if (poisonTimer >= 3000) { // Poison for 3 seconds
+              clearInterval(poisonInterval);
+              enemy.poisoned = false;
+            } else {
+              enemy.currentHp -= poisonDamagePerTick;
+              if (enemy.currentHp < 0) enemy.currentHp = 0;
+              drawBattleUI();
+            }
+            poisonTimer += 500;
+          }, 500);
+        }
+      });
+      showTemporaryText(`Used a Poison Vial! Enemies are taking poison damage!`);
+    } else if (itemName === 'extra_life') {
+      // Logic for extra life
+      if (extraLifeTimerId) {
+        clearTimeout(extraLifeTimerId);
+        extraLifeTimerId = null;
+      }
+      showTemporaryText(`Used an Extra Life! You have 3 seconds of invincibility!`);
+      extraLifeTimerId = setTimeout(() => {
+        extraLifeTimerId = null;
+      }, 3000); // 3 seconds of invincibility
+    }
+
+    // Decrement the item count
+    inventory.set(itemName, inventory.get(itemName) - 1);
+    
+    // Close the inventory and redraw
+    document.getElementById('inventory-battle-popup').style.display = 'none';
+    drawBattleUI();
+    drawPlayerBattleStatus();
+  }
+}
     
     function drawBattleUI() {
       const battleOverlay = document.getElementById('battle-overlay');
@@ -444,17 +582,25 @@
     }
 
     function takeTurn() {
-      if (!inBattle) return;
-      activeEnemies.forEach(enemy => {
-        playerStats.currentHp -= enemy.damage;
-      });
-      updateHp(playerStats.currentHp);
-      drawBattleUI();
-      drawPlayerBattleStatus();
-      if (playerStats.currentHp <= 0) {
-        endBattle('lose');
-      }
+  if (!inBattle) return;
+  activeEnemies.forEach(enemy => {
+    if (!enemy.stunned) {
+      playerStats.currentHp -= enemy.damage;
     }
+  });
+
+  // Check for Extra Life invincibility
+  if (!canGoBelow1Hp() && playerStats.currentHp <= 1) {
+      playerStats.currentHp = 1;
+  }
+  
+  updateHp(playerStats.currentHp);
+  drawBattleUI();
+  drawPlayerBattleStatus();
+  if (playerStats.currentHp <= 0) {
+    endBattle('lose');
+  }
+}
 
     function endBattle(outcome) {
       inBattle = false;
@@ -664,6 +810,28 @@
     });
 
     updateHp(playerStats.currentHp);
+
+    document.getElementById('inventory-battle-button').addEventListener('click', () => {
+  const inventoryPopup = document.getElementById('inventory-battle-popup');
+  
+  if (inventoryPopup.style.display === 'none') {
+    drawInventoryBattlePopup();
+    inventoryPopup.style.display = 'block';
+    if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
+    if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+  } else {
+    inventoryPopup.style.display = 'none';
+    if (staminaRegenIntervalId === null) {
+      staminaRegenIntervalId = setInterval(() => {
+        updateStamina(playerStats.currentStamina + 1);
+        drawPlayerBattleStatus();
+      }, 100);
+    }
+    if (enemyAttackIntervalId === null) {
+      enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+    }
+  }
+});
 
     function loadLevel(index, newX, newY) {
       currentLevelIndex = index;
