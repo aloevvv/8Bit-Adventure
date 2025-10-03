@@ -204,13 +204,6 @@
     <div class="hud-section" id="stats">
       <p id="stats-button">Stats</p>
       <div id="stats-popup" class="stats-popup" style="display: none;">
-<div id="inventory-popup" class="stats-popup" style="display: none;">
-  <h4>Inventory</h4>
-  <div id="general-inventory-list">
-    <!-- Item list will be populated here -->
-  </div>
-</div>
-
         <h4>Player Stats</h4>
         <p>Level: <span id="popup-level"></span></p>
         <p>XP: <span id="popup-xp"></span></p>
@@ -225,7 +218,15 @@
       </div>
     </div>
     <div class="hud-section" id="inventory">
-      <p>Inventory</p>
+      <p id="inventory-button">Inventory</p>
+    </div>
+  </div>
+
+  <!-- Place the inventory-popup OUTSIDE the stats-popup -->
+  <div id="inventory-popup" class="stats-popup" style="display: none;">
+    <h4>Inventory</h4>
+    <div id="general-inventory-list">
+      <!-- Item list will be populated here -->
     </div>
   </div>
 
