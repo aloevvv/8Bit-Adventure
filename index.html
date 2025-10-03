@@ -736,25 +736,6 @@ function useItem(itemName) {
       }
     }
 
-    document.getElementById('inventory').addEventListener('click', () => {
-  // Do nothing if a battle is in progress
-  if (inBattle) return;
-  
-  const inventoryPopup = document.getElementById('inventory-popup');
-  
-  if (inventoryPopup.style.display === 'none') {
-    // Populate the list and show the pop-up
-    drawGeneralInventory();
-    inventoryPopup.style.display = 'block';
-    
-    // Hide the stats popup if it's open to prevent overlap
-    document.getElementById('stats-popup').style.display = 'none';
-  } else {
-    // Hide the pop-up
-    inventoryPopup.style.display = 'none';
-  }
-});
-
 
     document.getElementById('attack-button').addEventListener('click', () => {
       if (!inBattle || !activeEnemies.length) return;
@@ -867,20 +848,43 @@ function useItem(itemName) {
       }
     });
 
-    document.getElementById('inventory-button').addEventListener('click', () => {
-  if (inBattle) return;
-  
+    // Remove any existing listener on #inventory container if present (not shown here)
+
+// Add event listener only on the #inventory-button
+document.getElementById('inventory-button').addEventListener('click', () => {
+  if (inBattle) return; // Do not open inventory during battle
+
   const inventoryPopup = document.getElementById('inventory-popup');
-  const statsPopup = document.getElementById('stats-popup'); // For hiding the other popup
-  
-  if (inventoryPopup.style.display === 'none') {
+  const statsPopup = document.getElementById('stats-popup');
+
+  // If popup is hidden or empty string (initial state), show and draw inventory
+  if (inventoryPopup.style.display === 'none' || inventoryPopup.style.display === '') {
     drawGeneralInventory();
     inventoryPopup.style.display = 'block';
-    statsPopup.style.display = 'none'; // Hide stats when showing inventory
+    statsPopup.style.display = 'none'; // Hide stats popup when inventory is shown
   } else {
-    inventoryPopup.style.display = 'none';
+    inventoryPopup.style.display = 'none'; // Hide popup if already visible
   }
 });
+
+// Function to populate the general inventory popup content
+function drawGeneralInventory() {
+  const inventoryList = document.getElementById('general-inventory-list');
+  inventoryList.innerHTML = ''; // Clear previous content
+
+  if (inventory.size === 0 || Array.from(inventory.values()).every(q => q === 0)) {
+    inventoryList.innerHTML = '<p>Your inventory is empty.</p>';
+    return;
+  }
+
+  inventory.forEach((quantity, itemName) => {
+    if (quantity > 0) {
+      const itemElement = document.createElement('p');
+      itemElement.textContent = `${itemName.replace(/_/g, ' ')}: ${quantity}`;
+      inventoryList.appendChild(itemElement);
+    }
+  });
+}
 
 
     updateHp(playerStats.currentHp);
