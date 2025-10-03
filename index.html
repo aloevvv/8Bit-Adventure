@@ -155,6 +155,24 @@
       text-shadow: 1px 1px 2px black;
     }
     /* ...existing CSS... */
+    #inventory-list {
+  display: flex; /* Enables Flexbox for this container */
+  flex-direction: row; /* Arranges items horizontally */
+  gap: 10px; /* Adds space between the items */
+  flex-wrap: wrap; /* Wraps items to the next line if the screen is too narrow */
+  justify-content: flex-start; /* Aligns items to the left side */
+}
+
+/* Update the inventory-item to no longer use flex for vertical spacing */
+.inventory-item {
+  /* Remove display: flex; if it exists here */
+  /* Remove justify-content: space-between; if it exists here */
+  flex-direction: column; /* Optional: keeps the item name and button stacked vertically */
+  padding: 5px;
+  border: 1px solid #555; /* Use a border instead of border-bottom for a cleaner look */
+  border-radius: 3px; /* Optional: adds rounded corners */
+}
+
 
 .inventory-popup {
   position: absolute;
@@ -169,18 +187,6 @@
   text-align: left;
   overflow-y: auto;
   z-index: 1000;
-}
-
-.inventory-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 5px;
-  border-bottom: 1px solid #555;
-}
-
-.inventory-item:last-child {
-  border-bottom: none;
 }
 
 .item-use-button {
