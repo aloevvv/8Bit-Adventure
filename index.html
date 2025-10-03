@@ -817,8 +817,6 @@ function useItem(itemName) {
   if (inventoryPopup.style.display === 'none') {
     drawInventoryBattlePopup();
     inventoryPopup.style.display = 'block';
-    if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
-    if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
   } else {
     inventoryPopup.style.display = 'none';
     if (staminaRegenIntervalId === null) {
