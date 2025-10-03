@@ -601,8 +601,6 @@ function useItem(itemName) {
     drawPlayerBattleStatus();
   }
 }
-
-  
     
     function drawBattleUI() {
       const battleOverlay = document.getElementById('battle-overlay');
@@ -711,32 +709,29 @@ function useItem(itemName) {
     function bossBehavior(enemy) {
   const now = Date.now();
 
-  // Manage shield cooldown and duration
-  if (!enemy.shieldActive) {
-    if (enemy.shieldCooldown <= 0) {
-      // Activate shield for 2 seconds
-      enemy.shieldActive = true;
-      enemy.shieldActivatedAt = now;
-      enemy.shieldCooldown = 5000; // 5 seconds cooldown after shield ends
-      showTemporaryText(`${enemy.name} activates a shield!`);
-    }
-  } else {
-    // Shield is active, check duration (2 seconds)
-    if (now - enemy.shieldActivatedAt >= 2000) {
+  // Initialize timer tracking if undefined
+  if (!enemy.shieldActivatedAt) enemy.shieldActivatedAt = 0;
+  if (!enemy.shieldCooldownEnd) enemy.shieldCooldownEnd = 0;
+
+  // If shield is active, check if duration expired (2 seconds)
+  if (enemy.shieldActive) {
+    if (now >= enemy.shieldActivatedAt + 2000) {
       enemy.shieldActive = false;
+      enemy.shieldCooldownEnd = now + 3000; // Shield cooldown 3 sec after shield ends
       showTemporaryText(`${enemy.name}'s shield fades.`);
     }
-  }
-
-  // Decrease shield cooldown timer when shield is inactive
-  if (!enemy.shieldActive && enemy.shieldCooldown > 0) {
-    enemy.shieldCooldown -= 1000; // reduce by 1 second each turn roughly
-    if (enemy.shieldCooldown < 0) enemy.shieldCooldown = 0;
+  } else {
+    // Try to activate shield if cooldown expired
+    if (now >= enemy.shieldCooldownEnd) {
+      enemy.shieldActive = true;
+      enemy.shieldActivatedAt = now;
+      showTemporaryText(`${enemy.name} activates a shield!`);
+    }
   }
 
   // Handle rocket attack damage over time ticks
   if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
-    const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05); // 5% max HP per tick
+    const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
     playerStats.currentHp -= rocketTickDamage;
     enemy.rocketTicksLeft--;
     showTemporaryText(`${enemy.name}'s rocket hits you for ${rocketTickDamage} damage!`);
@@ -748,18 +743,16 @@ function useItem(itemName) {
   }
 
   // If shield active, boss does not do normal attack this turn
-  if (enemy.shieldActive) {
-    return;
-  }
+  if (enemy.shieldActive) return;
 
-  // 25% chance to start rocket attack on this turn if not already active
+  // 25% chance to start rocket attack if not active
   if (!enemy.rocketActive && Math.random() < 0.25) {
     enemy.rocketActive = true;
-    enemy.rocketTicksLeft = 4; // lasts 4 turns (2 seconds if turns every 500ms)
+    enemy.rocketTicksLeft = 4; // 4 ticks
     showTemporaryText(`${enemy.name} launches a rocket!`);
   }
 
-  // Normal attack damage (only if shield not active)
+  // Normal attack damage
   playerStats.currentHp -= enemy.damage;
   showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
 }
@@ -1117,22 +1110,62 @@ function loadGame() {
   }
 }
 
-// Add Save and Load buttons to your HUD or somewhere convenient
-const saveButton = document.createElement('button');
-saveButton.textContent = 'Save Game';
-saveButton.style.fontFamily = '"Press Start 2P", sans-serif';
-saveButton.style.margin = '0 10px';
-saveButton.onclick = saveGame;
+// Save the current game state to localStorage
+function saveGame() {
+  const saveData = {
+    playerStats,
+    inventory: Array.from(inventory.entries()), // convert Map to array for JSON
+    currentLevelIndex,
+    playerPosition: { x, y },
+  };
+  localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
+  showTemporaryText('Game saved!');
+}
 
-const loadButton = document.createElement('button');
-loadButton.textContent = 'Load Game';
-loadButton.style.fontFamily = '"Press Start 2P", sans-serif';
-loadButton.style.margin = '0 10px';
-loadButton.onclick = loadGame;
+// Load the game state from localStorage
+function loadGame() {
+  const saved = localStorage.getItem('8bitsAdventureSave');
+  if (!saved) {
+    showTemporaryText('No saved game found.');
+    return;
+  }
+  try {
+    const saveData = JSON.parse(saved);
+    Object.assign(playerStats, saveData.playerStats);
+    inventory.clear();
+    saveData.inventory.forEach(([key, value]) => {
+      inventory.set(key, value);
+    });
+    loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
+    updateHp(playerStats.currentHp);
+    updateStatsPopup();
+    showTemporaryText('Game loaded!');
+  } catch (e) {
+    console.error('Failed to load save:', e);
+    showTemporaryText('Failed to load save.');
+  }
+}
 
-const gameHud = document.getElementById('game-hud');
-gameHud.appendChild(saveButton);
-gameHud.appendChild(loadButton);
+// Ensure DOM is loaded before appending buttons
+document.addEventListener('DOMContentLoaded', () => {
+  const saveButton = document.createElement('button');
+  saveButton.textContent = 'Save Game';
+  saveButton.style.fontFamily = '"Press Start 2P", sans-serif';
+  saveButton.style.margin = '0 10px';
+  saveButton.onclick = saveGame;
+
+  const loadButton = document.createElement('button');
+  loadButton.textContent = 'Load Game';
+  loadButton.style.fontFamily = '"Press Start 2P", sans-serif';
+  loadButton.style.margin = '0 10px';
+  loadButton.onclick = loadGame;
+
+  const gameHud = document.getElementById('game-hud');
+  if (gameHud) {
+    gameHud.appendChild(saveButton);
+    gameHud.appendChild(loadButton);
+  }
+});
 
     canvas.addEventListener('keydown', function(e) {
       if (inBattle) return;
