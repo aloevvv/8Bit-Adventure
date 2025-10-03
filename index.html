@@ -863,6 +863,22 @@ function useItem(itemName) {
       }
     });
 
+    document.getElementById('inventory-button').addEventListener('click', () => {
+  if (inBattle) return;
+  
+  const inventoryPopup = document.getElementById('inventory-popup');
+  const statsPopup = document.getElementById('stats-popup'); // For hiding the other popup
+  
+  if (inventoryPopup.style.display === 'none') {
+    drawGeneralInventory();
+    inventoryPopup.style.display = 'block';
+    statsPopup.style.display = 'none'; // Hide stats when showing inventory
+  } else {
+    inventoryPopup.style.display = 'none';
+  }
+});
+
+
     updateHp(playerStats.currentHp);
 
     document.getElementById('inventory-battle-button').addEventListener('click', () => {
