@@ -541,15 +541,25 @@
     const inventoryList = document.getElementById('general-inventory-list');
 
     inventoryButton.addEventListener('click', () => {
-      if (inBattle) return; // Prevent during battle
-      if (inventoryPopup.style.display === 'none' || inventoryPopup.style.display === '') {
-        drawGeneralInventory();
-        inventoryPopup.style.display = 'block';
-        statsPopup.style.display = 'none';
-      } else {
-        inventoryPopup.style.display = 'none';
-      }
-    });
+  // don’t open during battle
+  if (inBattle) return;
+
+  // Hide stats popup whenever opening inventory
+  statsPopup.style.display = 'none';
+
+  // Detect if it’s currently hidden (either none or default empty)
+  const isHidden =
+    inventoryPopup.style.display === 'none' ||
+    inventoryPopup.style.display === '';
+
+  if (isHidden) {
+    drawGeneralInventory();
+    inventoryPopup.style.display = 'block';
+  } else {
+    inventoryPopup.style.display = 'none';
+  }
+});
+
 
     function drawGeneralInventory() {
       inventoryList.innerHTML = '';
