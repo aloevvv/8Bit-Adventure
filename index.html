@@ -230,7 +230,6 @@
       background-color: #555;
     }
     #game-over-overlay {
-      display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -299,20 +298,24 @@
     <div id="enemy-display"></div>
     <div id="player-battle-status"></div>
     <div id="battle-controls">
-      <!-- … attack / special / inventory buttons … -->
+      <button id="attack-button">Attack</button>
+      <button id="special-attack-button-1">Extra Credits (100 STM)</button>
+      <button id="special-attack-button-2">Plasma Blast (200 STM)</button>
+      <button id="inventory-battle-button">Inventory</button>
     </div>
     <div id="inventory-battle-popup" class="inventory-popup" style="display: none;">
-      <!-- … -->
+      <h4>Inventory</h4>
+      <div id="inventory-list"></div>
     </div>
-  </div>
+    </div>
 
-  <!-- Moved outside battle-overlay -->
-  <div id="game-over-overlay" style="display: none;">
-    <div class="game-over-content">
-      <h1>Game Over</h1>
-      <p>Press 'R' to Restart</p>
-    </div>
+<!-- Must start hidden! -->
+<div id="game-over-overlay" style="display: none">
+  <div class="game-over-content">
+    <h1>Game Over</h1>
+    <p>Press 'R' to Restart</p>
   </div>
+</div>
 
   </div>
 
@@ -581,13 +584,16 @@
     }
 function showGameOver() {
   isGameOver = true;
-  clearInterval(enemyAttackIntervalId);
-  clearInterval(staminaRegenIntervalId);
+  // Stop all game loops
+  if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+  if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
 
-  document.getElementById('battle-overlay').style.display    = 'none';
-  document.getElementById('game-over-overlay').classList.add('show');
+  // Hide battle UI
+  document.getElementById('battle-overlay').style.display = 'none';
+
+  // Show game over overlay
+  document.getElementById('game-over-overlay').style.display = 'flex';
 }
-
 
     // Battle inventory popup draw
     function drawInventoryBattlePopup() {
@@ -819,17 +825,27 @@ function showGameOver() {
       drawPlayerBattleStatus();
       if (playerStats.currentHp <= 0) {
     endBattle('lose');
+    // Call the game over function here
+    showGameOver(); 
   }
 }
 
     // End battle and clean up
     function endBattle(outcome) {
-  inBattle = false;
-  document.getElementById('battle-overlay').style.display = 'none';
-  if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
-  if (enemyAttackIntervalId)    clearInterval(enemyAttackIntervalId);
+      inBattle = false;
+      document.getElementById('battle-overlay').style.display = 'none';
 
-  if (outcome === 'win') {
+      if (staminaRegenIntervalId) {
+        clearInterval(staminaRegenIntervalId);
+        staminaRegenIntervalId = null;
+      }
+
+      if (enemyAttackIntervalId) {
+        clearInterval(enemyAttackIntervalId);
+        enemyAttackIntervalId = null;
+      }
+
+      if (outcome === 'win') {
         let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
         gainXP(totalXp);
 
@@ -839,14 +855,15 @@ function showGameOver() {
         if (defeatedZone) {
           removeZone(defeatedZone);
         }
-      else if (outcome === 'lose') {
-    showGameOver();
-  }
+      } else if (outcome === 'lose') {
+        loadLevel(0, 150, 50);
+      }
 
-  activeEnemies = [];
-  defeatedZone   = null;
-  draw();
-}
+      activeEnemies = [];
+      defeatedZone = null;
+      draw();
+      document.getElementById('player-battle-status').innerHTML = '';
+    }
 
     // Initialize battle from zone or interactable
     function initiateBattle(zoneType, zoneObject) {
