@@ -581,12 +581,13 @@
     }
 function showGameOver() {
   isGameOver = true;
-  if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
-  if (staminaRegenIntervalId) clearInterval(staminaRegenIntervalId);
+  clearInterval(enemyAttackIntervalId);
+  clearInterval(staminaRegenIntervalId);
 
   document.getElementById('battle-overlay').style.display    = 'none';
-  document.getElementById('game-over-overlay').style.display = 'flex';
+  document.getElementById('game-over-overlay').classList.add('show');
 }
+
 
     // Battle inventory popup draw
     function drawInventoryBattlePopup() {
