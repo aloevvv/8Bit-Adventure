@@ -435,40 +435,31 @@ let currentLevelIndex = 0;
 let currentLevel = levels[currentLevelIndex];
 // Preload and spawn background + player at game start
 let bgImg = new Image();
-bgImg.src = 'arcade.png';
-const playerImg = new Image();
-playerImg.src = '8bit.png'; // keep your existing player path
-
-// helper to track readiness
-let _bgReady = false;
-let _playerReady = false;
-
-bgImg.onload = () => { _bgReady = true; startDrawIfReady(); };
-playerImg.onload = () => { _playerReady = true; startDrawIfReady(); };
+bgImg.onload = () => draw();
 
 // start loading the current level background
 function preloadLevelBackground() {
+  // create a fresh image so onload will fire reliably
   bgImg = new Image();
-  _bgReady = false;
-  bgImg.onload = () => { _bgReady = true; startDrawIfReady(); };
+  bgImg.onload = () => {
+    console.log('bg loaded', currentLevel.bgSrc);
+    draw();
+  };
+  console.log('preloading bg', currentLevel.bgSrc);
   bgImg.src = currentLevel.bgSrc;
 }
 
-// draw only when at least player is ready; background drawn if ready
-function startDrawIfReady() {
-  // ensure x,y are set to spawn if not already
-  if (typeof x !== 'number') x = 150;
-  if (typeof y !== 'number') y = 50;
-
-  // immediate draw that always paints player and a fallback background
-  draw();
-}
 
 // call this once after levels are defined to start the game
 function startGame() {
-  // ensure player image variable matches code that draws the sprite
-  // if your code expects `img` as the player image, alias it
-  window.img = playerImg;
+  currentLevelIndex = currentLevelIndex || 0;
+  currentLevel = levels[currentLevelIndex];
+  // ensure spawn coords exist
+  x = typeof x === 'number' ? x : 150;
+  y = typeof y === 'number' ? y : 50;
+  preloadLevelBackground();
+  draw(); // immediate draw shows player + fallback fill while bg loads
+}
 
   // set initial level and preload its background
   currentLevelIndex = 0;
