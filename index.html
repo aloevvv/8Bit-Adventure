@@ -1065,25 +1065,6 @@ document.addEventListener('keydown', function(e) {
 function loadLevel(index, newX = x, newY = y) {
   currentLevelIndex = index;
   currentLevel = levels[currentLevelIndex];
-
-  if (currentLevel.interactables && currentLevel.walls) {
-    currentLevel.interactables.forEach(obj => {
-      // skip non-blocking interactables explicitly
-      if (obj.blocking === false) return;
-
-      const col = obj.collision || { x: obj.x, y: obj.y, width: obj.width, height: obj.height };
-      const exists = currentLevel.walls.some(w =>
-        w.x === col.x && w.y === col.y && w.width === col.width && w.height === col.height
-      );
-      if (!exists) {
-        currentLevel.walls.push({ x: col.x, y: col.y, width: col.width, height: col.height });
-      }
-    });
-  }
-
-  bgImg.src = currentLevel.bgSrc;
-  x = newX;
-  y = newY;
   draw();
 }
 
@@ -1235,7 +1216,7 @@ canvas.addEventListener('keydown', function(e) {
 
   if (key === 'x') {
     e.preventDefault();
-    const interactableObject = checkInteraction(x, y);
+    const interactableObject = checkInteraction(x - 16, y) || checkInteraction(x + 16, y) || checkInteraction(x, y - 16) || checkInteraction(x, y + 16) || checkInteraction(x, y);
     if (interactableObject) handleInteraction(interactableObject);
     return;
   }
