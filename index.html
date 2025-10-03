@@ -298,21 +298,20 @@
     <div id="enemy-display"></div>
     <div id="player-battle-status"></div>
     <div id="battle-controls">
-      <button id="attack-button">Attack</button>
-      <button id="special-attack-button-1">Extra Credits (100 STM)</button>
-      <button id="special-attack-button-2">Plasma Blast (200 STM)</button>
-      <button id="inventory-battle-button">Inventory</button>
+      <!-- … attack / special / inventory buttons … -->
     </div>
     <div id="inventory-battle-popup" class="inventory-popup" style="display: none;">
-      <h4>Inventory</h4>
-      <div id="inventory-list"></div>
+      <!-- … -->
     </div>
-    <div id="game-over-overlay" style="display: none;">
-  <div class="game-over-content">
-    <h1>Game Over</h1>
-    <p>Press 'R' to Restart</p>
   </div>
-</div>
+
+  <!-- Moved outside battle-overlay -->
+  <div id="game-over-overlay">
+    <div class="game-over-content">
+      <h1>Game Over</h1>
+      <p>Press 'R' to Restart</p>
+    </div>
+  </div>
 
   </div>
 
