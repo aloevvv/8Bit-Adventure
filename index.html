@@ -400,7 +400,11 @@ const enemyTypes = {
   Sniperbot: { name: "Sniper", maxHp: 20, damage: 1, xpReward: 5, behavior: "sniperAttack" },
   Puncherbot: { name: "Puncher", maxHp: 36, damage: 1, xpReward: 5, behavior: "normalAttack" },
   Mousebot: { name: "Quickbot", maxHp: 30, damage: 2, xpReward: 5, behavior: "normalAttack" },
-  BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior" }
+  BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior" },
+  Summoner: { name: "Summoner", maxHp: 40, damage: 2, xpReward: 20, behavior: "summonerBehavior" },
+  SecondStageBossStage1: { name: "Stage1 Boss", maxHp: 50, damage: 3, xpReward: 30, behavior: "secondStageBossBehavior", secondStageType: "SecondStageBossStage2" },
+  SecondStageBossStage2: { name: "Stage2 Boss", maxHp: 80, damage: 6, xpReward: 50, behavior: "normalAttack" },
+  Healer: { name: "Healer", maxHp: 35, damage: 1, xpReward: 15, behavior: "healerBehavior" }
 };
 
 const levels = [
@@ -864,16 +868,148 @@ function bossBehavior(enemy) {
   playerStats.currentHp -= enemy.damage;
   showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
 }
+  // Summoner: summons 1 minion every 4 seconds
+function summonerBehavior(enemy) {
+  if (!enemy.lastSummonTime) enemy.lastSummonTime = 0;
+  const now = Date.now();
+
+  if (now - enemy.lastSummonTime >= 4000) {
+    enemy.lastSummonTime = now;
+
+    // Summon a minion (Dummy) at the end of activeEnemies list
+    const minionBase = enemyTypes["Dummy"];
+    const minionStats = scaleEnemyStats(minionBase);
+    const minion = {
+      type: "Dummy",
+      name: minionStats.name,
+      maxHp: minionStats.maxHp,
+      currentHp: minionStats.maxHp,
+      damage: minionStats.damage,
+      xpReward: minionStats.xpReward,
+      shieldActive: false,
+      shieldCooldownEnd: 0,
+      rocketActive: false,
+      rocketTicksLeft: 0,
+      stunned: false,
+      poisoned: false
+    };
+
+    activeEnemies.push(minion);
+    showTemporaryText(`${enemy.name} summons a minion!`);
+    drawBattleUI();
+  }
+
+  // After summoning, attack normally (if not stunned)
+  if (!enemy.stunned) {
+    normalAttack(enemy);
+  }
+}
+
+// Second Stage Boss: on death, transform into second stage
+function secondStageBossBehavior(enemy) {
+  // Normal attack behavior
+  if (!enemy.stunned) {
+    normalAttack(enemy);
+  }
+}
+
+// Override endBattle to check for second stage boss
+function endBattle(outcome) {
+  inBattle = false;
+  document.getElementById('battle-overlay').style.display = 'none';
+
+  if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
+  if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
+
+  if (outcome === 'win') {
+    let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
+
+    // Check for second stage boss death
+    activeEnemies.forEach(enemy => {
+      if (enemy.type === "SecondStageBossStage1" && enemy.currentHp <= 0) {
+        // Remove stage 1 enemy and spawn stage 2 boss
+        activeEnemies = activeEnemies.filter(e => e !== enemy);
+
+        const stage2Base = enemyTypes[enemyTypes.SecondStageBossStage1.secondStageType];
+        const stage2Stats = scaleEnemyStats(stage2Base);
+        const stage2Enemy = {
+          type: "SecondStageBossStage2",
+          name: stage2Stats.name,
+          maxHp: stage2Stats.maxHp,
+          currentHp: stage2Stats.maxHp,
+          damage: stage2Stats.damage,
+          xpReward: stage2Stats.xpReward,
+          shieldActive: false,
+          shieldCooldownEnd: 0,
+          rocketActive: false,
+          rocketTicksLeft: 0,
+          stunned: false,
+          poisoned: false
+        };
+
+        activeEnemies.push(stage2Enemy);
+        showTemporaryText(`${stage2Enemy.name} emerges!`);
+        inBattle = true;
+        enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+        drawBattleUI();
+        drawPlayerBattleStatus();
+        return; // Skip rest of endBattle for now
+      }
+    });
+
+    // If still no enemies, grant XP and finish battle
+    if (activeEnemies.length === 0) {
+      gainXP(totalXp);
+      playerStats.currentHp = playerStats.maxHp;
+      updateHp(playerStats.currentHp);
+      if (defeatedZone) removeZone(defeatedZone);
+      activeEnemies = [];
+      defeatedZone = null;
+      draw();
+      document.getElementById('player-battle-status').innerHTML = '';
+      return;
+    }
+  } else if (outcome === 'lose') {
+    showGameOver();
+  }
+}
+
+// Healer: heals all allies every 3 seconds
+function healerBehavior(enemy) {
+  if (!enemy.lastHealTime) enemy.lastHealTime = 0;
+  const now = Date.now();
+
+  if (now - enemy.lastHealTime >= 3000) {
+    enemy.lastHealTime = now;
+
+    activeEnemies.forEach(ally => {
+      if (ally.currentHp < ally.maxHp) {
+        const healAmount = Math.floor(ally.maxHp * 0.15); // Heals 15% max HP
+        ally.currentHp += healAmount;
+        if (ally.currentHp > ally.maxHp) ally.currentHp = ally.maxHp;
+      }
+    });
+    showTemporaryText(`${enemy.name} heals all allies!`);
+    drawBattleUI();
+  }
+
+  if (!enemy.stunned) {
+    normalAttack(enemy);
+  }
+}
 
 // Take enemy turn actions
 function takeTurn() {
   if (!inBattle) return;
   activeEnemies.forEach(enemy => {
     if (!enemy.stunned) {
-      const behavior = (enemyTypes[enemy.type] && enemyTypes[enemy.type].behavior) || 'normalAttack';
+      const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
       if (behavior === 'normalAttack') normalAttack(enemy);
       else if (behavior === 'sniperAttack') sniperAttack(enemy);
       else if (behavior === 'bossBehavior') bossBehavior(enemy);
+      else if (behavior === 'summonerBehavior') summonerBehavior(enemy);
+      else if (behavior === 'secondStageBossBehavior') secondStageBossBehavior(enemy);
+      else if (behavior === 'healerBehavior') healerBehavior(enemy);
     }
   });
 
