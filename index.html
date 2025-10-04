@@ -425,7 +425,7 @@ const levels = [
       { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 }
     ],
     battleZones: [
-      { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "Healer" }], sprite: 'bossrobot' },
+      { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "SecondStageBossStage1" }], sprite: 'bossrobot' },
       { x: 400, y: 250, width: 70, height: 70, encounter: [{ type: "Sniperbot" }, { type: "Sniperbot" }] }
 ],
     
@@ -723,7 +723,7 @@ function useItem(itemName) {
     }, 4000);
     showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
   } else if (itemName === 'poison_vial') {
-  const poisonDamagePerTick = Math.max(1, Math.ceil(5 * enemy.maxHP / 100));
+  const poisonDamagePerTick = Math.max(1, Math.ceil(10 * playerStats.damage / 100));
   activeEnemies.forEach(enemy => {
     if (enemy.isBoss) return; // skip bosses
     enemy.poisoned = true;
