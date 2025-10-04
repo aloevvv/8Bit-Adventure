@@ -728,24 +728,26 @@ if (!(enemy.resistances && enemy.resistances.stun)) {
     showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
   } else if (itemName === 'poison_vial') {
   const poisonDamagePerTick = Math.max(1, Math.ceil(5 * playerStats.damage / 100));
-activeEnemies.forEach(enemy => {
-  if (enemy.resistances && enemy.resistances.poison) return; // skip immune (bosses will be immune if configured)
-  enemy.poisoned = true;
-  let poisonTimer = 0;
-  const poisonInterval = setInterval(() => {
-    if (!enemy.poisoned || poisonTimer >= 3000) {
-      clearInterval(poisonInterval);
-      enemy.poisoned = false;
+  activeEnemies.forEach(enemy => {
+    if (enemy.resistances && enemy.resistances.poison) return; // skip immune
+    enemy.poisoned = true;
+    let poisonTimer = 0;
+    const poisonInterval = setInterval(() => {
+      if (!enemy.poisoned || poisonTimer >= 3000) {
+        clearInterval(poisonInterval);
+        enemy.poisoned = false;
+        drawBattleUI();
+        return;
+      }
+      enemy.currentHp -= poisonDamagePerTick;
+      if (enemy.currentHp < 0) enemy.currentHp = 0;
       drawBattleUI();
-      return;
-    }
-    enemy.currentHp -= poisonDamagePerTick;
-    if (enemy.currentHp < 0) enemy.currentHp = 0;
-    drawBattleUI();
-    poisonTimer += 500;
-  }, 500);
-});
-showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
+      poisonTimer += 500;
+    }, 500);
+  });
+  showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
+}
+
   } else if (itemName === 'extra_life') {
     if (extraLifeTimerId) {
       clearTimeout(extraLifeTimerId);
