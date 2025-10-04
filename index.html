@@ -389,7 +389,7 @@ let playerStats = {
   damage: 2,
   xp: 0,
   xpToNextLevel: 10,
-  currentStamina: 50,
+  currentStamina: 150,
   maxStamina: 200,
 };
 
@@ -1261,6 +1261,7 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
     if (enemy.currentHp < 0) enemy.currentHp = 0;
     if (enemy.currentHp > 0) remainingEnemies.push(enemy);
   });
+  toHandle.forEach(e => handleEnemyDeath(e));
 
   if (remainingEnemies.length === 0) {
     endBattle('win');
