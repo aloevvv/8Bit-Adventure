@@ -925,8 +925,7 @@ function endBattle(outcome) {
   if (outcome === 'win') {
     let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
 
-    // Check for second stage boss death
-    activeEnemies.forEach(enemy => {
+    for (const enemy of activeEnemies) {
       if (enemy.type === "SecondStageBossStage1" && enemy.currentHp <= 0) {
         // Remove stage 1 enemy and spawn stage 2 boss
         activeEnemies = activeEnemies.filter(e => e !== enemy);
@@ -954,11 +953,10 @@ function endBattle(outcome) {
         enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
         drawBattleUI();
         drawPlayerBattleStatus();
-        return; // Skip rest of endBattle for now
+        return; // Important to return early so battle continues
       }
-    });
+    }
 
-    // If still no enemies, grant XP and finish battle
     if (activeEnemies.length === 0) {
       gainXP(totalXp);
       playerStats.currentHp = playerStats.maxHp;
