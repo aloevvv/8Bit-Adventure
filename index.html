@@ -1200,6 +1200,12 @@ document.getElementById('attack-button').addEventListener('click', () => {
     targetEnemy.currentHp -= playerStats.damage;
     if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
   }
+  if (targetEnemy.currentHp === 0) {
+    handleEnemyDeath(targetEnemy);
+    // adjust selected index if needed
+    if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = Math.max(0, activeEnemies.length - 1);
+    return;
+  }
 
   // Remove dead enemies
   activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
@@ -1209,9 +1215,6 @@ document.getElementById('attack-button').addEventListener('click', () => {
     endBattle('win');
     return;
   }
-
-  // Adjust selected enemy if out of range
-  if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
 
   drawBattleUI();
   drawPlayerBattleStatus();
