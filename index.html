@@ -515,15 +515,15 @@ let activeEnemies = [];
 
 // Utility: text wrapping for canvas
 function wrapText(context, text, x, y, maxWidth, lineHeight) {
-  let words = text.split(' ');
+  const words = String(text).split(' ');
   let line = "";
   for (let n = 0; n < words.length; n++) {
-    let testLine = line + words[n] + ' ';
-    let metrics = context.measureText(testLine);
-    let testWidth = metrics.width;
+    const testLine = line ? (line + " " + words[n]) : words[n];
+    const metrics = context.measureText(testLine);
+    const testWidth = metrics.width;
     if (testWidth > maxWidth && n > 0) {
       context.fillText(line.trim(), x, y);
-      line = words[n] + ' ';
+      line = words[n];
       y += lineHeight;
     } else {
       line = testLine;
