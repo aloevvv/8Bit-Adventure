@@ -1080,8 +1080,8 @@ const enemy = {
   stunned: false,
   poisoned: false,
   // resistances: encounter override -> enemyType defaults -> safe defaults
-  resistances: { stun: false, poison: false }
-};
+  resistances: enemyData.resistances || (baseStats && baseStats.defaultResistances) || { stun: false, poison: false }
+}
 
     if (enemy.isBoss) {
       enemy.shieldActivatedAt = 0;
