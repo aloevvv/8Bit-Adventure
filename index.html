@@ -724,14 +724,27 @@ function useItem(itemName) {
     showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
   } else if (itemName === 'poison_vial') {
   const poisonDamagePerTick = Math.max(1, Math.ceil(10 * playerStats.damage / 100));
+
   activeEnemies.forEach(enemy => {
     if (enemy.isBoss) return; // skip bosses
+
+    if (enemy.poisonIntervalId) {
+      clearInterval(enemy.poisonIntervalId); // clear existing if any
+    }
+
     enemy.poisoned = true;
     let poisonTimer = 0;
-    const poisonInterval = setInterval(() => {
-      if (poisonTimer >= 3000 || !enemy.poisoned) {
-        clearInterval(poisonInterval);
+
+    enemy.poisonIntervalId = setInterval(() => {
+      if (
+        poisonTimer >= 3000 ||
+        !enemy.poisoned ||
+        enemy.currentHp <= 0 ||
+        !activeEnemies.includes(enemy)
+      ) {
+        clearInterval(enemy.poisonIntervalId);
         enemy.poisoned = false;
+        enemy.poisonIntervalId = null;
         drawBattleUI();
       } else {
         enemy.currentHp -= poisonDamagePerTick;
@@ -741,7 +754,9 @@ function useItem(itemName) {
       poisonTimer += 500;
     }, 500);
   });
+
   showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
+}
   } else if (itemName === 'extra_life') {
     if (extraLifeTimerId) {
       clearTimeout(extraLifeTimerId);
@@ -1046,7 +1061,13 @@ function endBattle(outcome) {
   draw();
   const pbs = document.getElementById('player-battle-status');
   if (pbs) pbs.innerHTML = "";
-}
+  activeEnemies.forEach(enemy => {
+  if (enemy.poisonIntervalId) {
+    clearInterval(enemy.poisonIntervalId);
+    enemy.poisonIntervalId = null;
+    enemy.poisoned = false;
+  }
+});
 
 // Initialize battle from zone or interactable
 function initiateBattle(zoneType, zoneObject) {
