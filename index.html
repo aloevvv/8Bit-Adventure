@@ -1022,6 +1022,28 @@ function takeTurn() {
     endBattle('lose');
   }
 }
+  function handleEnemyDeath(enemy) {
+  // award XP immediately
+  if (enemy && enemy.xpReward) gainXP(enemy.xpReward);
+
+  // cleanup behavior timers if any
+  if (enemy.behaviorTimers && enemy.behaviorTimers.length) {
+    enemy.behaviorTimers.forEach(id => clearInterval(id));
+    enemy.behaviorTimers = [];
+  }
+  // remove the enemy from activeEnemies
+  const idx = activeEnemies.indexOf(enemy);
+  if (idx > -1) activeEnemies.splice(idx, 1);
+
+  // update UI and check end of battle
+  drawBattleUI();
+  drawPlayerBattleStatus();
+
+  // if no enemies remain, finish the battle
+  if (activeEnemies.length === 0) {
+    endBattle('win');
+  }
+}
 
 // End battle and clean up
 function endBattle(outcome) {
@@ -1180,13 +1202,16 @@ document.getElementById('attack-button').addEventListener('click', () => {
   }
 
   // Remove dead enemies
-  activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-
-  // If no enemies left, end battle
-  if (activeEnemies.length === 0) {
-    endBattle('win');
+  if (targetEnemy.currentHp === 0) {
+    handleEnemyDeath(targetEnemy);
+    // adjust selected index if needed
+    if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = Math.max(0, activeEnemies.length - 1);
     return;
   }
+
+  // otherwise continue battle UI updates
+  drawPlayerBattleStatus();
+});
 
   // Adjust selected enemy if out of range
   if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
