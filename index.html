@@ -1379,15 +1379,15 @@ function draw() {
     const sprite = zoneSprites[zone.sprite];
     if (!sprite) return;
     // determine dest rect: scale down or up as you like
-    const spriteW = Math.min(zone.width, 80); // cap to avoid oversized sprites
-    const spriteH = Math.min(zone.height, 80);
+    const spriteW = Math.min(zone.width, 100); // cap to avoid oversized sprites
+    const spriteH = Math.min(zone.height, 100);
     const destX = zone.x + (zone.width - spriteW) / 2;
     const destY = zone.y + (zone.height - spriteH) / 2;
     if (sprite.complete && sprite.naturalWidth > 0) {
       ctx.drawImage(sprite, destX, destY, spriteW, spriteH);
     } else {
       // fallback visual while sprite loads
-      ctx.fillStyle = 'rgba(255,0,0,0.25)';
+      ctx.fillStyle = 'rgba(255,0,0,0.0)';
       ctx.fillRect(destX, destY, spriteW, spriteH);
     }
   });
