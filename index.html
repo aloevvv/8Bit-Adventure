@@ -1058,30 +1058,32 @@ function endBattle(outcome) {
 function initiateBattle(zoneType, zoneObject) {
   inBattle = true;
   defeatedZone = { type: zoneType, object: zoneObject };
+
   staminaRegenIntervalId = setInterval(() => {
     updateStamina(playerStats.currentStamina + 1);
     drawPlayerBattleStatus();
   }, 100);
 
-  const baseStats = enemyTypes[enemyData.type];
-const scaledStats = scaleEnemyStats(baseStats);
-const enemy = {
-  ...enemyData,
-  type: enemyData.type,
-  name: baseStats ? baseStats.name : enemyData.type,
-  maxHp: scaledStats.maxHp,
-  currentHp: scaledStats.maxHp,
-  damage: scaledStats.damage,
-  xpReward: baseStats ? baseStats.xpReward : 0,
-  shieldActive: false,
-  shieldCooldownEnd: 0,
-  rocketActive: false,
-  rocketTicksLeft: 0,
-  stunned: false,
-  poisoned: false,
-  // resistances: encounter override -> enemyType defaults -> safe defaults
-  resistances: enemyData.resistances || (baseStats && baseStats.defaultResistances) || { stun: false, poison: false }
-}
+  const encounter = (zoneObject && zoneObject.encounter) || [];
+  activeEnemies = encounter.map(enemyData => {
+    const baseStats = enemyTypes[enemyData.type] || {};
+    const scaledStats = scaleEnemyStats(baseStats || {});
+    const enemy = {
+      ...enemyData,
+      type: enemyData.type,
+      name: baseStats ? baseStats.name : enemyData.type,
+      maxHp: scaledStats.maxHp,
+      currentHp: scaledStats.maxHp,
+      damage: scaledStats.damage,
+      xpReward: baseStats ? baseStats.xpReward : 0,
+      shieldActive: false,
+      shieldCooldownEnd: 0,
+      rocketActive: false,
+      rocketTicksLeft: 0,
+      stunned: false,
+      poisoned: false,
+      resistances: enemyData.resistances || (baseStats && baseStats.defaultResistances) || { stun: false, poison: false }
+    };
 
     if (enemy.isBoss) {
       enemy.shieldActivatedAt = 0;
@@ -1089,12 +1091,14 @@ const enemy = {
       enemy.rocketActive = false;
       enemy.rocketTicksLeft = 0;
     }
+
     return enemy;
   });
 
   selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
+  if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
   enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 }
 
