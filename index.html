@@ -717,12 +717,14 @@ function useItem(itemName) {
 if (!(enemy.resistances && enemy.resistances.stun)) {
   enemy.stunned = true;
 }
+    });
 
     setTimeout(() => {
       activeEnemies.forEach(enemy => {
         if (!(enemy.resistances && enemy.resistances.stun)) {
   enemy.stunned = false;
 }
+      });
       drawBattleUI();
     }, 4000);
     showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
