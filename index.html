@@ -1195,13 +1195,15 @@ document.getElementById('attack-button').addEventListener('click', () => {
 
   if (targetEnemy.shieldActive) {
     showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
-  } else {
-    // Always deal damage regardless of poison status
-    targetEnemy.currentHp -= playerStats.damage;
-    if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+    return;
   }
 
-  // Remove dead enemies
+  // deal damage
+  targetEnemy.currentHp -= playerStats.damage;
+  if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+  drawBattleUI();
+
+  // if the target died, handle death now (awards XP per enemy)
   if (targetEnemy.currentHp === 0) {
     handleEnemyDeath(targetEnemy);
     // adjust selected index if needed
@@ -1212,6 +1214,7 @@ document.getElementById('attack-button').addEventListener('click', () => {
   // otherwise continue battle UI updates
   drawPlayerBattleStatus();
 });
+
 
   // Adjust selected enemy if out of range
   if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
