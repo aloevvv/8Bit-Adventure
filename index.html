@@ -1726,12 +1726,12 @@ function draw() {
 // Save game state to localStorage
 function saveGame() {
   const saveData = {
-    saveData.equipment = equipment;
     playerStats,
     inventory: Array.from(inventory.entries()),
     currentLevelIndex,
     playerPosition: { x, y },
   };
+  saveData.equipment = equipment;
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
   showTemporaryText('Game saved!');
   console.log('Game saved:', saveData);
