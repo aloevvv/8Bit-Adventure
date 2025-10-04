@@ -358,6 +358,14 @@ const hpText = document.getElementById('hp-text');
 let selectedEnemyIndex = 0;
 let isPowered = false;
 
+const zoneSprites = {
+  robot: new Image(),
+  bossrobot: new Image()
+};
+zoneSprites.robot.src = 'robot.png';
+zoneSprites.bossrobot.src = 'bossrobot.png';
+
+
 let tempText = "";
 let tempTextTimeout = null;
 let defeatedZone = null;
@@ -412,7 +420,7 @@ const levels = [
       { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 }
     ],
     battleZones: [
-      { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "BossBot" }] },
+      { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "BossBot" }] }, sprite: 'bossrobot' },
       { x: 400, y: 250, width: 70, height: 70, encounter: [{ type: "Sniperbot" }, { type: "Sniperbot" }] }
     ],
     interactables: []
@@ -1186,6 +1194,25 @@ function draw() {
   for (const wall of currentLevel.walls) {
     ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
   }
+  if (currentLevel && currentLevel.battleZones) {
+  currentLevel.battleZones.forEach(zone => {
+    if (!zone.sprite) return;
+    const sprite = zoneSprites[zone.sprite];
+    if (!sprite) return;
+    // determine dest rect: scale down or up as you like
+    const spriteW = Math.min(zone.width, 80); // cap to avoid oversized sprites
+    const spriteH = Math.min(zone.height, 80);
+    const destX = zone.x + (zone.width - spriteW) / 2;
+    const destY = zone.y + (zone.height - spriteH) / 2;
+    if (sprite.complete && sprite.naturalWidth > 0) {
+      ctx.drawImage(sprite, destX, destY, spriteW, spriteH);
+    } else {
+      // fallback visual while sprite loads
+      ctx.fillStyle = 'rgba(255,0,0,0.25)';
+      ctx.fillRect(destX, destY, spriteW, spriteH);
+    }
+  });
+}
   if (useImage && img.complete && img.naturalWidth > 0) {
     ctx.drawImage(img, x, y, imageSize, imageSize);
   } else {
