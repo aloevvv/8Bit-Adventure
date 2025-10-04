@@ -713,41 +713,35 @@ function useItem(itemName) {
     showTemporaryText(`Used a Bandage to heal for ${healAmount} HP!`);
   } else if (itemName === 'emp_grenade') {
     activeEnemies.forEach(enemy => {
-      // apply stun if enemy is not resistant
-if (!(enemy.resistances && enemy.resistances.stun)) {
-  enemy.stunned = true;
-}
+      if (!(enemy.resistances && enemy.resistances.stun)) enemy.stunned = true;
     });
-
     setTimeout(() => {
       activeEnemies.forEach(enemy => {
-        if (!(enemy.resistances && enemy.resistances.stun)) {
-  enemy.stunned = false;
-}
+        if (!(enemy.resistances && enemy.resistances.stun)) enemy.stunned = false;
       });
       drawBattleUI();
     }, 4000);
     showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
   } else if (itemName === 'poison_vial') {
-  const poisonDamagePerTick = Math.max(1, Math.ceil(5 * playerStats.damage / 100));
-  activeEnemies.forEach(enemy => {
-    if (enemy.resistances && enemy.resistances.poison) return; // skip immune
-    enemy.poisoned = true;
-    let poisonTimer = 0;
-    const poisonInterval = setInterval(() => {
-      if (!enemy.poisoned || poisonTimer >= 3000) {
-        clearInterval(poisonInterval);
-        enemy.poisoned = false;
+    const poisonDamagePerTick = Math.max(1, Math.ceil(5 * playerStats.damage / 100));
+    activeEnemies.forEach(enemy => {
+      if (enemy.resistances && enemy.resistances.poison) return;
+      enemy.poisoned = true;
+      let poisonTimer = 0;
+      const poisonInterval = setInterval(() => {
+        if (!enemy.poisoned || poisonTimer >= 3000) {
+          clearInterval(poisonInterval);
+          enemy.poisoned = false;
+          drawBattleUI();
+          return;
+        }
+        enemy.currentHp -= poisonDamagePerTick;
+        if (enemy.currentHp < 0) enemy.currentHp = 0;
         drawBattleUI();
-        return;
-      }
-      enemy.currentHp -= poisonDamagePerTick;
-      if (enemy.currentHp < 0) enemy.currentHp = 0;
-      drawBattleUI();
-      poisonTimer += 500;
-    }, 500);
-  });
-  showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
+        poisonTimer += 500;
+      }, 500);
+    });
+    showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
   } else if (itemName === 'extra_life') {
     if (extraLifeTimerId) {
       clearTimeout(extraLifeTimerId);
@@ -756,16 +750,16 @@ if (!(enemy.resistances && enemy.resistances.stun)) {
     showTemporaryText('Used an Extra Life! You have 3 seconds of invincibility!');
     extraLifeTimerId = setTimeout(() => { extraLifeTimerId = null; }, 3000);
   } else {
-    // unknown item - safe fallback
     showTemporaryText(`Used ${itemName}.`);
   }
-  }
 
-  // decrement inventory and update UI
+  // decrement inventory and update UI (this line must be inside the useItem function)
   inventory.set(itemName, Math.max(0, (inventory.get(itemName) || 0) - 1));
   drawInventoryBattlePopup();
   drawBattleUI();
   drawPlayerBattleStatus();
+}
+
 
 
 // Draw battle enemies UI
