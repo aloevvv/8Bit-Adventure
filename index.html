@@ -381,6 +381,103 @@ inventory.set("emp_grenade", 1);
 inventory.set("poison_vial", 1);
 inventory.set("extra_life", 1);
 inventory.set("hammer", 0);
+inventory.set("retro_armor", 0);
+inventory.set("v8_armor", 0);
+inventory.set("saloon_armor", 0);
+inventory.set("haunted_armor", 0);
+inventory.set("virus_armor", 0);
+
+inventory.set("retro_gun", 0);
+inventory.set("v8_gun", 0);
+inventory.set("saloon_gun", 0);
+inventory.set("haunted_gun", 0);
+inventory.set("virus_gun", 0);
+
+
+  // equipment state (only body and weapon)
+let equipment = {
+  body: null,
+  weapon: null
+};
+
+// item database: percent modifiers use keys like pctMaxHp, pctDamage
+const ITEM_DB = {
+  // Body armors
+  retro_armor: {
+    id: 'retro_armor',
+    name: 'Retro Armor',
+    slot: 'body',
+    desc: 'Classic plating. +10% HP and +10% damage.',
+    modifiers: { pctMaxHp: 0.10, pctDamage: 0.10 }
+  },
+  v8_armor: {
+    id: 'v8_armor',
+    name: 'V8 Armor',
+    slot: 'body',
+    desc: 'High-grade plating. +20% HP and +20% damage.',
+    modifiers: { pctMaxHp: 0.20, pctDamage: 0.20 }
+  },
+  saloon_armor: {
+    id: 'saloon_armor',
+    name: 'Saloon Armor',
+    slot: 'body',
+    desc: 'Old-timey charm. +10% HP, passive heal in battle.',
+    modifiers: { pctMaxHp: 0.10, passiveHealPct: 0.03 } // heals 3% max HP per turn
+  },
+  haunted_armor: {
+    id: 'haunted_armor',
+    name: 'Haunted Armor',
+    slot: 'body',
+    desc: 'Ghostly plating. +10% HP, chance to ignore incoming damage.',
+    modifiers: { pctMaxHp: 0.10, blockChance: 0.20 } // 20% block chance
+  },
+  virus_armor: {
+    id: 'virus_armor',
+    name: 'Virus Armor',
+    slot: 'body',
+    desc: 'Bio-reactive plating. +10% HP and +10% damage, extra effects later.',
+    modifiers: { pctMaxHp: 0.10, pctDamage: 0.10 }
+  },
+
+  // Weapons (replace the 200-stamina attack when equipped)
+  retro_gun: {
+    id: 'retro_gun',
+    name: 'Retro Gun',
+    slot: 'weapon',
+    desc: 'Classic blaster. +10% damage.',
+    modifiers: { pctDamage: 0.10 },
+  },
+  v8_gun: {
+    id: 'v8_gun',
+    name: 'V8 Gun',
+    slot: 'weapon',
+    desc: 'High-powered rifle. +20% damage.',
+    modifiers: { pctDamage: 0.20 },
+  },
+  saloon_gun: {
+    id: 'saloon_gun',
+    name: 'Saloon Gun',
+    slot: 'weapon',
+    desc: 'Piercing rounds. +10% damage and minor stun chance on hit.',
+    modifiers: { pctDamage: 0.10 },
+  },
+  haunted_gun: {
+    id: 'haunted_gun',
+    name: 'Haunted Gun',
+    slot: 'weapon',
+    desc: 'Phasing rounds. +10% damage and chance to ignore enemy shield.',
+    modifiers: { pctDamage: 0.10 },
+  },
+  virus_gun: {
+    id: 'virus_gun',
+    name: 'Virus Gun',
+    slot: 'weapon',
+    desc: 'Bio launcher. Replaces heavy 200 STM attack with a special viral blast.',
+    modifiers: { pctDamage: 0.10 },
+    specialKey: 'virus_special'
+  }
+};
+
 
 let playerStats = {
   level: 1,
@@ -818,14 +915,14 @@ function drawPlayerBattleStatus() {
 
 // Enemy behaviors
 function normalAttack(enemy) {
-  playerStats.currentHp -= enemy.damage;
-  showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
+  playerTakeDamage(enemy.damage, enemy.name);
+showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
 }
 function sniperAttack(enemy) {
   const isCritical = Math.random() < 0.3;
   const damage = isCritical ? enemy.damage * 3 : enemy.damage;
-  playerStats.currentHp -= damage;
-  showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
+  playerTakeDamage(damage, enemy.name);
+showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
 }
 function bossBehavior(enemy) {
   const now = Date.now();
@@ -997,10 +1094,38 @@ function healerBehavior(enemy) {
   }
 }
 
+  function playerTakeDamage(amount, sourceName) {
+  const body = equipment.body ? ITEM_DB[equipment.body] : null;
+  if (body && body.modifiers && body.modifiers.blockChance) {
+    const chance = body.modifiers.blockChance;
+    if (Math.random() < chance) {
+      showTemporaryText(`Your ${body.name} phases you through ${sourceName || 'the attack'}!`);
+      return; // damage ignored
+    }
+  }
+  playerStats.currentHp -= amount;
+  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+  updateHp(playerStats.currentHp);
+}
+
+
 // Take enemy turn actions
 function takeTurn() {
   if (!inBattle) return;
+  applyArmorPassives();
   activeEnemies.forEach(enemy => {
+function applyArmorPassives() {
+  const body = equipment.body ? ITEM_DB[equipment.body] : null;
+  if (!inBattle || !body || !body.modifiers) return;
+  const m = body.modifiers;
+  // passive heal percent per enemy turn (apply as percent of body/max HP)
+  if (m.passiveHealPct) {
+    const healAmount = Math.max(1, Math.floor((playerStats.maxHp || 1) * m.passiveHealPct));
+    playerStats.currentHp = Math.min(playerStats.maxHp, playerStats.currentHp + healAmount);
+    updateHp(playerStats.currentHp);
+    showTemporaryText(`Armor heals you for ${healAmount} HP.`);
+  }
+}
     if (!enemy.stunned) {
       const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
       if (behavior === 'normalAttack') normalAttack(enemy);
@@ -1135,6 +1260,128 @@ function checkInteraction(checkX, checkY) {
   return null;
 }
 
+// apply percent modifiers on top of base stats
+function computeStatsWithEquipment() {
+  // start from base stats (assume playerStats.base* holds base values if you want permanence)
+  // If you don't have base values stored, treat current playerStats as base and recompute carefully.
+  // We'll compute derived modifiers and apply them additively.
+  const baseMaxHp = Math.max(1, playerStats.baseMaxHp || playerStats.maxHp);
+  const baseDamage = Math.max(1, playerStats.baseDamage || playerStats.damage);
+  const baseMaxStamina = Math.max(1, playerStats.baseMaxStamina || playerStats.maxStamina);
+
+  let addPctHp = 0;
+  let addPctDamage = 0;
+  let addMaxStamina = 0;
+
+  const body = equipment.body ? ITEM_DB[equipment.body] : null;
+  const weapon = equipment.weapon ? ITEM_DB[equipment.weapon] : null;
+
+  [body, weapon].forEach(meta => {
+    if (!meta || !meta.modifiers) return;
+    const m = meta.modifiers;
+    if (m.pctMaxHp) addPctHp += m.pctMaxHp;
+    if (m.pctDamage) addPctDamage += m.pctDamage;
+    if (m.pctStamina) addMaxStamina += m.pctStamina;
+  });
+
+  // store derived stats on playerStats for UI and combat (but keep base values aside)
+  playerStats.effectiveMaxHp = Math.max(1, Math.floor(baseMaxHp * (1 + addPctHp)));
+  playerStats.effectiveDamage = Math.max(1, Math.ceil(baseDamage * (1 + addPctDamage)));
+  playerStats.effectiveMaxStamina = Math.max(1, Math.floor(baseMaxStamina * (1 + addMaxStamina)));
+
+  // clamp current values to new maxima
+  if (playerStats.currentHp > playerStats.effectiveMaxHp) playerStats.currentHp = playerStats.effectiveMaxHp;
+  if (playerStats.currentStamina > playerStats.effectiveMaxStamina) playerStats.currentStamina = playerStats.effectiveMaxStamina;
+}
+
+  function renderEquipPopup() {
+  const slotsDiv = document.getElementById('equip-slots');
+  slotsDiv.innerHTML = '';
+  ['body','weapon'].forEach(slot => {
+    const id = equipment[slot];
+    const meta = id ? ITEM_DB[id] : null;
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.justifyContent = 'space-between';
+    row.style.marginBottom = '6px';
+    row.innerHTML = `<strong>${slot.toUpperCase()}</strong><span>${meta ? meta.name : '—'}</span>`;
+    const btn = document.createElement('button');
+    btn.textContent = id ? 'Unequip' : '—';
+    btn.disabled = !id;
+    btn.onclick = () => { unequipSlot(slot); renderEquipPopup(); };
+    row.appendChild(btn);
+    slotsDiv.appendChild(row);
+  });
+
+  const listDiv = document.getElementById('equip-inventory-list');
+  listDiv.innerHTML = '';
+  inventory.forEach((qty, key) => {
+    if (qty <= 0) return;
+    const meta = ITEM_DB[key];
+    if (!meta) return;
+    const el = document.createElement('div');
+    el.style.display = 'flex';
+    el.style.justifyContent = 'space-between';
+    el.style.marginBottom = '6px';
+    el.innerHTML = `<span>${meta.name} x${qty}</span>`;
+    const btn = document.createElement('button');
+    btn.textContent = 'Equip';
+    btn.onclick = () => { equipItemById(key); renderEquipPopup(); };
+    el.appendChild(btn);
+    listDiv.appendChild(el);
+  });
+}
+document.getElementById('stats-button').addEventListener('click', () => {
+  const p = document.getElementById('equip-popup');
+  const isHidden = window.getComputedStyle(p).display === 'none';
+  if (isHidden) { renderEquipPopup(); p.style.display = 'block'; }
+  else p.style.display = 'none';
+});
+// equip item by id (body or weapon), moves one from inventory to slot and recomputes stats
+function equipItemById(itemId) {
+  const meta = ITEM_DB[itemId];
+  if (!meta) { showTemporaryText('Cannot equip item.'); return; }
+  if ((inventory.get(itemId) || 0) <= 0) { showTemporaryText('You do not have that item.'); return; }
+  const slot = meta.slot;
+  // unequip previous
+  if (equipment[slot]) {
+    inventory.set(equipment[slot], (inventory.get(equipment[slot]) || 0) + 1);
+    showTemporaryText(`Unequipped ${ITEM_DB[equipment[slot]].name}.`);
+    equipment[slot] = null;
+  }
+  // equip new
+  inventory.set(itemId, Math.max(0, (inventory.get(itemId) || 0) - 1));
+  equipment[slot] = itemId;
+  showTemporaryText(`Equipped ${meta.name}.`);
+  // ensure base stats snapshot exists
+  playerStats.baseMaxHp = playerStats.baseMaxHp || playerStats.maxHp;
+  playerStats.baseDamage = playerStats.baseDamage || playerStats.damage;
+  playerStats.baseMaxStamina = playerStats.baseMaxStamina || playerStats.maxStamina;
+  computeStatsWithEquipment();
+  // copy effective to used stats for combat code compatibility
+  playerStats.maxHp = playerStats.effectiveMaxHp;
+  playerStats.damage = playerStats.effectiveDamage;
+  playerStats.maxStamina = playerStats.effectiveMaxStamina;
+  updateHp(playerStats.currentHp);
+  draw();
+}
+
+// unequip slot and return item to inventory
+function unequipSlot(slot) {
+  const id = equipment[slot];
+  if (!id) { showTemporaryText('Nothing equipped.'); return; }
+  inventory.set(id, (inventory.get(id) || 0) + 1);
+  showTemporaryText(`Unequipped ${ITEM_DB[id].name}.`);
+  equipment[slot] = null;
+  // restore base if needed and recompute
+  computeStatsWithEquipment();
+  playerStats.maxHp = playerStats.effectiveMaxHp;
+  playerStats.damage = playerStats.effectiveDamage;
+  playerStats.maxStamina = playerStats.effectiveMaxStamina;
+  if (playerStats.currentHp > playerStats.maxHp) playerStats.currentHp = playerStats.maxHp;
+  updateHp(playerStats.currentHp);
+  draw();
+}
 
 // Handle interaction actions
 function handleInteraction(object) {
@@ -1255,6 +1502,47 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
     return;
   }
   updateStamina(playerStats.currentStamina - staminaCost);
+  const weaponMeta = equipment.weapon ? ITEM_DB[equipment.weapon] : null;
+  const special = weaponMeta && weaponMeta.specialKey ? weaponMeta.specialKey : null;
+  if (special === 'virus_special') {
+    // Viral blast: apply smaller AOE + poison to enemies that are not immune
+    const aoeDamage = Math.ceil(playerStats.damage * 1.5);
+    const toHandle = [];
+    activeEnemies.forEach(enemy => {
+      if (enemy.shieldActive) {
+        // virus ignores shield less often; we let it hit but still respects shield flag
+        // optional: ignore shields based on weapon modifiers
+      }
+      enemy.currentHp -= aoeDamage;
+      if (enemy.currentHp < 0) enemy.currentHp = 0;
+      // try to apply poison if not resistant
+      if (!(enemy.resistances && enemy.resistances.poison)) {
+        enemy.poisoned = true;
+        // start short poison (reuse your poison interval logic or simplified tick)
+        let poisonTimer = 0;
+        const poisonInterval = setInterval(() => {
+          if (!enemy.poisoned || poisonTimer >= 2000) {
+            clearInterval(poisonInterval);
+            enemy.poisoned = false;
+            drawBattleUI();
+            return;
+          }
+          enemy.currentHp -= Math.max(1, Math.ceil(playerStats.damage * 0.25));
+          if (enemy.currentHp < 0) enemy.currentHp = 0;
+          drawBattleUI();
+          poisonTimer += 500;
+        }, 500);
+        enemy.behaviorTimers = enemy.behaviorTimers || [];
+        enemy.behaviorTimers.push(poisonInterval);
+      }
+      if (enemy.currentHp === 0) toHandle.push(enemy);
+    });
+    toHandle.forEach(e => handleEnemyDeath(e));
+    if (activeEnemies.length === 0) return;
+    drawBattleUI();
+    drawPlayerBattleStatus();
+    return;
+  }
   let remainingEnemies = [];
   activeEnemies.forEach(enemy => {
     enemy.currentHp -= (playerStats.damage * 20);
@@ -1438,6 +1726,7 @@ function draw() {
 // Save game state to localStorage
 function saveGame() {
   const saveData = {
+    saveData.equipment = equipment;
     playerStats,
     inventory: Array.from(inventory.entries()),
     currentLevelIndex,
@@ -1462,6 +1751,12 @@ function loadGame() {
     Object.assign(playerStats, saveData.playerStats);
     inventory.clear();
     saveData.inventory.forEach(([key, value]) => inventory.set(key, value));
+    if (saveData.equipment) equipment = saveData.equipment;
+computeStatsWithEquipment();
+playerStats.maxHp = playerStats.effectiveMaxHp;
+playerStats.damage = playerStats.effectiveDamage;
+playerStats.maxStamina = playerStats.effectiveMaxStamina;
+updateHp(playerStats.currentHp);
     loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
     updateHp(playerStats.currentHp);
     updateStatsPopup();
