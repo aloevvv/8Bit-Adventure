@@ -614,13 +614,6 @@ function showTemporaryText(message) {
   }, 3000);
 }
 
-if (currentLevel._pendingDialog) {
-  const dz = currentLevel._pendingDialog;
-  currentLevel._pendingDialog = null;
-  showDialog(dz.text, dz.id, { style: dz.style, speaker: dz.speaker });
-  return;
-}
-
   
 // Check if player can go below 1 HP (used with extra life item)
 function canGoBelow1Hp() {
@@ -1584,13 +1577,6 @@ if (gameHud) {
   loadButton.onclick = loadGame;
   gameHud.appendChild(loadButton);
 }
-
-// DIALOG AUTO-TRIGGER CHECK (autoShow only).
-const dialogZone = findDialogZone(nextX, nextY);
-if (dialogZone && dialogZone.autoShow) {
-  showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
-  return; // stop further movement processing this frame
-}
   
 // Keyboard movement and interaction
 canvas.addEventListener('keydown', function(e) {
@@ -1621,6 +1607,10 @@ canvas.addEventListener('keydown', function(e) {
     const battleZone = findBattleZone(nextX, nextY);
     if (battleZone) { initiateBattle('battleZone', battleZone); return; }
     x = nextX; y = nextY;
+    const dialogZone = findDialogZone(nextX, nextY);
+    if (dialogZone && dialogZone.autoShow) {
+    showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
+  return;
   }
   draw();
 });
