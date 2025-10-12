@@ -1590,29 +1590,49 @@ canvas.addEventListener('keydown', function(e) {
   }
 
   if (key === 'x') {
-    e.preventDefault();
-    const interactableObject = checkInteraction(x - 16, y) || checkInteraction(x + 16, y) || checkInteraction(x, y - 16) || checkInteraction(x, y + 16) || checkInteraction(x, y);
-    if (interactableObject) handleInteraction(interactableObject);
+  e.preventDefault();
+  const interactableObject =
+    checkInteraction(x - 16, y) ||
+    checkInteraction(x + 16, y) ||
+    checkInteraction(x, y - 16) ||
+    checkInteraction(x, y + 16) ||
+    checkInteraction(x, y);
+  if (interactableObject) handleInteraction(interactableObject);
+  return;
+}
+
+if (key === 'arrowleft' || key === 'a') nextX -= speed;
+if (key === 'arrowright' || key === 'd') nextX += speed;
+if (key === 'arrowup' || key === 'w') nextY -= speed;
+if (key === 'arrowdown' || key === 's') nextY += speed;
+
+if (!isCollidingWithWall(nextX, nextY)) {
+  const door = checkDoorCollision(nextX, nextY);
+  if (door) {
+    loadLevel(door.destLevel, door.destX, door.destY);
     return;
   }
 
-  if (key === 'arrowleft' || key === 'a') nextX -= speed;
-  if (key === 'arrowright' || key === 'd') nextX += speed;
-  if (key === 'arrowup' || key === 'w') nextY -= speed;
-  if (key === 'arrowdown' || key === 's') nextY += speed;
-
-  if (!isCollidingWithWall(nextX, nextY)) {
-    const door = checkDoorCollision(nextX, nextY);
-    if (door) { loadLevel(door.destLevel, door.destX, door.destY); return; }
-    const battleZone = findBattleZone(nextX, nextY);
-    if (battleZone) { initiateBattle('battleZone', battleZone); return; }
-    x = nextX; y = nextY;
-    const dialogZone = findDialogZone(nextX, nextY);
-    if (dialogZone && dialogZone.autoShow) {
-    showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
-  return;
+  const battleZone = findBattleZone(nextX, nextY);
+  if (battleZone) {
+    initiateBattle('battleZone', battleZone);
+    return;
   }
-  draw();
+
+  // move player
+  x = nextX;
+  y = nextY;
+
+  // dialog auto-trigger (autoShow only)
+  const dialogZone = findDialogZone(nextX, nextY);
+  if (dialogZone && dialogZone.autoShow) {
+    showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
+    return;
+  }
+}
+
+draw();
+
 });
   </script>
 </body>
