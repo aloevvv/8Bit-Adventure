@@ -365,6 +365,10 @@ const hpText = document.getElementById('hp-text');
 let selectedEnemyIndex = 0;
 let isPowered = false;
 
+let shownDialogs = new Set();
+let _dialogQueue = [];
+
+
 const zoneSprites = {
   fail: new Image (),
   robot: new Image(),
