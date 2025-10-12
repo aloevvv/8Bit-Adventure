@@ -374,12 +374,6 @@ zoneSprites.fail.src = 'fail.png';
 zoneSprites.bossrobot.src = 'bossrobot.png';
 zoneSprites.robot.src = 'robot.png';
 
-// dialog auto-trigger check (autoShow only)
-const dialogZone = findDialogZone(nextX, nextY);
-if (dialogZone && dialogZone.autoShow) {
-  showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style, speaker: dialogZone.speaker });
-  return; // stop further movement processing this frame
-}
 
   
 let tempText = "";
@@ -1597,7 +1591,6 @@ if (dialogZone && dialogZone.autoShow) {
   showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
   return; // stop further movement processing this frame
 }
-
   
 // Keyboard movement and interaction
 canvas.addEventListener('keydown', function(e) {
