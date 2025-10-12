@@ -436,7 +436,8 @@ const levels = [
       { x: 450, y: 350, width: 50, height: 15 },
     ],
     doors: [
-      { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 }
+      { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 },
+      { x: 460, y: 620, width: 20, height: 480, destLevel: 2, destX: 40, destY: 40 }
     ],
     battleZones: [
       { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "BossBot" }], sprite: 'bossrobot' },
@@ -474,6 +475,31 @@ const levels = [
       { name: "big_stone", x: 300, y: 200, width: 64, height: 64, interactRect: { x: 268, y: 200, width: 96, height: 64 }, action: "break", requiredItem: "hammer" },
       { name: "hammer_pickup", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "hammer"}
     ]
+  },
+  {
+    bgSrc: "arcadeA2.png",
+    walls: [
+      { x: 0, y: 0, width: 640, height: 70 },
+      { x: 0, y: 460, width: 640, height: 20 },
+      { x: 608, y: 0, width: 32, height: 480 },
+      { x: 0, y: 0, width: 50, height: 480 },
+      { x: 300, y: 200, width: 64, height: 64 },
+    ],
+    doors: [
+      { x: 0, y: 0, width: 40, height: 150, destLevel: 0, destX: 400, destY: 600 }
+    ],
+    battleZones: [],
+    dialogZones: [
+  {
+    id: 'encounter_enemies',
+    x: 0, y: 0, width: 640, height: 480,
+    text: ["Oh, wow. There's robots around.", "I wonder if they're hostile. Maybe I should ask them what happened?"],
+    autoShow: true,
+    style: 'dialog',
+    speaker: '8-Bit'
+  }
+],
+    interactables: []
   }
 ];
 
