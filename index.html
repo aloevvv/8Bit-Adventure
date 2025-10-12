@@ -314,6 +314,16 @@
       <div id="inventory-list"></div>
     </div>
     </div>
+      <div id="dialog-overlay" style="display:none; position:fixed; inset:0; z-index:2500;
+     background:rgba(0,0,0,0.6); display:flex; align-items:flex-end; justify-content:center; padding:20px;">
+  <div id="dialog-box" style="background:#002591; color:white; border:2px solid black;
+       padding:16px; max-width:640px; font-family:'Press Start 2P',sans-serif;">
+    <div id="dialog-text" style="white-space:pre-wrap; font-size:12px; line-height:1.2;"></div>
+    <div style="text-align:right; margin-top:8px;">
+      <button id="dialog-next" style="font-family:'Press Start 2P',sans-serif; padding:8px 12px;">Next</button>
+    </div>
+  </div>
+</div>
 
 <!-- Must start hidden! -->
 <div id="game-over-overlay" style="display: none">
@@ -364,7 +374,14 @@ zoneSprites.fail.src = 'fail.png';
 zoneSprites.bossrobot.src = 'bossrobot.png';
 zoneSprites.robot.src = 'robot.png';
 
+// dialog auto-trigger check (autoShow only)
+const dialogZone = findDialogZone(nextX, nextY);
+if (dialogZone && dialogZone.autoShow) {
+  showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style, speaker: dialogZone.speaker });
+  return; // stop further movement processing this frame
+}
 
+  
 let tempText = "";
 let tempTextTimeout = null;
 let defeatedZone = null;
@@ -427,7 +444,7 @@ const levels = [
       { x: 100, y: 100, width: 50, height: 50, encounter: [{ type: "BossBot" }], sprite: 'bossrobot' },
       { x: 400, y: 300, width: 70, height: 70, encounter: [{ type: "Sniperbot" }, { type: "Sniperbot" }], sprite: 'fail' }
 ],
-    
+    dialogZones: [],
     interactables: []
   },
   {
@@ -443,6 +460,16 @@ const levels = [
       { x: 300, y: 450, width: 40, height: 60, destLevel: 0, destX: 400, destY: 400 }
     ],
     battleZones: [],
+    dialogZones: [
+  {
+    id: 'enter_arcade',
+    x: 0, y: 0, width: 640, height: 480,
+    text: ["The arcade! Always been my source of comfort.", "It's a little broken down, though."],
+    autoShow: true,
+    style: 'dialog',
+    speaker: '8-Bit'
+  }
+],
     interactables: [
       { name: "power_box", x: 20, y: 260, width: 100, height: 100, action: "power_on" },
       { name: "arcade_machine", x: 340, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] },
@@ -477,6 +504,58 @@ function preloadImagesForLevel(levelIndex, onComplete) {
     img.src = img.src || '8bit.png';
   };
   bgImg.src = level.bgSrc;
+}
+  let _dialogQueue = [];
+
+// find first unseen dialog zone at a given world position
+function findDialogZone(checkX, checkY) {
+  const hitboxX = checkX + (typeof hitboxOffsetX !== 'undefined' ? hitboxOffsetX : 0);
+  const hitboxY = checkY + (typeof hitboxOffsetY !== 'undefined' ? hitboxOffsetY : 0);
+  const hw = typeof hitboxWidth !== 'undefined' ? hitboxWidth : 16;
+  const hh = typeof hitboxHeight !== 'undefined' ? hitboxHeight : 16;
+  const level = currentLevel;
+  if (!level || !level.dialogZones) return null;
+  for (const zone of level.dialogZones) {
+    if (!zone || !zone.id) continue;
+    if (shownDialogs.has(zone.id)) continue;
+    if (
+      hitboxX < zone.x + zone.width &&
+      hitboxX + hw > zone.x &&
+      hitboxY < zone.y + zone.height &&
+      hitboxY + hh > zone.y
+    ) return zone;
+  }
+  return null;
+}
+
+// show dialog: textOrLines can be string or array; idToMark is the dialog id to mark shown after completion
+// opts: { style: 'dialog'|'narration', speaker: '8-Bit' }
+function showDialog(textOrLines, idToMark, opts = {}) {
+  const overlay = document.getElementById('dialog-overlay');
+  const box = document.getElementById('dialog-box');
+  const textDiv = document.getElementById('dialog-text');
+  const style = opts.style || 'dialog';
+  const speaker = opts.speaker || null;
+
+  overlay.style.display = 'flex';
+  if (style === 'narration') {
+    box.style.maxWidth = '480px';
+    box.style.background = '#223344';
+    box.style.fontSize = '11px';
+  } else {
+    box.style.maxWidth = '640px';
+    box.style.background = '#002591';
+    box.style.fontSize = '12px';
+  }
+
+  _dialogQueue = Array.isArray(textOrLines) ? textOrLines.slice() : [String(textOrLines)];
+  if (speaker) {
+    textDiv.innerHTML = `<strong>${speaker}</strong>\n\n${_dialogQueue.shift() || ''}`;
+  } else {
+    textDiv.textContent = _dialogQueue.shift() || '';
+  }
+  overlay._markId = idToMark || null;
+  draw(); // refresh screen so overlay appears immediately
 }
 
 // Play button handler
@@ -541,6 +620,14 @@ function showTemporaryText(message) {
   }, 3000);
 }
 
+if (currentLevel._pendingDialog) {
+  const dz = currentLevel._pendingDialog;
+  currentLevel._pendingDialog = null;
+  showDialog(dz.text, dz.id, { style: dz.style, speaker: dz.speaker });
+  return;
+}
+
+  
 // Check if player can go below 1 HP (used with extra life item)
 function canGoBelow1Hp() {
   return extraLifeTimerId === null;
@@ -1303,6 +1390,20 @@ document.getElementById('inventory-battle-button').addEventListener('click', () 
   }
 });
 
+  document.getElementById('dialog-next').addEventListener('click', () => {
+  const overlay = document.getElementById('dialog-overlay');
+  const textDiv = document.getElementById('dialog-text');
+  if (_dialogQueue.length > 0) {
+    textDiv.textContent = _dialogQueue.shift();
+    return;
+  }
+  const id = overlay._markId;
+  overlay._markId = null;
+  overlay.style.display = 'none';
+  draw();
+  if (id) shownDialogs.add(id);
+});
+
 document.addEventListener('keydown', function(e) {
   if (isGameOver && e.key.toLowerCase() === 'r') {
     location.reload();
@@ -1490,6 +1591,14 @@ if (gameHud) {
   gameHud.appendChild(loadButton);
 }
 
+// DIALOG AUTO-TRIGGER CHECK (autoShow only).
+const dialogZone = findDialogZone(nextX, nextY);
+if (dialogZone && dialogZone.autoShow) {
+  showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
+  return; // stop further movement processing this frame
+}
+
+  
 // Keyboard movement and interaction
 canvas.addEventListener('keydown', function(e) {
   if (inBattle || isGameOver) return;
