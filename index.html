@@ -1605,8 +1605,8 @@ function saveGame() {
     inventory: Array.from(inventory.entries()),
   currentLevelIndex,
   playerPosition: { x, y },
-  levelInteractables: currentLevel.interactables
-  };
+  saveData.levelInteractables = currentLevel.interactables;
+  saveData.shownDialogs = Array.from(shownDialogs);
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
   showTemporaryText('Game saved!');
   console.log('Game saved:', saveData);
@@ -1627,10 +1627,20 @@ function loadGame() {
     inventory.clear();
     saveData.inventory.forEach(([key, value]) => inventory.set(key, value));
     loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
-    updateHp(playerStats.currentHp);
-    updateStatsPopup();
-    showTemporaryText('Game loaded!');
-    console.log('Game loaded:', saveData);
+
+if (saveData.levelInteractables) {
+  currentLevel.interactables = saveData.levelInteractables;
+}
+
+if (Array.isArray(saveData.shownDialogs)) {
+  shownDialogs = new Set(saveData.shownDialogs);
+}
+
+updateHp(playerStats.currentHp);
+updateStatsPopup();
+showTemporaryText('Game loaded!');
+console.log('Game loaded:', saveData);
+
   } catch (e) {
     console.error('Failed to load save:', e);
     showTemporaryText('Failed to load save.');
