@@ -473,7 +473,9 @@ const levels = [
       { name: "power_box", x: 20, y: 260, width: 100, height: 100, action: "power_on" },
       { name: "arcade_machine", x: 340, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] },
       { name: "big_stone", x: 300, y: 200, width: 64, height: 64, interactRect: { x: 268, y: 200, width: 96, height: 96 }, action: "break", requiredItem: "hammer" },
-      { name: "hammer_pickup", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "hammer"}
+      { name: "hammer_pickup", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "hammer"},
+      { id: "chest_001", name: "wooden_chest", x: 220, y: 220, width: 32, height: 32, action: "chest",
+    rewards: [["bandaid",2], ["emp_grenade",1], ["extra_life",1]], opened: false }
     ]
   },
   {
@@ -605,7 +607,8 @@ playBtn.addEventListener('click', () => {
   draw();
 });
 
-
+const closedChestImg = new Image(); closedChestImg.src = "chest_closed.png";
+const openChestImg   = new Image(); openChestImg.src = "chest_open.png";
 
 const stoneImg = new Image();
 stoneImg.src = "stone.png"; // 64x64 graphic of a rock
@@ -1276,6 +1279,35 @@ function handleInteraction(object) {
     }
     return;
   }
+  
+if (object.action === "chest") {
+  // if already opened, show a short message and return
+  if (object.opened) {
+    showDialog("The chest is empty.", null, { speaker: null });
+    return;
+  }
+
+  // mark opened so it won't grant again
+  object.opened = true;
+
+  // grant rewards (rewards is array of [key, qty])
+  const rewardLines = [];
+  if (Array.isArray(object.rewards)) {
+    for (const [key, qty] of object.rewards) {
+      const current = inventory.get(key) || 0;
+      inventory.set(key, current + (qty || 1));
+      rewardLines.push(`+${qty || 1} ${key}`);
+    }
+  }
+
+  // Build a dialog that lists all rewards (guaranteed)
+  const dialogText = ["You opened the chest!", "You received:"].concat(rewardLines);
+  showDialog(dialogText, object.id, { speaker: null });
+
+  // optionally update UI immediately
+  draw();
+  return;
+}
 
   if (object.action === "pickup") {
     const key = object.itemName;
@@ -1542,6 +1574,20 @@ function draw() {
       else { ctx.fillStyle = "#cc9900"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
     }
   });
+// inside draw(), where you draw interactables
+currentLevel.interactables.forEach(obj => {
+  if (obj.action === "chest") {
+    if (obj.opened) {
+      // open chest sprite (or fallback)
+      if (openChestImg && openChestImg.complete) ctx.drawImage(openChestImg, obj.x, obj.y, obj.width, obj.height);
+      else { ctx.fillStyle = "#775533"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
+    } else {
+      // closed chest sprite (or fallback)
+      if (closedChestImg && closedChestImg.complete) ctx.drawImage(closedChestImg, obj.x, obj.y, obj.width, obj.height);
+      else { ctx.fillStyle = "#aa7722"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
+    }
+  }
+});
 
   // draw smashable stones (name matches what you added earlier)
   currentLevel.interactables.forEach(obj => {
@@ -1557,8 +1603,9 @@ function saveGame() {
   const saveData = {
     playerStats,
     inventory: Array.from(inventory.entries()),
-    currentLevelIndex,
-    playerPosition: { x, y },
+  currentLevelIndex,
+  playerPosition: { x, y },
+  levelInteractables: currentLevel.interactables
   };
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
   showTemporaryText('Game saved!');
