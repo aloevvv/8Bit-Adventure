@@ -837,6 +837,23 @@ function drawGeneralInventory() {
   });
 }
 
+  function playerTakeDamage(amount) {
+  if (equippedArmor === "haunted") {
+    const blockChance = armorTypes["haunted"].blockChance || 0;
+    if (Math.random() < blockChance) {
+      showTemporaryText("Haunted Armor blocked the attack!");
+      return; // no damage taken
+    }
+  }
+
+  playerStats.currentHp -= amount;
+  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+  updateHp(playerStats.currentHp);
+
+  if (playerStats.currentHp <= 0) {
+    endBattle('lose');
+  }
+}
 
 // Find battle zone for given player position
 function findBattleZone(checkX, checkY) {
@@ -1031,13 +1048,13 @@ function drawPlayerBattleStatus() {
 
 // Enemy behaviors
 function normalAttack(enemy) {
-  playerStats.currentHp -= enemy.damage;
+  playerTakeDamage(damageAmount);
   showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
 }
 function sniperAttack(enemy) {
   const isCritical = Math.random() < 0.3;
   const damage = isCritical ? enemy.damage * 3 : enemy.damage;
-  playerStats.currentHp -= enemy.damage;
+  playerTakeDamage(damageAmount);
   showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
 }
 function bossBehavior(enemy) {
@@ -1079,7 +1096,7 @@ function bossBehavior(enemy) {
     showTemporaryText(`${enemy.name} launches a rocket!`);
   }
 
-  playerStats.currentHp -= enemy.damage;
+  playerTakeDamage(damageAmount);
   showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
 }
   // Summoner: summons 1 minion every 4 seconds
@@ -1243,6 +1260,14 @@ function takeTurn() {
     showTemporaryText(`Passive heal: +${healAmount} HP`);
   }
 }
+  function playerTakeDamage(amount) {
+  if (equippedArmor === "haunted") {
+    const blockChance = armorTypes["haunted"].blockChance || 0;
+    if (Math.random() < blockChance) {
+      showTemporaryText("Haunted Armor blocked the attack!");
+      return; // no damage taken
+    }
+  }
 
   playerStats.currentHp -= amount;
   if (playerStats.currentHp < 0) playerStats.currentHp = 0;
