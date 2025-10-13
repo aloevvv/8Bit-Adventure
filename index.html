@@ -868,25 +868,44 @@ function showGameOver() {
 function drawInventoryBattlePopup() {
   const battleInventoryList = document.getElementById('inventory-list');
   battleInventoryList.innerHTML = "";
-  const allZero = inventory.size === 0 || Array.from(inventory.values()).every(q => q === 0);
-  if (allZero) {
+
+  // whitelist: items that are allowed in battle (exact names or prefixes)
+  const allowedExact = new Set(['bandaid','emp_grenade','poison_vial','extra_life']);
+  const allowedPrefix = ['battle_']; // add prefixes for any future battle-only items
+
+  // build list of entries that are allowed and have qty > 0
+  const entries = [];
+  inventory.forEach((quantity, itemName) => {
+    if (!quantity || quantity <= 0) return;
+    if (allowedExact.has(itemName)) {
+      entries.push({ itemName, quantity });
+      return;
+    }
+    for (const p of allowedPrefix) {
+      if (itemName.startsWith(p)) { entries.push({ itemName, quantity }); break; }
+    }
+  });
+
+  if (entries.length === 0) {
     battleInventoryList.innerHTML = '<p>Inventory is empty.</p>';
     return;
   }
-  inventory.forEach((quantity, itemName) => {
-    if (quantity > 0) {
-      const itemElement = document.createElement('div');
-      itemElement.className = 'inventory-item';
-      itemElement.innerHTML = `<span>${itemName.replace(/_/g, ' ')} (${quantity})</span>`;
-      const useButton = document.createElement('button');
-      useButton.textContent = 'Use';
-      useButton.className = 'item-use-button';
-      useButton.onclick = () => useItem(itemName);
-      itemElement.appendChild(useButton);
-      battleInventoryList.appendChild(itemElement);
-    }
-  });
+
+  for (const { itemName, quantity } of entries) {
+    const itemElement = document.createElement('div');
+    itemElement.className = 'inventory-item';
+    itemElement.innerHTML = `<span>${itemName.replace(/_/g,' ')} (${quantity})</span>`;
+
+    const useButton = document.createElement('button');
+    useButton.textContent = 'Use';
+    useButton.className = 'item-use-button';
+    useButton.onclick = () => useItem(itemName);
+    itemElement.appendChild(useButton);
+
+    battleInventoryList.appendChild(itemElement);
+  }
 }
+
 
 function equipArmor(type) {
   if (!armorTypes[type]) {
@@ -919,6 +938,16 @@ function equipWeapon(type) {
 // Use inventory item logic
 function useItem(itemName) {
   if ((inventory.get(itemName) || 0) <= 0) return;
+
+  // at the top of useItem(itemName) function, add:
+if (inBattle) {
+  // only allow explicit battle items while in battle
+  const battleAllowed = new Set(['bandaid','emp_grenade','poison_vial','extra_life']);
+  if (!battleAllowed.has(itemName) && !itemName.startsWith('battle_')) {
+    showTemporaryText("You can't use that item during battle.");
+    return;
+  }
+}
 
   if (itemName === 'bandaid') {
     const healAmount = Math.ceil(playerStats.maxHp * 0.33);
