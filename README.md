@@ -1,6 +1,5 @@
 Bugs present:
-N/A
+'Next' appearing immediately upon start (no intention of fixing atm)
 ```
 Things I'm working on now:
-Chest system perhaps?
-Equips / Armour and Weapons?
+N/A
