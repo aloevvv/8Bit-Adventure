@@ -826,7 +826,7 @@ function useItem(itemName) {
     }, 4000);
     showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
   } else if (itemName === 'poison_vial') {
-    const poisonDamagePerTick = Math.max(1, Math.ceil(5 * playerStats.damage / 100));
+    const poisonDamagePerTick = Math.max(1, Math.ceil(15 * playerStats.damage / 100));
     activeEnemies.forEach(enemy => {
       if (enemy.resistances && enemy.resistances.poison) return;
       enemy.poisoned = true;
