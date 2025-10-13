@@ -755,9 +755,9 @@ function levelUp() {
   playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
   playerStats.damage += Math.floor(1 + (playerStats.level / 6));
   playerStats.currentHp = playerStats.maxHp;
-  applyEquipmentBonuses();
   updateHp(playerStats.currentHp);
   updateStatsPopup();
+  applyEquipmentBonuses();
   showTemporaryText(`Leveled up to ${playerStats.level}!`);
 }
 
