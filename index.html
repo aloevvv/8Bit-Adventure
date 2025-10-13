@@ -1568,7 +1568,7 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
 
       // Apply poison if not boss
       if (!enemy.isBoss && !enemy.poisoned) {
-        enemy.poisoned = true;
+        enemy.poisoned = false;
         // Start poison interval here similar to poison vial effect
         // (You can reuse your poison vial code here)
       }
