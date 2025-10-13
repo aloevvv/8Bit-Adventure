@@ -1568,25 +1568,7 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
     // Apply poison if not boss and not already poisoned
     if (!enemy.isBoss && !enemy.poisoned) {
       enemy.poisoned = true;
-
-      const poisonDamagePerTick = Math.max(1, Math.ceil(15 * playerStats.damage / 100));
-      let poisonTimer = 0;
-
-      const poisonInterval = setInterval(() => {
-        if (!enemy.poisoned || poisonTimer >= 3000 || enemy.currentHp <= 0) {
-          clearInterval(poisonInterval);
-          enemy.poisoned = false;
-          drawBattleUI();
-          return;
-        }
-
-        enemy.currentHp -= poisonDamagePerTick;
-        if (enemy.currentHp < 0) enemy.currentHp = 0;
-        drawBattleUI();
-        poisonTimer += 500;
-      }, 500);
     }
-  });
 } else {
     // Default special attack: damage all enemies with 20x damage (as your current code)
     activeEnemies.forEach(enemy => {
