@@ -1253,6 +1253,7 @@ function takeTurn() {
       showTemporaryText("Haunted Armor blocked the attack!");
       return; // no damage taken
     }
+    }
   playerStats.currentHp -= amount;
   if (playerStats.currentHp < 0) playerStats.currentHp = 0;
   updateHp(playerStats.currentHp);
