@@ -1030,16 +1030,22 @@ function drawPlayerBattleStatus() {
 }
 
 // Enemy behaviors
+// normal enemy attack
 function normalAttack(enemy) {
-  playerTakeDamage(damageAmount);
-  showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
+  const damage = enemy.damage || 0;
+  playerTakeDamage(damage);
+  showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
 }
+
+// sniper attack with crits
 function sniperAttack(enemy) {
   const isCritical = Math.random() < 0.3;
-  const damage = isCritical ? enemy.damage * 3 : enemy.damage;
-  playerTakeDamage(damageAmount);
+  const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
+  playerTakeDamage(damage);
   showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
 }
+
+// boss behavior (condensed, uses playerTakeDamage with explicit values)
 function bossBehavior(enemy) {
   const now = Date.now();
   if (!enemy.shieldActivatedAt) enemy.shieldActivatedAt = 0;
@@ -1061,10 +1067,9 @@ function bossBehavior(enemy) {
 
   if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
     const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
-    playerStats.currentHp -= rocketTickDamage;
+    playerTakeDamage(rocketTickDamage);
     enemy.rocketTicksLeft--;
     showTemporaryText(`${enemy.name}'s rocket hits you for ${rocketTickDamage} damage!`);
-    if (playerStats.currentHp < 0) playerStats.currentHp = 0;
     if (enemy.rocketTicksLeft === 0) {
       enemy.rocketActive = false;
       showTemporaryText("The rocket damage ends.");
@@ -1079,8 +1084,9 @@ function bossBehavior(enemy) {
     showTemporaryText(`${enemy.name} launches a rocket!`);
   }
 
-  playerTakeDamage(damageAmount);
-  showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
+  const damage = enemy.damage || 0;
+  playerTakeDamage(damage);
+  showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
 }
   // Summoner: summons 1 minion every 4 seconds
 function summonerBehavior(enemy) {
