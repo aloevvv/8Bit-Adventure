@@ -837,23 +837,6 @@ function drawGeneralInventory() {
   });
 }
 
-  function playerTakeDamage(amount) {
-  if (equippedArmor === "haunted") {
-    const blockChance = armorTypes["haunted"].blockChance || 0;
-    if (Math.random() < blockChance) {
-      showTemporaryText("Haunted Armor blocked the attack!");
-      return; // no damage taken
-    }
-  }
-
-  playerStats.currentHp -= amount;
-  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
-  updateHp(playerStats.currentHp);
-
-  if (playerStats.currentHp <= 0) {
-    endBattle('lose');
-  }
-}
 
 // Find battle zone for given player position
 function findBattleZone(checkX, checkY) {
