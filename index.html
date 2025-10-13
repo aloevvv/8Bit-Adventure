@@ -749,7 +749,6 @@ function updateStatsPopup() {
 
 // Level up player
 function levelUp() {
-  applyEquipmentBonuses();
   playerStats.level++;
   playerStats.xp -= playerStats.xpToNextLevel;
   playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
