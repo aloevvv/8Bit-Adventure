@@ -838,7 +838,6 @@ function drawGeneralInventory() {
 }
 
 
-
 // Find battle zone for given player position
 function findBattleZone(checkX, checkY) {
   const hitboxX = checkX + hitboxOffsetX;
@@ -994,23 +993,7 @@ function drawBattleUI() {
     if (index === selectedEnemyIndex) enemyButton.classList.add('selected');
   });
 }
-function passiveArmorHeal() {
-  if (equippedArmor && armorTypes[equippedArmor] && armorTypes[equippedArmor].passiveHealPercent) {
-    const healAmount = Math.ceil(playerStats.maxHp * armorTypes[equippedArmor].passiveHealPercent);
-    playerStats.currentHp = Math.min(playerStats.currentHp + healAmount, playerStats.maxHp);
-    updateHp(playerStats.currentHp);
-    showTemporaryText(`Passive heal: +${healAmount} HP`);
-  }
-}
 
-  playerStats.currentHp -= amount;
-  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
-  updateHp(playerStats.currentHp);
-
-  if (playerStats.currentHp <= 0) {
-    endBattle('lose');
-  }
-}
 // Draw player status in battle UI
 function drawPlayerBattleStatus() {
   const playerBattleStatusDiv = document.getElementById('player-battle-status');
@@ -1048,13 +1031,13 @@ function drawPlayerBattleStatus() {
 
 // Enemy behaviors
 function normalAttack(enemy) {
-  playerStats.currentHp -= damageAmount;
+  playerStats.currentHp -= enemy.damage;
   showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
 }
 function sniperAttack(enemy) {
   const isCritical = Math.random() < 0.3;
   const damage = isCritical ? enemy.damage * 3 : enemy.damage;
-  playerStats.currentHp -= damageAmount;
+  playerStats.currentHp -= enemy.damage;
   showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
 }
 function bossBehavior(enemy) {
@@ -1096,7 +1079,7 @@ function bossBehavior(enemy) {
     showTemporaryText(`${enemy.name} launches a rocket!`);
   }
 
-  playerStats.currentHp -= damageAmount;
+  playerStats.currentHp -= enemy.damage;
   showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
 }
   // Summoner: summons 1 minion every 4 seconds
@@ -1252,7 +1235,23 @@ function takeTurn() {
     endBattle('lose');
   }
 }
-  
+  function passiveArmorHeal() {
+  if (equippedArmor && armorTypes[equippedArmor] && armorTypes[equippedArmor].passiveHealPercent) {
+    const healAmount = Math.ceil(playerStats.maxHp * armorTypes[equippedArmor].passiveHealPercent);
+    playerStats.currentHp = Math.min(playerStats.currentHp + healAmount, playerStats.maxHp);
+    updateHp(playerStats.currentHp);
+    showTemporaryText(`Passive heal: +${healAmount} HP`);
+  }
+}
+
+  playerStats.currentHp -= amount;
+  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+  updateHp(playerStats.currentHp);
+
+  if (playerStats.currentHp <= 0) {
+    endBattle('lose');
+  }
+}
   function handleEnemyDeath(enemy) {
   // award XP immediately
   if (enemy && enemy.xpReward) gainXP(enemy.xpReward);
