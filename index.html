@@ -1230,6 +1230,9 @@ function healerBehavior(enemy) {
 // Take enemy turn actions
 function takeTurn() {
   if (!inBattle) return;
+  console.log('takeTurn called');
+
+  passiveArmorHeal();
   activeEnemies.forEach(enemy => {
     if (!enemy.stunned) {
       const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
