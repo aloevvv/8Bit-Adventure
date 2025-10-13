@@ -389,12 +389,72 @@ let staminaRegenIntervalId = null;
 let inventory = new Map();
 let extraLifeTimerId = null;
 
+  const armorTypes = {
+  retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
+  v8:    { name: "V8 Armor", hpBonus: 0.20, passiveHealPercent: 0 },
+  saloon:{ name: "Saloon Armor", hpBonus: 0.40, passiveHealPercent: 0.02 },
+  haunted:{name: "Haunted Armor", hpBonus: 0.30, passiveHealPercent: 0, blockChance: 0.15 }, // 15% chance to block
+  virus: { name: "Virus Armor", hpBonus: 0.50, passiveHealPercent: 0 }
+};
+
+const weaponTypes = {
+  retro: { name: "Retro Weapon", dmgBonus: 0.10 },
+  v8:    { name: "V8 Weapon", dmgBonus: 0.20 },
+  saloon:{ name: "Saloon Weapon", dmgBonus: 0.15 },
+  haunted:{name: "Haunted Weapon", dmgBonus: 0.25 },
+  virus: { name: "Virus Weapon", dmgBonus: 0.50 }
+};
+
+  let equippedArmor = null;  // e.g. "retro", "v8", etc.
+let equippedWeapon = null; // e.g. "retro", "virus", etc.
+
+function applyEquipmentBonuses() {
+  // Base stats
+  let baseMaxHp = 8 + (playerStats.level - 1) * 2; // example base HP scaling
+  let baseDamage = 2 + Math.floor(playerStats.level / 6);
+
+  // Armor bonus to max HP
+  let armorBonusHp = 0;
+  if (equippedArmor && armorTypes[equippedArmor]) {
+    armorBonusHp = Math.floor(baseMaxHp * armorTypes[equippedArmor].hpBonus);
+  }
+
+  // Weapon bonus to damage
+  let weaponBonusDmg = 0;
+  if (equippedWeapon && weaponTypes[equippedWeapon]) {
+    weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
+  }
+
+  playerStats.maxHp = baseMaxHp + armorBonusHp;
+  playerStats.damage = baseDamage + weaponBonusDmg;
+
+  // Clamp current HP to max
+  if (playerStats.currentHp > playerStats.maxHp) {
+    playerStats.currentHp = playerStats.maxHp;
+  }
+
+  updateHp(playerStats.currentHp);
+  updateStatsPopup();
+}
+  
 // Initialize inventory with items
 inventory.set("bandaid", 1);
 inventory.set("emp_grenade", 1);
 inventory.set("poison_vial", 1);
 inventory.set("extra_life", 1);
 inventory.set("hammer", 0);
+  
+inventory.set("armor_retro", 0);
+inventory.set("armor_v8", 0);
+inventory.set("armor_saloon", 1);
+inventory.set("armor_haunted",1);
+inventory.set("armor_virus", 0);
+
+inventory.set("weapon_retro", 0);
+inventory.set("weapon_v8", 0);
+inventory.set("weapon_saloon", 1);
+inventory.set("weapon_haunted", 1);
+inventory.set("weapon_virus", 1);
 
 let playerStats = {
   level: 1,
@@ -754,9 +814,45 @@ function drawGeneralInventory() {
     if (quantity > 0) {
       const p = document.createElement('p');
       p.textContent = `${itemName.replace(/_/g, ' ')}: ${quantity}`;
+
+      // Add equip buttons for armor and weapons
+      if (itemName.startsWith("armor_")) {
+        const type = itemName.replace("armor_", "");
+        const equipBtn = document.createElement('button');
+        equipBtn.textContent = "Equip";
+        equipBtn.className = 'item-use-button';
+        equipBtn.onclick = () => equipArmor(type);
+        p.appendChild(equipBtn);
+      } else if (itemName.startsWith("weapon_")) {
+        const type = itemName.replace("weapon_", "");
+        const equipBtn = document.createElement('button');
+        equipBtn.textContent = "Equip";
+        equipBtn.className = 'item-use-button';
+        equipBtn.onclick = () => equipWeapon(type);
+        p.appendChild(equipBtn);
+      }
+
       inventoryList.appendChild(p);
     }
   });
+}
+
+  function playerTakeDamage(amount) {
+  if (equippedArmor === "haunted") {
+    const blockChance = armorTypes["haunted"].blockChance || 0;
+    if (Math.random() < blockChance) {
+      showTemporaryText("Haunted Armor blocked the attack!");
+      return; // no damage taken
+    }
+  }
+
+  playerStats.currentHp -= amount;
+  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+  updateHp(playerStats.currentHp);
+
+  if (playerStats.currentHp <= 0) {
+    endBattle('lose');
+  }
 }
 
 // Find battle zone for given player position
@@ -809,6 +905,34 @@ function drawInventoryBattlePopup() {
   });
 }
 
+function equipArmor(type) {
+  if (!armorTypes[type]) {
+    showTemporaryText(`Unknown armor type: ${type}`);
+    return;
+  }
+  if ((inventory.get(`armor_${type}`) || 0) <= 0) {
+    showTemporaryText(`You don't have ${armorTypes[type].name} in your inventory.`);
+    return;
+  }
+  equippedArmor = type;
+  applyEquipmentBonuses();
+  showTemporaryText(`Equipped ${armorTypes[type].name}`);
+}
+
+function equipWeapon(type) {
+  if (!weaponTypes[type]) {
+    showTemporaryText(`Unknown weapon type: ${type}`);
+    return;
+  }
+  if ((inventory.get(`weapon_${type}`) || 0) <= 0) {
+    showTemporaryText(`You don't have ${weaponTypes[type].name} in your inventory.`);
+    return;
+  }
+  equippedWeapon = type;
+  applyEquipmentBonuses();
+  showTemporaryText(`Equipped ${weaponTypes[type].name}`);
+}
+  
 // Use inventory item logic
 function useItem(itemName) {
   if ((inventory.get(itemName) || 0) <= 0) return;
@@ -924,13 +1048,13 @@ function drawPlayerBattleStatus() {
 
 // Enemy behaviors
 function normalAttack(enemy) {
-  playerStats.currentHp -= enemy.damage;
+  playerTakeDamage(damageAmount);
   showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
 }
 function sniperAttack(enemy) {
   const isCritical = Math.random() < 0.3;
   const damage = isCritical ? enemy.damage * 3 : enemy.damage;
-  playerStats.currentHp -= damage;
+  playerTakeDamage(damageAmount);
   showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
 }
 function bossBehavior(enemy) {
@@ -972,7 +1096,7 @@ function bossBehavior(enemy) {
     showTemporaryText(`${enemy.name} launches a rocket!`);
   }
 
-  playerStats.currentHp -= enemy.damage;
+  playerTakeDamage(damageAmount);
   showTemporaryText(`${enemy.name} attacks you for ${enemy.damage} damage!`);
 }
   // Summoner: summons 1 minion every 4 seconds
@@ -1124,6 +1248,31 @@ function takeTurn() {
   updateHp(playerStats.currentHp);
   drawBattleUI();
   drawPlayerBattleStatus();
+  if (playerStats.currentHp <= 0) {
+    endBattle('lose');
+  }
+}
+  function passiveArmorHeal() {
+  if (equippedArmor && armorTypes[equippedArmor] && armorTypes[equippedArmor].passiveHealPercent) {
+    const healAmount = Math.ceil(playerStats.maxHp * armorTypes[equippedArmor].passiveHealPercent);
+    playerStats.currentHp = Math.min(playerStats.currentHp + healAmount, playerStats.maxHp);
+    updateHp(playerStats.currentHp);
+    showTemporaryText(`Passive heal: +${healAmount} HP`);
+  }
+}
+  function playerTakeDamage(amount) {
+  if (equippedArmor === "haunted") {
+    const blockChance = armorTypes["haunted"].blockChance || 0;
+    if (Math.random() < blockChance) {
+      showTemporaryText("Haunted Armor blocked the attack!");
+      return; // no damage taken
+    }
+  }
+
+  playerStats.currentHp -= amount;
+  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+  updateHp(playerStats.currentHp);
+
   if (playerStats.currentHp <= 0) {
     endBattle('lose');
   }
@@ -1390,18 +1539,35 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
     return;
   }
   updateStamina(playerStats.currentStamina - staminaCost);
-  let remainingEnemies = [];
-  activeEnemies.forEach(enemy => {
-    enemy.currentHp -= (playerStats.damage * 20);
-    if (enemy.currentHp < 0) enemy.currentHp = 0;
-    if (enemy.currentHp > 0) remainingEnemies.push(enemy);
-  });
 
-  if (remainingEnemies.length === 0) {
+  if (equippedWeapon === "virus") {
+    // Virus weapon special attack: example - hits all enemies with  damage + poison effect
+    activeEnemies.forEach(enemy => {
+      enemy.currentHp -= playerStats.damage * 30;
+      if (enemy.currentHp < 0) enemy.currentHp = 0;
+
+      // Apply poison if not boss
+      if (!enemy.isBoss && !enemy.poisoned) {
+        enemy.poisoned = true;
+        // Start poison interval here similar to poison vial effect
+        // (You can reuse your poison vial code here)
+      }
+    });
+  } else {
+    // Default special attack: damage all enemies with 20x damage (as your current code)
+    activeEnemies.forEach(enemy => {
+      enemy.currentHp -= playerStats.damage * 20;
+      if (enemy.currentHp < 0) enemy.currentHp = 0;
+    });
+  }
+
+  // Remove dead enemies
+  activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+
+  if (activeEnemies.length === 0) {
     endBattle('win');
     return;
   }
-  activeEnemies = remainingEnemies;
   if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
