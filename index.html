@@ -1605,8 +1605,8 @@ function saveGame() {
     inventory: Array.from(inventory.entries()),
   currentLevelIndex,
   playerPosition: { x, y },
-  saveData.levelInteractables = currentLevel.interactables;
-  saveData.shownDialogs = Array.from(shownDialogs);
+  levelInteractables: currentLevel.interactables
+  };
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
   showTemporaryText('Game saved!');
   console.log('Game saved:', saveData);
