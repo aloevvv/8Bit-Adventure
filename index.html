@@ -1247,7 +1247,6 @@ function takeTurn() {
   }
 }
   function playerTakeDamage(amount) {
-  if (equippedArmor === "haunted") {
     const blockChance = armorTypes["haunted"].blockChance || 0;
     if (Math.random() < blockChance) {
       showTemporaryText("Haunted Armor blocked the attack!");
