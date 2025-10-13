@@ -463,7 +463,7 @@ let playerStats = {
   damage: 2,
   xp: 0,
   xpToNextLevel: 10,
-  currentStamina: 190,
+  currentStamina: 50,
   maxStamina: 200,
 };
 
@@ -1561,15 +1561,19 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
   updateStamina(playerStats.currentStamina - staminaCost);
 
   if (equippedWeapon === "virus") {
-  activeEnemies.forEach(enemy => {
-    enemy.currentHp -= playerStats.damage * 30;
-    if (enemy.currentHp < 0) enemy.currentHp = 0;
+    // Virus weapon special attack: example - hits all enemies with  damage + poison effect
+    activeEnemies.forEach(enemy => {
+      enemy.currentHp -= playerStats.damage * 30;
+      if (enemy.currentHp < 0) enemy.currentHp = 0;
 
-    // Apply poison if not boss and not already poisoned
-    if (!enemy.isBoss && !enemy.poisoned) {
-      enemy.poisoned = true;
-    }
-} else {
+      // Apply poison if not boss
+      if (!enemy.isBoss && !enemy.poisoned) {
+        enemy.poisoned = true;
+        // Start poison interval here similar to poison vial effect
+        // (You can reuse your poison vial code here)
+      }
+    });
+  } else {
     // Default special attack: damage all enemies with 20x damage (as your current code)
     activeEnemies.forEach(enemy => {
       enemy.currentHp -= playerStats.damage * 20;
