@@ -1216,9 +1216,10 @@ function takeTurn() {
   console.log('takeTurn called');
 
   passiveArmorHeal();
+  if (!inBattle) return;
   activeEnemies.forEach(enemy => {
     if (!enemy.stunned) {
-      const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
+      const behavior = (enemyTypes[enemy.type] && enemyTypes[enemy.type].behavior) || 'normalAttack';
       if (behavior === 'normalAttack') normalAttack(enemy);
       else if (behavior === 'sniperAttack') sniperAttack(enemy);
       else if (behavior === 'bossBehavior') bossBehavior(enemy);
@@ -1234,10 +1235,9 @@ function takeTurn() {
   updateHp(playerStats.currentHp);
   drawBattleUI();
   drawPlayerBattleStatus();
-  if (playerStats.currentHp <= 0) {
-    endBattle('lose');
-  }
+  if (playerStats.currentHp <= 0) endBattle('lose');
 }
+  }
   function passiveArmorHeal() {
   if (equippedArmor && armorTypes[equippedArmor] && armorTypes[equippedArmor].passiveHealPercent) {
     const healAmount = Math.ceil(playerStats.maxHp * armorTypes[equippedArmor].passiveHealPercent);
@@ -1355,7 +1355,7 @@ function initiateBattle(zoneType, zoneObject) {
   drawBattleUI();
   drawPlayerBattleStatus();
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
-  enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 }
 
 // Check collision with interactables
