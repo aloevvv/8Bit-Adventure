@@ -1010,7 +1010,31 @@ function drawBattleUI() {
     if (index === selectedEnemyIndex) enemyButton.classList.add('selected');
   });
 }
+function passiveArmorHeal() {
+  if (equippedArmor && armorTypes[equippedArmor] && armorTypes[equippedArmor].passiveHealPercent) {
+    const healAmount = Math.ceil(playerStats.maxHp * armorTypes[equippedArmor].passiveHealPercent);
+    playerStats.currentHp = Math.min(playerStats.currentHp + healAmount, playerStats.maxHp);
+    updateHp(playerStats.currentHp);
+    showTemporaryText(`Passive heal: +${healAmount} HP`);
+  }
+}
+  function playerTakeDamage(amount) {
+  if (equippedArmor === "haunted") {
+    const blockChance = armorTypes["haunted"].blockChance || 0;
+    if (Math.random() < blockChance) {
+      showTemporaryText("Haunted Armor blocked the attack!");
+      return; // no damage taken
+    }
+  }
 
+  playerStats.currentHp -= amount;
+  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+  updateHp(playerStats.currentHp);
+
+  if (playerStats.currentHp <= 0) {
+    endBattle('lose');
+  }
+}
 // Draw player status in battle UI
 function drawPlayerBattleStatus() {
   const playerBattleStatusDiv = document.getElementById('player-battle-status');
@@ -1252,31 +1276,7 @@ function takeTurn() {
     endBattle('lose');
   }
 }
-  function passiveArmorHeal() {
-  if (equippedArmor && armorTypes[equippedArmor] && armorTypes[equippedArmor].passiveHealPercent) {
-    const healAmount = Math.ceil(playerStats.maxHp * armorTypes[equippedArmor].passiveHealPercent);
-    playerStats.currentHp = Math.min(playerStats.currentHp + healAmount, playerStats.maxHp);
-    updateHp(playerStats.currentHp);
-    showTemporaryText(`Passive heal: +${healAmount} HP`);
-  }
-}
-  function playerTakeDamage(amount) {
-  if (equippedArmor === "haunted") {
-    const blockChance = armorTypes["haunted"].blockChance || 0;
-    if (Math.random() < blockChance) {
-      showTemporaryText("Haunted Armor blocked the attack!");
-      return; // no damage taken
-    }
-  }
-
-  playerStats.currentHp -= amount;
-  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
-  updateHp(playerStats.currentHp);
-
-  if (playerStats.currentHp <= 0) {
-    endBattle('lose');
-  }
-}
+  
   function handleEnemyDeath(enemy) {
   // award XP immediately
   if (enemy && enemy.xpReward) gainXP(enemy.xpReward);
