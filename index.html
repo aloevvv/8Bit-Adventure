@@ -1561,19 +1561,33 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
   updateStamina(playerStats.currentStamina - staminaCost);
 
   if (equippedWeapon === "virus") {
-    // Virus weapon special attack: example - hits all enemies with  damage + poison effect
-    activeEnemies.forEach(enemy => {
-      enemy.currentHp -= playerStats.damage * 30;
-      if (enemy.currentHp < 0) enemy.currentHp = 0;
+  activeEnemies.forEach(enemy => {
+    enemy.currentHp -= playerStats.damage * 30;
+    if (enemy.currentHp < 0) enemy.currentHp = 0;
 
-      // Apply poison if not boss
-      if (!enemy.isBoss && !enemy.poisoned) {
-        enemy.poisoned = true;
-        // Start poison interval here similar to poison vial effect
-        // (You can reuse your poison vial code here)
-      }
-    });
-  } else {
+    // Apply poison if not boss and not already poisoned
+    if (!enemy.isBoss && !enemy.poisoned) {
+      enemy.poisoned = true;
+
+      const poisonDamagePerTick = Math.max(1, Math.ceil(15 * playerStats.damage / 100));
+      let poisonTimer = 0;
+
+      const poisonInterval = setInterval(() => {
+        if (!enemy.poisoned || poisonTimer >= 3000 || enemy.currentHp <= 0) {
+          clearInterval(poisonInterval);
+          enemy.poisoned = false;
+          drawBattleUI();
+          return;
+        }
+
+        enemy.currentHp -= poisonDamagePerTick;
+        if (enemy.currentHp < 0) enemy.currentHp = 0;
+        drawBattleUI();
+        poisonTimer += 500;
+      }, 500);
+    }
+  });
+} else {
     // Default special attack: damage all enemies with 20x damage (as your current code)
     activeEnemies.forEach(enemy => {
       enemy.currentHp -= playerStats.damage * 20;
