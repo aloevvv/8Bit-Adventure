@@ -879,21 +879,6 @@ function findBattleZone(checkX, checkY) {
   return null;
 }
 
-if (currentLevel.waterZones) {
-  ctx.fillStyle = "rgba(0, 0, 255, 0.9)";
-  currentLevel.waterZones.forEach(zone => {
-    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
-  });
-}
-
-// Draw poison zones
-if (currentLevel.poisonZones) {
-  ctx.fillStyle = "rgba(0, 255, 0, 0.4)"; // semi-transparent green
-  currentLevel.poisonZones.forEach(zone => {
-    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
-  });
-}
-
 function showGameOver() {
   isGameOver = true;
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
@@ -1859,6 +1844,20 @@ currentLevel.interactables.forEach(obj => {
     }
   }
 });
+  if (currentLevel.waterZones) {
+  ctx.fillStyle = "rgba(0, 0, 255, 0.9)";
+  currentLevel.waterZones.forEach(zone => {
+    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
+  });
+}
+
+// Draw poison zones
+if (currentLevel.poisonZones) {
+  ctx.fillStyle = "rgba(0, 255, 0, 0.4)"; // semi-transparent green
+  currentLevel.poisonZones.forEach(zone => {
+    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
+  });
+}
 
   // draw smashable stones (name matches what you added earlier)
   currentLevel.interactables.forEach(obj => {
