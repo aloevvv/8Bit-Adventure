@@ -583,7 +583,10 @@ const levels = [
       }
 ],
     interactables: [
-      { name: "big_stone", x: 580, y: 250, width: 64, height: 64, interactRect: { x: 560, y: 230, width: 120, height: 96 }, action: "break", requiredItem: "hammer" }
+      { name: "big_stone", x: 580, y: 250, width: 64, height: 64, interactRect: { x: 560, y: 230, width: 120, height: 96 }, action: "break", requiredItem: "hammer" },
+      { name: "laser_cutter", x: 100, y: 300, width: 32, height: 32, action: "pickup", itemName: "laser_cutter" },
+      { name: "keycard", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "keycard" },
+      { name: "gas_mask", x: 200, y: 300, width: 32, height: 32, action: "pickup", itemName: "gas_mask" },
     ]
   }
 ];
