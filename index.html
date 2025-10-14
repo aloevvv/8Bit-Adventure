@@ -1840,11 +1840,29 @@ function draw() {
   }
 
   currentLevel.interactables.forEach(obj => {
-    if (obj.action === "pickup" && obj.name === "hammer_pickup") {
-      if (hammerImg.complete) ctx.drawImage(hammerImg, obj.x, obj.y, obj.width, obj.height);
-      else { ctx.fillStyle = "#cc9900"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
+  if (obj.action === "pickup") {
+    // Draw key items with their images
+    let imgToDraw = null;
+    if (obj.name === "laser_cutter") imgToDraw = laserCutterImg;
+    else if (obj.name === "keycard") imgToDraw = keycardImg;
+    else if (obj.name === "gas_mask") imgToDraw = gasMaskImg;
+    else if (obj.name === "hammer") imgToDraw = hammerImg;
+
+    if (imgToDraw && imgToDraw.complete) {
+      ctx.drawImage(imgToDraw, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#cc9900"; // fallback color
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
     }
-  });
+  } else if (obj.action === "break" && obj.name === "steel_block") {
+    if (steelBlockImg.complete) {
+      ctx.drawImage(steelBlockImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#888"; // fallback gray
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
 // inside draw(), where you draw interactables
 currentLevel.interactables.forEach(obj => {
   if (obj.action === "chest") {
