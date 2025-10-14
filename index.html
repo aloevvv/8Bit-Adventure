@@ -587,6 +587,7 @@ const levels = [
       { name: "laser_cutter", x: 100, y: 300, width: 32, height: 32, action: "pickup", itemName: "laser_cutter" },
       { name: "keycard", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "keycard" },
       { name: "gas_mask", x: 200, y: 300, width: 32, height: 32, action: "pickup", itemName: "gas_mask" },
+      { name: "raft", x: 250, y: 300, width: 32, height: 32, action: "pickup", itemName: "raft" }
     ]
   }
 ];
@@ -715,6 +716,9 @@ keycardImg.src = 'keycard.png';
 
 const gasMaskImg = new Image();
 gasMaskImg.src = 'gas_mask.png';
+
+const raftImg = new Image();
+raftImg.src = 'raft.png';
 
 let activeEnemies = [];
 
@@ -1849,6 +1853,7 @@ function draw() {
     else if (obj.name === "keycard") imgToDraw = keycardImg;
     else if (obj.name === "gas_mask") imgToDraw = gasMaskImg;
     else if (obj.name === "laser_cutter") imgToDraw = laserCutterImg;
+    else if (obj.name === "raft") imgToDraw = raftImg;
 
     if (imgToDraw && imgToDraw.complete) {
       ctx.drawImage(imgToDraw, obj.x, obj.y, obj.width, obj.height);
