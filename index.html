@@ -1845,10 +1845,10 @@ function draw() {
   if (obj.action === "pickup") {
     // Draw key items with their images
     let imgToDraw = null;
-    if (obj.name === "laser_cutter") imgToDraw = laserCutterImg;
+    if (obj.name === "hammer") imgToDraw = hammerImg;
     else if (obj.name === "keycard") imgToDraw = keycardImg;
     else if (obj.name === "gas_mask") imgToDraw = gasMaskImg;
-    else if (obj.name === "hammer") imgToDraw = hammerImg;
+    else if (obj.name === "laser_cutter") imgToDraw = laserCutterImg;
 
     if (imgToDraw && imgToDraw.complete) {
       ctx.drawImage(imgToDraw, obj.x, obj.y, obj.width, obj.height);
