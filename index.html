@@ -584,7 +584,11 @@ const levels = [
       }
 ],
     interactables: [
-      { name: "big_stone", x: 580, y: 250, width: 64, height: 64, interactRect: { x: 560, y: 230, width: 120, height: 96 }, action: "break", requiredItem: "hammer" }
+      { name: "big_stone", x: 580, y: 250, width: 64, height: 64, interactRect: { x: 560, y: 230, width: 120, height: 96 }, action: "break", requiredItem: "hammer" },
+      { name: "laser_cutter", x: 100, y: 400, width: 32, height: 32, action: "pickup", itemName: "laser_cutter" },
+      { name: "keycard", x: 150, y: 400, width: 32, height: 32, action: "pickup", itemName: "keycard" },
+      { name: "gas_mask", x: 200, y: 400, width: 32, height: 32, action: "pickup", itemName: "gas_mask" },
+      { name: "hammer", x: 250, y: 400, width: 32, height: 32, action: "pickup", itemName: "hammer" }
     ]
   }
 ];
@@ -698,6 +702,21 @@ stoneImg.src = "stone.png"; // 64x64 graphic of a rock
 
 const hammerImg = new Image();
 hammerImg.src = "hammer.png";
+
+//const keypanelImg = new Image();
+//keypanelImg.src = 'keypanel.png';
+
+const steelBlockImg = new Image();
+steelBlockImg.src = 'steel_block.png';
+
+const laserCutterImg = new Image();
+laserCutterImg.src = 'laser_cutter.png';
+
+const keycardImg = new Image();
+keycardImg.src = 'keycard.png';
+
+const gasMaskImg = new Image();
+gasMaskImg.src = 'gas_mask.png';
 
 let activeEnemies = [];
 
@@ -1825,11 +1844,36 @@ function draw() {
   }
 
   currentLevel.interactables.forEach(obj => {
-    if (obj.action === "pickup" && obj.name === "hammer_pickup") {
-      if (hammerImg.complete) ctx.drawImage(hammerImg, obj.x, obj.y, obj.width, obj.height);
-      else { ctx.fillStyle = "#cc9900"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
+  if (obj.action === "pickup") {
+    // Draw key items with their images
+    let imgToDraw = null;
+    if (obj.name === "laser_cutter") imgToDraw = laserCutterImg;
+    else if (obj.name === "keycard") imgToDraw = keycardImg;
+    else if (obj.name === "gas_mask") imgToDraw = gasMaskImg;
+    else if (obj.name === "hammer") imgToDraw = hammerImg;
+
+    if (imgToDraw && imgToDraw.complete) {
+      ctx.drawImage(imgToDraw, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#cc9900"; // fallback color
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
     }
-  });
+  } else if (obj.action === "break" && obj.name === "steel_block") {
+    if (steelBlockImg.complete) {
+      ctx.drawImage(steelBlockImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#888"; // fallback gray
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  } else if (obj.action === "open_door") {
+    if (keypanelImg.complete) {
+      ctx.drawImage(keypanelImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#444"; // fallback dark gray
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
 // inside draw(), where you draw interactables
 currentLevel.interactables.forEach(obj => {
   if (obj.action === "chest") {
@@ -1845,7 +1889,7 @@ currentLevel.interactables.forEach(obj => {
   }
 });
   if (currentLevel.waterZones) {
-  ctx.fillStyle = "rgba(0, 0, 255, 0.9)";
+  ctx.fillStyle = "rgba(167, 255, 255, 0.9)";
   currentLevel.waterZones.forEach(zone => {
     ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
   });
