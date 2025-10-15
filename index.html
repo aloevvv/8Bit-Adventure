@@ -834,10 +834,6 @@ passwordSubmit.addEventListener('click', () => {
       loadLevel(currentPasswordDoor.destLevel, currentPasswordDoor.destX, currentPasswordDoor.destY);
     }
 
-    // Optionally remove or disable this door so no repeat prompt
-    currentLevel.interactables = currentLevel.interactables.filter(o => o !== currentPasswordDoor);
-    draw();
-
   } else {
     passwordMessage.textContent = "Incorrect code!";
   }
