@@ -601,7 +601,15 @@ const levels = [
       { name: "laser_cutter", x: 100, y: 300, width: 32, height: 32, action: "pickup", itemName: "laser_cutter" },
       { name: "keycard", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "keycard" },
       { name: "gas_mask", x: 200, y: 300, width: 32, height: 32, action: "pickup", itemName: "gas_mask" },
-      { name: "password_door", x: 550, y: 100, width: 500, height: 500, action: "password_door", passcode: "3756", destLevel: 0, destX: 100, destY: 100 },
+      {
+  name: "password_door",
+  x: 550, y: 100, width: 400, height: 500,
+  action: "password_door",
+  passcode: "3756",
+  destLevel: 0,
+  destX: 100,
+  destY: 100
+},
       { name: "raft", x: 250, y: 300, width: 32, height: 32, action: "pickup", itemName: "raft" }
     ]
   }
