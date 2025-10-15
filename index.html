@@ -829,10 +829,14 @@ passwordSubmit.addEventListener('click', () => {
     showTemporaryText('Access granted!');
     closePasswordPopup();
 
-    // Open door: load destination level and position
+    // Teleport player to destination level and coordinates
     if (currentPasswordDoor.destLevel !== undefined) {
       loadLevel(currentPasswordDoor.destLevel, currentPasswordDoor.destX, currentPasswordDoor.destY);
     }
+
+    // Remove door so it can't be reused
+    currentLevel.interactables = currentLevel.interactables.filter(o => o !== currentPasswordDoor);
+    draw();
 
   } else {
     passwordMessage.textContent = "Incorrect code!";
@@ -1783,7 +1787,6 @@ function loadLevel(index, newX = x, newY = y) {
   currentLevelIndex = index;
   currentLevel = levels[currentLevelIndex];
 
-  // create a fresh Image so onload fires for the new source
   bgImg = new Image();
   bgImg.onload = () => draw();
   bgImg.src = currentLevel.bgSrc;
@@ -1791,7 +1794,6 @@ function loadLevel(index, newX = x, newY = y) {
   x = newX;
   y = newY;
 
-  // immediate draw to show player/hud while background loads
   draw();
 }
 
