@@ -325,18 +325,20 @@
   </div>
 </div>
       
-<div id="password-popup" style="display:none;position:fixed;inset:0;z-index:3000;
-  background:rgba(0,0,0,0.8); display:flex; flex-direction:column; justify-content:center; align-items:center;">
-  <div style="background:#002591; padding:20px; border:2px solid black; font-family:'Press Start 2P',sans-serif; color:white; width:300px; text-align:center;">
-    <p>Enter 4-digit code:</p>
-    <input id="password-input" type="password" maxlength="4" style="font-size:20px; text-align:center; width:100px;" />
-    <div style="margin-top:15px;">
-      <button id="password-submit" style="font-family:'Press Start 2P',sans-serif; padding:8px 12px; cursor:pointer;">Submit</button>
-      <button id="password-cancel" style="font-family:'Press Start 2P',sans-serif; padding:8px 12px; cursor:pointer; margin-left:10px;">Cancel</button>
+<div id="password-popup" style="display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,0.8);">
+  <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%;">
+    <div style="background:#002591; padding:20px; border:2px solid black; font-family:'Press Start 2P',sans-serif; color:white; width:300px; text-align:center;">
+      <p>Enter 4-digit code:</p>
+      <input id="password-input" type="password" maxlength="4" style="font-size:20px; text-align:center; width:100px;" />
+      <div style="margin-top:15px;">
+        <button id="password-submit" style="font-family:'Press Start 2P',sans-serif; padding:8px 12px; cursor:pointer;">Submit</button>
+        <button id="password-cancel" style="font-family:'Press Start 2P',sans-serif; padding:8px 12px; cursor:pointer; margin-left:10px;">Cancel</button>
+      </div>
+      <p id="password-message" style="color:#ff4444; margin-top:10px; height:18px;"></p>
     </div>
-    <p id="password-message" style="color:#ff4444; margin-top:10px; height:18px;"></p>
   </div>
 </div>
+
 <!-- Must start hidden! -->
 <div id="game-over-overlay" style="display: none">
   <div class="game-over-content">
@@ -790,52 +792,68 @@ function updateStatsPopup() {
   document.getElementById('popup-damage').textContent = playerStats.damage;
 }
 
-const passwordPopup = document.getElementById('password-popup');
-const passwordInput = document.getElementById('password-input');
-const passwordSubmit = document.getElementById('password-submit');
-const passwordCancel = document.getElementById('password-cancel');
-const passwordMessage = document.getElementById('password-message');
+document.addEventListener('DOMContentLoaded', () => {
+  const passwordPopup = document.getElementById('password-popup');
+  const passwordInput = document.getElementById('password-input');
+  const passwordSubmit = document.getElementById('password-submit');
+  const passwordCancel = document.getElementById('password-cancel');
+  const passwordMessage = document.getElementById('password-message');
 
-let currentPasswordDoor = null;
+  window.__passwordPopupState = { passwordPopup, passwordInput, passwordSubmit, passwordCancel, passwordMessage, currentPasswordDoor: null };
+
+  passwordSubmit.addEventListener('click', handlePasswordSubmit);
+  passwordCancel.addEventListener('click', closePasswordPopup);
+
 
 function openPasswordPopup(doorObj) {
-  currentPasswordDoor = doorObj;
-  passwordInput.value = "";
-  passwordMessage.textContent = "";
-  passwordPopup.style.display = 'flex';
-  passwordInput.focus();
+  const s = window.__passwordPopupState;
+  if (!s) return console.warn('password popup state missing');
+  s.currentPasswordDoor = doorObj;
+  s.passwordInput.value = "";
+  s.passwordMessage.textContent = "";
+  s.passwordPopup.style.display = 'block';
+  // delay focus so browser will accept it
+  setTimeout(() => s.passwordInput.focus(), 10);
 }
 
 function closePasswordPopup() {
-  passwordPopup.style.display = 'none';
-  currentPasswordDoor = null;
+  const s = window.__passwordPopupState;
+  if (!s) return;
+  s.passwordPopup.style.display = 'none';
+  s.currentPasswordDoor = null;
 }
 
-passwordSubmit.addEventListener('click', () => {
-  const entered = passwordInput.value;
-  if (!currentPasswordDoor) return;
-
-  if (entered === currentPasswordDoor.passcode) {
+function handlePasswordSubmit() {
+  const s = window.__passwordPopupState;
+  if (!s) return;
+  const entered = s.passwordInput.value;
+  const door = s.currentPasswordDoor;
+  if (!door) return;
+  if (entered === door.passcode) {
     showTemporaryText('Access granted!');
-    closePasswordPopup();
-
-    // Open door: load destination level and position
-    if (currentPasswordDoor.destLevel !== undefined) {
-      loadLevel(currentPasswordDoor.destLevel, currentPasswordDoor.destX, currentPasswordDoor.destY);
+    // if map-door: remove/disable interactable so it doesn't reopen
+    if (Array.isArray(door.targets)) {
+      door.targets.forEach(id => {
+        const w = currentLevel.walls.find(wall => wall.id === id);
+        if (w) w.removed = true;
+      });
     }
-
-    // Optionally remove or disable this door so no repeat prompt
-    currentLevel.interactables = currentLevel.interactables.filter(o => o !== currentPasswordDoor);
-    draw();
-
+    // if warp door:
+    if (door.destLevel != null) {
+      closePasswordPopup();
+      loadLevel(door.destLevel, door.destX, door.destY);
+    } else {
+      closePasswordPopup();
+      currentLevel.interactables = currentLevel.interactables.filter(o => o !== door);
+      saveLevelState(currentLevelId);
+      draw();
+    }
   } else {
-    passwordMessage.textContent = "Incorrect code!";
+    s.passwordMessage.textContent = "Incorrect code!";
+    s.passwordInput.value = "";
+    s.passwordInput.focus();
   }
-});
-
-passwordCancel.addEventListener('click', () => {
-  closePasswordPopup();
-});
+}
 
 // Level up player
 function levelUp() {
