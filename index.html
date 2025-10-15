@@ -828,10 +828,7 @@ passwordSubmit.addEventListener('click', () => {
   if (entered === currentPasswordDoor.passcode) {
     showTemporaryText('Access granted!');
     closePasswordPopup();
-
-    // Teleport player to destination level and coordinates
-    if (currentPasswordDoor.destLevel !== undefined) {
-      loadLevel(currentPasswordDoor.destLevel, currentPasswordDoor.destX, currentPasswordDoor.destY);
+   loadLevel(currentPasswordDoor.destLevel, currentPasswordDoor.destX, currentPasswordDoor.destY);
     }
 
     // Remove door so it can't be reused
