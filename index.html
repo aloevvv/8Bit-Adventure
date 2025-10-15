@@ -1788,13 +1788,12 @@ function loadLevel(index, newX = x, newY = y) {
   currentLevel = levels[currentLevelIndex];
 
   bgImg = new Image();
-  bgImg.onload = () => draw();
+  bgImg.onload = () => {
+    x = newX;
+    y = newY;
+    draw();
+  };
   bgImg.src = currentLevel.bgSrc;
-
-  x = newX;
-  y = newY;
-
-  draw();
 }
 
 function isInZone(zones, px, py) {
