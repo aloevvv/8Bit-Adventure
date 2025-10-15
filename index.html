@@ -324,7 +324,19 @@
     </div>
   </div>
 </div>
-
+      
+<div id="password-popup" style="display:none;position:fixed;inset:0;z-index:3000;
+  background:rgba(0,0,0,0.8); display:flex; flex-direction:column; justify-content:center; align-items:center;">
+  <div style="background:#002591; padding:20px; border:2px solid black; font-family:'Press Start 2P',sans-serif; color:white; width:300px; text-align:center;">
+    <p>Enter 4-digit code:</p>
+    <input id="password-input" type="password" maxlength="4" style="font-size:20px; text-align:center; width:100px;" />
+    <div style="margin-top:15px;">
+      <button id="password-submit" style="font-family:'Press Start 2P',sans-serif; padding:8px 12px; cursor:pointer;">Submit</button>
+      <button id="password-cancel" style="font-family:'Press Start 2P',sans-serif; padding:8px 12px; cursor:pointer; margin-left:10px;">Cancel</button>
+    </div>
+    <p id="password-message" style="color:#ff4444; margin-top:10px; height:18px;"></p>
+  </div>
+</div>
 <!-- Must start hidden! -->
 <div id="game-over-overlay" style="display: none">
   <div class="game-over-content">
@@ -587,6 +599,7 @@ const levels = [
       { name: "laser_cutter", x: 100, y: 300, width: 32, height: 32, action: "pickup", itemName: "laser_cutter" },
       { name: "keycard", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "keycard" },
       { name: "gas_mask", x: 200, y: 300, width: 32, height: 32, action: "pickup", itemName: "gas_mask" },
+      { name: "password_door", x: 550, y: 100, width: 40, height: 80, action: "password_door", passcode: "3756", destLevel: 2, destX: 100, destY: 100 },
       { name: "raft", x: 250, y: 300, width: 32, height: 32, action: "pickup", itemName: "raft" }
     ]
   }
@@ -776,6 +789,53 @@ function updateStatsPopup() {
   document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
   document.getElementById('popup-damage').textContent = playerStats.damage;
 }
+
+const passwordPopup = document.getElementById('password-popup');
+const passwordInput = document.getElementById('password-input');
+const passwordSubmit = document.getElementById('password-submit');
+const passwordCancel = document.getElementById('password-cancel');
+const passwordMessage = document.getElementById('password-message');
+
+let currentPasswordDoor = null;
+
+function openPasswordPopup(doorObj) {
+  currentPasswordDoor = doorObj;
+  passwordInput.value = "";
+  passwordMessage.textContent = "";
+  passwordPopup.style.display = 'flex';
+  passwordInput.focus();
+}
+
+function closePasswordPopup() {
+  passwordPopup.style.display = 'none';
+  currentPasswordDoor = null;
+}
+
+passwordSubmit.addEventListener('click', () => {
+  const entered = passwordInput.value;
+  if (!currentPasswordDoor) return;
+
+  if (entered === currentPasswordDoor.passcode) {
+    showTemporaryText('Access granted!');
+    closePasswordPopup();
+
+    // Open door: load destination level and position
+    if (currentPasswordDoor.destLevel !== undefined) {
+      loadLevel(currentPasswordDoor.destLevel, currentPasswordDoor.destX, currentPasswordDoor.destY);
+    }
+
+    // Optionally remove or disable this door so no repeat prompt
+    currentLevel.interactables = currentLevel.interactables.filter(o => o !== currentPasswordDoor);
+    draw();
+
+  } else {
+    passwordMessage.textContent = "Incorrect code!";
+  }
+});
+
+passwordCancel.addEventListener('click', () => {
+  closePasswordPopup();
+});
 
 // Level up player
 function levelUp() {
@@ -1470,6 +1530,10 @@ function handleInteraction(object) {
     }
     return;
   }
+  if (object.action === "password_door") {
+  openPasswordPopup(object);
+  return;
+}
   
   if (object.name === "power_box") {
     if (!isPowered) {
