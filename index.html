@@ -1949,6 +1949,8 @@ function loadGame() {
       });
     }
 
+    rebuildWalls ();
+
     loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
 
     if (Array.isArray(saveData.shownDialogs)) {
@@ -1964,6 +1966,33 @@ function loadGame() {
     console.error('Failed to load save:', e);
     showTemporaryText('Failed to load save.');
   }
+}
+
+  function rebuildWalls() {
+  // For each level, remove walls that correspond to missing interactables (broken objects)
+  levels.forEach(level => {
+    if (!level.walls || !level.interactables) return;
+
+    // Collect all interactable bounding boxes that block movement (breakable objects)
+    const interactableRects = level.interactables.map(obj => ({
+      x: obj.x,
+      y: obj.y,
+      width: obj.width,
+      height: obj.height
+    }));
+
+    // Filter walls: keep only those that do NOT overlap any interactable bounding box
+    level.walls = level.walls.filter(wall => {
+      return !interactableRects.some(rect => {
+        return (
+          wall.x === rect.x &&
+          wall.y === rect.y &&
+          wall.width === rect.width &&
+          wall.height === rect.height
+        );
+      });
+    });
+  });
 }
 
 // Create Save and Load buttons after DOM is ready (script at bottom so safe)
