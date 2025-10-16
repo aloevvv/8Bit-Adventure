@@ -462,8 +462,6 @@ inventory.set("laser_cutter", 0);
 inventory.set("raft", 0);
 inventory.set("keycard", 0);
 inventory.set("gas_mask", 0);
-inventory.set("drill", 0);
-inventory.set("torch", 0);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
@@ -740,12 +738,6 @@ gasMaskImg.src = 'gas_mask.png';
 
 const raftImg = new Image();
 raftImg.src = 'raft.png';
-
-const drillImg = new Image();
-drillImg.src = 'drill.png';
-
-const torchImg = new Image();
-torchImg.src = 'torch.png';
 
 let activeEnemies = [];
 
@@ -1535,15 +1527,6 @@ function checkInteraction(checkX, checkY) {
 function handleInteraction(object) {
   if (!object) return;
 
-  if (object.action === "use_drill") {
-  if ((inventory.get("drill") || 0) > 0) {
-    showTemporaryText("You use the drill to break through the crack!");
-    loadLevel(object.destLevel, object.destX, object.destY);
-  } else {
-    showTemporaryText("You need a drill to break through here.");
-  }
-  return;
-
   if (object.requiresKeycard) {
     if ((inventory.get('keycard') || 0) > 0) {
       showTemporaryText("You used a keycard to activate this.");
@@ -1840,22 +1823,6 @@ function isInWater(px, py) {
 function isInPoison(px, py) {
   return isInZone(currentLevel.poisonZones, px, py);
 }
-  function isInDarkZone(px, py) {
-  if (!currentLevel.darkZones) return false;
-  const hitboxX = px + hitboxOffsetX;
-  const hitboxY = py + hitboxOffsetY;
-  for (const zone of currentLevel.darkZones) {
-    if (
-      hitboxX < zone.x + zone.width &&
-      hitboxX + hitboxWidth > zone.x &&
-      hitboxY < zone.y + zone.height &&
-      hitboxY + hitboxHeight > zone.y
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
 
 // Wall collision detection
 function isCollidingWithWall(newX, newY) {
@@ -1957,8 +1924,6 @@ function draw() {
     else if (obj.name === "gas_mask") imgToDraw = gasMaskImg;
     else if (obj.name === "laser_cutter") imgToDraw = laserCutterImg;
     else if (obj.name === "raft") imgToDraw = raftImg;
-    else if (obj.name === "drill") imgToDraw = drillImg;
-    else if (obj.name === "torch") imgToDraw = torchImg;
 
     if (imgToDraw && imgToDraw.complete) {
       ctx.drawImage(imgToDraw, obj.x, obj.y, obj.width, obj.height);
@@ -2004,11 +1969,6 @@ if (currentLevel.poisonZones) {
   });
 }
 
-if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
-  // Draw solid black overlay to simulate darkness
-  ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
   // draw smashable stones (name matches what you added earlier)
   currentLevel.interactables.forEach(obj => {
     if (obj.name === "big_stone" || obj.name === "bigStone") {
