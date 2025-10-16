@@ -1443,23 +1443,12 @@ function healerBehavior(enemy) {
   }
 }
 
-  function startPassiveHeal() {
-  if (passiveHealTimerId) clearInterval(passiveHealTimerId);
-  passiveHealTimerId = setInterval(() => {
-    if (!inBattle) {
-      clearInterval(passiveHealTimerId);
-      passiveHealTimerId = null;
-      return;
-    }
-    passiveArmorHeal();
-  }, 1000);
-}
-
 // Take enemy turn actions
 function takeTurn() {
   if (!inBattle) return;
   console.log('takeTurn called');
 
+  passiveArmorHeal();
   activeEnemies.forEach(enemy => {
     if (!enemy.stunned) {
       const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
@@ -1594,7 +1583,7 @@ function initiateBattle(zoneType, zoneObject) {
 
     return enemy;
   });
-  startPassiveHeal()
+
   selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
