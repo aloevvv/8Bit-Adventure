@@ -462,8 +462,8 @@ inventory.set("laser_cutter", 0);
 inventory.set("raft", 0);
 inventory.set("keycard", 0);
 inventory.set("gas_mask", 0);
-inventory.set("drill", 1);
-inventory.set("torch", 1);
+inventory.set("drill", 0);
+inventory.set("torch", 0);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
@@ -754,6 +754,12 @@ gasMaskImg.src = 'gas_mask.png';
 
 const raftImg = new Image();
 raftImg.src = 'raft.png';
+
+const torchImg = new Image();
+torchImg.src = 'torch.png';
+
+const drillImg = new Image();
+drillImg.src = 'drill.png';
 
 let activeEnemies = [];
 
@@ -1950,6 +1956,8 @@ function draw() {
     else if (obj.name === "gas_mask") imgToDraw = gasMaskImg;
     else if (obj.name === "laser_cutter") imgToDraw = laserCutterImg;
     else if (obj.name === "raft") imgToDraw = raftImg;
+    else if (obj.name === "torch") imgToDraw = torchImg;
+    else if (obj.name === "drill") imgToDraw = drillImg;
 
     if (imgToDraw && imgToDraw.complete) {
       ctx.drawImage(imgToDraw, obj.x, obj.y, obj.width, obj.height);
