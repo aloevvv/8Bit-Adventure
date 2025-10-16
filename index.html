@@ -632,13 +632,8 @@ const levels = [
   { bgSrc: "arcadeB2_3.png",
     walls: [
       { x: 0, y: 0, width: 640, height: 20 },
-      { x: 0, y: 460, width: 640, height: 20 },
-      { x: 290, y: 150, width: 32, height: 200 },
-      { x: 290, y: 150, width: 220, height: 20 },
-      { x: 500, y: 150, width: 20, height: 200 },
       { x: 0, y: 0, width: 20, height: 480 },
-      { x: 290, y: 350, width: 85, height: 15 },
-      { x: 450, y: 350, width: 50, height: 15 },
+      { x: 620, y: 0, width: 20, height: 480},
     ],
     doors: [
       { x: 375, y: 340, width: 85, height: 10, destLevel: 1, destX: 300, destY: 375 },
@@ -648,7 +643,16 @@ const levels = [
     { x: 50, y: 50, width: 50, height: 50 },
       ],
     battleZones: [],
-    dialogZones: [],
+    dialogZones: [
+      {
+    id: 'enter_B2',
+    x: 0, y: 0, width: 640, height: 480,
+    text: ["Wow, is that a chest I see?", "What's up with that huge crack on the floor though?"],
+    autoShow: true,
+    style: 'dialog',
+    speaker: '8-Bit'
+  }
+    ],
     interactables: []
   },
 ];
