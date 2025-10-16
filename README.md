@@ -1,6 +1,9 @@
 Bugs present:
-'Next' appearing immediately upon start (no intention of fixing atm);
 Game softlocks if you kill an enemy while its poisoned
+Destroyed walls are made present upon load game
 ```
 Things I'm working on now:
-N/A
+Key Items (drills, torch)
+Obstacles (levers, etc)
+Levels
+Poison bug
