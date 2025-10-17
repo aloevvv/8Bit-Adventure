@@ -1267,17 +1267,27 @@ if (inBattle) {
       enemy.poisoned = true;
       let poisonTimer = 0;
       const poisonInterval = setInterval(() => {
-        if (!enemy.poisoned || poisonTimer >= 3000) {
-          clearInterval(poisonInterval);
-          enemy.poisoned = false;
-          drawBattleUI();
-          return;
-        }
-        enemy.currentHp -= poisonDamagePerTick;
-        if (enemy.currentHp < 0) enemy.currentHp = 0;
-        drawBattleUI();
-        poisonTimer += 500;
-      }, 500);
+  if (!enemy.poisoned || poisonTimer >= 3000) {
+    clearInterval(poisonInterval);
+    enemy.poisoned = false;
+    drawBattleUI();
+    return;
+  }
+  enemy.currentHp -= poisonDamagePerTick;
+  if (enemy.currentHp < 0) enemy.currentHp = 0;
+
+  // Check death immediately
+  if (enemy.currentHp === 0) {
+    clearInterval(poisonInterval);
+    enemy.poisoned = false;
+    handleEnemyDeath(enemy);
+    drawBattleUI();
+    return;
+  }
+
+  poisonTimer += 500;
+  drawBattleUI();
+}, 500);
     });
     showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
   } else if (itemName === 'extra_life') {
