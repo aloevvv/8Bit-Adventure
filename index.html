@@ -424,7 +424,7 @@ let equippedWeapon = null; // e.g. "retro", "virus", etc.
 
 function applyEquipmentBonuses() {
   // Base stats
-  let baseMaxHp = 8 + Math.floor(playerStats.level / 2; // example base HP scaling
+  let baseMaxHp = 8 + (playerStats.level - 1) * 3; // example base HP scaling
   let baseDamage = 2 + Math.floor(playerStats.level / 3);
 
   // Armor bonus to max HP
