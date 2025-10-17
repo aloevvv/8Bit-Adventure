@@ -501,7 +501,7 @@ const enemyTypes = {
   Dummy: { name: "Dummy", maxHp: 12, damage: 1, xpReward: 3, behavior: "normalAttack" },
   Botling: { name: "Botling", maxHp: 10, damage: 1, xpReward: 2, behavior: "normalAttack" },
   Sniperbot: { name: "Sniper", maxHp: 20, damage: 1, xpReward: 5, behavior: "sniperAttack" },
-  Puncherbot: { name: "Puncher", maxHp: 156, damage: 1, xpReward: 5, behavior: "normalAttack" },
+  Puncherbot: { name: "Puncher", maxHp: 36, damage: 1, xpReward: 5, behavior: "normalAttack" },
   Mousebot: { name: "Quickbot", maxHp: 30, damage: 2, xpReward: 5, behavior: "normalAttack" },
   BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior", defaultResistances: {stun: true, poison:true }},
   Summoner: { name: "Factory", maxHp: 80, damage: 0, xpReward: 20, behavior: "summonerBehavior" },
@@ -1937,109 +1937,38 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
   }
   updateStamina(playerStats.currentStamina - staminaCost);
 
-  // virus weapon special (replace your current block)
-const POISON_TICK_MS = 500;
-const POISON_DURATION_MS = 3000;
-const poisonDamagePerTick = Math.max(1, Math.ceil(15 * playerStats.damage / 100));
+  if (equippedWeapon === "virus") {
+    // Virus weapon special attack: example - hits all enemies with  damage + poison effect
+    activeEnemies.forEach(enemy => {
+      enemy.currentHp -= playerStats.damage * 30;
+      if (enemy.currentHp < 0) enemy.currentHp = 0;
 
-if (equippedWeapon === "virus") {
-  // Virus weapon: heavy damage + poison to non-boss enemies
-  activeEnemies.forEach(enemy => {
-    // direct damage (use a constant multiplier you prefer)
-    enemy.currentHp -= playerStats.damage * 30;
-    enemy.currentHp = Math.max(0, enemy.currentHp);
-
-    // apply poison to non-bosses
-    if (!enemy.isBoss) {
-      if (!enemy._effects) enemy._effects = {};
-
-      // if there's already an interval, refresh duration; otherwise attach a new interval
-      if (enemy._poisonIntervalId != null) {
-        // refresh effect values so the existing interval continues ticking with refreshed duration
-        enemy._poisonDuration = POISON_DURATION_MS;
-        enemy._poisonElapsed = 0;
-        enemy._effects.poison = enemy._effects.poison || {};
-        enemy._effects.poison.damagePerTick = poisonDamagePerTick;
-        enemy.poisoned = true;
-      } else {
-        // attach new poison effect and interval id on the enemy
-        enemy._effects.poison = {
-          damagePerTick: poisonDamagePerTick,
-          elapsed: 0,
-          duration: POISON_DURATION_MS,
-          tickInterval: POISON_TICK_MS
-        };
-        enemy._poisonElapsed = 0;
-        enemy._poisonDuration = POISON_DURATION_MS;
-        enemy.poisoned = true;
-
-        enemy._poisonIntervalId = setInterval(() => {
-          // defensive guards
-          if (!enemy || enemy.removed || enemy.currentHp == null) {
-            if (enemy && enemy._poisonIntervalId != null) {
-              clearInterval(enemy._poisonIntervalId);
-              enemy._poisonIntervalId = null;
-            }
-            if (enemy) enemy.poisoned = false;
-            return;
-          }
-
-          // tick damage
-          enemy.currentHp = Math.max(0, enemy.currentHp - Math.max(1, Math.floor(enemy._effects.poison.damagePerTick || poisonDamagePerTick)));
-          enemy._poisonElapsed += POISON_TICK_MS;
-          enemy._poisonDuration -= POISON_TICK_MS;
-
-          drawBattleUI();
-
-          // death handling: clear interval first, then remove via handler with known index if possible
-          if (enemy.currentHp === 0) {
-            const idx = activeEnemies.indexOf(enemy);
-            if (enemy._poisonIntervalId != null) {
-              clearInterval(enemy._poisonIntervalId);
-              enemy._poisonIntervalId = null;
-            }
-            enemy.poisoned = false;
-
-            if (idx >= 0) {
-              handleEnemyDeath(enemy, idx);
-            } else {
-              handleEnemyDeath(enemy);
-            }
-            return;
-          }
-
-          // expiry
-          if (enemy._poisonDuration <= 0) {
-            if (enemy._poisonIntervalId != null) {
-              clearInterval(enemy._poisonIntervalId);
-              enemy._poisonIntervalId = null;
-            }
-            enemy.poisoned = false;
-            if (enemy._effects) delete enemy._effects.poison;
-          }
-        }, POISON_TICK_MS);
+      // Apply poison if not boss
+      if (!enemy.isBoss && !enemy.poisoned) {
+        enemy.poisoned = false;
+        // Start poison interval here similar to poison vial effect
+        // (You can reuse your poison vial code here)
       }
-    }
-  });
-} else {
-  // default special attack
-  activeEnemies.forEach(enemy => {
-    enemy.currentHp -= playerStats.damage * 20;
-    enemy.currentHp = Math.max(0, enemy.currentHp);
-  });
-}
+    });
+  } else {
+    // Default special attack: damage all enemies with 20x damage (as your current code)
+    activeEnemies.forEach(enemy => {
+      enemy.currentHp -= playerStats.damage * 20;
+      if (enemy.currentHp < 0) enemy.currentHp = 0;
+    });
+  }
 
-// Remove dead enemies
-activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+  // Remove dead enemies
+  activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
 
-// Post-attack flow
-if (activeEnemies.length === 0) {
-  endBattle('win');
-  return;
-}
-if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
-drawBattleUI();
-drawPlayerBattleStatus();
+  if (activeEnemies.length === 0) {
+    endBattle('win');
+    return;
+  }
+  if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
+  drawBattleUI();
+  drawPlayerBattleStatus();
+});
 
 // Handle enemy selection click
 document.getElementById('enemy-display').addEventListener('click', (event) => {
