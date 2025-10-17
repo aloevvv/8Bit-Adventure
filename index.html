@@ -1263,7 +1263,7 @@ if (inBattle) {
   } else if (itemName === 'poison_vial') {
   const POISON_TICK_MS = 500;
   const POISON_DURATION_MS = 3000;
-  const poisonDamagePerTick = Math.max(1, Math.ceil(15 * playerStats.damage / 100));
+  const poisonDamagePerTick = Math.max(1, Math.ceil(200 * playerStats.damage / 100));
 
   activeEnemies.forEach(enemy => {
     if (enemy.resistances && enemy.resistances.poison) return;
