@@ -1720,47 +1720,34 @@ function globalPoisonTick() {
 
   let anyDamage = false;
 
-  // iterate backwards when we may remove enemies during the loop
   for (let i = activeEnemies.length - 1; i >= 0; i--) {
     const enemy = activeEnemies[i];
     if (!enemy) continue;
-
     const p = enemy._effects && enemy._effects.poison;
     if (!p) continue;
 
     p.elapsed += dt;
 
-    // apply ticks for every tickInterval passed
+    // apply one or more ticks
     while (p.elapsed >= p.tickInterval && p.duration > 0) {
       p.elapsed -= p.tickInterval;
-      p.duration -= p.tickInterval;
-
-      // guard: enemy might already be flagged removed or dead
-      if (!enemy || enemy.currentHp == null || enemy.removed) {
-        // clear the poison effect to avoid leakage
-        delete enemy._effects.poison;
-        enemy.poisoned = false;
-        break;
-      }
-
-      // apply damage
-      enemy.currentHp -= p.damagePerTick;
-      if (enemy.currentHp < 0) enemy.currentHp = 0;
+      // ensure damage is >= 1
+      const dmg = Math.max(1, Math.floor(p.damagePerTick));
+      enemy.currentHp = Math.max(0, enemy.currentHp - dmg);
       anyDamage = true;
 
-      // immediate death handling if hp <= 0
+      // handle death immediately
       if (enemy.currentHp <= 0) {
-        // clear poison effect immediately to prevent later ticks
         delete enemy._effects.poison;
         enemy.poisoned = false;
-
-        handleEnemyDeath(enemy, i); // will remove or mark enemy
-        // after removal, the enemy at index i is removed; continue loop
-        break;
+        handleEnemyDeath(enemy, i);
+        break; // enemy removed, move to next iteration
       }
+
+      p.duration -= p.tickInterval;
     }
 
-    // if duration expired but enemy still alive, clear effect
+    // clear expired effect if still alive
     if (p && p.duration <= 0 && enemy && !enemy.removed) {
       delete enemy._effects.poison;
       enemy.poisoned = false;
@@ -1768,8 +1755,6 @@ function globalPoisonTick() {
   }
 
   if (anyDamage) drawBattleUI();
-
-  // stop ticker if nothing left
   stopGlobalPoisonTickerIfUnused();
 }
 
