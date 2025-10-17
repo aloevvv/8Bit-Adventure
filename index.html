@@ -423,9 +423,9 @@ const weaponTypes = {
 let equippedWeapon = null; // e.g. "retro", "virus", etc.
 
 function applyEquipmentBonuses() {
-  // Base stats
-  let baseMaxHp = 8 + (playerStats.level - 1) * 3; // example base HP scaling
-  let baseDamage = 2 + Math.floor(playerStats.level / 3);
+  // Use current base stats (already updated in levelUp)
+  let baseMaxHp = playerStats.maxHp;
+  let baseDamage = playerStats.damage;
 
   // Armor bonus to max HP
   let armorBonusHp = 0;
@@ -1025,10 +1025,14 @@ function levelUp() {
   playerStats.xp -= playerStats.xpToNextLevel;
   playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
 
-  // Recalculate maxHp and damage based on new level and equipment
+  // Increase base stats with exponential scaling
+  playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
+  playerStats.damage += Math.floor(1 + (playerStats.level / 6));
+
+  // Apply equipment bonuses on top of new base stats
   applyEquipmentBonuses();
 
-  // Set current HP to max HP after recalculation
+  // Heal player to new max HP
   playerStats.currentHp = playerStats.maxHp;
   updateHp(playerStats.currentHp);
 
