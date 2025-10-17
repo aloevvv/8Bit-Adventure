@@ -1024,10 +1024,14 @@ function levelUp() {
   playerStats.level++;
   playerStats.xp -= playerStats.xpToNextLevel;
   playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
-  playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
-  playerStats.damage += Math.floor(1 + (playerStats.level / 6));
+
+  // Recalculate maxHp and damage based on new level and equipment
+  applyEquipmentBonuses();
+
+  // Set current HP to max HP after recalculation
   playerStats.currentHp = playerStats.maxHp;
   updateHp(playerStats.currentHp);
+
   updateStatsPopup();
   showTemporaryText(`Leveled up to ${playerStats.level}!`);
 }
