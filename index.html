@@ -423,26 +423,27 @@ const weaponTypes = {
 let equippedWeapon = null; // e.g. "retro", "virus", etc.
 
 function applyEquipmentBonuses() {
-  // Use current base stats (already updated in levelUp)
-  let baseMaxHp = playerStats.maxHp;
-  let baseDamage = playerStats.damage;
+  // read base stats (never mutated by this function)
+  const baseMaxHp = playerStats.baseMaxHp;
+  const baseDamage = playerStats.baseDamage;
 
-  // Armor bonus to max HP
+  // Armor bonus to max HP (percentage)
   let armorBonusHp = 0;
   if (equippedArmor && armorTypes[equippedArmor]) {
     armorBonusHp = Math.floor(baseMaxHp * armorTypes[equippedArmor].hpBonus);
   }
 
-  // Weapon bonus to damage
+  // Weapon bonus to damage (percentage)
   let weaponBonusDmg = 0;
   if (equippedWeapon && weaponTypes[equippedWeapon]) {
     weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
   }
 
+  // compute final stats (idempotent)
   playerStats.maxHp = baseMaxHp + armorBonusHp;
   playerStats.damage = baseDamage + weaponBonusDmg;
 
-  // Clamp current HP to max
+  // clamp current HP to max (preserve relative HP percentage)
   if (playerStats.currentHp > playerStats.maxHp) {
     playerStats.currentHp = playerStats.maxHp;
   }
@@ -450,6 +451,7 @@ function applyEquipmentBonuses() {
   updateHp(playerStats.currentHp);
   updateStatsPopup();
 }
+
   
 // Initialize inventory with items
 inventory.set("bandaid", 1);
@@ -486,7 +488,12 @@ let playerStats = {
   xpToNextLevel: 10,
   currentStamina: 50,
   maxStamina: 200,
+
+  // new base fields — always treat these as the canonical, unmodified stats
+  baseMaxHp: 8,
+  baseDamage: 2
 };
+
 
 let inBattle = false;
 
@@ -1025,14 +1032,13 @@ function levelUp() {
   playerStats.xp -= playerStats.xpToNextLevel;
   playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
 
-  // Increase base stats with exponential scaling
-  playerStats.maxHp += Math.floor(2 + (playerStats.level / 2));
-  playerStats.damage += Math.floor(1 + (playerStats.level / 6));
+  // increase base stats (affects final via applyEquipmentBonuses)
+  playerStats.baseMaxHp += Math.floor(2 + (playerStats.level / 2));
+  playerStats.baseDamage += Math.floor(1 + (playerStats.level / 6));
 
-  // Apply equipment bonuses on top of new base stats
+  // recompute final stats and heal
   applyEquipmentBonuses();
 
-  // Heal player to new max HP
   playerStats.currentHp = playerStats.maxHp;
   updateHp(playerStats.currentHp);
 
