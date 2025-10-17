@@ -1261,25 +1261,33 @@ if (inBattle) {
     }, 4000);
     showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
   } else if (itemName === 'poison_vial') {
-    const poisonDamagePerTick = Math.max(1, Math.ceil(15 * playerStats.damage / 100));
-    activeEnemies.forEach(enemy => {
-      if (enemy.resistances && enemy.resistances.poison) return;
-      enemy.poisoned = true;
-      let poisonTimer = 0;
-      const poisonInterval = setInterval(() => {
-        if (!enemy.poisoned || poisonTimer >= 3000) {
-          clearInterval(poisonInterval);
-          enemy.poisoned = false;
-          drawBattleUI();
-          return;
-        }
-        enemy.currentHp -= poisonDamagePerTick;
-        if (enemy.currentHp < 0) enemy.currentHp = 0;
-        drawBattleUI();
-        poisonTimer += 500;
-      }, 500);
-    });
-    showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
+  const poisonDamagePerTick = Math.max(1, Math.ceil(15 * playerStats.damage / 100));
+  const POISON_TICK_MS = 500;
+  const POISON_DURATION_MS = 3000;
+
+  activeEnemies.forEach(enemy => {
+    if (enemy.resistances && enemy.resistances.poison) return;
+
+    // attach a poison effect object to the enemy (idempotent)
+    if (!enemy._effects) enemy._effects = {};
+    if (!enemy._effects.poison) {
+      enemy._effects.poison = {
+        damagePerTick: poisonDamagePerTick,
+        elapsed: 0,
+        duration: POISON_DURATION_MS,
+        tickInterval: POISON_TICK_MS
+      };
+    } else {
+      // refresh duration if already poisoned
+      enemy._effects.poison.elapsed = 0;
+      enemy._effects.poison.damagePerTick = poisonDamagePerTick;
+    }
+    enemy.poisoned = true;
+  });
+
+  // ensure the global poison ticking loop is running
+  startGlobalPoisonTicker();
+  showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
   } else if (itemName === 'extra_life') {
     if (extraLifeTimerId) {
       clearTimeout(extraLifeTimerId);
@@ -1593,20 +1601,56 @@ function takeTurn() {
     endBattle('lose');
   }
 }
-  function handleEnemyDeath(enemy) {
-  // award XP immediately
-  if (enemy && enemy.xpReward) gainXP(enemy.xpReward);
+  function handleEnemyDeath(enemy, indexInActiveEnemies) {
+  if (!enemy) return;
 
-  // cleanup behavior timers if any
+  // award XP once
+  if (enemy.xpReward) gainXP(enemy.xpReward);
+
+  // clear any behavior timers (defensive)
   if (enemy.behaviorTimers && enemy.behaviorTimers.length) {
-    enemy.behaviorTimers.forEach(id => clearInterval(id));
+    enemy.behaviorTimers.forEach(id => {
+      try { clearInterval(id); } catch (e) {}
+    });
     enemy.behaviorTimers = [];
   }
-  // remove the enemy from activeEnemies
-  const idx = activeEnemies.indexOf(enemy);
-  if (idx > -1) activeEnemies.splice(idx, 1);
 
-  // update UI and check end of battle
+  // clear any per-enemy interval ids or effects (poison, etc)
+  if (enemy._poisonIntervalId) {
+    try { clearInterval(enemy._poisonIntervalId); } catch (e) {}
+    delete enemy._poisonIntervalId;
+  }
+  if (enemy._effects) {
+    // clear known effect timers if present
+    if (enemy._effects.poison && enemy._effects.poison._intervalId) {
+      try { clearInterval(enemy._effects.poison._intervalId); } catch (e) {}
+    }
+    // drop all effects object
+    delete enemy._effects;
+  }
+
+  // mark removed to let other logic ignore this object
+  enemy.removed = true;
+
+  // callback hook for other systems (drops, achievements, etc)
+  if (typeof onEnemyKilled === 'function') {
+    try { onEnemyKilled(enemy); } catch (e) { console.error('onEnemyKilled threw', e); }
+  }
+
+  // remove from activeEnemies using provided index if valid (fast) or fallback to find
+  let removed = false;
+  if (typeof indexInActiveEnemies === 'number' && activeEnemies[indexInActiveEnemies] === enemy) {
+    activeEnemies.splice(indexInActiveEnemies, 1);
+    removed = true;
+  } else {
+    const idx = activeEnemies.indexOf(enemy);
+    if (idx >= 0) {
+      activeEnemies.splice(idx, 1);
+      removed = true;
+    }
+  }
+
+  // UI updates
   drawBattleUI();
   drawPlayerBattleStatus();
 
@@ -1650,6 +1694,84 @@ function initiateBattle(zoneType, zoneObject) {
     updateStamina(playerStats.currentStamina + 1);
     drawPlayerBattleStatus();
   }, 100);
+
+  let _globalPoisonTickerId = null;
+let _globalPoisonTickerLast = 0;
+
+function startGlobalPoisonTicker() {
+  if (_globalPoisonTickerId != null) return; // already running
+  _globalPoisonTickerLast = Date.now();
+  _globalPoisonTickerId = setInterval(globalPoisonTick, 100); // small step
+}
+
+function stopGlobalPoisonTickerIfUnused() {
+  // stop ticker if no active poison effects remain
+  const hasPoison = activeEnemies.some(e => e._effects && e._effects.poison);
+  if (!hasPoison && _globalPoisonTickerId != null) {
+    clearInterval(_globalPoisonTickerId);
+    _globalPoisonTickerId = null;
+  }
+}
+
+function globalPoisonTick() {
+  const now = Date.now();
+  const dt = Math.max(0, now - _globalPoisonTickerLast);
+  _globalPoisonTickerLast = now;
+
+  let anyDamage = false;
+
+  // iterate backwards when we may remove enemies during the loop
+  for (let i = activeEnemies.length - 1; i >= 0; i--) {
+    const enemy = activeEnemies[i];
+    if (!enemy) continue;
+
+    const p = enemy._effects && enemy._effects.poison;
+    if (!p) continue;
+
+    p.elapsed += dt;
+
+    // apply ticks for every tickInterval passed
+    while (p.elapsed >= p.tickInterval && p.duration > 0) {
+      p.elapsed -= p.tickInterval;
+      p.duration -= p.tickInterval;
+
+      // guard: enemy might already be flagged removed or dead
+      if (!enemy || enemy.currentHp == null || enemy.removed) {
+        // clear the poison effect to avoid leakage
+        delete enemy._effects.poison;
+        enemy.poisoned = false;
+        break;
+      }
+
+      // apply damage
+      enemy.currentHp -= p.damagePerTick;
+      if (enemy.currentHp < 0) enemy.currentHp = 0;
+      anyDamage = true;
+
+      // immediate death handling if hp <= 0
+      if (enemy.currentHp <= 0) {
+        // clear poison effect immediately to prevent later ticks
+        delete enemy._effects.poison;
+        enemy.poisoned = false;
+
+        handleEnemyDeath(enemy, i); // will remove or mark enemy
+        // after removal, the enemy at index i is removed; continue loop
+        break;
+      }
+    }
+
+    // if duration expired but enemy still alive, clear effect
+    if (p && p.duration <= 0 && enemy && !enemy.removed) {
+      delete enemy._effects.poison;
+      enemy.poisoned = false;
+    }
+  }
+
+  if (anyDamage) drawBattleUI();
+
+  // stop ticker if nothing left
+  stopGlobalPoisonTickerIfUnused();
+}
 
   const encounter = (zoneObject && zoneObject.encounter) || [];
   activeEnemies = encounter.map(enemyData => {
