@@ -466,7 +466,7 @@ inventory.set("keycard", 0);
 inventory.set("gas_mask", 0);
 inventory.set("drill", 1);
 inventory.set("torch", 0);
-inventory.set("ice_boots", 1);
+inventory.set("ice_boots", 0);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
@@ -2416,6 +2416,7 @@ if (gameHud) {
 canvas.addEventListener('keydown', function(e) {
   if (inBattle || isGameOver) return;
 
+
   let dx = 0;
   let dy = 0;
   const key = e.key.toLowerCase();
@@ -2459,8 +2460,9 @@ canvas.addEventListener('keydown', function(e) {
       return;
     }
 
-    // If next tile is ice and no boots, start sliding
-    if (isOnIce(nextX, nextY) && !hasIceBoots()) {
+    // If next tile is ice and no boots, start sliding (support tile-based maps too)
+const tileX = Math.floor(nextX / speed), tileY = Math.floor(nextY / speed);
+if ((isOnIce(nextX, nextY) || (typeof isTileIce === 'function' && isTileIce(tileX, tileY))) && !hasIceBoots()) {
       startSliding(dx, dy);
       return;
     }
