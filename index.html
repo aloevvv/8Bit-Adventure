@@ -2460,12 +2460,15 @@ canvas.addEventListener('keydown', function(e) {
       return;
     }
 
-    // If next tile is ice and no boots, start sliding (support tile-based maps too)
-const tileX = Math.floor(nextX / speed), tileY = Math.floor(nextY / speed);
-if ((isOnIce(nextX, nextY) || (typeof isTileIce === 'function' && isTileIce(tileX, tileY))) && !hasIceBoots()) {
-      startSliding(dx, dy);
-      return;
-    }
+ const destIsIce =
+  (typeof isOnIce === 'function' && isOnIce(nextX, nextY)) ||
+  (typeof isTileIce === 'function' && isTileIce(Math.floor(nextX / speed), Math.floor(nextY / speed)));
+
+if (destIsIce && !hasIceBoots()) {
+  startSliding(dx, dy);
+  return;
+}
+
 
     // Normal movement if no sliding triggered
     if (!isCollidingWithWall(nextX, nextY)) {
