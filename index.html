@@ -1943,35 +1943,43 @@ function endBattle(outcome) {
   inBattle = false;
   document.getElementById('battle-overlay').style.display = 'none';
 
-  if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
-  if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
-
-  if (outcome === 'win') {
-  let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
-  gainXP(totalXp);
-
-  playerStats.currentHp = playerStats.maxHp;
-  updateHp(playerStats.currentHp);
-
-  // Heal allies by 33% of their maxHp
-  for (const id in party.members) {
-    if (!Object.prototype.hasOwnProperty.call(party.members, id)) continue;
-    const m = party.members[id];
-    const healAmount = Math.ceil(m.maxHp * 0.33);
-    m.currentHp = Math.min(m.maxHp, (m.currentHp || 0) + healAmount);
+  if (staminaRegenIntervalId) {
+    clearInterval(staminaRegenIntervalId);
+    staminaRegenIntervalId = null;
+  }
+  if (enemyAttackIntervalId) {
+    clearInterval(enemyAttackIntervalId);
+    enemyAttackIntervalId = null;
   }
 
-  stopAllyCombatTimers();
+  if (outcome === 'win') {
+    let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
+    gainXP(totalXp);
 
-  if (defeatedZone) removeZone(defeatedZone);
-  activeEnemies = [];
-  defeatedZone = null;
-  draw();
-  const pbs = document.getElementById('player-battle-status');
-  if (pbs) pbs.innerHTML = '';
-} else if (outcome === 'lose') {
-  stopAllyCombatTimers();
-  showGameOver();
+    playerStats.currentHp = playerStats.maxHp;
+    updateHp(playerStats.currentHp);
+
+    // Heal allies by 33% of their maxHp
+    for (const id in party.members) {
+      if (!Object.prototype.hasOwnProperty.call(party.members, id)) continue;
+      const m = party.members[id];
+      const healAmount = Math.ceil(m.maxHp * 0.33);
+      m.currentHp = Math.min(m.maxHp, (m.currentHp || 0) + healAmount);
+    }
+
+    stopAllyCombatTimers();
+
+    if (defeatedZone) removeZone(defeatedZone);
+    activeEnemies = [];
+    defeatedZone = null;
+    draw();
+    const pbs = document.getElementById('player-battle-status');
+    if (pbs) pbs.innerHTML = '';
+  }
+  else if (outcome === 'lose') {
+    stopAllyCombatTimers();
+    showGameOver();
+  }
 }
 
 
