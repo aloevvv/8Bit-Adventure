@@ -2422,8 +2422,6 @@ canvas.addEventListener('keydown', function(e) {
     return;
   }
 
-  let nextX = x;
-  let nextY = y;
   let dx = 0;
   let dy = 0;
   const key = e.key.toLowerCase();
@@ -2450,8 +2448,8 @@ canvas.addEventListener('keydown', function(e) {
   if (dx !== 0 || dy !== 0) {
     e.preventDefault();
 
-    nextX = x + dx * speed;
-    nextY = y + dy * speed;
+    const nextX = x + dx * speed;
+    const nextY = y + dy * speed;
 
     // Check water crossing
     if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
