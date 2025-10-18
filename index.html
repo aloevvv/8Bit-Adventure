@@ -550,7 +550,7 @@ const levels = [
     x: 0, y: 0, width: 640, height: 480,
     text: ["The arcade! Always been my source of comfort.", "It's a little broken down, though."],
     autoShow: true,
-    style: 'other',
+    style: 'dialog',
     speaker: '8-Bit'
   }
 ],
@@ -849,6 +849,10 @@ function showDialog(textOrLines, idToMark, opts = {}) {
   if (style === 'other') {
     box.style.maxWidth = '640px';
     box.style.background = '#223344';
+    box.style.fontSize = '14px';
+  } else if (style === 'newstyle') {
+    box.style.maxWidth = '640px';
+    box.style.background = '#7d8084';
     box.style.fontSize = '14px';
   } else {
     box.style.maxWidth = '640px';
