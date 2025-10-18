@@ -2281,6 +2281,12 @@ if (currentLevel.poisonZones) {
     ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
   });
 }
+  if (currentLevel.iceZones) {
+  ctx.fillStyle = "rgba(255, 255, 0, 0.1)"; //
+  currentLevel.iceZones.forEach(zone => {
+    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
+  });
+}
   // After all normal drawing is done
 if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   // Draw solid black overlay to simulate darkness
