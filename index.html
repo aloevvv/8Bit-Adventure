@@ -443,7 +443,7 @@ function applyEquipmentBonuses() {
   playerStats.maxHp = baseMaxHp + armorBonusHp;
   playerStats.damage = baseDamage + weaponBonusDmg;
 
-  // clamp current HP to max (preserve relative HP percentage) mmm
+  // clamp current HP to max (preserve relative HP percentage)
   if (playerStats.currentHp > playerStats.maxHp) {
     playerStats.currentHp = playerStats.maxHp;
   }
@@ -466,7 +466,6 @@ inventory.set("keycard", 0);
 inventory.set("gas_mask", 0);
 inventory.set("drill", 1);
 inventory.set("torch", 0);
-inventory.set("ice_boots", 0);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
@@ -551,7 +550,7 @@ const levels = [
     x: 0, y: 0, width: 640, height: 480,
     text: ["The arcade! Always been my source of comfort.", "It's a little broken down, though."],
     autoShow: true,
-    style: 'dialog',
+    style: 'other',
     speaker: '8-Bit'
   }
 ],
@@ -759,9 +758,6 @@ const levels = [
 ],
     waterZones: [],
   poisonZones: [],
-    iceZones: [
-  { x: 100, y: 100, width: 100, height: 100 }
-],
     dialogZones: [],
     interactables: []
   },
@@ -841,8 +837,7 @@ function findDialogZone(checkX, checkY) {
   return null;
 }
 
-// show dialog: textOrLines can be string or array; idToMark is the dialog id to mark shown after completion
-// opts: { style: 'dialog'|'narration', speaker: '8-Bit' }
+
 function showDialog(textOrLines, idToMark, opts = {}) {
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
@@ -851,13 +846,13 @@ function showDialog(textOrLines, idToMark, opts = {}) {
   const speaker = opts.speaker || null;
 
   overlay.style.display = 'flex';
-  if (style === 'narration') {
-    box.style.maxWidth = '480px';
+  if (style === 'other') {
+    box.style.maxWidth = '640px';
     box.style.background = '#223344';
-    box.style.fontSize = '11px';
+    box.style.fontSize = '14px';
   } else {
     box.style.maxWidth = '640px';
-    box.style.background = '#002591';
+    box.style.background = '#0e2057';
     box.style.fontSize = '12px';
   }
 
@@ -1738,11 +1733,7 @@ function initiateBattle(zoneType, zoneObject) {
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
   enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 }
-  
-function hasIceBoots() {
-  return (inventory.get("ice_boots") || 0) > 0;
-}
-  
+
 // Check collision with interactables
 function checkInteraction(checkX, checkY) {
   const hitboxX = checkX + hitboxOffsetX;
@@ -2071,54 +2062,6 @@ function isInWater(px, py) {
 function isInPoison(px, py) {
   return isInZone(currentLevel.poisonZones, px, py);
 }
-function isOnIce(px, py) {
-  if (!currentLevel.iceZones) return false;
-  const hitboxX = px + hitboxOffsetX;
-  const hitboxY = py + hitboxOffsetY;
-  for (const zone of currentLevel.iceZones) {
-    if (
-      hitboxX < zone.x + zone.width &&
-      hitboxX + hitboxWidth > zone.x &&
-      hitboxY < zone.y + zone.height &&
-      hitboxY + hitboxHeight > zone.y
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// Start sliding in given direction if no ice boots
-function startSliding(dx, dy) {
-  if (hasIceBoots()) {
-    sliding = false;
-    return; // Boots cancel sliding effect
-  }
-  sliding = true;
-  slideDir.x = dx;
-  slideDir.y = dy;
-  slideMove();
-}
-
-// Slide movement loop using setTimeout for compatibility
-function slideMove() {
-  if (!sliding) return;
-
-  const nextX = x + slideDir.x * slideSpeed;
-  const nextY = y + slideDir.y * slideSpeed;
-
-  // Stop sliding on collision or leaving ice
-  if (isCollidingWithWall(nextX, nextY) || !isOnIce(nextX, nextY)) {
-    sliding = false;
-    return;
-  }
-
-  x = nextX;
-  y = nextY;
-  draw();
-
-  setTimeout(slideMove, 16); // ~60fps sliding
-}
 
 // Wall collision detection
 function isCollidingWithWall(newX, newY) {
@@ -2281,12 +2224,6 @@ if (currentLevel.poisonZones) {
     ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
   });
 }
-  if (currentLevel.iceZones) {
-  ctx.fillStyle = "rgba(255, 255, 0, 0.1)"; //
-  currentLevel.iceZones.forEach(zone => {
-    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
-  });
-}
   // After all normal drawing is done
 if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   // Draw solid black overlay to simulate darkness
@@ -2411,26 +2348,18 @@ if (gameHud) {
   loadButton.onclick = loadGame;
   gameHud.appendChild(loadButton);
 }
-
-  const MAX_SPEED = 20;
-if (speed > MAX_SPEED) speed = MAX_SPEED;
-
+  
 // Keyboard movement and interaction
 canvas.addEventListener('keydown', function(e) {
   if (inBattle || isGameOver) return;
-
-
-  let dx = 0;
-  let dy = 0;
+  let nextX = x, nextY = y;
   const key = e.key.toLowerCase();
 
-  // Movement keys
-  if (['arrowup', 'w'].includes(key)) dy = -1;
-  else if (['arrowdown', 's'].includes(key)) dy = 1;
-  else if (['arrowleft', 'a'].includes(key)) dx = -1;
-  else if (['arrowright', 'd'].includes(key)) dx = 1;
+  // movement keys: prevent default for arrows/wasd
+  if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(key)) {
+    e.preventDefault();
+  }
 
-  // Interaction key
   if (key === 'x') {
     e.preventDefault();
     const interactableObject =
@@ -2439,243 +2368,50 @@ canvas.addEventListener('keydown', function(e) {
       checkInteraction(x, y - 16) ||
       checkInteraction(x, y + 16) ||
       checkInteraction(x, y);
-    if (interactableObject) {
-      handleInteraction(interactableObject);
-    }
+    if (interactableObject) handleInteraction(interactableObject);
     return;
   }
 
-  if (dx !== 0 || dy !== 0) {
-    e.preventDefault();
+  if (key === 'arrowleft' || key === 'a') nextX -= speed;
+  if (key === 'arrowright' || key === 'd') nextX += speed;
+  if (key === 'arrowup' || key === 'w') nextY -= speed;
+  if (key === 'arrowdown' || key === 's') nextY += speed;
 
-    const nextX = x + dx * speed;
-    const nextY = y + dy * speed;
-
-    // Check water crossing
-    if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
-      showTemporaryText("You need a raft to cross water!");
-      return;
-    }
-
-    // Check poison crossing
-    if (isInPoison(nextX, nextY) && (inventory.get('gas_mask') || 0) <= 0) {
-      showTemporaryText("You need a gas mask to cross poison!");
-      return;
-    }
-
-    // ensure player object exists (safe fallback)
-// ---- Safe fallback for player object ----
-if (typeof player === 'undefined' || player === null) {
-  player = { _slidingIntervalId: null };
-}
-
-// ---- Sliding constants / state ----
-const SLIDE_TICK_MS = 120; // milliseconds per tile while sliding
-
-// ensure sliding flag exists
-if (typeof sliding === 'undefined') sliding = false;
-
-// ---- startSliding / stopSliding ----
-function startSliding(dx, dy) {
-  // Defensive guards: boots, battle, gameover, already sliding
-  if (hasIceBoots() || inBattle || isGameOver) return;
-  if (sliding) return;
-
-  sliding = true;
-
-  // clear any previous interval
-  if (player._slidingIntervalId) {
-    clearInterval(player._slidingIntervalId);
-    player._slidingIntervalId = null;
+  // Check water crossing
+  if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
+    showTemporaryText("You need a raft to cross water!");
+    return;
   }
 
-  // Start sliding loop from current x,y (we assume the caller already moved onto first ice tile)
-  player._slidingIntervalId = setInterval(() => {
-    // stop if global state changed
-    if (!sliding || inBattle || isGameOver) {
-      stopSliding();
-      return;
-    }
+  // Check poison crossing
+  if (isInPoison(nextX, nextY) && (inventory.get('gas_mask') || 0) <= 0) {
+    showTemporaryText("You need a gas mask to cross poison!");
+    return;
+  }
 
-    // compute next tile ahead
-    const nextX = x + dx * speed;
-    const nextY = y + dy * speed;
-
-    // If next tile is a wall (real obstacle), stop sliding and remain on current tile
-    if (isCollidingWithWall(nextX, nextY)) {
-      stopSliding();
-      return;
-    }
-
-    // If next is a door, stop sliding and trigger the door
+  // Existing collision checks
+  if (!isCollidingWithWall(nextX, nextY)) {
     const door = checkDoorCollision(nextX, nextY);
     if (door) {
-      stopSliding();
       loadLevel(door.destLevel, door.destX, door.destY);
       return;
     }
 
-    // If next is a battle zone, stop sliding and start battle
     const battleZone = findBattleZone(nextX, nextY);
     if (battleZone) {
-      stopSliding();
       initiateBattle('battleZone', battleZone);
       return;
     }
 
-    // commit the step onto the next tile
+    // move player
     x = nextX;
     y = nextY;
 
-    // if the tile you landed on is NOT ice, or you gained boots mid-slide, stop sliding
-    if (!isOnIce(x, y) || hasIceBoots()) {
-      // run auto-dialog if present on landing tile
-      const dialogZone = findDialogZone(x, y);
-      if (dialogZone && dialogZone.autoShow) {
-        showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
-      }
-      stopSliding();
-      return;
-    }
-
-    // landed on ice and still sliding: check for autoShow dialog
-    const dialogZone = findDialogZone(x, y);
+    // dialog auto-trigger (autoShow only)
+    const dialogZone = findDialogZone(nextX, nextY);
     if (dialogZone && dialogZone.autoShow) {
       showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
-    }
-
-    // redraw after movement
-    if (typeof draw === 'function') draw();
-  }, SLIDE_TICK_MS);
-}
-
-function stopSliding() {
-  sliding = false;
-  if (player && player._slidingIntervalId) {
-    clearInterval(player._slidingIntervalId);
-    player._slidingIntervalId = null;
-  }
-}
-
-// ---- Global movement handler (replace previous keydown handler) ----
-(function attachMovementHandler() {
-  // Remove duplicates if any
-  try { window.removeEventListener('keydown', window._movementHandlerRef); } catch (e) {}
-
-  window._movementHandlerRef = function (e) {
-    // quick rejects
-    if (inBattle || isGameOver) return;
-
-    // Ignore input while sliding
-    if (sliding) {
-      e.preventDefault();
       return;
-    }
-
-    const key = (e.key || '').toLowerCase();
-
-    // Interaction key (X)
-    if (key === 'x') {
-      e.preventDefault();
-      const interactableObject =
-        checkInteraction(x - speed, y) ||
-        checkInteraction(x + speed, y) ||
-        checkInteraction(x, y - speed) ||
-        checkInteraction(x, y + speed) ||
-        checkInteraction(x, y);
-      if (interactableObject) handleInteraction(interactableObject);
-      return;
-    }
-
-    // Movement mapping
-    let dx = 0, dy = 0;
-    if (key === 'arrowup' || key === 'w') dy = -1;
-    else if (key === 'arrowdown' || key === 's') dy = 1;
-    else if (key === 'arrowleft' || key === 'a') dx = -1;
-    else if (key === 'arrowright' || key === 'd') dx = 1;
-    else return; // not a movement key
-
-    e.preventDefault();
-
-    // candidate position
-    const nextX = x + dx * speed;
-    const nextY = y + dy * speed;
-
-    // WATER / POISON checks first
-    if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
-      showTemporaryText("You need a raft to cross water!");
-      return;
-    }
-    if (isInPoison(nextX, nextY) && (inventory.get('gas_mask') || 0) <= 0) {
-      showTemporaryText("You need a gas mask to cross poison!");
-      return;
-    }
-
-    // If destination is ice and player has no boots, commit the step then start sliding
-    if (isOnIce(nextX, nextY) && !hasIceBoots()) {
-      x = nextX;
-      y = nextY;
-      if (typeof draw === 'function') draw();
-      startSliding(dx, dy);
-      return;
-    }
-
-    // Normal movement if no sliding triggered
-    if (!isCollidingWithWall(nextX, nextY)) {
-      const door = checkDoorCollision(nextX, nextY);
-      if (door) {
-        loadLevel(door.destLevel, door.destX, door.destY);
-        return;
-      }
-
-      const battleZone = findBattleZone(nextX, nextY);
-      if (battleZone) {
-        initiateBattle('battleZone', battleZone);
-        return;
-      }
-
-      // Move player normally
-      x = nextX;
-      y = nextY;
-
-      // Auto dialog trigger if any
-      const dialogZone = findDialogZone(nextX, nextY);
-      if (dialogZone && dialogZone.autoShow) {
-        showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
-        return;
-      }
-
-      if (typeof draw === 'function') draw();
-    }
-  };
-
-  window.addEventListener('keydown', window._movementHandlerRef);
-})();
-
-    // Normal movement if no sliding triggered
-    if (!isCollidingWithWall(nextX, nextY)) {
-      const door = checkDoorCollision(nextX, nextY);
-      if (door) {
-        loadLevel(door.destLevel, door.destX, door.destY);
-        return;
-      }
-
-      const battleZone = findBattleZone(nextX, nextY);
-      if (battleZone) {
-        initiateBattle('battleZone', battleZone);
-        return;
-      }
-
-      // Move player normally
-      x = nextX;
-      y = nextY;
-
-      // Auto dialog trigger if any
-      const dialogZone = findDialogZone(nextX, nextY);
-      if (dialogZone && dialogZone.autoShow) {
-        showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
-        return;
-      }
     }
   }
 
