@@ -2460,14 +2460,15 @@ canvas.addEventListener('keydown', function(e) {
       return;
     }
 
- const destIsIce =
-  (typeof isOnIce === 'function' && isOnIce(nextX, nextY)) ||
-  (typeof isTileIce === 'function' && isTileIce(Math.floor(nextX / speed), Math.floor(nextY / speed)));
-
-if (destIsIce && !hasIceBoots()) {
+ // If destination is ice and player has no boots, commit the step then start sliding
+if (isOnIce(nextX, nextY) && !hasIceBoots()) {
+  x = nextX;
+  y = nextY;
+  if (typeof draw === 'function') draw();
   startSliding(dx, dy);
   return;
 }
+
 
 
     // Normal movement if no sliding triggered
