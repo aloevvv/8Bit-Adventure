@@ -758,7 +758,20 @@ const levels = [
 ],
     waterZones: [],
   poisonZones: [],
-    dialogZones: [],
+    dialogZones: [
+  {
+    id: 'test',
+    x: 0, y: 0, width: 640, height: 480,
+    text: [
+      { speaker: '8-Bit', text: "Why am I speaking right now?", style: 'dialog' },
+      { speaker: 'Boss',  text: "Author wanted to test some code.", style: 'boss' },
+      { speaker: '8-Bit', text: "Oh. Well I hope it works.", style: 'dialog' },
+      { speaker: 'Boss',  text: "If you're seeing this, it probably does.", style: 'boss' }
+    ],
+    autoShow: true,
+    style: 'dialog'
+  }
+      ],
     interactables: []
   },
   {
@@ -838,37 +851,63 @@ function findDialogZone(checkX, checkY) {
 }
 
 
+function normalizeDialogLines(textOrLines, defaultStyle) {
+  const lines = Array.isArray(textOrLines) ? textOrLines.slice() : [String(textOrLines)];
+  return lines.map(line => {
+    if (typeof line === 'string') {
+      return { speaker: null, text: line, style: defaultStyle || 'dialog' };
+    }
+    return {
+      speaker: line.speaker || null,
+      text: line.text != null ? String(line.text) : '',
+      style: line.style || defaultStyle || 'dialog'
+    };
+  });
+}
+
+function applyDialogStyle(box, style) {
+  box.style.maxWidth = '640px';
+  box.style.fontSize = '12px';
+  if (style === 'other') {
+    box.style.background = '#223344';
+    box.style.fontSize = '14px';
+  } else if (style === 'newstyle') {
+    box.style.background = '#7d8084';
+    box.style.fontSize = '14px';
+  } else if (style === 'boss') {
+    box.style.background = '#330000';
+    box.style.fontSize = '12px';
+  } else {
+    box.style.background = '#0e2057';
+    box.style.fontSize = '12px';
+  }
+}
+
 function showDialog(textOrLines, idToMark, opts = {}) {
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
-  const style = opts.style || 'dialog';
-  const speaker = opts.speaker || null;
+
+  const defaultStyle = opts.style || 'dialog';
+  _dialogQueue = normalizeDialogLines(textOrLines, defaultStyle);
+
+  if (_dialogQueue.length > 0) {
+    const line = _dialogQueue.shift();
+    applyDialogStyle(box, line.style);
+    if (line.speaker) {
+      textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
+    } else {
+      textDiv.textContent = line.text;
+    }
+  } else {
+    textDiv.textContent = '';
+  }
 
   overlay.style.display = 'flex';
-  if (style === 'other') {
-    box.style.maxWidth = '640px';
-    box.style.background = '#223344';
-    box.style.fontSize = '14px';
-  } else if (style === 'newstyle') {
-    box.style.maxWidth = '640px';
-    box.style.background = '#7d8084';
-    box.style.fontSize = '14px';
-  } else {
-    box.style.maxWidth = '640px';
-    box.style.background = '#0e2057';
-    box.style.fontSize = '12px';
-  }
-
-  _dialogQueue = Array.isArray(textOrLines) ? textOrLines.slice() : [String(textOrLines)];
-  if (speaker) {
-    textDiv.innerHTML = `<strong>${speaker}</strong>\n\n${_dialogQueue.shift() || ''}`;
-  } else {
-    textDiv.textContent = _dialogQueue.shift() || '';
-  }
   overlay._markId = idToMark || null;
-  draw(); // refresh screen so overlay appears immediately
+  draw();
 }
+
 
 // Play button handler
 playBtn.addEventListener('click', () => {
@@ -2010,11 +2049,20 @@ document.getElementById('inventory-battle-button').addEventListener('click', () 
 
   document.getElementById('dialog-next').addEventListener('click', () => {
   const overlay = document.getElementById('dialog-overlay');
+  const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
+
   if (_dialogQueue.length > 0) {
-    textDiv.textContent = _dialogQueue.shift();
+    const line = _dialogQueue.shift();
+    applyDialogStyle(box, line.style);
+    if (line.speaker) {
+      textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
+    } else {
+      textDiv.textContent = line.text;
+    }
     return;
   }
+
   const id = overlay._markId;
   overlay._markId = null;
   overlay.style.display = 'none';
