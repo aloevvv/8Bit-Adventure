@@ -466,6 +466,7 @@ inventory.set("keycard", 0);
 inventory.set("gas_mask", 0);
 inventory.set("drill", 1);
 inventory.set("torch", 0);
+inventory.set("ice_boots", 0);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
@@ -758,6 +759,9 @@ const levels = [
 ],
     waterZones: [],
   poisonZones: [],
+    iceZones: [
+  { x: 100, y: 100, width: 100, height: 100 }
+],
     dialogZones: [],
     interactables: []
   },
@@ -1734,7 +1738,11 @@ function initiateBattle(zoneType, zoneObject) {
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
   enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 }
-
+  
+function hasIceBoots() {
+  return (inventory.get("ice_boots") || 0) > 0;
+}
+  
 // Check collision with interactables
 function checkInteraction(checkX, checkY) {
   const hitboxX = checkX + hitboxOffsetX;
@@ -2063,6 +2071,54 @@ function isInWater(px, py) {
 function isInPoison(px, py) {
   return isInZone(currentLevel.poisonZones, px, py);
 }
+function isOnIce(px, py) {
+  if (!currentLevel.iceZones) return false;
+  const hitboxX = px + hitboxOffsetX;
+  const hitboxY = py + hitboxOffsetY;
+  for (const zone of currentLevel.iceZones) {
+    if (
+      hitboxX < zone.x + zone.width &&
+      hitboxX + hitboxWidth > zone.x &&
+      hitboxY < zone.y + zone.height &&
+      hitboxY + hitboxHeight > zone.y
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Start sliding in given direction if no ice boots
+function startSliding(dx, dy) {
+  if (hasIceBoots()) {
+    sliding = false;
+    return; // Boots cancel sliding effect
+  }
+  sliding = true;
+  slideDir.x = dx;
+  slideDir.y = dy;
+  slideMove();
+}
+
+// Slide movement loop using setTimeout for compatibility
+function slideMove() {
+  if (!sliding) return;
+
+  const nextX = x + slideDir.x * slideSpeed;
+  const nextY = y + slideDir.y * slideSpeed;
+
+  // Stop sliding on collision or leaving ice
+  if (isCollidingWithWall(nextX, nextY) || !isOnIce(nextX, nextY)) {
+    sliding = false;
+    return;
+  }
+
+  x = nextX;
+  y = nextY;
+  draw();
+
+  setTimeout(slideMove, 16); // ~60fps sliding
+}
 
 // Wall collision detection
 function isCollidingWithWall(newX, newY) {
@@ -2353,12 +2409,61 @@ if (gameHud) {
 // Keyboard movement and interaction
 canvas.addEventListener('keydown', function(e) {
   if (inBattle || isGameOver) return;
-  let nextX = x, nextY = y;
+
+  if (sliding) {
+    // Ignore input while sliding
+    e.preventDefault();
+    return;
+  }
+
+  let nextX = x;
+  let nextY = y;
+  let dx = 0;
+  let dy = 0;
   const key = e.key.toLowerCase();
 
-  // movement keys: prevent default for arrows/wasd
-  if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(key)) {
+  if (['arrowup', 'w'].includes(key)) dy = -1;
+  else if (['arrowdown', 's'].includes(key)) dy = 1;
+  else if (['arrowleft', 'a'].includes(key)) dx = -1;
+  else if (['arrowright', 'd'].includes(key)) dx = 1;
+
+  if (dx !== 0 || dy !== 0) {
     e.preventDefault();
+
+    nextX = x + dx * speed;
+    nextY = y + dy * speed;
+
+    // If next tile is ice and no boots, start sliding
+    if (isOnIce(nextX, nextY) && !hasIceBoots()) {
+      startSliding(dx, dy);
+      return;
+    }
+
+    // Normal movement if no sliding triggered
+    if (!isCollidingWithWall(nextX, nextY)) {
+      const door = checkDoorCollision(nextX, nextY);
+      if (door) {
+        loadLevel(door.destLevel, door.destX, door.destY);
+        return;
+      }
+
+      const battleZone = findBattleZone(nextX, nextY);
+      if (battleZone) {
+        initiateBattle('battleZone', battleZone);
+        return;
+      }
+
+      // Move player normally
+      x = nextX;
+      y = nextY;
+
+      // Auto dialog trigger if any
+      const dialogZone = findDialogZone(nextX, nextY);
+      if (dialogZone && dialogZone.autoShow) {
+        showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
+        return;
+      }
+    }
   }
 
   if (key === 'x') {
