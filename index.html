@@ -2411,7 +2411,10 @@ if (gameHud) {
   loadButton.onclick = loadGame;
   gameHud.appendChild(loadButton);
 }
-  
+
+  const MAX_SPEED = 15;
+if (speed > MAX_SPEED) speed = MAX_SPEED;
+
 // Keyboard movement and interaction
 canvas.addEventListener('keydown', function(e) {
   if (inBattle || isGameOver) return;
