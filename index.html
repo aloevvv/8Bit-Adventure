@@ -164,7 +164,7 @@
 }
     .enemy-target.poisoned {
   box-shadow: 0 0 10px 10px rgba(0, 120, 0, 0.8);
-  border-color: #007800;
+  border-color: ##007800;
 }
     #player-battle-status .hp-bar-container:last-of-type .hp-bar {
       background-color: #00FFFF;
@@ -249,24 +249,6 @@
   font-family: "Press Start 2P", sans-serif;
 }
 
-    #party-list div {
-  padding: 6px;
-  border: 1px solid #444;
-  margin-bottom: 6px;
-  cursor: pointer;
-  user-select: none;
-}
-
-#party-list div.selected {
-  border-color: yellow;
-  background: #555;
-}
-
-#party-list div.locked {
-  opacity: 0.5;
-  border-style: dashed;
-}
-
     /* Save and Load buttons styling */
     #game-hud button {
       font-family: "Press Start 2P", sans-serif;
@@ -304,16 +286,13 @@
         <p>Damage: <span id="popup-damage"></span></p>
       </div>
     </div>
-    <div class="hud-section" id="party">
-  <p id="party-button">Party</p>
-  <div id="party-popup" class="stats-popup" style="display: none;">
-    <h4>Party</h4>
-    <div id="party-list"></div>
-    <div style="margin-top:8px;">
-      <button id="equip-ally-button" class="item-use-button">Equip Selected Ally</button>
+    <div class="hud-section" id="player-status">
+      <p>Player</p>
+      <div id="hp-bar-container">
+        <div id="hp-bar"></div>
+        <div id="hp-text">8/8</div>
+      </div>
     </div>
-  </div>
-</div>
     <div class="hud-section" id="inventory">
       <p id="inventory-button">Inventory</p>
   <div id="inventory-popup" class="stats-popup" style="display: none;">
@@ -515,35 +494,6 @@ let playerStats = {
   baseDamage: 2
 };
 
-  const PARTY_MEMBERS_DEF = {
-  ally1: { name: "Lou", maxHp: 12, damage: 1, attackIntervalMs: 1500, unlocked: true },
-  ally2: { name: "Otis",  maxHp: 18, damage: 2, attackIntervalMs: 2200, unlocked: false },
-  ally3: { name: "Colt",  maxHp: 10, damage: 3, attackIntervalMs: 1000, unlocked: false },
-  ally4: { name: "Buzz",   maxHp: 20, damage: 1, attackIntervalMs: 3000, unlocked: false },
-  ally5: { name: "Janet",   maxHp: 25, damage: 4, attackIntervalMs: 2600, unlocked: false },
-  ally6: { name: "Max",    maxHp: 14, damage: 2, attackIntervalMs: 1800, unlocked: false }
-};
-
-let party = {
-  leader: '8-Bit',
-  equippedAllyId: null,  // currently equipped ally id or null
-  members: {},           // runtime member objects
-  allyTimers: {}         // running timers for active ally in battle
-};
-
-// instantiate runtime members from the defs
-for (const id of Object.keys(PARTY_MEMBERS_DEF)) {
-  const def = PARTY_MEMBERS_DEF[id];
-  party.members[id] = {
-    id,
-    name: def.name,
-    maxHp: def.maxHp,
-    currentHp: def.maxHp,
-    damage: def.damage,
-    attackIntervalMs: def.attackIntervalMs,
-    unlocked: !!def.unlocked
-  };
-}
 
 let inBattle = false;
 
@@ -1125,7 +1075,6 @@ passwordCancel.addEventListener('click', () => {
 
 // Level up player
 function levelUp() {
-  // increase level and consume XP
   playerStats.level++;
   playerStats.xp -= playerStats.xpToNextLevel;
   playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
@@ -1134,38 +1083,15 @@ function levelUp() {
   playerStats.baseMaxHp += Math.floor(2 + (playerStats.level / 2));
   playerStats.baseDamage += Math.floor(1 + (playerStats.level / 6));
 
-  // recompute final player stats and heal player to full
+  // recompute final stats and heal
   applyEquipmentBonuses();
+
   playerStats.currentHp = playerStats.maxHp;
   updateHp(playerStats.currentHp);
 
-  // Apply the same growth to every ally (locked or unlocked)
-  const allyHpGain = Math.floor(2 + (playerStats.level / 2));
-  const allyDmgGain = Math.floor(1 + (playerStats.level / 6));
-  for (const id of Object.keys(party.members)) {
-    const ally = party.members[id];
-    if (!ally) continue;
-
-    const prevMax = ally.maxHp || 1;
-    const prevCurrent = typeof ally.currentHp === 'number' ? ally.currentHp : prevMax;
-
-    // increase ally max HP and damage using the same formulas
-    ally.maxHp = (ally.maxHp || 0) + allyHpGain;
-    ally.damage = (ally.damage || 0) + allyDmgGain;
-
-    // preserve current HP percentage after growth
-    const pct = prevMax > 0 ? (prevCurrent / prevMax) : 1;
-    ally.currentHp = Math.min(ally.maxHp, Math.max(1, Math.round(ally.maxHp * pct)));
-  }
-
-  // refresh UI
   updateStatsPopup();
-  renderPartyList && renderPartyList();
-  drawPlayerBattleStatus && drawPlayerBattleStatus();
-
   showTemporaryText(`Leveled up to ${playerStats.level}!`);
 }
-
 
 // Gain XP and check level up
 function gainXP(amount) {
@@ -1252,71 +1178,6 @@ function drawGeneralInventory() {
       inventoryList.appendChild(p);
     }
   });
-}
-// --- Party UI handlers ---
-const partyButton = document.getElementById('party-button');
-const partyPopup = document.getElementById('party-popup');
-const partyListDiv = document.getElementById('party-list');
-let _selectedPartyListId = null;
-
-function renderPartyList() {
-  partyListDiv.innerHTML = '';
-  // Leader entry
-  const leaderDiv = document.createElement('div');
-  leaderDiv.textContent = `8-Bit (Leader) HP ${playerStats.currentHp}/${playerStats.maxHp}`;
-  leaderDiv.dataset.memberId = 'leader';
-  if (_selectedPartyListId === null) leaderDiv.classList.add('selected');
-  partyListDiv.appendChild(leaderDiv);
-
-  // Ally entries
-  for (const id of Object.keys(party.members)) {
-    const m = party.members[id];
-    const d = document.createElement('div');
-    d.dataset.memberId = id;
-    if (!m.unlocked) {
-      d.classList.add('locked');
-      d.textContent = `${m.name} (Locked)`;
-    } else {
-      d.textContent = `${m.name} HP ${m.currentHp}/${m.maxHp} DMG ${m.damage} SPD ${m.attackIntervalMs}ms`;
-    }
-    if (_selectedPartyListId === id) d.classList.add('selected');
-    if (party.equippedAllyId === id) d.style.borderColor = 'cyan';
-    partyListDiv.appendChild(d);
-  }
-}
-
-partyButton.addEventListener('click', () => {
-  const isHidden = window.getComputedStyle(partyPopup).display === 'none';
-  if (isHidden) { renderPartyList(); partyPopup.style.display = 'block'; }
-  else partyPopup.style.display = 'none';
-});
-
-partyListDiv.addEventListener('click', (ev) => {
-  const el = ev.target.closest('div[data-member-id]');
-  if (!el) return;
-  const id = el.dataset.memberId;
-  _selectedPartyListId = id === 'leader' ? null : id;
-  renderPartyList();
-});
-
-document.getElementById('equip-ally-button').addEventListener('click', () => {
-  // if selected is a locked ally, ignore
-  if (_selectedPartyListId && !party.members[_selectedPartyListId].unlocked) {
-    showTemporaryText('That ally is locked.');
-    return;
-  }
-  party.equippedAllyId = _selectedPartyListId;
-  showTemporaryText(party.equippedAllyId ? `Equipped ${party.members[party.equippedAllyId].name}` : 'No ally equipped');
-  partyPopup.style.display = 'none';
-  renderPartyList();
-});
-// -------------------------------------------------------------------
-function rescueAlly(id) {
-  if (!party.members[id]) return;
-  party.members[id].unlocked = true;
-  party.members[id].currentHp = party.members[id].maxHp;
-  showTemporaryText(`${party.members[id].name} rescued!`);
-  renderPartyList && renderPartyList();
 }
 
 
@@ -1551,12 +1412,9 @@ function drawBattleUI() {
 // Draw player status in battle UI
 function drawPlayerBattleStatus() {
   const playerBattleStatusDiv = document.getElementById('player-battle-status');
-  playerBattleStatusDiv.innerHTML = '';
-
-  // Leader (8-Bit)
+  playerBattleStatusDiv.innerHTML = "";
   const playerName = document.createElement('p');
   playerName.textContent = '8-Bit';
-  playerBattleStatusDiv.appendChild(playerName);
 
   const hpContainer = document.createElement('div');
   hpContainer.className = 'hp-bar-container';
@@ -1568,9 +1426,10 @@ function drawPlayerBattleStatus() {
   hpTxt.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
   hpContainer.appendChild(innerHpBar);
   hpContainer.appendChild(hpTxt);
+
+  playerBattleStatusDiv.appendChild(playerName);
   playerBattleStatusDiv.appendChild(hpContainer);
 
-  // Stamina
   const staminaContainer = document.createElement('div');
   staminaContainer.className = 'hp-bar-container';
   const staminaBar = document.createElement('div');
@@ -1583,44 +1442,22 @@ function drawPlayerBattleStatus() {
   staminaContainer.appendChild(staminaBar);
   staminaContainer.appendChild(staminaText);
   playerBattleStatusDiv.appendChild(staminaContainer);
-
-  // Ally (if equipped)
-  const allyId = party.equippedAllyId;
-  if (allyId && party.members[allyId]) {
-    const ally = party.members[allyId];
-    const allyLabel = document.createElement('p');
-    allyLabel.textContent = `${ally.name} (Ally)`;
-    playerBattleStatusDiv.appendChild(allyLabel);
-
-    const allyHpContainer = document.createElement('div');
-    allyHpContainer.className = 'hp-bar-container';
-    const allyHpBar = document.createElement('div');
-    allyHpBar.className = 'hp-bar';
-    allyHpBar.style.width = `${(ally.currentHp / ally.maxHp) * 100}%`;
-    allyHpContainer.appendChild(allyHpBar);
-    const allyHpText = document.createElement('div');
-    allyHpText.className = 'hp-text';
-    allyHpText.textContent = `${ally.currentHp}/${ally.maxHp}`;
-    allyHpContainer.appendChild(allyHpText);
-    playerBattleStatusDiv.appendChild(allyHpContainer);
-  }
 }
-
 
 // Enemy behaviors
 // normal enemy attack
 function normalAttack(enemy) {
   const damage = enemy.damage || 0;
-  
-enemyDealDamage(enemy, damage);
+  playerTakeDamage(damage);
+  showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
 }
 
 // sniper attack with crits
 function sniperAttack(enemy) {
   const isCritical = Math.random() < 0.3;
   const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
-  
-enemyDealDamage(enemy, damage);
+  playerTakeDamage(damage);
+  showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
 }
 
 // boss behavior (condensed, uses playerTakeDamage with explicit values)
@@ -1663,8 +1500,8 @@ function bossBehavior(enemy) {
   }
 
   const damage = enemy.damage || 0;
-  
-enemyDealDamage(enemy, damage);
+  playerTakeDamage(damage);
+  showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
 }
   // Summoner: summons 1 minion every 4 seconds
 function summonerBehavior(enemy) {
@@ -1830,75 +1667,6 @@ function takeTurn() {
     showTemporaryText(`Passive heal: +${healAmount} HP`);
   }
 }
-  // --- Ally combat timers and helpers ---
-function startAllyCombatTimers() {
-  stopAllyCombatTimers();
-  if (!inBattle) return;
-  const allyId = party.equippedAllyId;
-  if (!allyId) return;
-  const ally = party.members[allyId];
-  if (!ally || ally.currentHp <= 0) return;
-
-  // start interval for the equipped ally
-  party.allyTimers[allyId] = setInterval(() => {
-    if (!inBattle || !activeEnemies || activeEnemies.length === 0) return;
-    // try to attack the currently selected enemy; fallback to first
-    const idx = Math.min(selectedEnemyIndex, Math.max(0, activeEnemies.length - 1)) || 0;
-    const target = activeEnemies[idx];
-    if (!target) return;
-
-    if (target.shieldActive) {
-      showTemporaryText(`${ally.name}'s attack was blocked!`);
-    } else {
-      target.currentHp = Math.max(0, target.currentHp - ally.damage);
-      showTemporaryText(`${ally.name} hits ${target.name} for ${ally.damage} damage!`);
-      if (target.currentHp === 0) handleEnemyDeath(target);
-    }
-    drawBattleUI();
-    drawPlayerBattleStatus();
-  }, ally.attackIntervalMs);
-}
-
-function stopAllyCombatTimers() {
-  for (const id in party.allyTimers) {
-    if (party.allyTimers[id]) clearInterval(party.allyTimers[id]);
-  }
-  party.allyTimers = {};
-}
-
-// Choose whether enemy targets player or ally
-function chooseTargetForEnemy() {
-  const allyId = party.equippedAllyId;
-  // 50% chance to target ally if one is equipped and alive
-  if (allyId && party.members[allyId] && party.members[allyId].currentHp > 0 && Math.random() < 0.5) {
-    return { type: 'ally', id: allyId };
-  }
-  return { type: 'player' };
-}
-// -------------------------------------------------------------------
-function enemyDealDamage(enemy, damage) {
-  const target = chooseTargetForEnemy();
-  if (target.type === 'player') {
-    playerTakeDamage(damage);
-    showTemporaryText(`${enemy.name} attacks 8-Bit for ${damage} damage!`);
-  } else {
-    const ally = party.members[target.id];
-    if (!ally || ally.currentHp <= 0) {
-      playerTakeDamage(damage);
-      showTemporaryText(`${enemy.name} attacks 8-Bit for ${damage} damage!`);
-    } else {
-      ally.currentHp = Math.max(0, ally.currentHp - damage);
-      showTemporaryText(`${enemy.name} attacks ${ally.name} for ${damage} damage!`);
-      if (ally.currentHp <= 0) {
-        showTemporaryText(`${ally.name} was defeated!`);
-        stopAllyCombatTimers();
-        if (party.equippedAllyId === target.id) party.equippedAllyId = null;
-      }
-      drawPlayerBattleStatus();
-    }
-  }
-}
-
   function playerTakeDamage(amount) {
     if (equippedArmor === "haunted") {
     const blockChance = armorTypes["haunted"].blockChance || 0;
@@ -1943,45 +1711,25 @@ function endBattle(outcome) {
   inBattle = false;
   document.getElementById('battle-overlay').style.display = 'none';
 
-  if (staminaRegenIntervalId) {
-    clearInterval(staminaRegenIntervalId);
-    staminaRegenIntervalId = null;
-  }
-  if (enemyAttackIntervalId) {
-    clearInterval(enemyAttackIntervalId);
-    enemyAttackIntervalId = null;
-  }
+  if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
+  if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
 
   if (outcome === 'win') {
     let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
     gainXP(totalXp);
-
     playerStats.currentHp = playerStats.maxHp;
     updateHp(playerStats.currentHp);
-
-    // Heal allies by 33% of their maxHp
-    for (const id in party.members) {
-      if (!Object.prototype.hasOwnProperty.call(party.members, id)) continue;
-      const m = party.members[id];
-      const healAmount = Math.ceil(m.maxHp * 0.33);
-      m.currentHp = Math.min(m.maxHp, (m.currentHp || 0) + healAmount);
-    }
-
-    stopAllyCombatTimers();
-
     if (defeatedZone) removeZone(defeatedZone);
-    activeEnemies = [];
-    defeatedZone = null;
-    draw();
-    const pbs = document.getElementById('player-battle-status');
-    if (pbs) pbs.innerHTML = '';
-  }
-  else if (outcome === 'lose') {
-    stopAllyCombatTimers();
+  } else if (outcome === 'lose') {
     showGameOver();
   }
-}
 
+  activeEnemies = [];
+  defeatedZone = null;
+  draw();
+  const pbs = document.getElementById('player-battle-status');
+  if (pbs) pbs.innerHTML = "";
+}
 
 // Initialize battle from zone or interactable
 function initiateBattle(zoneType, zoneObject) {
@@ -2562,11 +2310,6 @@ function saveGame() {
     allInteractables,
     shownDialogs: Array.from(shownDialogs),
   };
-  // before localStorage.setItem('8bitsAdventureSave', ...)
-saveData.party = {
-  equippedAllyId: party.equippedAllyId,
-  members: Object.fromEntries(Object.entries(party.members).map(([k,v]) => [k, { unlocked: v.unlocked, currentHp: v.currentHp }]))
-};
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
   showTemporaryText('Game saved!');
   console.log('Game saved:', saveData);
@@ -2586,18 +2329,6 @@ function loadGame() {
     Object.assign(playerStats, saveData.playerStats);
     inventory.clear();
     saveData.inventory.forEach(([key, value]) => inventory.set(key, value));
-    if (saveData.party) {
-  party.equippedAllyId = saveData.party.equippedAllyId || null;
-  for (const [id, info] of Object.entries(saveData.party.members || {})) {
-    if (party.members[id]) {
-      party.members[id].unlocked = !!info.unlocked;
-      party.members[id].currentHp = Math.min(party.members[id].maxHp, info.currentHp || party.members[id].maxHp);
-    }
-  }
-}
-// After load, update UI and ensure party timers not running
-stopAllyCombatTimers();
-renderPartyList && renderPartyList();
 
     // Restore interactables for all levels
     if (Array.isArray(saveData.allInteractables)) {
