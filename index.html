@@ -443,7 +443,7 @@ function applyEquipmentBonuses() {
   playerStats.maxHp = baseMaxHp + armorBonusHp;
   playerStats.damage = baseDamage + weaponBonusDmg;
 
-  // clamp current HP to max (preserve relative HP percentage)
+  // clamp current HP to max (preserve relative HP percentage) mmm
   if (playerStats.currentHp > playerStats.maxHp) {
     playerStats.currentHp = playerStats.maxHp;
   }
