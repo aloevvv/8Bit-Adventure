@@ -2460,7 +2460,47 @@ canvas.addEventListener('keydown', function(e) {
       return;
     }
 
- // If destination is ice and player has no boots, commit the step then start sliding
+    // ensure player object exists (safe fallback)
+if (typeof player === 'undefined' || player === null) {
+  player = { _slidingIntervalId: null };
+}
+// sliding constants and storage (always defined)
+const SLIDE_TICK_MS = 120; // adjust speed of sliding steps
+
+function startSliding(dx, dy) {
+  if (hasIceBoots() || inBattle || isGameOver) return;
+  if (sliding) return;
+
+  sliding = true;
+
+  // clear any previous interval
+  if (player._slidingIntervalId) {
+    clearInterval(player._slidingIntervalId);
+    player._slidingIntervalId = null;
+  }
+
+  // sliding loop
+  player._slidingIntervalId = setInterval(() => {
+    if (!sliding || inBattle || isGameOver) {
+      stopSliding();
+      return;
+    }
+
+    const nextX = x + dx * speed;
+    const nextY = y + dy * speed;
+
+    if (isCollidingWithWall(nextX, nextY)) { stopSliding(); return; }
+
+    const door = checkDoorCollision(nextX, nextY);
+    if (door) { stopSliding(); loadLevel(door.destLevel, door.destX, door.destY); return; }
+
+    const battleZone = findBattleZone(nextX, nextY);
+    if (battleZone) { stopSliding(); initiateBattle('battleZone', battleZone); return; }
+
+    x = nextX;
+    y = nextY;
+
+    // inside movement handler, right after computing nextX/nextY
 if (isOnIce(nextX, nextY) && !hasIceBoots()) {
   x = nextX;
   y = nextY;
@@ -2468,6 +2508,34 @@ if (isOnIce(nextX, nextY) && !hasIceBoots()) {
   startSliding(dx, dy);
   return;
 }
+
+
+    if (!isOnIce(x, y) || hasIceBoots()) {
+      const dialogZone = findDialogZone(x, y);
+      if (dialogZone && dialogZone.autoShow) {
+        showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
+      }
+      stopSliding();
+      return;
+    }
+
+    const dialogZone = findDialogZone(x, y);
+    if (dialogZone && dialogZone.autoShow) {
+      showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
+    }
+
+    if (typeof draw === 'function') draw();
+  }, SLIDE_TICK_MS);
+}
+
+function stopSliding() {
+  sliding = false;
+  if (player._slidingIntervalId) {
+    clearInterval(player._slidingIntervalId);
+    player._slidingIntervalId = null;
+  }
+}
+
 
 
 
