@@ -2413,17 +2413,26 @@ if (gameHud) {
 }
   
 // Keyboard movement and interaction
-// Put this in your initialization code (replace the old listener)
-window.addEventListener('keydown', function(e) {
+canvas.addEventListener('keydown', function(e) {
   if (inBattle || isGameOver) return;
 
-  // sliding blocks input
   if (sliding) {
+    // Ignore input while sliding
     e.preventDefault();
     return;
   }
 
+  let nextX = x;
+  let nextY = y;
+  let dx = 0;
+  let dy = 0;
   const key = e.key.toLowerCase();
+
+  // Movement keys
+  if (['arrowup', 'w'].includes(key)) dy = -1;
+  else if (['arrowdown', 's'].includes(key)) dy = 1;
+  else if (['arrowleft', 'a'].includes(key)) dx = -1;
+  else if (['arrowright', 'd'].includes(key)) dx = 1;
 
   // Interaction key
   if (key === 'x') {
@@ -2438,60 +2447,54 @@ window.addEventListener('keydown', function(e) {
     return;
   }
 
-  // Determine movement direction once
-  let dx = 0;
-  let dy = 0;
-  if (key === 'arrowup' || key === 'w') dy = -1;
-  else if (key === 'arrowdown' || key === 's') dy = 1;
-  else if (key === 'arrowleft' || key === 'a') dx = -1;
-  else if (key === 'arrowright' || key === 'd') dx = 1;
-  else return; // not a movement key
+  if (dx !== 0 || dy !== 0) {
+    e.preventDefault();
 
-  e.preventDefault();
+    nextX = x + dx * speed;
+    nextY = y + dy * speed;
 
-  // compute candidate position
-  const nextX = x + dx * speed;
-  const nextY = y + dy * speed;
-
-  // Ice sliding check first
-  if (isOnIce(nextX, nextY) && !hasIceBoots()) {
-    startSliding(dx, dy);
-    return;
-  }
-
-  // Water / poison crossing checks
-  if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
-    showTemporaryText("You need a raft to cross water!");
-    return;
-  }
-  if (isInPoison(nextX, nextY) && (inventory.get('gas_mask') || 0) <= 0) {
-    showTemporaryText("You need a gas mask to cross poison!");
-    return;
-  }
-
-  // Collision and special tile handling
-  if (!isCollidingWithWall(nextX, nextY)) {
-    const door = checkDoorCollision(nextX, nextY);
-    if (door) {
-      loadLevel(door.destLevel, door.destX, door.destY);
+    // Check water crossing
+    if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
+      showTemporaryText("You need a raft to cross water!");
       return;
     }
 
-    const battleZone = findBattleZone(nextX, nextY);
-    if (battleZone) {
-      initiateBattle('battleZone', battleZone);
+    // Check poison crossing
+    if (isInPoison(nextX, nextY) && (inventory.get('gas_mask') || 0) <= 0) {
+      showTemporaryText("You need a gas mask to cross poison!");
       return;
     }
 
-    // Move player
-    x = nextX;
-    y = nextY;
-
-    // Auto dialog trigger only for autoShow
-    const dialogZone = findDialogZone(nextX, nextY);
-    if (dialogZone && dialogZone.autoShow) {
-      showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
+    // If next tile is ice and no boots, start sliding
+    if (isOnIce(nextX, nextY) && !hasIceBoots()) {
+      startSliding(dx, dy);
       return;
+    }
+
+    // Normal movement if no sliding triggered
+    if (!isCollidingWithWall(nextX, nextY)) {
+      const door = checkDoorCollision(nextX, nextY);
+      if (door) {
+        loadLevel(door.destLevel, door.destX, door.destY);
+        return;
+      }
+
+      const battleZone = findBattleZone(nextX, nextY);
+      if (battleZone) {
+        initiateBattle('battleZone', battleZone);
+        return;
+      }
+
+      // Move player normally
+      x = nextX;
+      y = nextY;
+
+      // Auto dialog trigger if any
+      const dialogZone = findDialogZone(nextX, nextY);
+      if (dialogZone && dialogZone.autoShow) {
+        showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
+        return;
+      }
     }
   }
 
