@@ -2441,7 +2441,9 @@ canvas.addEventListener('keydown', function(e) {
       checkInteraction(x, y - 16) ||
       checkInteraction(x, y + 16) ||
       checkInteraction(x, y);
-    if (interactableObject) handleInteraction(interactableObject);
+    if (interactableObject) {
+      handleInteraction(interactableObject);
+    }
     return;
   }
 
