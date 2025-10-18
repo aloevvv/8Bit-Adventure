@@ -2416,12 +2416,6 @@ if (gameHud) {
 canvas.addEventListener('keydown', function(e) {
   if (inBattle || isGameOver) return;
 
-  if (sliding) {
-    // Ignore input while sliding
-    e.preventDefault();
-    return;
-  }
-
   let dx = 0;
   let dy = 0;
   const key = e.key.toLowerCase();
