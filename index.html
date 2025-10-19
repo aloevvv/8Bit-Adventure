@@ -774,7 +774,7 @@ const levels = [
   allyId: 'ally1',               // must match alliesData id
   displayName: 'Lou',
   recruitDialog: [
-    { speaker: 'Lou', text: "Hey, looks like you could use a hand.", style: 'dialog' },
+    { speaker: 'Lou', text: "Hey, looks like you could use a hand.", style: 'lou' },
     { speaker: '8-Bit', text: "Welcome aboard, Lou.", style: 'dialog' }
   ],
   opened: false
@@ -919,11 +919,14 @@ function applyDialogStyle(box, style) {
   if (style === 'other') {
     box.style.background = '#223344';
     box.style.fontSize = '14px';
-  } else if (style === 'newstyle') {
-    box.style.background = '#7d8084';
+  } else if (style === 'lou') {
+    box.style.background = '#78bdff';
     box.style.fontSize = '14px';
   } else if (style === 'boss') {
     box.style.background = '#330000';
+    box.style.fontSize = '12px';
+    } else if (style === 'colt') {
+    box.style.background = '#ca2f2f';
     box.style.fontSize = '12px';
   } else {
     box.style.background = '#0e2057';
