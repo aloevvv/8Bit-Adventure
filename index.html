@@ -2240,8 +2240,19 @@ function endBattle(outcome) {
   if (pbs) pbs.innerHTML = "";
 }
 
-// Initialize battle from zone or interactable
-activeEnemies = encounter.map(enemyData => {
+function initiateBattle(zoneType, zoneObject) {
+  inBattle = true;
+  defeatedZone = { type: zoneType, object: zoneObject };
+
+  staminaRegenIntervalId = setInterval(() => {
+    updateStamina(playerStats.currentStamina + 1);
+    drawPlayerBattleStatus();
+  }, 100);
+
+  const encounter = (zoneObject && zoneObject.encounter) || [];
+
+  // Build activeEnemies using scaled stats that respect difficulty
+  activeEnemies = encounter.map(enemyData => {
     const baseStats = enemyTypes[enemyData.type] || {};
 
     // scale base stats according to current level and difficulty
@@ -2279,32 +2290,35 @@ activeEnemies = encounter.map(enemyData => {
 
     return enemy;
   });
-// Setup activeAlly data from equipped ally
-if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
-  const allyBase = alliesData.find(a => a.id === equippedAllyId);
-  activeAlly = {
-    id: allyBase.id,
-    name: allyBase.name,
-    maxHp: allyBase.baseMaxHp,
-    currentHp: allyBase.baseMaxHp,
-    damage: allyBase.baseDamage,
-    attackIntervalMs: allyBase.attackIntervalMs,
-    level: allyBase.level,
-    xp: allyBase.xp,
-    xpToNextLevel: allyBase.xpToNextLevel,
-    attackTimerId: null
-  };
-  startAllyAttacking();
-  drawPartyStatus();
-} else {
-  activeAlly = null;
-}
+
+  // Setup activeAlly data from equipped ally
+  if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
+    const allyBase = alliesData.find(a => a.id === equippedAllyId);
+    activeAlly = {
+      id: allyBase.id,
+      name: allyBase.name,
+      maxHp: allyBase.baseMaxHp,
+      currentHp: allyBase.baseMaxHp,
+      damage: allyBase.baseDamage,
+      attackIntervalMs: allyBase.attackIntervalMs,
+      level: allyBase.level,
+      xp: allyBase.xp,
+      xpToNextLevel: allyBase.xpToNextLevel,
+      attackTimerId: null
+    };
+    startAllyAttacking();
+    drawPartyStatus();
+  } else {
+    activeAlly = null;
+  }
+
   selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
   enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 }
+
 
   // Unlock an ally and update UI/save state
 function unlockAlly(allyId) {
