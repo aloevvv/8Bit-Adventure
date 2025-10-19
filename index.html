@@ -179,71 +179,49 @@
       user-select: none;
     }
     /* Settings HUD section (align with other hud sections) */
-#game-hud .hud-section#settings {
-  text-align: center;
-  padding: 0 1em;
-}
+/* Settings popup: behave like other HUD popups (absolute inside HUD) */
+#game-hud { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; } /* keep existing */
+#game-hud .hud-section#settings { text-align: center; padding: 0 1em; }
 
-/* Settings popup reuses .stats-popup but ensure width and z-order */
+/* Match other popups: position absolute and anchored under the HUD item */
 #settings-popup {
   display: none;
-  width: 280px;             /* fits inside HUD area */
+  position: absolute;       /* same stacking as stats/party popups */
+  bottom: 46px;             /* sits above the HUD bar (adjust if your HUD height differs) */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
   max-height: 380px;
   overflow-y: auto;
-  background-color: #002591; 
+  background-color: #002591;
   color: white;
   border: 2px solid black;
   padding: 10px;
   box-sizing: border-box;
-  z-index: 4000;            /* sit above most overlays */
-  position: relative;       /* same stacking context as other popups */
+  z-index: 3000;
   font-size: 11px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.6);
 }
 
-/* Keep the same look for buttons in settings (matches item-use-button) */
-#settings-popup .item-use-button,
-#settings-popup button.settings-btn {
-  font-family: "Press Start 2P", sans-serif;
-  font-size: 0.7em;
-  padding: 6px 8px;
-  margin: 2px 0;
-  cursor: pointer;
-  background-color: #2b2b2b;
-  border: 2px solid white;
-  color: white;
-  transition: background-color 0.15s ease;
-}
-#settings-popup .item-use-button:hover,
-#settings-popup button.settings-btn:hover {
-  background-color: #0060ff;
+/* Keep same button visuals as HUD */
+#settings-popup .item-use-button { font-family:"Press Start 2P",sans-serif; font-size:0.7em; padding:6px 8px; margin:2px 0; cursor:pointer; background:#2b2b2b; border:2px solid white; color:white; }
+#settings-popup .item-use-button:hover { background:#0060ff; }
+
+/* compact select tooltip target spacing */
+.settings-row { margin:8px 0; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.settings-row label { font-size:10px; display:block; flex:1 1 auto; text-align:left; }
+.settings-row .control { flex:0 0 auto; }
+
+/* small tooltip style (used by JS fallback if needed) */
+.settings-tooltip {
+  font-size:10px;
+  color:#ddd;
+  margin-top:6px;
+  background: rgba(0,0,0,0.2);
+  padding:6px;
+  border-radius:4px;
 }
 
-/* Compact select and checkbox visuals */
-#settings-popup select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-color: #1b3a8a;
-  color: white;
-  border: 1px solid #ffffff33;
-  padding: 6px;
-  box-sizing: border-box;
-}
-
-/* Ensure the HUD text label matches other hud sections */
-#settings-button {
-  cursor: pointer;
-  user-select: none;
-}
-
-/* Optional: make popup scroll bar match theme */
-#settings-popup::-webkit-scrollbar {
-  width: 8px;
-}
-#settings-popup::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
-  border: 1px solid #222;
-}
     /* Inventory styling */
     #inventory-list {
       display: flex;
