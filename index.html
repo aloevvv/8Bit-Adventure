@@ -2915,14 +2915,6 @@ if (window.gameSettings && window.gameSettings.showZones) {
   ctx.strokeStyle = 'yellow';
   ctx.lineWidth = 2;
   ctx.strokeRect(x + hitboxOffsetX + 0.5, y + hitboxOffsetY + 0.5, hitboxWidth, hitboxHeight);
-
-  ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY - 16, 60, 14);
-  ctx.fillStyle = 'white';
-  ctx.font = "10px 'Press Start 2P'";
-  ctx.textAlign = 'left';
-  ctx.fillText('hitbox', x + hitboxOffsetX + 2, y + hitboxOffsetY - 4);
-  ctx.restore();
 }
 
   if (tempText) {
