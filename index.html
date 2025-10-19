@@ -493,7 +493,19 @@ let playerStats = {
   baseMaxHp: 8,
   baseDamage: 2
 };
+const alliesData = [
+  { id: 'ally1', name: 'Lou', baseMaxHp: 30, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10 },
+  { id: 'ally2', name: 'Buzz', baseMaxHp: 58, baseDamage: 4, attackIntervalMs: 2200, level: 1, xp: 0, xpToNextLevel: 10 },
+  { id: 'ally3', name: 'Colt', baseMaxHp: 23, baseDamage: 6, attackIntervalMs: 3000, level: 1, xp: 0, xpToNextLevel: 10 },
+  { id: 'ally4', name: 'Otis', baseMaxHp: 45, baseDamage: 4, attackIntervalMs: 2000, level: 1, xp: 0, xpToNextLevel: 10 },
+  { id: 'ally5', name: 'Janet', baseMaxHp: 40, baseDamage: 3, attackIntervalMs: 1500, level: 1, xp: 0, xpToNextLevel: 10 },
+  { id: 'ally6', name: 'Max', baseMaxHp: 36, baseDamage: 4, attackIntervalMs: 1000, level: 1, xp: 0, xpToNextLevel: 10 },
+];
 
+let unlockedAllies = new Set();  // Track unlocked ally IDs
+let equippedAllyId = null;       // Currently equipped ally ID or null
+let activeAlly = null;           // Ally battle state (HP etc)
+let allyAttackTimerId = null;    // Timer for ally attacks
 
 let inBattle = false;
 
@@ -1073,6 +1085,30 @@ passwordCancel.addEventListener('click', () => {
   closePasswordPopup();
 });
 
+function levelUpAlly(ally) {
+  ally.level++;
+  ally.xp -= ally.xpToNextLevel;
+  ally.xpToNextLevel = Math.floor(ally.xpToNextLevel * 1.5);
+
+  ally.baseMaxHp += Math.floor(2 + (ally.level / 2));
+  ally.baseDamage += Math.floor(1 + (ally.level / 6));
+
+  // Update max HP and heal on level up
+  ally.maxHp = ally.baseMaxHp;
+  ally.currentHp = ally.maxHp;
+
+  showTemporaryText(`${ally.name} leveled up to ${ally.level}!`);
+  drawPartyStatus();
+}
+  // After levelUpAlly
+const baseAlly = alliesData.find(a => a.id === ally.id);
+if (baseAlly) {
+  baseAlly.level = ally.level;
+  baseAlly.xp = ally.xp;
+  baseAlly.xpToNextLevel = ally.xpToNextLevel;
+  baseAlly.baseMaxHp = ally.baseMaxHp;
+  baseAlly.baseDamage = ally.baseDamage;
+}
 // Level up player
 function levelUp() {
   playerStats.level++;
@@ -1096,10 +1132,20 @@ function levelUp() {
 // Gain XP and check level up
 function gainXP(amount) {
   playerStats.xp += amount;
+
+  // Also give XP to equipped ally
+  if (activeAlly) {
+    activeAlly.xp += amount;
+    while (activeAlly.xp >= activeAlly.xpToNextLevel) {
+      levelUpAlly(activeAlly);
+    }
+  }
+
   if (playerStats.xp >= playerStats.xpToNextLevel) {
     levelUp();
   }
   updateStatsPopup();
+  drawPartyStatus();
 }
 
 // Remove battle or interactable zone after clearing
@@ -1249,6 +1295,71 @@ function drawInventoryBattlePopup() {
   }
 }
 
+  const partyButton = document.getElementById('party-button');
+const partyPopup = document.getElementById('party-popup');
+const partyListDiv = document.getElementById('party-list');
+const equipAllyButton = document.getElementById('equip-ally-button');
+
+partyButton.addEventListener('click', () => {
+  if (partyPopup.style.display === 'none') {
+    drawPartyList();
+    partyPopup.style.display = 'block';
+  } else {
+    partyPopup.style.display = 'none';
+  }
+});
+
+function drawPartyList() {
+  partyListDiv.innerHTML = '';
+  if (unlockedAllies.size === 0) {
+    partyListDiv.innerHTML = '<p>No allies unlocked yet.</p>';
+    equipAllyButton.disabled = true;
+    return;
+  }
+
+  equipAllyButton.disabled = false;
+
+  unlockedAllies.forEach(allyId => {
+    const ally = alliesData.find(a => a.id === allyId);
+    if (!ally) return;
+
+    const div = document.createElement('div');
+    div.className = 'party-ally-item';
+    div.textContent = `${ally.name} (Lvl ${ally.level}, HP: ${ally.baseMaxHp}, DMG: ${ally.baseDamage})`;
+    div.dataset.allyId = ally.id;
+    div.style.cursor = 'pointer';
+
+    if (ally.id === equippedAllyId) {
+      div.style.fontWeight = 'bold';
+      div.style.color = 'yellow';
+    }
+
+    div.onclick = () => {
+      const prevSelected = partyListDiv.querySelector('.selected');
+      if (prevSelected) prevSelected.classList.remove('selected');
+      div.classList.add('selected');
+    };
+
+    partyListDiv.appendChild(div);
+  });
+}
+
+equipAllyButton.addEventListener('click', () => {
+  const selectedDiv = partyListDiv.querySelector('.selected');
+  if (!selectedDiv) {
+    showTemporaryText('Select an ally to equip.');
+    return;
+  }
+  const allyId = selectedDiv.dataset.allyId;
+  if (!unlockedAllies.has(allyId)) {
+    showTemporaryText('This ally is not unlocked.');
+    return;
+  }
+  equippedAllyId = allyId;
+  showTemporaryText(`Equipped ${alliesData.find(a => a.id === allyId).name} as ally.`);
+  partyPopup.style.display = 'none';
+  drawPartyList();
+});
 
 function equipArmor(type) {
   if (!armorTypes[type]) {
@@ -1385,6 +1496,7 @@ if (inBattle) {
   inventory.set(itemName, Math.max(0, (inventory.get(itemName) || 0) - 1));
   drawInventoryBattlePopup();
   drawBattleUI();
+  drawPartyStatus();
   drawPlayerBattleStatus();
 }
 
@@ -1444,24 +1556,133 @@ function drawPlayerBattleStatus() {
   playerBattleStatusDiv.appendChild(staminaContainer);
 }
 
+  function drawPartyStatus() {
+  const partyHud = document.getElementById('party');
+  if (!partyHud) return;
+
+  let statusDiv = partyHud.querySelector('.party-status');
+  if (!statusDiv) {
+    statusDiv = document.createElement('div');
+    statusDiv.className = 'party-status';
+    statusDiv.style.marginTop = '10px';
+    partyHud.appendChild(statusDiv);
+  }
+  statusDiv.innerHTML = '';
+
+  if (!activeAlly) {
+    statusDiv.textContent = 'No ally equipped';
+    return;
+  }
+
+  const nameP = document.createElement('p');
+  nameP.textContent = `${activeAlly.name} (Lvl ${activeAlly.level})`;
+  nameP.style.fontWeight = 'bold';
+  statusDiv.appendChild(nameP);
+
+  const hpContainer = document.createElement('div');
+  hpContainer.className = 'hp-bar-container';
+  hpContainer.style.width = '150px';
+  hpContainer.style.height = '15px';
+  hpContainer.style.backgroundColor = '#555';
+  hpContainer.style.border = '1px solid white';
+  hpContainer.style.position = 'relative';
+
+  const hpBar = document.createElement('div');
+  hpBar.className = 'hp-bar';
+  const hpPercent = (activeAlly.currentHp / activeAlly.maxHp) * 100;
+  hpBar.style.width = `${hpPercent}%`;
+  hpBar.style.height = '100%';
+  hpBar.style.backgroundColor = '#00FF00';
+
+  const hpText = document.createElement('div');
+  hpText.className = 'hp-text';
+  hpText.textContent = `${activeAlly.currentHp} / ${activeAlly.maxHp}`;
+  hpText.style.position = 'absolute';
+  hpText.style.top = '50%';
+  hpText.style.left = '50%';
+  hpText.style.transform = 'translate(-50%, -50%)';
+  hpText.style.fontSize = '0.7em';
+  hpText.style.textShadow = '1px 1px 2px black';
+  hpText.style.userSelect = 'none';
+
+  hpContainer.appendChild(hpBar);
+  hpContainer.appendChild(hpText);
+  statusDiv.appendChild(hpContainer);
+}
+  function startAllyAttacking() {
+  if (!activeAlly) return;
+  if (activeAlly.attackTimerId) clearInterval(activeAlly.attackTimerId);
+
+  activeAlly.attackTimerId = setInterval(() => {
+    if (!inBattle || !activeAlly || activeAlly.currentHp <= 0) {
+      clearInterval(activeAlly.attackTimerId);
+      return;
+    }
+    if (!activeEnemies.length) return;
+
+    const targetEnemy = activeEnemies[selectedEnemyIndex] || activeEnemies[0];
+    if (!targetEnemy) return;
+
+    if (targetEnemy.shieldActive) {
+      showTemporaryText(`${activeAlly.name}'s attack was blocked by shield!`);
+    } else {
+      targetEnemy.currentHp -= activeAlly.damage;
+      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+      showTemporaryText(`${activeAlly.name} attacks ${targetEnemy.name} for ${activeAlly.damage} damage!`);
+    }
+
+    if (targetEnemy.currentHp === 0) {
+      handleEnemyDeath(targetEnemy);
+      if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = Math.max(0, activeEnemies.length - 1);
+      drawBattleUI();
+      drawPlayerBattleStatus();
+      drawPartyStatus();
+      if (activeEnemies.length === 0) {
+        endBattle('win');
+      }
+    } else {
+      drawBattleUI();
+    }
+  }, activeAlly.attackIntervalMs);
+}
 // Enemy behaviors
 // normal enemy attack
-function normalAttack(enemy) {
+function normalAttack(enemy, target) {
   const damage = enemy.damage || 0;
-  playerTakeDamage(damage);
-  showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
+  if (target === playerStats) {
+    playerTakeDamage(damage);
+    showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
+  } else if (target === activeAlly) {
+    activeAlly.currentHp -= damage;
+    if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
+    showTemporaryText(`${enemy.name} attacks ${activeAlly.name} for ${damage} damage!`);
+    if (activeAlly.currentHp === 0) {
+      showTemporaryText(`${activeAlly.name} has been defeated!`);
+      clearInterval(activeAlly.attackTimerId);
+      activeAlly.attackTimerId = null;
+    }
+  }
 }
 
-// sniper attack with crits
-function sniperAttack(enemy) {
+function sniperAttack(enemy, target) {
   const isCritical = Math.random() < 0.3;
   const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
-  playerTakeDamage(damage);
-  showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
+  if (target === playerStats) {
+    playerTakeDamage(damage);
+    showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
+  } else if (target === activeAlly) {
+    activeAlly.currentHp -= damage;
+    if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
+    showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} ${activeAlly.name} for ${damage} damage!`);
+    if (activeAlly.currentHp === 0) {
+      showTemporaryText(`${activeAlly.name} has been defeated!`);
+      clearInterval(activeAlly.attackTimerId);
+      activeAlly.attackTimerId = null;
+    }
+  }
 }
 
-// boss behavior (condensed, uses playerTakeDamage with explicit values)
-function bossBehavior(enemy) {
+function bossBehavior(enemy, target) {
   const now = Date.now();
   if (!enemy.shieldActivatedAt) enemy.shieldActivatedAt = 0;
   if (!enemy.shieldCooldownEnd) enemy.shieldCooldownEnd = 0;
@@ -1482,9 +1703,19 @@ function bossBehavior(enemy) {
 
   if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
     const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
-    playerTakeDamage(rocketTickDamage);
+    if (target === playerStats) {
+      playerTakeDamage(rocketTickDamage);
+    } else if (target === activeAlly) {
+      activeAlly.currentHp -= rocketTickDamage;
+      if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
+      if (activeAlly.currentHp === 0) {
+        showTemporaryText(`${activeAlly.name} has been defeated!`);
+        clearInterval(activeAlly.attackTimerId);
+        activeAlly.attackTimerId = null;
+      }
+    }
     enemy.rocketTicksLeft--;
-    showTemporaryText(`${enemy.name}'s rocket hits you for ${rocketTickDamage} damage!`);
+    showTemporaryText(`${enemy.name}'s rocket hits ${target === playerStats ? 'you' : activeAlly.name} for ${rocketTickDamage} damage!`);
     if (enemy.rocketTicksLeft === 0) {
       enemy.rocketActive = false;
       showTemporaryText("The rocket damage ends.");
@@ -1500,18 +1731,28 @@ function bossBehavior(enemy) {
   }
 
   const damage = enemy.damage || 0;
-  playerTakeDamage(damage);
-  showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
+  if (target === playerStats) {
+    playerTakeDamage(damage);
+    showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
+  } else if (target === activeAlly) {
+    activeAlly.currentHp -= damage;
+    if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
+    showTemporaryText(`${enemy.name} attacks ${activeAlly.name} for ${damage} damage!`);
+    if (activeAlly.currentHp === 0) {
+      showTemporaryText(`${activeAlly.name} has been defeated!`);
+      clearInterval(activeAlly.attackTimerId);
+      activeAlly.attackTimerId = null;
+    }
+  }
 }
-  // Summoner: summons 1 minion every 4 seconds
-function summonerBehavior(enemy) {
+
+function summonerBehavior(enemy, target) {
   if (!enemy.lastSummonTime) enemy.lastSummonTime = 0;
   const now = Date.now();
 
   if (now - enemy.lastSummonTime >= 4000) {
     enemy.lastSummonTime = now;
 
-    // Summon a minion (Dummy) at the end of activeEnemies list
     const minionBase = enemyTypes["Botling"];
     const minionStats = scaleEnemyStats(minionBase);
     const minion = {
@@ -1534,17 +1775,14 @@ function summonerBehavior(enemy) {
     drawBattleUI();
   }
 
-  // After summoning, attack normally (if not stunned)
   if (!enemy.stunned) {
-    normalAttack(enemy);
+    normalAttack(enemy, target);
   }
 }
 
-// Second Stage Boss: on death, transform into second stage
-function secondStageBossBehavior(enemy) {
-  // Normal attack behavior
+function secondStageBossBehavior(enemy, target) {
   if (!enemy.stunned) {
-    normalAttack(enemy);
+    normalAttack(enemy, target);
   }
 }
 
@@ -1634,29 +1872,57 @@ function healerBehavior(enemy) {
 // Take enemy turn actions
 function takeTurn() {
   if (!inBattle) return;
-  console.log('takeTurn called');
 
   passiveArmorHeal();
+
   activeEnemies.forEach(enemy => {
     if (!enemy.stunned) {
-      const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
-      if (behavior === 'normalAttack') normalAttack(enemy);
-      else if (behavior === 'sniperAttack') sniperAttack(enemy);
-      else if (behavior === 'bossBehavior') bossBehavior(enemy);
-      else if (behavior === 'summonerBehavior') summonerBehavior(enemy);
-      else if (behavior === 'secondStageBossBehavior') secondStageBossBehavior(enemy);
-      else if (behavior === 'healerBehavior') healerBehavior(enemy);
-    }
-  });
+      let target = playerStats;
+      if (activeAlly && activeAlly.currentHp > 0) {
+        target = (Math.random() < 0.5) ? playerStats : activeAlly;
+      }
 
+      const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
+if (behavior === 'normalAttack') {
+  normalAttack(enemy, target);
+} else if (behavior === 'sniperAttack') {
+  sniperAttack(enemy, target);
+} else if (behavior === 'bossBehavior') {
+  bossBehavior(enemy, target);
+} else if (behavior === 'summonerBehavior') {
+  summonerBehavior(enemy, target);
+} else if (behavior === 'secondStageBossBehavior') {
+  secondStageBossBehavior(enemy, target);
+} else if (behavior === 'healerBehavior') {
+  healerBehavior(enemy, target);
+}
   if (!canGoBelow1Hp() && playerStats.currentHp <= 1) {
     playerStats.currentHp = 1;
   }
   updateHp(playerStats.currentHp);
   drawBattleUI();
   drawPlayerBattleStatus();
+  drawPartyStatus();
+
   if (playerStats.currentHp <= 0) {
     endBattle('lose');
+  }
+}
+
+function enemyAttack(enemy, target) {
+  const damage = enemy.damage || 0;
+  if (target === playerStats) {
+    playerTakeDamage(damage);
+    showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
+  } else if (target === activeAlly) {
+    activeAlly.currentHp -= damage;
+    if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
+    showTemporaryText(`${enemy.name} attacks ${activeAlly.name} for ${damage} damage!`);
+    if (activeAlly.currentHp === 0) {
+      showTemporaryText(`${activeAlly.name} has been defeated!`);
+      clearInterval(activeAlly.attackTimerId);
+      activeAlly.attackTimerId = null;
+    }
   }
 }
   function passiveArmorHeal() {
@@ -1705,7 +1971,14 @@ function takeTurn() {
     endBattle('win');
   }
 }
-
+    
+function healAllyAfterBattle() {
+  if (activeAlly && activeAlly.currentHp > 0) {
+    const healAmount = Math.ceil(activeAlly.maxHp * 0.33);
+    activeAlly.currentHp = Math.min(activeAlly.currentHp + healAmount, activeAlly.maxHp);
+    showTemporaryText(`${activeAlly.name} healed for ${healAmount} HP after battle.`);
+  }
+}
 // End battle and clean up
 function endBattle(outcome) {
   inBattle = false;
@@ -1713,6 +1986,10 @@ function endBattle(outcome) {
 
   if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
   if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
+  if (activeAlly && activeAlly.attackTimerId) {
+    clearInterval(activeAlly.attackTimerId);
+    activeAlly.attackTimerId = null;
+  }
 
   if (outcome === 'win') {
     let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
@@ -1720,13 +1997,17 @@ function endBattle(outcome) {
     playerStats.currentHp = playerStats.maxHp;
     updateHp(playerStats.currentHp);
     if (defeatedZone) removeZone(defeatedZone);
+
+    healAllyAfterBattle();
   } else if (outcome === 'lose') {
     showGameOver();
   }
 
   activeEnemies = [];
   defeatedZone = null;
+  activeAlly = null;
   draw();
+  drawPartyStatus();
   const pbs = document.getElementById('player-battle-status');
   if (pbs) pbs.innerHTML = "";
 }
@@ -1771,7 +2052,26 @@ function initiateBattle(zoneType, zoneObject) {
 
     return enemy;
   });
-
+// Setup activeAlly data from equipped ally
+if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
+  const allyBase = alliesData.find(a => a.id === equippedAllyId);
+  activeAlly = {
+    id: allyBase.id,
+    name: allyBase.name,
+    maxHp: allyBase.baseMaxHp,
+    currentHp: allyBase.baseMaxHp,
+    damage: allyBase.baseDamage,
+    attackIntervalMs: allyBase.attackIntervalMs,
+    level: allyBase.level,
+    xp: allyBase.xp,
+    xpToNextLevel: allyBase.xpToNextLevel,
+    attackTimerId: null
+  };
+  startAllyAttacking();
+  drawPartyStatus();
+} else {
+  activeAlly = null;
+}
   selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
@@ -1945,6 +2245,7 @@ document.getElementById('attack-button').addEventListener('click', () => {
   }
 
   drawBattleUI();
+  drawPartyStatus();
   drawPlayerBattleStatus();
 });
 
@@ -1973,6 +2274,7 @@ document.getElementById('special-attack-button-1').addEventListener('click', () 
   activeEnemies = remainingEnemies;
   if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
   drawBattleUI();
+  drawPartyStatus();
   drawPlayerBattleStatus();
 });
 
@@ -2014,6 +2316,7 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
   }
   if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = 0;
   drawBattleUI();
+  drawPartyStatus();
   drawPlayerBattleStatus();
 });
 
