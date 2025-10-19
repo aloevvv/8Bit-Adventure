@@ -1093,21 +1093,21 @@ function levelUpAlly(ally) {
   ally.baseMaxHp += Math.floor(2 + (ally.level / 2));
   ally.baseDamage += Math.floor(1 + (ally.level / 6));
 
-  // Update max HP and heal on level up
   ally.maxHp = ally.baseMaxHp;
   ally.currentHp = ally.maxHp;
 
   showTemporaryText(`${ally.name} leveled up to ${ally.level}!`);
   drawPartyStatus();
-}
-  // After levelUpAlly
-const baseAlly = alliesData.find(a => a.id === ally.id);
-if (baseAlly) {
-  baseAlly.level = ally.level;
-  baseAlly.xp = ally.xp;
-  baseAlly.xpToNextLevel = ally.xpToNextLevel;
-  baseAlly.baseMaxHp = ally.baseMaxHp;
-  baseAlly.baseDamage = ally.baseDamage;
+
+  // Sync changes back to base data:
+  const baseAlly = alliesData.find(a => a.id === ally.id);
+  if (baseAlly) {
+    baseAlly.level = ally.level;
+    baseAlly.xp = ally.xp;
+    baseAlly.xpToNextLevel = ally.xpToNextLevel;
+    baseAlly.baseMaxHp = ally.baseMaxHp;
+    baseAlly.baseDamage = ally.baseDamage;
+  }
 }
 // Level up player
 function levelUp() {
