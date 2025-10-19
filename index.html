@@ -1180,20 +1180,20 @@ function levelUpAlly(ally) {
   drawPartyStatus();
 
   // Sync back to alliesData (only numeric fields)
-  const baseAlly = alliesData.find(a => a.id === ally.id);
+    const baseAlly = alliesData.find(a => a.id === ally.id);
   if (baseAlly) {
     baseAlly.level = ally.level;
     baseAlly.xp = ally.xp;
     baseAlly.xpToNextLevel = ally.xpToNextLevel;
     baseAlly.baseMaxHp = ally.baseMaxHp;
     baseAlly.baseDamage = ally.baseDamage;
-    console.log('synced to template', { before: baseAlly });
-  } else {
-    console.warn('No base template found for ally id', ally.id);
   }
-
-  console.log('levelUp end', { id: ally.id, after: { ...ally } });
-}
+  // Persist alliesData to localStorage so levels survive reloads
+  localStorage.setItem('8bitsAdventureSave', JSON.stringify({
+    // minimal payload if you prefer incremental saves:
+    alliesData,
+    // optionally include any other small state here
+  }));
 
 
 // Level up player
@@ -2802,22 +2802,34 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
 }
 
 // Save game state to localStorage
+// Helper: coerce one ally's numeric fields safely
+function normalizeAlly(a) {
+  return {
+    id: a.id,
+    name: a.name,
+    baseMaxHp: Number(a.baseMaxHp),
+    baseDamage: Number(a.baseDamage),
+    attackIntervalMs: Number(a.attackIntervalMs),
+    level: Number(a.level),
+    xp: Number(a.xp),
+    xpToNextLevel: Number(a.xpToNextLevel)
+  };
+}
+
+// Save game including alliesData
 function saveGame() {
-  // Save interactables for all levels
-  const allInteractables = levels.map(level => {
-    // Save a deep copy of interactables array for each level
-    return level.interactables.map(obj => ({ ...obj }));
-  });
+  const allInteractables = levels.map(level => level.interactables.map(obj => ({ ...obj })));
 
   const saveData = {
-  playerStats,
-  inventory: Array.from(inventory.entries()),
-  currentLevelIndex,
-  playerPosition: { x, y },
-  allInteractables,
-  shownDialogs: Array.from(shownDialogs),
-  unlockedAllies: Array.from(unlockedAllies)
-};
+    playerStats,
+    inventory: Array.from(inventory.entries()),
+    currentLevelIndex,
+    playerPosition: { x, y },
+    allInteractables,
+    shownDialogs: Array.from(shownDialogs),
+    unlockedAllies: Array.from(unlockedAllies),
+    alliesData // include the current authoritative allies array
+  };
 
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
   showTemporaryText('Game saved!');
@@ -2825,6 +2837,7 @@ function saveGame() {
 }
 
 // Load game state from localStorage
+// Load game and normalize numeric fields
 function loadGame() {
   const saved = localStorage.getItem('8bitsAdventureSave');
   if (!saved) {
@@ -2835,9 +2848,11 @@ function loadGame() {
 
   try {
     const saveData = JSON.parse(saved);
-    Object.assign(playerStats, saveData.playerStats);
+
+    // Player and simple structures
+    Object.assign(playerStats, saveData.playerStats || {});
     inventory.clear();
-    saveData.inventory.forEach(([key, value]) => inventory.set(key, value));
+    (saveData.inventory || []).forEach(([key, value]) => inventory.set(key, value));
 
     // Restore interactables for all levels
     if (Array.isArray(saveData.allInteractables)) {
@@ -2848,21 +2863,31 @@ function loadGame() {
       });
     }
 
-    rebuildWalls ();
-
-    loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
-
-    if (Array.isArray(saveData.shownDialogs)) {
-      shownDialogs = new Set(saveData.shownDialogs);
+    // Restore alliesData with numeric normalization
+    if (Array.isArray(saveData.alliesData)) {
+      alliesData = saveData.alliesData.map(a => normalizeAlly(a));
+    } else {
+      // Keep existing alliesData if none saved
+      alliesData = alliesData.map(a => normalizeAlly(a));
     }
-    if (Array.isArray(saveData.unlockedAllies)) {
-  unlockedAllies = new Set(saveData.unlockedAllies);
-} else {
-  unlockedAllies = new Set();
-}
-drawPartyList();
-drawPartyStatus();
 
+    // Rebuild world and load level/position
+    rebuildWalls();
+    loadLevel(saveData.currentLevelIndex ?? currentLevelIndex, (saveData.playerPosition || {}).x, (saveData.playerPosition || {}).y);
+
+    // Restore sets
+    if (Array.isArray(saveData.shownDialogs)) shownDialogs = new Set(saveData.shownDialogs);
+    else shownDialogs = new Set();
+
+    if (Array.isArray(saveData.unlockedAllies)) unlockedAllies = new Set(saveData.unlockedAllies);
+    else unlockedAllies = new Set();
+
+    // Redraw UI and sync any runtime instances from alliesData
+    drawPartyList();
+    drawPartyStatus();
+
+    // If you use runtime ally instances in other parts of the game, recreate them from alliesData now:
+    // runtimeAllies = alliesData.map(a => ({ ...a, maxHp: a.baseMaxHp, currentHp: a.baseMaxHp }));
 
     updateHp(playerStats.currentHp);
     updateStatsPopup();
@@ -2874,6 +2899,7 @@ drawPartyStatus();
     showTemporaryText('Failed to load save.');
   }
 }
+
 
   function rebuildWalls() {
   // For each level, remove walls that correspond to missing interactables (broken objects)
