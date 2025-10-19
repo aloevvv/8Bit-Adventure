@@ -1896,6 +1896,7 @@ if (behavior === 'normalAttack') {
 } else if (behavior === 'healerBehavior') {
   healerBehavior(enemy, target);
 }
+    }
   if (!canGoBelow1Hp() && playerStats.currentHp <= 1) {
     playerStats.currentHp = 1;
   }
@@ -1907,6 +1908,7 @@ if (behavior === 'normalAttack') {
   if (playerStats.currentHp <= 0) {
     endBattle('lose');
   }
+    });
 }
 
 function enemyAttack(enemy, target) {
