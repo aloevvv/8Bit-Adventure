@@ -1120,6 +1120,13 @@ passwordCancel.addEventListener('click', () => {
 });
 
 function levelUpAlly(ally) {
+  // Normalize inputs to numbers with sensible defaults
+  ally.level = Number(ally.level) || 1;
+  ally.xp = Number(ally.xp) || 0;
+  ally.xpToNextLevel = Number(ally.xpToNextLevel) || 10;
+  ally.baseMaxHp = Number(ally.baseMaxHp) || 1;
+  ally.baseDamage = Number(ally.baseDamage) || 0;
+
   ally.level++;
   ally.xp -= ally.xpToNextLevel;
   ally.xpToNextLevel = Math.floor(ally.xpToNextLevel * 1.5);
@@ -1133,7 +1140,6 @@ function levelUpAlly(ally) {
   showTemporaryText(`${ally.name} leveled up to ${ally.level}!`);
   drawPartyStatus();
 
-  // Sync changes back to base data:
   const baseAlly = alliesData.find(a => a.id === ally.id);
   if (baseAlly) {
     baseAlly.level = ally.level;
@@ -1143,6 +1149,7 @@ function levelUpAlly(ally) {
     baseAlly.baseDamage = ally.baseDamage;
   }
 }
+
 // Level up player
 function levelUp() {
   playerStats.level++;
