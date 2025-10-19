@@ -1565,17 +1565,28 @@ function drawPlayerBattleStatus() {
   leftBlock.style.display = 'inline-block';
   leftBlock.style.verticalAlign = 'top';
   leftBlock.style.marginRight = '12px';
+
   const playerName = document.createElement('p');
   playerName.textContent = '8-Bit';
   leftBlock.appendChild(playerName);
+
   const hpContainer = document.createElement('div');
   hpContainer.className = 'hp-bar-container';
+  hpContainer.style.width = '150px';
+  hpContainer.style.height = '15px';
+  hpContainer.style.position = 'relative';
+
   const innerHpBar = document.createElement('div');
   innerHpBar.className = 'hp-bar';
   innerHpBar.style.width = `${(playerStats.currentHp / playerStats.maxHp) * 100}%`;
-  hpContainer.appendChild(innerHpBar);
-  const hpTxt = document.createElement('div'); hpTxt.className = 'hp-text';
+  innerHpBar.style.height = '100%';
+  innerHpBar.style.backgroundColor = '#00FF00'; // force HP green
+
+  const hpTxt = document.createElement('div');
+  hpTxt.className = 'hp-text';
   hpTxt.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
+
+  hpContainer.appendChild(innerHpBar);
   hpContainer.appendChild(hpTxt);
   leftBlock.appendChild(hpContainer);
 
@@ -1583,44 +1594,65 @@ function drawPlayerBattleStatus() {
   const rightBlock = document.createElement('div');
   rightBlock.style.display = 'inline-block';
   rightBlock.style.verticalAlign = 'top';
+
   if (activeAlly) {
     const allyName = document.createElement('p');
     allyName.textContent = `${activeAlly.name} (Lvl ${activeAlly.level})`;
     allyName.style.fontWeight = 'bold';
     rightBlock.appendChild(allyName);
+
     const allyHpContainer = document.createElement('div');
     allyHpContainer.className = 'hp-bar-container';
     allyHpContainer.style.width = '120px';
+    allyHpContainer.style.height = '15px';
+    allyHpContainer.style.position = 'relative';
+
     const allyInner = document.createElement('div');
     allyInner.className = 'hp-bar';
-    const allyPercent = (activeAlly.currentHp / activeAlly.maxHp) * 100;
+    const allyPercent = (activeAlly.currentHp / activeAlly.maxHp) * 100 || 0;
     allyInner.style.width = `${allyPercent}%`;
-    allyHpContainer.appendChild(allyInner);
-    const allyHpText = document.createElement('div'); allyHpText.className = 'hp-text';
+    allyInner.style.height = '100%';
+    allyInner.style.backgroundColor = '#00FF00'; // force ally HP green
+
+    const allyHpText = document.createElement('div');
+    allyHpText.className = 'hp-text';
     allyHpText.textContent = `${activeAlly.currentHp}/${activeAlly.maxHp}`;
+
+    allyHpContainer.appendChild(allyInner);
     allyHpContainer.appendChild(allyHpText);
     rightBlock.appendChild(allyHpContainer);
   } else {
     rightBlock.innerHTML = '<p style="opacity:0.7">No ally equipped</p>';
   }
 
-  // append both blocks
+  // Append player + ally blocks
   playerBattleStatusDiv.appendChild(leftBlock);
   playerBattleStatusDiv.appendChild(rightBlock);
 
-  // stamina container stays below or to the side as desired
+  // Stamina bar (separate and explicitly cyan)
   const staminaContainer = document.createElement('div');
   staminaContainer.className = 'hp-bar-container';
   staminaContainer.style.marginTop = '8px';
-  const staminaBar = document.createElement('div'); staminaBar.className = 'hp-bar';
+  staminaContainer.style.width = '100%';
+  staminaContainer.style.height = '12px';
+  staminaContainer.style.position = 'relative';
+
+  const staminaBar = document.createElement('div');
+  staminaBar.className = 'hp-bar';
   staminaBar.style.width = `${(playerStats.currentStamina / playerStats.maxStamina) * 100}%`;
-  staminaBar.style.backgroundColor = "#00FFFF";
-  staminaContainer.appendChild(staminaBar);
-  const staminaText = document.createElement('div'); staminaText.className = 'hp-text';
+  staminaBar.style.height = '100%';
+  staminaBar.style.backgroundColor = '#00FFFF'; // force stamina cyan
+
+  const staminaText = document.createElement('div');
+  staminaText.className = 'hp-text';
   staminaText.textContent = `${playerStats.currentStamina}/${playerStats.maxStamina}`;
+
+  staminaContainer.appendChild(staminaBar);
   staminaContainer.appendChild(staminaText);
   playerBattleStatusDiv.appendChild(staminaContainer);
 }
+
+
 
 
   function drawPartyStatus() {
