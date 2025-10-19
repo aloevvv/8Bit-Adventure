@@ -620,12 +620,8 @@ const levels = [
       { x: 530, y: 80, width: 64, height: 64, encounter: [{ type: "Sniperbot" }], sprite: 'fail' },
       { x: 240, y: 315, width: 64, height: 64, encounter: [{ type: "Sniperbot" }, {type: "Sniperbot"}], sprite: 'fail'}
 ],
-    waterZones: [
-    { x: 100, y: 400, width: 200, height: 50 } // example water rectangle
-  ],
-  poisonZones: [
-    { x: 350, y: 350, width: 100, height: 50 } // example poison rectangle
-  ],
+    waterZones: [], // make something like { x: 0, y: 0, width: 1, height: 1 } for zones
+  poisonZones: [],
     dialogZones: [
   {
     id: 'encounter_enemies',
@@ -645,31 +641,7 @@ const levels = [
       }
 ],
     interactables: [
-      { name: "big_stone", x: 580, y: 250, width: 64, height: 64, interactRect: { x: 560, y: 230, width: 120, height: 96 }, action: "break", requiredItem: "hammer" },
-      { name: "laser_cutter", x: 100, y: 300, width: 32, height: 32, action: "pickup", itemName: "laser_cutter" },
-      { name: "keycard", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "keycard" },
-      { name: "gas_mask", x: 200, y: 300, width: 32, height: 32, action: "pickup", itemName: "gas_mask" },
-      {
-  name: "password_door",
-  x: 550, y: 100, width: 400, height: 500,
-  action: "password_door",
-  passcode: "3756",
-  destLevel: 0,
-  destX: 100,
-  destY: 100
-},
-      { name: "raft", x: 250, y: 300, width: 32, height: 32, action: "pickup", itemName: "raft" },
-      {
-  name: "ground_crack",
-  x: 400,
-  y: 400,
-  width: 64,
-  height: 64,
-  action: "use_drill",
-  destLevel: 3,  // index of your cave level in levels array
-  destX: 100,
-  destY: 100
-}
+      { name: "big_stone", x: 580, y: 250, width: 64, height: 64, interactRect: { x: 560, y: 230, width: 120, height: 96 }, action: "break", requiredItem: "hammer" }
     ]
   },
   { bgSrc: "arcadeB2_3.png",
