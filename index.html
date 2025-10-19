@@ -2317,46 +2317,44 @@ function initiateBattle(zoneType, zoneObject) {
   }, 100);
 
   const encounter = (zoneObject && zoneObject.encounter) || [];
+const mult = getDifficultyMultipliers();
 
-  // Build activeEnemies using scaled stats that respect difficulty
-  activeEnemies = encounter.map(enemyData => {
-    const baseStats = enemyTypes[enemyData.type] || {};
+activeEnemies = encounter.map(enemyData => {
+  const baseStats = enemyTypes[enemyData.type] || {};
+  const baseHp = (baseStats.maxHp != null) ? baseStats.maxHp : (enemyData.maxHp || 1);
+  const baseDmg = (baseStats.damage != null) ? baseStats.damage : (enemyData.damage || 1);
 
-    // scale base stats according to current level and difficulty
-    const scaled = scaleEnemyStats(baseStats);
+  const finalMaxHp = Math.max(1, Math.floor(baseHp * mult.enemyHp));
+  const finalDamage = Math.max(0, Math.floor(baseDmg * mult.enemyDmg));
 
-    const maxHp = scaled.maxHp != null ? scaled.maxHp : (enemyData.maxHp || 1);
-    const damage = scaled.damage != null ? scaled.damage : (enemyData.damage || 1);
+  const enemy = {
+    ...enemyData,
+    type: enemyData.type,
+    name: baseStats.name || enemyData.type,
+    maxHp: finalMaxHp,
+    currentHp: finalMaxHp,
+    damage: finalDamage,
+    xpReward: baseStats.xpReward || enemyData.xpReward || 0,
+    shieldActive: false,
+    shieldCooldownEnd: 0,
+    rocketActive: false,
+    rocketTicksLeft: 0,
+    stunned: false,
+    poisoned: false,
+    resistances: (enemyData.resistances || baseStats.defaultResistances) || { stun: false, poison: false },
+    isBoss: !!baseStats.isBoss
+  };
 
-    const enemy = {
-      // preserve provided spawn overrides but prefer scaled values
-      ...enemyData,
-      type: enemyData.type,
-      name: baseStats.name || enemyData.type,
-      maxHp: Math.max(1, maxHp),
-      currentHp: Math.max(1, maxHp),
-      damage: Math.max(0, damage),
-      xpReward: baseStats.xpReward || enemyData.xpReward || 0,
-      shieldActive: false,
-      shieldCooldownEnd: 0,
-      rocketActive: false,
-      rocketTicksLeft: 0,
-      stunned: false,
-      poisoned: false,
-      resistances: (enemyData.resistances || baseStats.defaultResistances) || { stun: false, poison: false },
-      isBoss: !!baseStats.isBoss
-    };
+  if (enemy.isBoss) {
+    enemy.shieldActivatedAt = 0;
+    enemy.shieldCooldownEnd = 0;
+    enemy.rocketActive = false;
+    enemy.rocketTicksLeft = 0;
+  }
 
-    // boss-specific initial state
-    if (enemy.isBoss) {
-      enemy.shieldActivatedAt = 0;
-      enemy.shieldCooldownEnd = 0;
-      enemy.rocketActive = false;
-      enemy.rocketTicksLeft = 0;
-    }
+  return enemy;
+});
 
-    return enemy;
-  });
 
   // Setup activeAlly data from equipped ally
   if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
