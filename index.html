@@ -1119,7 +1119,19 @@ passwordCancel.addEventListener('click', () => {
   closePasswordPopup();
 });
 
+function ensureFiniteNumber(v, fallback) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 function levelUpAlly(ally) {
+  // Normalize only if necessary, preserving valid numbers
+  ally.level = ensureFiniteNumber(ally.level, 1);
+  ally.xp = ensureFiniteNumber(ally.xp, 0);
+  ally.xpToNextLevel = ensureFiniteNumber(ally.xpToNextLevel, 10);
+  ally.baseMaxHp = ensureFiniteNumber(ally.baseMaxHp, 1);
+  ally.baseDamage = ensureFiniteNumber(ally.baseDamage, 0);
+
   ally.level++;
   ally.xp -= ally.xpToNextLevel;
   ally.xpToNextLevel = Math.floor(ally.xpToNextLevel * 1.5);
@@ -1133,7 +1145,6 @@ function levelUpAlly(ally) {
   showTemporaryText(`${ally.name} leveled up to ${ally.level}!`);
   drawPartyStatus();
 
-  // Sync changes back to base data:
   const baseAlly = alliesData.find(a => a.id === ally.id);
   if (baseAlly) {
     baseAlly.level = ally.level;
@@ -1143,6 +1154,7 @@ function levelUpAlly(ally) {
     baseAlly.baseDamage = ally.baseDamage;
   }
 }
+
 // Level up player
 function levelUp() {
   playerStats.level++;
