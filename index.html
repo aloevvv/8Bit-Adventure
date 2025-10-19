@@ -314,6 +314,42 @@
     </div>
   </div>
 </div>
+<div class="hud-section" id="settings">
+  <p id="settings-button">Settings</p>
+  <div id="settings-popup" class="stats-popup" style="display:none; width:280px;">
+    <h4>Settings</h4>
+
+    <div style="margin:8px 0;">
+      <label style="display:block; font-size:10px;">Difficulty</label>
+      <select id="difficulty-select" style="width:100%; font-family:'Press Start 2P',sans-serif;">
+        <option value="normal">Normal</option>
+        <option value="hard">Hard</option>
+        <option value="ultimate">Ultimate</option>
+      </select>
+    </div>
+
+    <div style="margin:8px 0;">
+      <label style="display:block; font-size:10px;">Show Zones & Walls</label>
+      <input id="toggle-zones" type="checkbox" /> Show debug outlines
+    </div>
+
+    <div style="margin:8px 0;">
+      <label style="display:block; font-size:10px;">Save Slots</label>
+      <div style="display:flex; gap:6px;">
+        <button id="save-slot-1" class="item-use-button">Save 1</button>
+        <button id="load-slot-1" class="item-use-button">Load 1</button>
+      </div>
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <button id="save-slot-2" class="item-use-button">Save 2</button>
+        <button id="load-slot-2" class="item-use-button">Load 2</button>
+      </div>
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <button id="save-slot-3" class="item-use-button">Save 3</button>
+        <button id="load-slot-3" class="item-use-button">Load 3</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
   <div id="battle-overlay">
@@ -1271,14 +1307,29 @@ function removeZone(zone) {
 }
 
 // Scale enemy stats with level
+// === Difficulty multipliers ===
+function getDifficultyMultipliers() {
+  // Normal: 1x; Hard: enemy damage x2; Ultimate: enemy damage x2 and enemy HP x2
+  if (gameSettings.difficulty === 'hard') {
+    return { enemyHp: 1, enemyDmg: 2 };
+  } else if (gameSettings.difficulty === 'ultimate') {
+    return { enemyHp: 2, enemyDmg: 2 };
+  }
+  return { enemyHp: 1, enemyDmg: 1 };
+}
+
+
 function scaleEnemyStats(baseStats) {
+  const mult = getDifficultyMultipliers();
   return {
     ...baseStats,
-    maxHp: baseStats.maxHp + Math.floor(currentLevelIndex / 2),
-    damage: baseStats.damage + Math.floor(currentLevelIndex / 3)
+    maxHp: Math.max(1, Math.floor((baseStats.maxHp + Math.floor(currentLevelIndex / 2)) * mult.enemyHp)),
+    damage: Math.max(0, Math.floor((baseStats.damage + Math.floor(currentLevelIndex / 3)) * mult.enemyDmg))
   };
 }
 
+
+  
 // Inventory popup toggle and drawing
 const inventoryButton = document.getElementById('inventory-button');
 const inventoryPopup = document.getElementById('inventory-popup');
@@ -2190,36 +2241,35 @@ function endBattle(outcome) {
 }
 
 // Initialize battle from zone or interactable
-function initiateBattle(zoneType, zoneObject) {
-  inBattle = true;
-  defeatedZone = { type: zoneType, object: zoneObject };
-
-  staminaRegenIntervalId = setInterval(() => {
-    updateStamina(playerStats.currentStamina + 1);
-    drawPlayerBattleStatus();
-  }, 100);
-
-  const encounter = (zoneObject && zoneObject.encounter) || [];
-  activeEnemies = encounter.map(enemyData => {
+activeEnemies = encounter.map(enemyData => {
     const baseStats = enemyTypes[enemyData.type] || {};
+
+    // scale base stats according to current level and difficulty
+    const scaled = scaleEnemyStats(baseStats);
+
+    const maxHp = scaled.maxHp != null ? scaled.maxHp : (enemyData.maxHp || 1);
+    const damage = scaled.damage != null ? scaled.damage : (enemyData.damage || 1);
+
     const enemy = {
-  ...enemyData,
-  type: enemyData.type,
-  name: baseStats.name || enemyData.type,
-  maxHp: (baseStats.maxHp != null) ? baseStats.maxHp : (enemyData.maxHp || 1),
-  currentHp: (baseStats.maxHp != null) ? baseStats.maxHp : (enemyData.maxHp || 1),
-  damage: (baseStats.damage != null) ? baseStats.damage : (enemyData.damage || 1),
-  xpReward: baseStats.xpReward || 0,
-  shieldActive: false,
-  shieldCooldownEnd: 0,
-  rocketActive: false,
-  rocketTicksLeft: 0,
-  stunned: false,
-  poisoned: false,
-  resistances: enemyData.resistances || baseStats.defaultResistances || { stun: false, poison: false }
-};
+      // preserve provided spawn overrides but prefer scaled values
+      ...enemyData,
+      type: enemyData.type,
+      name: baseStats.name || enemyData.type,
+      maxHp: Math.max(1, maxHp),
+      currentHp: Math.max(1, maxHp),
+      damage: Math.max(0, damage),
+      xpReward: baseStats.xpReward || enemyData.xpReward || 0,
+      shieldActive: false,
+      shieldCooldownEnd: 0,
+      rocketActive: false,
+      rocketTicksLeft: 0,
+      stunned: false,
+      poisoned: false,
+      resistances: (enemyData.resistances || baseStats.defaultResistances) || { stun: false, poison: false },
+      isBoss: !!baseStats.isBoss
+    };
 
-
+    // boss-specific initial state
     if (enemy.isBoss) {
       enemy.shieldActivatedAt = 0;
       enemy.shieldCooldownEnd = 0;
@@ -2737,6 +2787,27 @@ function draw() {
     const startY = canvas.height - 100;
     wrapText(ctx, tempText, canvas.width / 2, startY, maxWidth, lineHeight);
   }
+// in draw(), after drawing normal walls and interactables add:
+if (gameSettings.showZones) {
+  // walls outline
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,0,0.9)';
+  ctx.lineWidth = 2;
+  currentLevel.walls.forEach(w => {
+    ctx.strokeRect(w.x + 0.5, w.y + 0.5, w.width, w.height);
+  });
+  // interactable boxes
+  ctx.strokeStyle = 'rgba(0,255,255,0.9)';
+  currentLevel.interactables.forEach(obj => {
+    ctx.strokeRect(obj.x + 0.5, obj.y + 0.5, obj.width, obj.height);
+  });
+  // battle zones
+  ctx.strokeStyle = 'rgba(255,0,0,0.9)';
+  (currentLevel.battleZones || []).forEach(z => {
+    ctx.strokeRect(z.x + 0.5, z.y + 0.5, z.width, z.height);
+  });
+  ctx.restore();
+}
 
   currentLevel.interactables.forEach(obj => {
   if (obj.action === "pickup") {
@@ -2823,6 +2894,123 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
     }
   });
 }
+
+  // === Settings storage and defaults ===
+const SETTINGS_KEY = '8bitsAdventureSettings';
+const SAVE_SLOT_PREFIX = '8bitsAdventureSave_slot_'; // followed by 1,2,3
+
+const defaultSettings = {
+  difficulty: 'normal', // normal | hard | ultimate
+  showZones: false // false by default
+};
+
+let gameSettings = Object.assign({}, defaultSettings);
+
+// load settings on start
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      Object.assign(gameSettings, parsed);
+    }
+  } catch (e) {
+    console.error('Failed to load settings', e);
+  }
+  // apply UI initial values
+  const sel = document.getElementById('difficulty-select');
+  const chk = document.getElementById('toggle-zones');
+  if (sel) sel.value = gameSettings.difficulty || 'normal';
+  if (chk) chk.checked = !!gameSettings.showZones;
+}
+function saveSettings() {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(gameSettings));
+  } catch (e) {
+    console.error('Failed to save settings', e);
+  }
+}
+
+// === Save slot helpers ===
+function saveToSlot(slotNumber) {
+  const key = SAVE_SLOT_PREFIX + slotNumber;
+  const allInteractables = levels.map(level => (level.interactables || []).map(obj => ({ ...obj })));
+  const saveData = {
+    playerStats,
+    inventory: Array.from(inventory.entries()),
+    currentLevelIndex,
+    playerPosition: { x, y },
+    allInteractables,
+    shownDialogs: Array.from(shownDialogs),
+    unlockedAllies: Array.from(unlockedAllies),
+    settings: gameSettings
+  };
+  localStorage.setItem(key, JSON.stringify(saveData));
+  showTemporaryText(`Saved to slot ${slotNumber}`);
+}
+function loadFromSlot(slotNumber) {
+  const key = SAVE_SLOT_PREFIX + slotNumber;
+  const raw = localStorage.getItem(key);
+  if (!raw) {
+    showTemporaryText(`No save in slot ${slotNumber}`);
+    return;
+  }
+  try {
+    const saveData = JSON.parse(raw);
+    Object.assign(playerStats, saveData.playerStats);
+    inventory.clear();
+    saveData.inventory.forEach(([k, v]) => inventory.set(k, v));
+    if (Array.isArray(saveData.allInteractables)) {
+      saveData.allInteractables.forEach((arr, idx) => {
+        if (levels[idx]) levels[idx].interactables = arr.map(o => ({ ...o }));
+      });
+    }
+    shownDialogs = new Set(saveData.shownDialogs || []);
+    unlockedAllies = new Set(saveData.unlockedAllies || []);
+    // restore settings from save if present
+    if (saveData.settings) {
+      Object.assign(gameSettings, saveData.settings);
+      const sel = document.getElementById('difficulty-select');
+      const chk = document.getElementById('toggle-zones');
+      if (sel) sel.value = gameSettings.difficulty;
+      if (chk) chk.checked = !!gameSettings.showZones;
+    }
+    loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
+    drawPartyList();
+    drawPartyStatus();
+    updateHp(playerStats.currentHp);
+    updateStatsPopup();
+    showTemporaryText(`Loaded slot ${slotNumber}`);
+  } catch (e) {
+    console.error('Failed to load slot', e);
+    showTemporaryText('Failed to load save');
+  }
+}
+
+// === Hook up settings UI buttons ===
+document.getElementById('save-slot-1').addEventListener('click', () => saveToSlot(1));
+document.getElementById('save-slot-2').addEventListener('click', () => saveToSlot(2));
+document.getElementById('save-slot-3').addEventListener('click', () => saveToSlot(3));
+document.getElementById('load-slot-1').addEventListener('click', () => loadFromSlot(1));
+document.getElementById('load-slot-2').addEventListener('click', () => loadFromSlot(2));
+document.getElementById('load-slot-3').addEventListener('click', () => loadFromSlot(3));
+
+// difficulty selector
+document.getElementById('difficulty-select').addEventListener('change', (e) => {
+  gameSettings.difficulty = e.target.value;
+  saveSettings();
+  showTemporaryText(`Difficulty set to ${gameSettings.difficulty}`);
+});
+
+// toggle zones
+document.getElementById('toggle-zones').addEventListener('change', (e) => {
+  gameSettings.showZones = !!e.target.checked;
+  saveSettings();
+  draw(); // redraw overlays
+});
+
+// initialize settings on load
+loadSettings();
 
 // Save game state to localStorage
 function saveGame() {
