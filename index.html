@@ -761,7 +761,25 @@ const levels = [
     speaker: '8-Bit'
   }
     ],
-    interactables: []
+    interactables: [
+      {
+  id: 'lou_recruit',
+  name: 'lou_recruit',
+  x: 300,
+  y: 200,
+  width: 32,
+  height: 32,
+  interactRect: { x: 290, y: 190, width: 52, height: 52 },
+  action: 'recruit',
+  allyId: 'ally1',               // must match alliesData id
+  displayName: 'Lou',
+  recruitDialog: [
+    { speaker: 'Lou', text: "Hey, looks like you could use a hand.", style: 'dialog' },
+    { speaker: '8-Bit', text: "Welcome aboard, Lou.", style: 'dialog' }
+  ],
+  opened: false
+}
+    ]
   },
   {
     bgSrc: "caves2_5.png",
@@ -2097,6 +2115,33 @@ if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
   enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 }
 
+  // Unlock an ally and update UI/save state
+function unlockAlly(allyId) {
+  if (!allyId) return;
+  if (unlockedAllies.has(allyId)) {
+    showTemporaryText(`${alliesData.find(a => a.id === allyId)?.name || allyId} is already unlocked.`);
+    return;
+  }
+  const ally = alliesData.find(a => a.id === allyId);
+  if (!ally) {
+    console.warn('unlockAlly: unknown allyId', allyId);
+    showTemporaryText('Unknown ally.');
+    return;
+  }
+
+  unlockedAllies.add(allyId);
+  // Auto-equip if nothing equipped yet
+  if (!equippedAllyId) {
+    equippedAllyId = allyId;
+    showTemporaryText(`${ally.name} has joined and was auto-equipped.`);
+  } else {
+    showTemporaryText(`${ally.name} has joined your party!`);
+  }
+
+  drawPartyList();
+  drawPartyStatus();
+}
+
 // Check collision with interactables
 function checkInteraction(checkX, checkY) {
   const hitboxX = checkX + hitboxOffsetX;
@@ -2118,6 +2163,29 @@ function checkInteraction(checkX, checkY) {
 // Handle interaction actions
 function handleInteraction(object) {
   if (!object) return;
+  // inside handleInteraction(object) add a branch for action === "recruit"
+if (object.action === "recruit") {
+  // optional short dialog before unlocking
+  const preText = object.recruitDialog || [`You meet ${object.displayName || 'someone'}.`, 'They might help you.'];
+  // showDialog accepts text or lines; here we mark the dialog id so it's not retriggered
+  showDialog(preText, object.id, { style: object.dialogStyle || 'dialog', speaker: object.speaker || null });
+
+  // unlock immediately so the player can equip right away after dialog closes
+  // store the allyId on the object as object.allyId (set in level data)
+  if (object.allyId) {
+    // if you want the unlock to happen only after dialog confirmed, move this call into dialog-next handler by checking overlay._markId
+    unlockAlly(object.allyId);
+  } else {
+    console.warn('recruit object missing allyId', object);
+    showTemporaryText('Nothing happened.');
+  }
+
+  // remove the interactable so it can't be recruited repeatedly
+  currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
+  draw();
+  return;
+}
+
 
   if (object.action === "use_drill") {
   if ((inventory.get("drill") || 0) > 0) {
@@ -2624,13 +2692,15 @@ function saveGame() {
   });
 
   const saveData = {
-    playerStats,
-    inventory: Array.from(inventory.entries()),
-    currentLevelIndex,
-    playerPosition: { x, y },
-    allInteractables,
-    shownDialogs: Array.from(shownDialogs),
-  };
+  playerStats,
+  inventory: Array.from(inventory.entries()),
+  currentLevelIndex,
+  playerPosition: { x, y },
+  allInteractables,
+  shownDialogs: Array.from(shownDialogs),
+  unlockedAllies: Array.from(unlockedAllies)
+};
+
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
   showTemporaryText('Game saved!');
   console.log('Game saved:', saveData);
@@ -2667,6 +2737,14 @@ function loadGame() {
     if (Array.isArray(saveData.shownDialogs)) {
       shownDialogs = new Set(saveData.shownDialogs);
     }
+    if (Array.isArray(saveData.unlockedAllies)) {
+  unlockedAllies = new Set(saveData.unlockedAllies);
+} else {
+  unlockedAllies = new Set();
+}
+drawPartyList();
+drawPartyStatus();
+
 
     updateHp(playerStats.currentHp);
     updateStatsPopup();
