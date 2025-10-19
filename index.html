@@ -304,6 +304,7 @@
         <button id="equip-ally-button" class="item-use-button">Equip Selected Ally</button>
       </div>
     </div>
+  </div>
 
   <div class="hud-section" id="inventory">
     <p id="inventory-button">Inventory</p>
@@ -312,40 +313,40 @@
       <div id="general-inventory-list"></div>
     </div>
   </div>
-</div>
-  
-<div class="hud-section" id="settings">
-  <p id="settings-button">Settings</p>
-  <div id="settings-popup" class="stats-popup" style="display:none; width:280px;">
-    <h4>Settings</h4>
 
-    <div style="margin:8px 0;">
-      <label style="display:block; font-size:10px;">Difficulty</label>
-      <select id="difficulty-select" style="width:100%; font-family:'Press Start 2P',sans-serif;">
-        <option value="normal">Normal</option>
-        <option value="hard">Hard</option>
-        <option value="ultimate">Ultimate</option>
-      </select>
-    </div>
+  <div class="hud-section" id="settings">
+    <p id="settings-button">Settings</p>
+    <div id="settings-popup" class="stats-popup" style="display:none; width:280px;">
+      <h4>Settings</h4>
 
-    <div style="margin:8px 0;">
-      <label style="display:block; font-size:10px;">Show Zones & Walls</label>
-      <input id="toggle-zones" type="checkbox" /> Show debug outlines
-    </div>
-
-    <div style="margin:8px 0;">
-      <label style="display:block; font-size:10px;">Save Slots</label>
-      <div style="display:flex; gap:6px;">
-        <button id="save-slot-1" class="item-use-button">Save 1</button>
-        <button id="load-slot-1" class="item-use-button">Load 1</button>
+      <div style="margin:8px 0;">
+        <label style="display:block; font-size:10px;">Difficulty</label>
+        <select id="difficulty-select" style="width:100%; font-family:'Press Start 2P',sans-serif;">
+          <option value="normal">Normal</option>
+          <option value="hard">Hard</option>
+          <option value="ultimate">Ultimate</option>
+        </select>
       </div>
-      <div style="display:flex; gap:6px; margin-top:6px;">
-        <button id="save-slot-2" class="item-use-button">Save 2</button>
-        <button id="load-slot-2" class="item-use-button">Load 2</button>
+
+      <div style="margin:8px 0;">
+        <label style="display:block; font-size:10px;">Show Zones & Walls</label>
+        <input id="toggle-zones" type="checkbox" /> Show debug outlines
       </div>
-      <div style="display:flex; gap:6px; margin-top:6px;">
-        <button id="save-slot-3" class="item-use-button">Save 3</button>
-        <button id="load-slot-3" class="item-use-button">Load 3</button>
+
+      <div style="margin:8px 0;">
+        <label style="display:block; font-size:10px;">Save Slots</label>
+        <div style="display:flex; gap:6px;">
+          <button id="save-slot-1" class="item-use-button">Save 1</button>
+          <button id="load-slot-1" class="item-use-button">Load 1</button>
+        </div>
+        <div style="display:flex; gap:6px; margin-top:6px;">
+          <button id="save-slot-2" class="item-use-button">Save 2</button>
+          <button id="load-slot-2" class="item-use-button">Load 2</button>
+        </div>
+        <div style="display:flex; gap:6px; margin-top:6px;">
+          <button id="save-slot-3" class="item-use-button">Save 3</button>
+          <button id="load-slot-3" class="item-use-button">Load 3</button>
+        </div>
       </div>
     </div>
   </div>
