@@ -1279,7 +1279,7 @@ function levelUpAlly(ally) {
     leveled = true;
     ally.level++;
     ally.xp -= ally.xpToNextLevel;
-    ally.xpToNextLevel = Math.floor(ally.xpToNextLevel * 1.2);
+    ally.xpToNextLevel = Math.floor(ally.xpToNextLevel * 1.5);
 
     // Apply stat growth based on the new level
     ally.baseMaxHp += Math.floor(2 + (ally.level / 2));
