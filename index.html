@@ -1346,11 +1346,11 @@ function gainXP(amount) {
 
   // Also give XP to equipped ally
   if (activeAlly) {
-    activeAlly.xp += amount;
-    while (activeAlly.xp >= activeAlly.xpToNextLevel) {
-      levelUpAlly(activeAlly);
-    }
+  activeAlly.xp += amount;
+  while (activeAlly.xp >= activeAlly.xpToNextLevel && activeAlly.xpToNextLevel > 0) {
+    levelUpAlly(activeAlly);
   }
+}
 
   if (playerStats.xp >= playerStats.xpToNextLevel) {
     levelUp();
@@ -3349,7 +3349,6 @@ if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
   levels.forEach(level => {
     if (!level.walls || !level.interactables) return;
 
-    // Collect bounding boxes of current interactables that block movement
     const interactableRects = level.interactables.map(obj => ({
       x: obj.x,
       y: obj.y,
@@ -3357,13 +3356,13 @@ if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
       height: obj.height
     }));
 
-    // Remove walls that overlap any interactable rect (obstacles)
     level.walls = level.walls.filter(wall => {
+      // Check if wall rectangle overlaps any interactable rectangle
       return !interactableRects.some(rect => (
-        wall.x === rect.x &&
-        wall.y === rect.y &&
-        wall.width === rect.width &&
-        wall.height === rect.height
+        wall.x < rect.x + rect.width &&
+        wall.x + wall.width > rect.x &&
+        wall.y < rect.y + rect.height &&
+        wall.y + wall.height > rect.y
       ));
     });
   });
