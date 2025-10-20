@@ -3252,7 +3252,16 @@ function saveGame() {
   playerPosition: { x, y },
   allInteractables,
   shownDialogs: Array.from(shownDialogs),
-  unlockedAllies: Array.from(unlockedAllies)
+  alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
+    id: a.id,
+    level: a.level,
+    xp: a.xp,
+    xpToNextLevel: a.xpToNextLevel,
+    baseMaxHp: a.baseMaxHp,
+    baseDamage: a.baseDamage
+  })),
+  unlockedAllies: Array.from(unlockedAllies),
+  equippedAllyId,
 };
 
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
@@ -3277,27 +3286,52 @@ function loadGame() {
 
     // Restore interactables for all levels
     if (Array.isArray(saveData.allInteractables)) {
-      saveData.allInteractables.forEach((interactablesArr, index) => {
-        if (levels[index]) {
-          levels[index].interactables = interactablesArr.map(obj => ({ ...obj }));
-        }
-      });
+  saveData.allInteractables.forEach((interactablesArr, index) => {
+    if (levels[index]) {
+      levels[index].interactables = interactablesArr.map(o => ({ ...o }));
     }
-
-    rebuildWalls ();
+  });
+}
+rebuildWalls();
 
     loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
 
     if (Array.isArray(saveData.shownDialogs)) {
       shownDialogs = new Set(saveData.shownDialogs);
     }
-    if (Array.isArray(saveData.unlockedAllies)) {
-  unlockedAllies = new Set(saveData.unlockedAllies);
-} else {
-  unlockedAllies = new Set();
+    if (Array.isArray(saveData.alliesData)) {
+  saveData.alliesData.forEach(savedAlly => {
+    const baseAlly = alliesData.find(a => a.id === savedAlly.id);
+    if (baseAlly) {
+      baseAlly.level = savedAlly.level;
+      baseAlly.xp = savedAlly.xp;
+      baseAlly.xpToNextLevel = savedAlly.xpToNextLevel;
+      baseAlly.baseMaxHp = savedAlly.baseMaxHp;
+      baseAlly.baseDamage = savedAlly.baseDamage;
+    }
+  });
 }
-drawPartyList();
-drawPartyStatus();
+unlockedAllies = new Set(saveData.unlockedAllies || []);
+equippedAllyId = saveData.equippedAllyId || null;
+
+// If equipped, restore activeAlly stats with updated data
+if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
+  const allyBase = alliesData.find(a => a.id === equippedAllyId);
+  activeAlly = {
+    id: allyBase.id,
+    name: allyBase.name,
+    maxHp: allyBase.baseMaxHp,
+    currentHp: allyBase.baseMaxHp,
+    damage: allyBase.baseDamage,
+    attackIntervalMs: allyBase.attackIntervalMs,
+    level: allyBase.level,
+    xp: allyBase.xp,
+    xpToNextLevel: allyBase.xpToNextLevel,
+    attackTimerId: null
+  };
+} else {
+  activeAlly = null;
+}
 
 
     updateHp(playerStats.currentHp);
@@ -3312,11 +3346,10 @@ drawPartyStatus();
 }
 
   function rebuildWalls() {
-  // For each level, remove walls that correspond to missing interactables (broken objects)
   levels.forEach(level => {
     if (!level.walls || !level.interactables) return;
 
-    // Collect all interactable bounding boxes that block movement (breakable objects)
+    // Collect bounding boxes of current interactables that block movement
     const interactableRects = level.interactables.map(obj => ({
       x: obj.x,
       y: obj.y,
@@ -3324,16 +3357,14 @@ drawPartyStatus();
       height: obj.height
     }));
 
-    // Filter walls: keep only those that do NOT overlap any interactable bounding box
+    // Remove walls that overlap any interactable rect (obstacles)
     level.walls = level.walls.filter(wall => {
-      return !interactableRects.some(rect => {
-        return (
-          wall.x === rect.x &&
-          wall.y === rect.y &&
-          wall.width === rect.width &&
-          wall.height === rect.height
-        );
-      });
+      return !interactableRects.some(rect => (
+        wall.x === rect.x &&
+        wall.y === rect.y &&
+        wall.width === rect.width &&
+        wall.height === rect.height
+      ));
     });
   });
 }
