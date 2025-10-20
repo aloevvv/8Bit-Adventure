@@ -3090,90 +3090,97 @@ function saveSettings() {
 
 // Mobile controls -> synthesize canvas keyboard events (no persistence)
 (function wireMobileToCanvasInputs() {
+  document.addEventListener('DOMContentLoaded', function() {
+  // --- defensive element lookups
   const canvasEl = document.getElementById('game') || document.querySelector('canvas');
   const mobileToggle = document.getElementById('mobile-mode-toggle');
   const mobileControls = document.getElementById('mobile-controls');
   const mobileAction = document.getElementById('mobile-action');
   const mobileInteract = document.getElementById('mobile-interact');
-  if (!canvasEl || !mobileToggle || !mobileControls || !mobileAction || !mobileInteract) {
-    console.warn('Mobile wiring: required elements missing; skipping mobile wiring.');
+  const dpadBtns = document.querySelectorAll('#dpad .dpad-btn');
+
+  if (!canvasEl || !mobileToggle || !mobileControls || !mobileAction || !mobileInteract || !dpadBtns.length) {
+    console.warn('Mobile wiring aborted, missing required elements:', {
+      canvas: !!canvasEl,
+      mobileToggle: !!mobileToggle,
+      mobileControls: !!mobileControls,
+      mobileAction: !!mobileAction,
+      mobileInteract: !!mobileInteract,
+      dpadBtns: dpadBtns.length
+    });
     return;
   }
 
-  // in-memory flag only
-  window.gameSettings = window.gameSettings || { difficulty: 'normal', showZones: false, mobileMode: false };
-  window.gameSettings.mobileMode = !!window.gameSettings.mobileMode;
+  // --- in-memory settings default (no persistence)
+  window.gameSettings = window.gameSettings || { difficulty: 'normal', showZones: false };
+  if (typeof window.gameSettings.mobileMode === 'undefined') window.gameSettings.mobileMode = false;
 
-  // show/hide UI
-  function setMobileUI(visible) {
-    mobileControls.style.display = visible ? 'block' : 'none';
-    mobileAction.style.display = visible ? 'block' : 'none';
-  }
-  mobileToggle.checked = !!window.gameSettings.mobileMode;
-  setMobileUI(window.gameSettings.mobileMode);
+  // --- exposed helper: show/hide mobile UI
+  window.setMobileUI = function(visible) {
+    try {
+      mobileControls.style.display = visible ? 'block' : 'none';
+      mobileAction.style.display = visible ? 'block' : 'none';
+      mobileToggle.checked = !!visible;
+    } catch (e) { console.error('setMobileUI failed', e); }
+  };
 
+  // initialize UI from memory
+  window.setMobileUI(!!window.gameSettings.mobileMode);
+
+  // --- toggle handler (memory-only)
   mobileToggle.addEventListener('change', (e) => {
     window.gameSettings.mobileMode = !!e.target.checked;
-    setMobileUI(window.gameSettings.mobileMode);
+    window.setMobileUI(window.gameSettings.mobileMode);
     console.log('Mobile mode (temporary):', window.gameSettings.mobileMode);
   });
 
-  // helper: dispatch keyboard event to canvas element so your existing handler runs
+  // --- helper to dispatch keyboard events to canvas (so existing canvas key handler runs)
   function dispatchCanvasKeyEvent(type, key) {
-    // match the string form your handler lowercases and checks (e.key.toLowerCase())
     const ev = new KeyboardEvent(type, { key, code: key, bubbles: true, cancelable: true });
-    // dispatch on the canvas so canvas.addEventListener('keydown', ...) receives it
     canvasEl.dispatchEvent(ev);
   }
-
-  // mapping for directions
   const dirToKey = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
 
-  // pointer handling for dpad buttons -> start (keydown) on pointerdown, stop (keyup) on pointerup/cancel/leave
-  const dpadBtns = document.querySelectorAll('#dpad .dpad-btn');
+  // --- dpad pointer bindings (keydown on pointerdown, keyup on pointerup/leave)
   dpadBtns.forEach(btn => {
     const dir = btn.getAttribute('data-dir');
     const key = dirToKey[dir];
     if (!key) return;
-    btn.addEventListener('pointerdown', (ev) => { ev.preventDefault(); dispatchCanvasKeyEvent('keydown', key); }, { passive: false });
-    btn.addEventListener('pointerup',   (ev) => { ev.preventDefault(); dispatchCanvasKeyEvent('keyup', key); }, { passive: false });
-    btn.addEventListener('pointercancel',(ev) => { ev.preventDefault(); dispatchCanvasKeyEvent('keyup', key); }, { passive: false });
-    btn.addEventListener('pointerleave', (ev) => { ev.preventDefault(); dispatchCanvasKeyEvent('keyup', key); }, { passive: false });
+    btn.addEventListener('pointerdown', (ev) => { ev.preventDefault(); ev.stopPropagation(); dispatchCanvasKeyEvent('keydown', key); }, { passive: false });
+    btn.addEventListener('pointerup',   (ev) => { ev.preventDefault(); ev.stopPropagation(); dispatchCanvasKeyEvent('keyup', key); }, { passive: false });
+    btn.addEventListener('pointercancel',(ev) => { ev.preventDefault(); ev.stopPropagation(); dispatchCanvasKeyEvent('keyup', key); }, { passive: false });
+    btn.addEventListener('pointerleave', (ev) => { ev.preventDefault(); ev.stopPropagation(); dispatchCanvasKeyEvent('keyup', key); }, { passive: false });
   });
 
-  // mobile interact: call handleInteraction(x +/- offsets) if available, otherwise synthesize 'x' key
+  // --- interact button: prefer direct interaction, fallback to synth 'x'
   mobileInteract.addEventListener('pointerdown', (ev) => {
     ev.preventDefault();
-    // prefer direct interaction call for accuracy
-    if (typeof handleInteraction === 'function' && typeof checkInteraction === 'function') {
-      try {
-        // replicate the same interaction checks your canvas key handler uses.
-        // assume player coordinates x,y and speed variables are global as in your handler
-        const ix = (typeof x === 'number') ? x : 0;
-        const iy = (typeof y === 'number') ? y : 0;
+    ev.stopPropagation();
+    try {
+      if (typeof handleInteraction === 'function' && typeof checkInteraction === 'function' && typeof x === 'number' && typeof y === 'number') {
         const candidate =
-          checkInteraction(ix - 16, iy) ||
-          checkInteraction(ix + 16, iy) ||
-          checkInteraction(ix, iy - 16) ||
-          checkInteraction(ix, iy + 16) ||
-          checkInteraction(ix, iy);
+          checkInteraction(x - 16, y) ||
+          checkInteraction(x + 16, y) ||
+          checkInteraction(x, y - 16) ||
+          checkInteraction(x, y + 16) ||
+          checkInteraction(x, y);
         if (candidate) { handleInteraction(candidate); return; }
-      } catch (err) { console.error('mobile interact direct call failed', err); }
-    }
-    // fallback: synthesize 'x' keydown/up to canvas so existing handler reacts
+      }
+    } catch (err) { /* fall through to keyboard fallback */ }
     dispatchCanvasKeyEvent('keydown', 'x');
     setTimeout(() => dispatchCanvasKeyEvent('keyup', 'x'), 40);
   }, { passive: false });
 
-  // avoid pointer events bubbling to the canvas/game world
+  // --- prevent control containers from letting pointer events bubble to game world
   ['pointerdown','pointerup','pointercancel'].forEach(ev => {
     mobileControls.addEventListener(ev, (e) => e.stopPropagation());
     mobileAction.addEventListener(ev, (e) => e.stopPropagation());
   });
 
+  // --- make a mark so you can detect wiring status
+  window._mobileWiringInstalled = true;
   console.log('Mobile -> Canvas input wiring installed');
-})();
-
+});
   
 // === Save slot helpers ===
 function saveToSlot(slotNumber) {
