@@ -1251,52 +1251,72 @@ function ensureFiniteNumber(v, fallback) {
   return Number.isFinite(n) ? n : fallback;
 }
 
-  function toFiniteNumber(v, fallback) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-
 function levelUpAlly(ally) {
-  if (!ally || !ally.id) return;
+  // Snapshot at start for debugging
+  console.log('levelUp start', { id: ally.id, name: ally.name, before: { ...ally } });
 
-  // Normalize numeric fields safely
-  ally.level = toFiniteNumber(ally.level, 1);
-  ally.xp = toFiniteNumber(ally.xp, 0);
-  ally.xpToNextLevel = toFiniteNumber(ally.xpToNextLevel, 10);
-  ally.baseMaxHp = toFiniteNumber(ally.baseMaxHp, 1);
-  ally.baseDamage = toFiniteNumber(ally.baseDamage, 0);
+  // Preserve existing numeric values when valid; fall back only when truly invalid
+  ally.level = ensureFiniteNumber(ally.level, 1);
+  ally.xp = ensureFiniteNumber(ally.xp, 0);
+  ally.xpToNextLevel = ensureFiniteNumber(ally.xpToNextLevel, 10);
+  ally.baseMaxHp = ensureFiniteNumber(ally.baseMaxHp, null);
+  ally.baseDamage = ensureFiniteNumber(ally.baseDamage, null);
 
+  // If this ally has defaults in alliesData, use them only when the current values are missing
+  const baseAllyTemplate = alliesData.find(a => a.id === ally.id);
+  if (baseAllyTemplate) {
+    if (ally.baseMaxHp === null) ally.baseMaxHp = ensureFiniteNumber(baseAllyTemplate.baseMaxHp, 1);
+    if (ally.baseDamage === null) ally.baseDamage = ensureFiniteNumber(baseAllyTemplate.baseDamage, 0);
+  } else {
+    // final fallback
+    if (ally.baseMaxHp === null) ally.baseMaxHp = 1;
+    if (ally.baseDamage === null) ally.baseDamage = 0;
+  }
+
+  // Perform repeated level-ups if xp is enough for multiple
   let leveled = false;
-  // allow multiple level-ups if xp accumulated
   while (ally.xp >= ally.xpToNextLevel && ally.xpToNextLevel > 0) {
     leveled = true;
     ally.level++;
     ally.xp -= ally.xpToNextLevel;
-    ally.xpToNextLevel = Math.max(1, Math.floor(ally.xpToNextLevel * 1.5));
+    ally.xpToNextLevel = Math.floor(ally.xpToNextLevel * 1.05);
 
-    // growth per level (tweak to taste)
+    // Apply stat growth based on the new level
     ally.baseMaxHp += Math.floor(2 + (ally.level / 2));
     ally.baseDamage += Math.floor(1 + (ally.level / 6));
+
+    console.log('leveled one step', {
+      id: ally.id, level: ally.level, xp: ally.xp,
+      xpToNextLevel: ally.xpToNextLevel, baseMaxHp: ally.baseMaxHp, baseDamage: ally.baseDamage
+    });
   }
 
-  if (!leveled) return;
+  if (!leveled) {
+    console.log('no level up: xp below threshold', { xp: ally.xp, xpToNextLevel: ally.xpToNextLevel });
+    return; // nothing changed
+  }
 
-  // refresh ally HP and UI
+  // Update hp after all level-ups
   ally.maxHp = ally.baseMaxHp;
   ally.currentHp = ally.maxHp;
+
   showTemporaryText(`${ally.name} leveled up to ${ally.level}!`);
   drawPartyStatus();
 
-  // Sync back to alliesData so future battles and saves use updated numbers
-  const template = alliesData.find(a => a.id === ally.id);
-  if (template) {
-    template.level = ally.level;
-    template.xp = ally.xp;
-    template.xpToNextLevel = ally.xpToNextLevel;
-    template.baseMaxHp = ally.baseMaxHp;
-    template.baseDamage = ally.baseDamage;
+  // Sync back to alliesData (only numeric fields)
+  const baseAlly = alliesData.find(a => a.id === ally.id);
+  if (baseAlly) {
+    baseAlly.level = ally.level;
+    baseAlly.xp = ally.xp;
+    baseAlly.xpToNextLevel = ally.xpToNextLevel;
+    baseAlly.baseMaxHp = ally.baseMaxHp;
+    baseAlly.baseDamage = ally.baseDamage;
+    console.log('synced to template', { before: baseAlly });
+  } else {
+    console.warn('No base template found for ally id', ally.id);
   }
+
+  console.log('levelUp end', { id: ally.id, after: { ...ally } });
 }
 
 
@@ -1322,32 +1342,22 @@ function levelUp() {
 
 // Gain XP and check level up
 function gainXP(amount) {
-  playerStats.xp = toFiniteNumber(playerStats.xp, 0) + amount;
+  playerStats.xp += amount;
 
-  // Give XP to equipped/active ally object and persist it
+  // Also give XP to equipped ally
   if (activeAlly) {
-    // activeAlly is the in-battle instance; update both it and the template entry
-    activeAlly.xp = toFiniteNumber(activeAlly.xp, 0) + amount;
-    levelUpAlly(activeAlly);
-
-    const base = alliesData.find(a => a.id === activeAlly.id);
-    if (base) {
-      base.xp = activeAlly.xp;
-      base.level = activeAlly.level;
-      base.xpToNextLevel = activeAlly.xpToNextLevel;
-      base.baseMaxHp = activeAlly.baseMaxHp;
-      base.baseDamage = activeAlly.baseDamage;
+    activeAlly.xp += amount;
+    while (activeAlly.xp >= activeAlly.xpToNextLevel) {
+      levelUpAlly(activeAlly);
     }
   }
 
-  // Player level check
-  if (playerStats.xp >= toFiniteNumber(playerStats.xpToNextLevel, 10)) {
+  if (playerStats.xp >= playerStats.xpToNextLevel) {
     levelUp();
   }
   updateStatsPopup();
   drawPartyStatus();
 }
-
 
 // Remove battle or interactable zone after clearing
 function removeZone(zone) {
@@ -3290,14 +3300,14 @@ rebuildWalls();
       shownDialogs = new Set(saveData.shownDialogs);
     }
     if (Array.isArray(saveData.alliesData)) {
-  saveData.alliesData.forEach(saved => {
-    const base = alliesData.find(a => a.id === saved.id);
-    if (base) {
-      base.level = toFiniteNumber(saved.level, base.level || 1);
-      base.xp = toFiniteNumber(saved.xp, base.xp || 0);
-      base.xpToNextLevel = toFiniteNumber(saved.xpToNextLevel, base.xpToNextLevel || 10);
-      base.baseMaxHp = toFiniteNumber(saved.baseMaxHp, base.baseMaxHp || 1);
-      base.baseDamage = toFiniteNumber(saved.baseDamage, base.baseDamage || 0);
+  saveData.alliesData.forEach(savedAlly => {
+    const baseAlly = alliesData.find(a => a.id === savedAlly.id);
+    if (baseAlly) {
+      baseAlly.level = savedAlly.level;
+      baseAlly.xp = savedAlly.xp;
+      baseAlly.xpToNextLevel = savedAlly.xpToNextLevel;
+      baseAlly.baseMaxHp = savedAlly.baseMaxHp;
+      baseAlly.baseDamage = savedAlly.baseDamage;
     }
   });
 }
@@ -3339,6 +3349,7 @@ if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
   levels.forEach(level => {
     if (!level.walls || !level.interactables) return;
 
+    // Collect bounding boxes of current interactables that block movement
     const interactableRects = level.interactables.map(obj => ({
       x: obj.x,
       y: obj.y,
@@ -3346,13 +3357,13 @@ if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
       height: obj.height
     }));
 
+    // Remove walls that overlap any interactable rect (obstacles)
     level.walls = level.walls.filter(wall => {
-      // Check if wall rectangle overlaps any interactable rectangle
       return !interactableRects.some(rect => (
-        wall.x < rect.x + rect.width &&
-        wall.x + wall.width > rect.x &&
-        wall.y < rect.y + rect.height &&
-        wall.y + wall.height > rect.y
+        wall.x === rect.x &&
+        wall.y === rect.y &&
+        wall.width === rect.width &&
+        wall.height === rect.height
       ));
     });
   });
