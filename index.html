@@ -373,6 +373,11 @@
       </div>
 
       <div style="margin:8px 0;">
+  <label style="display:block; font-size:10px;">Mobile Mode</label>
+  <input id="toggle-mobile-mode" type="checkbox" /> Enable Mobile Controls
+</div>
+
+      <div style="margin:8px 0;">
         <label style="display:block; font-size:10px;">Show Zones & Walls</label>
         <input id="toggle-zones" type="checkbox" /> Show debug outlines
       </div>
@@ -435,7 +440,22 @@
     </div>
   </div>
 </div>
+  
+<div id="mobile-controls" style="display:none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); width: 220px; user-select:none; z-index: 3000;">
 
+  <div style="display:flex; justify-content:center; margin-bottom: 6px;">
+    <button id="btn-up" style="width: 60px; height: 60px;">▲</button>
+  </div>
+  <div style="display:flex; justify-content:center; gap: 10px;">
+    <button id="btn-left" style="width: 60px; height: 60px;">◄</button>
+    <button id="btn-interact" style="width: 60px; height: 60px;">X</button>
+    <button id="btn-right" style="width: 60px; height: 60px;">►</button>
+  </div>
+  <div style="display:flex; justify-content:center; margin-top: 6px;">
+    <button id="btn-down" style="width: 60px; height: 60px;">▼</button>
+  </div>
+
+</div>
 <!-- Must start hidden! -->
 <div id="game-over-overlay" style="display: none">
   <div class="game-over-content">
@@ -2548,7 +2568,7 @@ if (object.action === "chest") {
     return;
   }
 }
-// --- Settings wiring: paste this near the end of your <script>, after helper functions exist ---
+  
 document.addEventListener('DOMContentLoaded', () => {
   // Elements
   const settingsButton = document.getElementById('settings-button');
@@ -2605,7 +2625,73 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     console.warn('Settings wiring: no #toggle-zones found');
   }
+  
+const mobileToggle = document.getElementById('toggle-mobile-mode');
+const mobileControls = document.getElementById('mobile-controls');
 
+mobileToggle.addEventListener('change', (e) => {
+  if (e.target.checked) {
+    mobileControls.style.display = 'block';
+    canvas.blur(); // optionally remove keyboard focus when mobile controls active
+  } else {
+    mobileControls.style.display = 'none';
+  }
+});
+
+  function movePlayer(dx, dy) {
+  if (inBattle || isGameOver) return;
+  let nextX = x + dx * speed;
+  let nextY = y + dy * speed;
+
+  // Insert your existing collision, door, battle zone, water, poison checks here
+  // Example:
+  if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
+    showTemporaryText("You need a raft to cross water!");
+    return;
+  }
+  if (isInPoison(nextX, nextY) && (inventory.get('gas_mask') || 0) <= 0) {
+    showTemporaryText("You need a gas mask to cross poison!");
+    return;
+  }
+  if (!isCollidingWithWall(nextX, nextY)) {
+    const door = checkDoorCollision(nextX, nextY);
+    if (door) {
+      loadLevel(door.destLevel, door.destX, door.destY);
+      return;
+    }
+    const battleZone = findBattleZone(nextX, nextY);
+    if (battleZone) {
+      initiateBattle('battleZone', battleZone);
+      return;
+    }
+    x = nextX;
+    y = nextY;
+
+    const dialogZone = findDialogZone(nextX, nextY);
+    if (dialogZone && dialogZone.autoShow) {
+      showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
+      return;
+    }
+  }
+  draw();
+}
+
+document.getElementById('btn-up').addEventListener('click', () => movePlayer(0, -1));
+document.getElementById('btn-down').addEventListener('click', () => movePlayer(0, 1));
+document.getElementById('btn-left').addEventListener('click', () => movePlayer(-1, 0));
+document.getElementById('btn-right').addEventListener('click', () => movePlayer(1, 0));
+
+document.getElementById('btn-interact').addEventListener('click', () => {
+  if (inBattle || isGameOver) return;
+  // Simulate pressing 'x' key interaction:
+  const interactableObject =
+    checkInteraction(x - 16, y) ||
+    checkInteraction(x + 16, y) ||
+    checkInteraction(x, y - 16) ||
+    checkInteraction(x, y + 16) ||
+    checkInteraction(x, y);
+  if (interactableObject) handleInteraction(interactableObject);
+});
   // Save/load slot buttons (guarded)
   function bindSlot(id, fn) {
     const el = document.getElementById(id);
