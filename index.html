@@ -479,7 +479,6 @@ canvas.focus();
 canvas.addEventListener('click', () => canvas.focus());
 
 // Player and game variables
-const baseWalls = levels.map(level => level.walls.map(wall => ({ ...wall })));
 let isGameOver = false;
 let x = 150, y = 50;
 const speed = 20;
@@ -3350,13 +3349,10 @@ if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
 }
 
   function rebuildWalls() {
-  levels.forEach((level, idx) => {
-    if (!level.interactables) return;
+  levels.forEach(level => {
+    if (!level.walls || !level.interactables) return;
 
-    // Reset to base walls copy
-    level.walls = baseWalls[idx].map(wall => ({ ...wall }));
-
-    // Remove walls overlapping interactables
+    // Collect bounding boxes of current interactables that block movement
     const interactableRects = level.interactables.map(obj => ({
       x: obj.x,
       y: obj.y,
@@ -3364,13 +3360,14 @@ if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
       height: obj.height
     }));
 
+    // Remove walls that overlap any interactable rect (obstacles)
     level.walls = level.walls.filter(wall => {
-      return !interactableRects.some(rect =>
-        wall.x < rect.x + rect.width &&
-        wall.x + wall.width > rect.x &&
-        wall.y < rect.y + rect.height &&
-        wall.y + wall.height > rect.y
-      );
+      return !interactableRects.some(rect => (
+        wall.x === rect.x &&
+        wall.y === rect.y &&
+        wall.width === rect.width &&
+        wall.height === rect.height
+      ));
     });
   });
 }
