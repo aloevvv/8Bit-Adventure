@@ -1038,6 +1038,18 @@ levels.forEach(level => {
   }
 ];
 
+  alliesData.forEach(ally => {
+  achievements.push({
+    id: `ally_unlock_${ally.id}`,
+    name: `Unlock Ally: ${ally.name}`,
+    description: `Unlock the ally ${ally.name}.`,
+    progress: 0,
+    target: 1,
+    unlocked: false,
+    checkCondition: function() { return this.progress >= this.target; }
+  });
+});
+
     const achievementsMap = {};
 achievements.forEach(a => achievementsMap[a.id] = a);
   
@@ -2479,7 +2491,13 @@ function unlockAlly(allyId) {
   } else {
     showTemporaryText(`${ally.name} has joined your party!`);
   }
-
+const ach = achievementsMap[`ally_unlock_${allyId}`];
+  if (ach && !ach.unlocked) {
+    ach.progress = 1;
+    checkAchievements();
+  }
+}
+  
   drawPartyList();
   drawPartyStatus();
 }
