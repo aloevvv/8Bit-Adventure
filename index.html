@@ -2338,6 +2338,8 @@ function enemyAttack(enemy, target) {
   drawPlayerBattleStatus();
 
   achievementsMap['kill_enemies'].progress++;
+  achievementsMap['kill_enemies2'].progress++;
+  achievementsMap['kill_enemies3'].progress++;
   
   if (enemy.type === 'Dummy') {
     achievementsMap['kill_tutorial_dummy'].progress = 1;
