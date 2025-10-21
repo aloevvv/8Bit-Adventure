@@ -499,7 +499,7 @@ let isPowered = false;
 
 let shownDialogs = new Set();
 let _dialogQueue = [];
-
+let removedWallIds = new Set();
 
 const zoneSprites = {
   fail: new Image (),
@@ -977,6 +977,12 @@ const levels = [
 
 let currentLevelIndex = 0;
 let currentLevel = levels[currentLevelIndex];
+  // Assign unique IDs to walls for tracking
+levels.forEach(level => {
+  level.walls.forEach((wall, idx) => {
+    if (!wall.id) wall.id = `wall_${idx}`;
+  });
+});
 
   const titleScreen = document.getElementById('title-screen');
 const playBtn = document.getElementById('play-button');
@@ -2511,24 +2517,23 @@ if (object.action === "recruit") {
   if (object.action === "break") {
   const tool = object.requiredItem;
   if ((inventory.get(tool) || 0) > 0) {
+    // Remove interactable first
     currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
-    currentLevel.walls = currentLevel.walls.filter(w =>
-      !(w.x === object.x && w.y === object.y && w.width === object.width && w.height === object.height)
-    );
-    // Show message based on tool used
-    if (tool === "laser_cutter") {
-      showTemporaryText("You cut through the steel block!");
-    } else if (tool === "hammer") {
-      showTemporaryText("You smashed the stone!");
-    } else {
-      showTemporaryText("You broke the obstacle!");
-    }
-    draw();
-  } else {
-    showTemporaryText(`You need a ${tool.replace('_', ' ')} to break this.`);
-  }
-  return;
-}
+
+    // Remove matching walls and track removed wall IDs
+    currentLevel.walls = currentLevel.walls.filter(wall => {
+      if (
+        wall.x === object.x &&
+        wall.y === object.y &&
+        wall.width === object.width &&
+        wall.height === object.height
+      ) {
+        removedWallIds.add(wall.id);
+        return false;
+      }
+      return true;
+    });
+
   
 if (object.action === "chest") {
   // if already opened, show a short message and return
@@ -3265,8 +3270,8 @@ function saveGame() {
   })),
   unlockedAllies: Array.from(unlockedAllies),
   equippedAllyId,
+  removedWallIds: Array.from(removedWallIds),
 };
-
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
   showTemporaryText('Game saved!');
   console.log('Game saved:', saveData);
@@ -3298,7 +3303,16 @@ function loadGame() {
 rebuildWalls();
 
     loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
+    
+    if (saveData.removedWallIds) {
+  removedWallIds = new Set(saveData.removedWallIds);
+}
 
+// Reset walls to original full set from baseWalls or initial levels
+levels.forEach(level => {
+  level.walls = level.walls.map(w => ({ ...w })); // shallow copy to reset if needed
+  level.walls = level.walls.filter(wall => !removedWallIds.has(wall.id));
+});
     if (Array.isArray(saveData.shownDialogs)) {
       shownDialogs = new Set(saveData.shownDialogs);
     }
