@@ -3381,6 +3381,11 @@ function saveGame() {
   });
 
   const saveData = {
+  saveData.achievements = achievements.map(a => ({
+  id: a.id,
+  progress: a.progress,
+  unlocked: a.unlocked
+});
   playerStats,
   inventory: Array.from(inventory.entries()),
   currentLevelIndex,
@@ -3476,6 +3481,16 @@ if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
 } else {
   activeAlly = null;
 }
+    if (Array.isArray(saveData.achievements)) {
+  saveData.achievements.forEach(savedAch => {
+    const ach = achievementsMap[savedAch.id];
+    if (ach) {
+      ach.progress = savedAch.progress || 0;
+      ach.unlocked = !!savedAch.unlocked;
+    }
+  });
+}
+drawAchievementsUI();
 
 
     updateHp(playerStats.currentHp);
