@@ -1,5 +1,5 @@
 Bugs present:
-Destroyed walls are made present upon load game ; ; Ally levels don't save with load
+Allies don't retain XP if it's not equal to the XP they need to level up
 ```
 Things I'm working on now:
 Obstacles (levers, etc)
