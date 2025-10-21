@@ -1063,7 +1063,7 @@ levels.forEach(level => {
   {
     id: 'kill_lifestealboss',
     name: 'Undertaker',
-    description: 'Kill the Soul what did I name him on Ultimate Difficulty',
+    description: 'Kill the Soul Slasher on Ultimate Difficulty',
     target: 1,
     progress: 0,
     unlocked: false,
@@ -1828,17 +1828,13 @@ if (inBattle) {
 
   showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
 } else if (itemName === 'extra_life') {
-    if (extraLifeTimerId) {
-      clearTimeout(extraLifeTimerId);
-      extraLifeTimerId = null;
-    }
-    showTemporaryText('Used an Extra Life! You have 3 seconds of invincibility!');
-    extraLifeTimerId = setTimeout(() => { extraLifeTimerId = null; }, 3000);
-  } else {
-    showTemporaryText(`Used ${itemName}.`);
+  if (extraLifeTimerId) {
+    clearTimeout(extraLifeTimerId);
+    extraLifeTimerId = null;
   }
-
-  // decrement inventory and update UI (this line must be inside the useItem function)
+  showTemporaryText('Used an Extra Life! You have 3 seconds of invincibility!');
+  extraLifeTimerId = setTimeout(() => { extraLifeTimerId = null; }, 3000);
+}
   inventory.set(itemName, Math.max(0, (inventory.get(itemName) || 0) - 1));
   drawInventoryBattlePopup();
   drawBattleUI();
@@ -2473,15 +2469,25 @@ function enemyAttack(enemy, target) {
   }
 }
   function playerTakeDamage(amount) {
-    if (equippedArmor === "haunted") {
+  if (equippedArmor === "haunted") {
     const blockChance = armorTypes["haunted"].blockChance || 0;
     if (Math.random() < blockChance) {
       showTemporaryText("Haunted Armor blocked the attack!");
       return; // no damage taken
     }
-    }
+  }
+
   playerStats.currentHp -= amount;
-  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+
+  // If Extra Life active, prevent death and clamp HP at 1
+  if (!canGoBelow1Hp() && playerStats.currentHp <= 0) {
+    playerStats.currentHp = 1;
+  }
+
+  if (playerStats.currentHp < 0) {
+    playerStats.currentHp = 0;
+  }
+
   updateHp(playerStats.currentHp);
 
   if (playerStats.currentHp <= 0) {
