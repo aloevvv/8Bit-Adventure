@@ -2652,7 +2652,6 @@ if (object.action === "chest") {
 
   achievementsMap['open_chests'].progress++;
   checkAchievements();
-}
   // Build a dialog that lists all rewards (guaranteed)
   const dialogText = ["You opened the chest!", "You received:"].concat(rewardLines);
   showDialog(dialogText, object.id, { speaker: null });
