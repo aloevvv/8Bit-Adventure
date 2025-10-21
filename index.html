@@ -368,6 +368,7 @@
         <select id="difficulty-select" style="width:100%; font-family:'Press Start 2P',sans-serif;">
           <option value="normal">Normal</option>
           <option value="hard">Hard</option>
+          <option value="hard">Extreme</option>
           <option value="ultimate">Ultimate</option>
         </select>
       </div>
@@ -1377,8 +1378,10 @@ function getDifficultyMultipliers() {
   // Normal: 1x; Hard: enemy damage x2; Ultimate: enemy damage x2 and enemy HP x2
   if (gameSettings.difficulty === 'hard') {
     return { enemyHp: 1, enemyDmg: 2 };
-  } else if (gameSettings.difficulty === 'ultimate') {
+  } else if (gameSettings.difficulty === 'extreme') {
     return { enemyHp: 2, enemyDmg: 2 };
+  } else if (gameSettings.difficulty === 'ultimate') {
+    return { enemyHp: 3, enemyDmg: 3 };
   }
   return { enemyHp: 1, enemyDmg: 1 };
 }
