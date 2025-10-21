@@ -3381,11 +3381,6 @@ function saveGame() {
   });
 
   const saveData = {
-  saveData.achievements = achievements.map(a => ({
-  id: a.id,
-  progress: a.progress,
-  unlocked: a.unlocked
-}));
   playerStats,
   inventory: Array.from(inventory.entries()),
   currentLevelIndex,
@@ -3404,6 +3399,11 @@ function saveGame() {
   equippedAllyId,
   removedWallIds: Array.from(removedWallIds),
 };
+  saveData.achievements = achievements.map(a => ({
+  id: a.id,
+  progress: a.progress,
+  unlocked: a.unlocked
+}));
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
   showTemporaryText('Game saved!');
   console.log('Game saved:', saveData);
