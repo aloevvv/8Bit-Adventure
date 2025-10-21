@@ -644,7 +644,10 @@ const enemyTypes = {
   Summoner: { name: "Factory", maxHp: 80, damage: 0, xpReward: 20, behavior: "summonerBehavior" },
   SecondStageBossStage1: { name: "Stage1 Boss", maxHp: 50, damage: 3, xpReward: 30, behavior: "secondStageBossBehavior", secondStageType: "SecondStageBossStage2" },
   SecondStageBossStage2: { name: "Stage2 Boss", maxHp: 80, damage: 6, xpReward: 50, behavior: "normalAttack" },
-  Healer: { name: "Barbot", maxHp: 35, damage: 1, xpReward: 15, behavior: "healerBehavior" }
+  Healer: { name: "Barbot", maxHp: 35, damage: 1, xpReward: 15, behavior: "healerBehavior" },
+  IceBoss: { name: "Frozen Metal", maxHp: 100, damage: 6, xpReward: 1, behavior: "iceBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
+  LifeStealBoss: { name: "Soul Slasher", maxHp: 100, damage: 5, xpReward: 1, behavior: "lifeStealBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
+  CritBoss: { name: "Deadshot", maxHp: 100, damage: 7, xpReward: 1, behavior: "critBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }}
 };
 
 const levels = [
@@ -2156,6 +2159,122 @@ function secondStageBossBehavior(enemy, target) {
   }
 }
 
+  // snowtel boss
+function iceBossBehavior(enemy, target) {
+  const now = Date.now();
+
+  if (!enemy.lastFreezeTime) enemy.lastFreezeTime = 0;
+
+  if (enemy.shieldActive) {
+    return;
+  }
+
+  // Freeze cooldown: every 8 seconds
+  if (now - enemy.lastFreezeTime >= 8000) {
+    enemy.lastFreezeTime = now;
+
+    // Freeze effect: disable attack button and freeze players for 3 seconds
+    showTemporaryText(`${enemy.name} unleashes an icy blast! Everyone is frozen!`);
+
+    // Disable player's attack button
+    const attackButton = document.getElementById('attack-button');
+    const specialButton1 = document.getElementById('special-attack-button-1');
+    const specialButton2 = document.getElementById('special-attack-button-2');
+    const inventoryBattleButton = document.getElementById('inventory-battle-button');
+
+    if (attackButton) attackButton.disabled = true;
+    if (specialButton1) specialButton1.disabled = true;
+    if (specialButton2) specialButton2.disabled = true;
+    if (inventoryBattleButton) inventoryBattleButton.disabled = true;
+
+    // Also stun active ally if present
+    if (activeAlly) {
+      activeAlly.stunned = true;
+    }
+
+    setTimeout(() => {
+      if (attackButton) attackButton.disabled = false;
+      if (specialButton1) specialButton1.disabled = false;
+      if (specialButton2) specialButton2.disabled = false;
+      if (inventoryBattleButton) inventoryBattleButton.disabled = false;
+
+      if (activeAlly) {
+        activeAlly.stunned = false;
+      }
+      showTemporaryText(`The ice melts away, and you can move again!`);
+      drawPlayerBattleStatus();
+    }, 3000);
+
+    return;
+  }
+
+  // Normal attack if not frozen/stunned
+  if (!enemy.stunned) {
+    normalAttack(enemy, target);
+  }
+}
+
+//mortuary boss
+function lifeStealBossBehavior(enemy, target) {
+  if (enemy.shieldActive) {
+    return;
+  }
+
+  if (!enemy.stunned) {
+    const damage = enemy.damage || 0;
+
+    // Deal damage to target
+    if (target === playerStats) {
+      playerTakeDamage(damage);
+      showTemporaryText(`${enemy.name} life steals you for ${damage} damage!`);
+    } else if (target === activeAlly) {
+      activeAlly.currentHp -= damage;
+      if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
+      showTemporaryText(`${enemy.name} life steals ${activeAlly.name} for ${damage} damage!`);
+      if (activeAlly.currentHp === 0) {
+        showTemporaryText(`${activeAlly.name} has been defeated!`);
+        clearInterval(activeAlly.attackTimerId);
+        activeAlly.attackTimerId = null;
+      }
+    }
+
+    // Heal boss for damage dealt to either target
+    enemy.currentHp += damage;
+    if (enemy.currentHp > enemy.maxHp) enemy.currentHp = enemy.maxHp;
+    showTemporaryText(`${enemy.name} heals for ${damage} HP!`);
+
+    drawBattleUI();
+    drawPlayerBattleStatus();
+  }
+}
+
+//battlefield boss
+function critBossBehavior(enemy, target) {
+  if (enemy.shieldActive) {
+    return;
+  }
+
+  if (!enemy.stunned) {
+    const isCrit = Math.random() < 0.5;
+    const baseDamage = enemy.damage || 0;
+    const damage = isCrit ? baseDamage * 3 : baseDamage;
+
+    if (target === playerStats) {
+      playerTakeDamage(damage);
+      showTemporaryText(`${enemy.name} ${isCrit ? 'critically attacks' : 'attacks'} you for ${damage} damage!`);
+    } else if (target === activeAlly) {
+      activeAlly.currentHp -= damage;
+      if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
+      showTemporaryText(`${enemy.name} ${isCrit ? 'critically attacks' : 'attacks'} ${activeAlly.name} for ${damage} damage!`);
+      if (activeAlly.currentHp === 0) {
+        showTemporaryText(`${activeAlly.name} has been defeated!`);
+        clearInterval(activeAlly.attackTimerId);
+        activeAlly.attackTimerId = null;
+      }
+    }
+  }
+}
+
 // Override endBattle to check for second stage boss
 function endBattle(outcome) {
   inBattle = false;
@@ -2263,6 +2382,16 @@ if (behavior === 'normalAttack') {
   summonerBehavior(enemy, target);
 } else if (behavior === 'secondStageBossBehavior') {
   secondStageBossBehavior(enemy, target);
+} else if (behavior === 'iceBossBehavior') {
+  iceBossBehavior(enemy, target);
+} else if (behavior === 'lifeStealBossBehavior') {
+  lifeStealBossBehavior(enemy, target);
+} else if (behavior === 'critBossBehavior') {
+  critBossBehavior(enemy, target);
+} else if (behavior === 'lifeStealBossBehavior') {
+  lifeStealBossBehavior(enemy, target);
+} else if (behavior === 'critBossBehavior') {
+  critBossBehavior(enemy, target);
 } else if (behavior === 'healerBehavior') {
   healerBehavior(enemy, target);
 }
