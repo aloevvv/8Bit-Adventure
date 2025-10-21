@@ -358,6 +358,12 @@
     </div>
   </div>
 
+    <div class="hud-section" id="achievements">
+  <p id="achievements-button">Achievements</p>
+  <div id="achievements-popup" class="stats-popup" style="display:none; max-height: 300px; overflow-y:auto;">
+  </div>
+</div>
+
   <div class="hud-section" id="settings">
     <p id="settings-button">Settings</p>
     <div id="settings-popup" class="stats-popup" style="display:none; width:280px;">
@@ -984,6 +990,57 @@ levels.forEach(level => {
   });
 });
 
+  const achievements = [
+  {
+    id: 'kill_enemies',
+    name: 'Bot Killer',
+    description: 'Kill 50 enemies',
+    target: 50,      // set your number here
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['kill_enemies'].progress >= achievementsMap['kill_enemies'].target
+  },
+    {
+    id: 'kill_enemies2',
+    name: 'Bot Slayer',
+    description: 'Kill 100 enemies',
+    target: 100,      // set your number here
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['kill_enemies'].progress >= achievementsMap['kill_enemies'].target
+  },
+    {
+    id: 'kill_enemies3',
+    name: 'No More Robots',
+    description: 'Kill 1000 enemies',
+    target: 1000,      // set your number here
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['kill_enemies'].progress >= achievementsMap['kill_enemies'].target
+  },
+  {
+    id: 'open_chests',
+    name: 'Treasure Opener',
+    description: 'Open 10 chests',
+    target: 10,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['open_chests'].progress >= achievementsMap['open_chests'].target
+  },
+    {
+    id: 'kill_tutorial_dummy',
+    name: 'Tutorial Beaten',
+    description: 'Kill the tutorial dummy enemy',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['kill_tutorial_dummy'].progress >= 1
+  }
+];
+
+    const achievementsMap = {};
+achievements.forEach(a => achievementsMap[a.id] = a);
+  
   const titleScreen = document.getElementById('title-screen');
 const playBtn = document.getElementById('play-button');
   
@@ -2268,6 +2325,14 @@ function enemyAttack(enemy, target) {
   drawBattleUI();
   drawPlayerBattleStatus();
 
+  achievementsMap['kill_enemies'].progress++;
+  
+  if (enemy.type === 'Dummy') {
+    achievementsMap['kill_tutorial_dummy'].progress = 1;
+  }
+
+  checkAchievements();
+
   // if no enemies remain, finish the battle
   if (activeEnemies.length === 0) {
     endBattle('win');
@@ -2419,6 +2484,33 @@ function unlockAlly(allyId) {
   drawPartyStatus();
 }
 
+function checkAchievements() {
+  achievements.forEach(ach => {
+    if (!ach.unlocked && ach.checkCondition()) {
+      ach.unlocked = true;
+      showAchievementUnlocked(ach);
+      drawAchievementsUI();
+    }
+  });
+}
+
+function drawAchievementsUI() {
+  achievementsPopup.innerHTML = '';
+  achievements.forEach(ach => {
+    const div = document.createElement('div');
+    div.textContent = ach.unlocked ? `✓ ${ach.name}` : `🔒 ${ach.name}`;
+    div.title = ach.unlocked ? '' : ach.description; // Hover text only if locked
+    div.style.cursor = ach.unlocked ? 'default' : 'help';
+    div.style.padding = '4px 0';
+    if (ach.unlocked) div.style.color = 'lightgreen';
+    else div.style.color = 'gray';
+    achievementsPopup.appendChild(div);
+  });
+}
+
+  function showAchievementUnlocked(ach) {
+  showTemporaryText(`Achievement unlocked: ${ach.name}!`);
+}
 // Check collision with interactables
 function checkInteraction(checkX, checkY) {
   const hitboxX = checkX + hitboxOffsetX;
@@ -2532,7 +2624,7 @@ if (object.action === "recruit") {
         return false;
       }
       return true;
-    }); // Add the missing closing brace here
+    });
   }
 }
 
@@ -2558,6 +2650,9 @@ if (object.action === "chest") {
     }
   }
 
+  achievementsMap['open_chests'].progress++;
+  checkAchievements();
+}
   // Build a dialog that lists all rewards (guaranteed)
   const dialogText = ["You opened the chest!", "You received:"].concat(rewardLines);
   showDialog(dialogText, object.id, { speaker: null });
@@ -2721,6 +2816,19 @@ document.getElementById('btn-interact').addEventListener('click', () => {
   console.log('Settings wiring installed');
 });
 
+
+const achievementsButton = document.getElementById('achievements-button');
+const achievementsPopup = document.getElementById('achievements-popup');
+
+achievementsButton.addEventListener('click', () => {
+  if (achievementsPopup.style.display === 'none') {
+    drawAchievementsUI();
+    achievementsPopup.style.display = 'block';
+  } else {
+    achievementsPopup.style.display = 'none';
+  }
+});
+  
 // Attack buttons event listeners
 document.getElementById('attack-button').addEventListener('click', () => {
   if (!inBattle || !activeEnemies.length) return;
