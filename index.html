@@ -872,6 +872,11 @@ const levels = [
       { x: 0, y: 0, width: 640, height: 30 },
       { x: 0, y: 450, width: 640, height: 30 },
       { x: 196, y: 196, width: 444, height: 133 },
+      {
+    id: 'lever_combo_wall',  
+    name: 'combo_wall',
+    x: 350, y: 200, width: 60, height: 80
+  }
     ],
     doors: [
       { x: 0, y: 0, width: 20, height: 50, destLevel: 4, destX: 580, destY: 50 },
@@ -945,13 +950,6 @@ const levels = [
   x: 300, y: 200, width: 40, height: 40,
   state: false,
   action: 'lever'
-},
-{
-  id: 'lever_combo_wall',
-  name: 'combo_wall',
-  x: 350, y: 200, width: 60, height: 80,
-  id: 'wall_combo',
-  action: 'wall'
 }
     ]
   },
