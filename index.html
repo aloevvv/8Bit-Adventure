@@ -2090,9 +2090,6 @@ function drawPlayerBattleStatus() {
   }, activeAlly.attackIntervalMs);
 }
 // Enemy behaviors
-  const others = activeEnemies.filter(e => e && e !== enemy);
-const caveBossStillPresent = others.some(e => e && e.type === 'CaveBoss' && (e._blackoutIntervalId || e._blackoutRunning));
-if (!caveBossStillPresent) hideBattleBlackout();
 // normal enemy attack
 function normalAttack(enemy, target) {
   const damage = enemy.damage || 0;
@@ -2655,7 +2652,20 @@ function enemyAttack(enemy, target) {
 
 if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
 if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
-hideBattleBlackout();
+enemy._blackoutRunning = false;
+enemy._isBlackout = false;
+
+// Now remove enemy from activeEnemies (later in function).
+// AFTER removal, if no remaining active enemy has a running blackout, hide overlay:
+const willHideBattleBlackout = (() => {
+  // consider other activeEnemies except this one (we haven't removed it yet)
+  const others = activeEnemies.filter(e => e && e !== enemy);
+  // if any other enemy has _blackoutIntervalId or _blackoutRunning truthy, keep overlay
+  return !others.some(e => e && (e._blackoutIntervalId || e._blackoutRunning || e._isBlackout));
+})();
+if (willHideBattleBlackout) {
+  hideBattleBlackout();
+}
   // award XP immediately
   if (enemy && enemy.xpReward) gainXP(enemy.xpReward);
 
