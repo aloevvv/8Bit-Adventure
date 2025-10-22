@@ -651,7 +651,7 @@ const enemyTypes = {
   IceBoss: { name: "Frozen Metal", maxHp: 100, damage: 6, xpReward: 1, behavior: "iceBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   LifeStealBoss: { name: "Soul Slasher", maxHp: 100, damage: 5, xpReward: 1, behavior: "lifeStealBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   CritBoss: { name: "Deadshot", maxHp: 100, damage: 7, xpReward: 1, behavior: "critBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
-  CaveBoss: { name: "Stoneforce", maxHp: 200, damage: 6, xpReward: 150, isBoss: true, behavior: "caveBossBehavior", defaultResistances: { stun: false, poison: true }},
+  CaveBoss: { name: "Stoneforce", maxHp: 200, damage: 6, xpReward: 150, isBoss: true, behavior: "caveBossBehavior", defaultResistances: { stun: true, poison: true }},
   CrystalShard: { name: "Crystal Shard", maxHp: 5, damage: 2, xpReward: 1, behavior: "normalAttack" }
 };
 
@@ -2513,6 +2513,8 @@ if (behavior === 'normalAttack') {
   normalAttack(enemy, target);
 } else if (behavior === 'sniperAttack') {
   sniperAttack(enemy, target);
+} else if (behavior === 'caveBossBehavior') {
+  caveBossBehavior(enemy, target);
 } else if (behavior === 'bossBehavior') {
   bossBehavior(enemy, target);
 } else if (behavior === 'summonerBehavior') {
