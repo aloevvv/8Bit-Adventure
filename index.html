@@ -528,9 +528,6 @@ zoneSprites.bossrobot.src = 'bossrobot.png';
 zoneSprites.robot.src = 'robot.png';
 
 
-const others = activeEnemies.filter(e => e && e !== enemy);
-const caveBossStillPresent = others.some(e => e && e.type === 'CaveBoss' && (e._blackoutIntervalId || e._blackoutRunning));
-if (!caveBossStillPresent) hideBattleBlackout();
   
 let tempText = "";
 let tempTextTimeout = null;
@@ -2093,6 +2090,9 @@ function drawPlayerBattleStatus() {
   }, activeAlly.attackIntervalMs);
 }
 // Enemy behaviors
+  const others = activeEnemies.filter(e => e && e !== enemy);
+const caveBossStillPresent = others.some(e => e && e.type === 'CaveBoss' && (e._blackoutIntervalId || e._blackoutRunning));
+if (!caveBossStillPresent) hideBattleBlackout();
 // normal enemy attack
 function normalAttack(enemy, target) {
   const damage = enemy.damage || 0;
