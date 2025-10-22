@@ -1216,6 +1216,7 @@ playBtn.addEventListener('click', () => {
   // Hide title screen
   titleScreen.style.display = 'none';
   achievementsMap['played'].progress++;
+  checkAchievements();
 
   // Set starting level and spawn coordinates (adjust if different)
   currentLevelIndex = 0;
