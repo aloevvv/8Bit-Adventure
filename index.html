@@ -2506,6 +2506,36 @@ function enemyAttack(enemy, target) {
   }
 }
   function handleEnemyDeath(enemy) {
+  if (enemy.type === "SecondStageBossStage1") {
+    // Spawn Stage 2 boss here instead of endBattle
+    const stage2Base = enemyTypes[enemyTypes.SecondStageBossStage1.secondStageType];
+    const stage2Stats = scaleEnemyStats(stage2Base);
+
+    const stage2Enemy = {
+      type: "SecondStageBossStage2",
+      name: stage2Stats.name,
+      maxHp: stage2Stats.maxHp,
+      currentHp: stage2Stats.maxHp,
+      damage: stage2Stats.damage,
+      xpReward: stage2Stats.xpReward,
+      shieldActive: false,
+      shieldCooldownEnd: 0,
+      rocketActive: false,
+      rocketTicksLeft: 0,
+      stunned: false,
+      poisoned: false
+    };
+
+    activeEnemies.push(stage2Enemy);
+    showTemporaryText(`${stage2Enemy.name} emerges!`);
+    drawBattleUI();
+    drawPlayerBattleStatus();
+
+    // Remove Stage 1 boss now
+    activeEnemies = activeEnemies.filter(e => e !== enemy);
+
+    return; // Skip further XP gain/end battle checks for now
+  }
   // award XP immediately
   if (enemy && enemy.xpReward) gainXP(enemy.xpReward);
 
