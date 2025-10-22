@@ -528,6 +528,9 @@ zoneSprites.bossrobot.src = 'bossrobot.png';
 zoneSprites.robot.src = 'robot.png';
 
 
+const others = activeEnemies.filter(e => e && e !== enemy);
+const caveBossStillPresent = others.some(e => e && e.type === 'CaveBoss' && (e._blackoutIntervalId || e._blackoutRunning));
+if (!caveBossStillPresent) hideBattleBlackout();
   
 let tempText = "";
 let tempTextTimeout = null;
