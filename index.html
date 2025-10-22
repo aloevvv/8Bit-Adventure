@@ -990,7 +990,7 @@ const levels = [
       { x: 0, y: 0, width: 640, height: 480 }
     ],
     battleZones: [
-      { x: 80, y: 80, width: 64, height: 64, encounter: [{ type: "IceBoss" }], sprite: 'fail' } //LifeStealBoss, CritBoss
+      { x: 80, y: 80, width: 64, height: 64, encounter: [{ type: "CaveBoss" }], sprite: 'fail' } //LifeStealBoss, CritBoss, CaveBoss
     ],
     dialogZones: [],
     interactables: []
@@ -1112,6 +1112,15 @@ levels.forEach(level => {
     progress: 0,
     unlocked: false,
     checkCondition: () => achievementsMap['kill_critboss'].progress >= 1
+  },
+    {
+    id: 'kill_caveboss',
+    name: 'Reduced to Pebbles',
+    description: 'Kill Stoneforce on Ultimate Difficulty',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['kill_caveboss'].progress >= 1
   }
 ];
 
@@ -2687,6 +2696,7 @@ if (willHideBattleBlackout) {
   if (enemy.type === 'IceBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_icebot'].progress = 1;
   if (enemy.type === 'LifeStealBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_lifestealboss'].progress = 1;
   if (enemy.type === 'CritBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_critboss'].progress = 1;
+  if (enemy.type === 'CaveBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_caveboss'].progress = 1;
   if (enemy.type === 'Dummy') achievementsMap['kill_tutorial_dummy'].progress = 1;
   checkAchievements();
 
