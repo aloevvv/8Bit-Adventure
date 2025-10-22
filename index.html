@@ -164,7 +164,7 @@
 }
     .enemy-target.poisoned {
   box-shadow: 0 0 10px 10px rgba(0, 120, 0, 0.8);
-  border-color: #007800;
+  border-color: ##007800;
 }
     #player-battle-status .hp-bar-container:last-of-type .hp-bar {
       background-color: #00FFFF;
@@ -526,7 +526,6 @@ const ENEMY_ATTACK_DELAY = 2000;
 let staminaRegenIntervalId = null;
 let inventory = new Map();
 let extraLifeTimerId = null;
-const baseWalls = levels.map(level => level.walls.map(wall => ({ ...wall })));
 
   const armorTypes = {
   retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
@@ -872,11 +871,6 @@ const levels = [
       { x: 0, y: 0, width: 640, height: 30 },
       { x: 0, y: 450, width: 640, height: 30 },
       { x: 196, y: 196, width: 444, height: 133 },
-      {
-    id: 'lever_combo_wall',  
-    name: 'combo_wall',
-    x: 350, y: 200, width: 60, height: 80
-  }
     ],
     doors: [
       { x: 0, y: 0, width: 20, height: 50, destLevel: 4, destX: 580, destY: 50 },
@@ -911,47 +905,7 @@ const levels = [
     style: 'dialog'
   }
       ],
-    interactables: [
-      {
-  id: 'lever_1',
-  name: 'lever1',
-  type: 'single',
-  x: 100, y: 200, width: 40, height: 40,
-  state: false,
-  wallId: 'lever_combo_wall',
-  action: 'lever'
-},
-      {
-  id: 'lever_combo_1',
-  name: 'lever_combo_1',
-  type: 'multi',
-  groupId: 'combo1',
-  index: 0,
-  x: 200, y: 200, width: 40, height: 40,
-  state: false,
-  action: 'lever'
-},
-{
-  id: 'lever_combo_2',
-  name: 'lever_combo_2',
-  type: 'multi',
-  groupId: 'combo1',
-  index: 1,
-  x: 250, y: 200, width: 40, height: 40,
-  state: true,
-  action: 'lever'
-},
-{
-  id: 'lever_combo_3',
-  name: 'lever_combo_3',
-  type: 'multi',
-  groupId: 'combo1',
-  index: 2,
-  x: 300, y: 200, width: 40, height: 40,
-  state: false,
-  action: 'lever'
-}
-    ]
+    interactables: []
   },
   {
     bgSrc: "caves3_6.png",
@@ -1041,11 +995,7 @@ levels.forEach(level => {
     if (!wall.id) wall.id = `wall_${idx}`;
   });
 });
-  
-  const multiLeverCombos = {
-  combo1: [true, false, true]
-};
-  
+
   const achievements = [
   {
     id: 'played',
@@ -1314,12 +1264,6 @@ torchImg.src = 'torch.png';
 
 const drillImg = new Image();
 drillImg.src = 'drill.png';
-
-const leverOnImg = new Image();
-leverOnImg.src = 'leveron.png';
-  
-const leverOffImg = new Image();
-leverOffImg.src = 'leveroff.png';
 
 let activeEnemies = [];
 
@@ -2827,66 +2771,7 @@ if (object.action === "recruit") {
   return;
 }
 
-  if (object.action === 'lever') {
-    // Toggle lever state
-    object.state = !object.state;
-    showTemporaryText(`Lever ${object.id} turned ${object.state ? 'ON' : 'OFF'}`);
 
-    if (object.type === 'single') {
-      // Find the wall controlled by this lever
-      const wallId = object.wallId;
-      if (!wallId) return;
-
-      const wallIndex = currentLevel.walls.findIndex(w => w.id === wallId);
-      if (wallIndex === -1) return;
-
-      if (object.state) {
-        // Remove wall when lever ON
-        currentLevel.walls.splice(wallIndex, 1);
-      } else {
-        // Add wall back when lever OFF
-        const baseWall = baseWalls[currentLevelIndex].find(w => w.id === wallId);
-        if (baseWall) {
-          currentLevel.walls.push({ ...baseWall });
-        }
-      }
-    } else if (object.type === 'multi') {
-      // Check all levers in this group
-      const groupId = object.groupId;
-      if (!groupId) return;
-
-      const groupLevers = currentLevel.interactables.filter(o => o.type === 'multi' && o.groupId === groupId);
-      const currentStates = groupLevers
-        .sort((a, b) => a.index - b.index)
-        .map(l => l.state);
-
-      const requiredCombo = multiLeverCombos[groupId];
-      if (!requiredCombo) return;
-
-      // Check if current combo matches required
-      const comboMatch = currentStates.length === requiredCombo.length &&
-        currentStates.every((val, idx) => val === requiredCombo[idx]);
-
-      // Find wall controlled by this combo group
-      const comboWallId = `wall_${groupId}`;
-      const wallIndex = currentLevel.walls.findIndex(w => w.id === comboWallId);
-
-      if (comboMatch) {
-        // Remove wall if combo correct
-        if (wallIndex !== -1) currentLevel.walls.splice(wallIndex, 1);
-      } else {
-        // Add wall back if combo incorrect
-        const baseWall = baseWalls[currentLevelIndex].find(w => w.id === comboWallId);
-        if (baseWall && wallIndex === -1) {
-          currentLevel.walls.push({ ...baseWall });
-        }
-      }
-    }
-
-    draw(); // redraw after lever flip
-    return;
-  }
-  
   if (object.action === "use_drill") {
   if ((inventory.get("drill") || 0) > 0) {
     showTemporaryText("You use the drill to break through the crack!");
@@ -3398,19 +3283,6 @@ function checkDoorCollision(newX, newY) {
   return null;
 }
 
-function drawLevers() {
-  currentLevel.interactables.forEach(obj => {
-    if (obj.action === 'lever') {
-      const img = obj.state ? leverOnImg : leverOffImg;
-      if (img.complete) {
-        ctx.drawImage(img, obj.x, obj.y, obj.width, obj.height);
-      } else {
-        ctx.fillStyle = obj.state ? '#0f0' : '#900';
-        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
-      }
-    }
-  });
-}
 // Draw game world and player
 function draw() {
   if (inBattle || isGameOver) return;
@@ -3524,7 +3396,6 @@ if (gameSettings.showZones) {
   }
 });
 // inside draw(), where you draw interactables
-drawLevers();
 currentLevel.interactables.forEach(obj => {
   if (obj.action === "chest") {
     if (obj.opened) {
