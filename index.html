@@ -526,6 +526,9 @@ const ENEMY_ATTACK_DELAY = 2000;
 let staminaRegenIntervalId = null;
 let inventory = new Map();
 let extraLifeTimerId = null;
+let battleRounds = 0;                // number of rounds remaining
+let currentRoundEncounters = [];     // array of rounds (each round = array of enemy defs)
+let currentRoundIndex = 0;           // index of current round
 
   const armorTypes = {
   retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
@@ -730,7 +733,15 @@ const levels = [
     ],
      battleZones: [
       { x: 530, y: 80, width: 64, height: 64, encounter: [{ type: "SecondStageBossStage1" }], sprite: 'fail' },
-      { x: 240, y: 315, width: 64, height: 64, encounter: [{ type: "Sniperbot" }, {type: "Sniperbot"}], sprite: 'fail'}
+      { x: 240, y: 315, width: 64, height: 64, encounter: [{ type: "Sniperbot" }, {type: "Sniperbot"}], sprite: 'fail'},
+      {
+    x: 507, y: 70, width: 64, height: 64,
+    encounter: [
+      [ { type: "Sniperbot" }, { type: "Sniperbot" } ], // round 1
+      [ { type: "Puncherbot" }, { type: "Sniperbot" } ]   // round 2
+    ],
+    sprite: 'fail'
+  }
 ],
     waterZones: [], // make something like { x: 0, y: 0, width: 1, height: 1 } for zones
   poisonZones: [],
@@ -2320,7 +2331,7 @@ function critBossBehavior(enemy, target) {
   }
 }
 
-// Override endBattle to check for second stage boss
+// Override endBattle to check for second stage boss this is the defunct endbattle idk why i have 2 of em why doesnt the game crash idk
 function endBattle(outcome) {
   inBattle = false;
   document.getElementById('battle-overlay').style.display = 'none';
@@ -2506,8 +2517,8 @@ function enemyAttack(enemy, target) {
   }
 }
   function handleEnemyDeath(enemy) {
+  // Stage1 -> Stage2 special handling
   if (enemy.type === "SecondStageBossStage1") {
-    // Spawn Stage 2 boss here instead of endBattle
     const stage2Base = enemyTypes[enemyTypes.SecondStageBossStage1.secondStageType];
     const stage2Stats = scaleEnemyStats(stage2Base);
 
@@ -2523,19 +2534,19 @@ function enemyAttack(enemy, target) {
       rocketActive: false,
       rocketTicksLeft: 0,
       stunned: false,
-      poisoned: false
+      poisoned: false,
+      resistances: stage2Base.defaultResistances || {}
     };
 
+    // Remove Stage1 then push Stage2 immediately
+    activeEnemies = activeEnemies.filter(e => e !== enemy);
     activeEnemies.push(stage2Enemy);
     showTemporaryText(`${stage2Enemy.name} emerges!`);
     drawBattleUI();
     drawPlayerBattleStatus();
-
-    // Remove Stage 1 boss now
-    activeEnemies = activeEnemies.filter(e => e !== enemy);
-
-    return; // Skip further XP gain/end battle checks for now
+    return; // skip normal death handling for stage1
   }
+
   // award XP immediately
   if (enemy && enemy.xpReward) gainXP(enemy.xpReward);
 
@@ -2544,39 +2555,29 @@ function enemyAttack(enemy, target) {
     enemy.behaviorTimers.forEach(id => clearInterval(id));
     enemy.behaviorTimers = [];
   }
+
   // remove the enemy from activeEnemies
   const idx = activeEnemies.indexOf(enemy);
   if (idx > -1) activeEnemies.splice(idx, 1);
 
-  // update UI and check end of battle
-  drawBattleUI();
-  drawPlayerBattleStatus();
-
+  
   achievementsMap['kill_enemies'].progress++;
   achievementsMap['kill_enemies2'].progress++;
   achievementsMap['kill_enemies3'].progress++;
-
-  if (enemy.type === 'BossBot' && gameSettings.difficulty === 'ultimate') {
-    achievementsMap['kill_bossbot'].progress = 1;
-  }
-  if (enemy.type === 'IceBoss' && gameSettings.difficulty === 'ultimate') {
-    achievementsMap['kill_icebot'].progress = 1;
-  }
-  if (enemy.type === 'LifeStealBoss' && gameSettings.difficulty === 'ultimate') {
-    achievementsMap['kill_lifestealboss'].progress = 1;
-  }
-  if (enemy.type === 'CritBoss' && gameSettings.difficulty === 'ultimate') {
-    achievementsMap['kill_critboss'].progress = 1;
-  }
-  if (enemy.type === 'Dummy') {
-    achievementsMap['kill_tutorial_dummy'].progress = 1;
-  }
-
+  if (enemy.type === 'BossBot' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_bossbot'].progress = 1;
+  if (enemy.type === 'IceBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_icebot'].progress = 1;
+  if (enemy.type === 'LifeStealBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_lifestealboss'].progress = 1;
+  if (enemy.type === 'CritBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_critboss'].progress = 1;
+  if (enemy.type === 'Dummy') achievementsMap['kill_tutorial_dummy'].progress = 1;
   checkAchievements();
 
-  // if no enemies remain, finish the battle
+  // if no enemies remain, either end the battle round (endBattle('win') will check rounds) or spawn next round is handled in endBattle
   if (activeEnemies.length === 0) {
     endBattle('win');
+  } else {
+    drawBattleUI();
+    drawPlayerBattleStatus();
+    drawPartyStatus();
   }
 }
     
@@ -2589,6 +2590,22 @@ function healAllyAfterBattle() {
 }
 // End battle and clean up
 function endBattle(outcome) {
+  // If win and there are rounds remaining, move to next round instead of ending.
+  if (outcome === 'win') {
+    // award XP for this round (the activeEnemies array may be empty here; xp already handled on individual death)
+    // decrement rounds and spawn next if available
+    battleRounds--;
+    if (battleRounds > 0) {
+      currentRoundIndex++;
+      // small pause/message then spawn next round
+      showTemporaryText(`Round ${currentRoundIndex + 1} begins!`);
+      spawnRound(currentRoundIndex);
+      draw();
+      return; // continue battle
+    }
+  }
+
+  // --- Normal battle end cleanup (no rounds left or lost) ---
   inBattle = false;
   document.getElementById('battle-overlay').style.display = 'none';
 
@@ -2600,12 +2617,12 @@ function endBattle(outcome) {
   }
 
   if (outcome === 'win') {
+    // XP from any remaining enemies (defensive)
     let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
     gainXP(totalXp);
     playerStats.currentHp = playerStats.maxHp;
     updateHp(playerStats.currentHp);
     if (defeatedZone) removeZone(defeatedZone);
-
     healAllyAfterBattle();
   } else if (outcome === 'lose') {
     showGameOver();
@@ -2624,52 +2641,25 @@ function initiateBattle(zoneType, zoneObject) {
   inBattle = true;
   defeatedZone = { type: zoneType, object: zoneObject };
 
+  // stamina regen
   staminaRegenIntervalId = setInterval(() => {
     updateStamina(playerStats.currentStamina + 1);
     drawPlayerBattleStatus();
   }, 100);
 
-  const encounter = (zoneObject && zoneObject.encounter) || [];
-const mult = getDifficultyMultipliers();
 
-activeEnemies = encounter.map(enemyData => {
-  const baseStats = enemyTypes[enemyData.type] || {};
-  const baseHp = (baseStats.maxHp != null) ? baseStats.maxHp : (enemyData.maxHp || 1);
-  const baseDmg = (baseStats.damage != null) ? baseStats.damage : (enemyData.damage || 1);
-
-  const finalMaxHp = Math.max(1, Math.floor(baseHp * mult.enemyHp));
-  const finalDamage = Math.max(0, Math.floor(baseDmg * mult.enemyDmg));
-
-  const enemy = {
-    ...enemyData,
-    type: enemyData.type,
-    name: baseStats.name || enemyData.type,
-    maxHp: finalMaxHp,
-    currentHp: finalMaxHp,
-    damage: finalDamage,
-    xpReward: baseStats.xpReward || enemyData.xpReward || 0,
-    shieldActive: false,
-    shieldCooldownEnd: 0,
-    rocketActive: false,
-    rocketTicksLeft: 0,
-    stunned: false,
-    poisoned: false,
-    resistances: (enemyData.resistances || baseStats.defaultResistances) || { stun: false, poison: false },
-    isBoss: !!baseStats.isBoss
-  };
-
-  if (enemy.isBoss) {
-    enemy.shieldActivatedAt = 0;
-    enemy.shieldCooldownEnd = 0;
-    enemy.rocketActive = false;
-    enemy.rocketTicksLeft = 0;
+  if (zoneObject && Array.isArray(zoneObject.encounter) && Array.isArray(zoneObject.encounter[0])) {
+    currentRoundEncounters = zoneObject.encounter.map(round => Array.isArray(round) ? round.slice() : []);
+  } else {
+    currentRoundEncounters = [(zoneObject && zoneObject.encounter) ? zoneObject.encounter.slice() : []];
   }
+  battleRounds = currentRoundEncounters.length;
+  currentRoundIndex = 0;
 
-  return enemy;
-});
+  // Spawn first round
+  spawnRound(currentRoundIndex);
 
-
-  // Setup activeAlly data from equipped ally
+  // Setup activeAlly if equipped
   if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
     const allyBase = alliesData.find(a => a.id === equippedAllyId);
     activeAlly = {
@@ -2682,7 +2672,8 @@ activeEnemies = encounter.map(enemyData => {
       level: allyBase.level,
       xp: allyBase.xp,
       xpToNextLevel: allyBase.xpToNextLevel,
-      attackTimerId: null
+      attackTimerId: null,
+      stunned: false
     };
     startAllyAttacking();
     drawPartyStatus();
@@ -2693,11 +2684,50 @@ activeEnemies = encounter.map(enemyData => {
   selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
+
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
   enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 }
 
+function spawnRound(roundIdx) {
+  const encounter = currentRoundEncounters[roundIdx] || [];
+  const mult = getDifficultyMultipliers();
 
+  activeEnemies = encounter.map(enemyData => {
+    const baseStats = enemyTypes[enemyData.type] || {};
+    const baseHp = (baseStats.maxHp != null) ? baseStats.maxHp : (enemyData.maxHp || 1);
+    const baseDmg = (baseStats.damage != null) ? baseStats.damage : (enemyData.damage || 1);
+
+    const finalMaxHp = Math.max(1, Math.floor(baseHp * mult.enemyHp));
+    const finalDamage = Math.max(0, Math.floor(baseDmg * mult.enemyDmg));
+
+    return {
+      ...enemyData,
+      type: enemyData.type,
+      name: baseStats.name || enemyData.type,
+      maxHp: finalMaxHp,
+      currentHp: finalMaxHp,
+      damage: finalDamage,
+      xpReward: baseStats.xpReward || enemyData.xpReward || 0,
+      shieldActive: false,
+      shieldCooldownEnd: 0,
+      rocketActive: false,
+      rocketTicksLeft: 0,
+      stunned: false,
+      poisoned: false,
+      resistances: (enemyData.resistances || baseStats.defaultResistances) || { stun: false, poison: false },
+      isBoss: !!baseStats.isBoss
+    };
+  });
+
+  selectedEnemyIndex = 0;
+  // restart enemy turn timer
+  if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+  enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+
+  drawBattleUI();
+  drawPlayerBattleStatus();
+}
   // Unlock an ally and update UI/save state
 function unlockAlly(allyId) {
   if (!allyId) return;
