@@ -998,13 +998,22 @@ levels.forEach(level => {
 
   const achievements = [
   {
+    id: 'played',
+    name: 'Demo Player',
+    description: 'Played the demo? idk of the game!',
+    target: 1,      // set your number here
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['played'].progress >= achievementsMap['played'].target
+  },
+  {
     id: 'kill_enemies',
     name: 'Bot Killer',
     description: 'Kill 50 enemies',
     target: 50,      // set your number here
     progress: 0,
     unlocked: false,
-    checkCondition: () => achievementsMap['kill_enemies'].progress >= achievementsMap['kill_enemies2'].target
+    checkCondition: () => achievementsMap['kill_enemies'].progress >= achievementsMap['kill_enemies'].target
   },
     {
     id: 'kill_enemies2',
@@ -1013,7 +1022,7 @@ levels.forEach(level => {
     target: 100,      // set your number here
     progress: 0,
     unlocked: false,
-    checkCondition: () => achievementsMap['kill_enemies'].progress >= achievementsMap['kill_enemies3'].target
+    checkCondition: () => achievementsMap['kill_enemies2'].progress >= achievementsMap['kill_enemies2'].target
   },
     {
     id: 'kill_enemies3',
@@ -1022,7 +1031,7 @@ levels.forEach(level => {
     target: 1000,      // set your number here
     progress: 0,
     unlocked: false,
-    checkCondition: () => achievementsMap['kill_enemies'].progress >= achievementsMap['kill_enemies'].target
+    checkCondition: () => achievementsMap['kill_enemies3'].progress >= achievementsMap['kill_enemies3'].target
   },
   {
     id: 'open_chests',
@@ -1206,6 +1215,7 @@ function showDialog(textOrLines, idToMark, opts = {}) {
 playBtn.addEventListener('click', () => {
   // Hide title screen
   titleScreen.style.display = 'none';
+  achievementsMap['played'].progress = 1;
 
   // Set starting level and spawn coordinates (adjust if different)
   currentLevelIndex = 0;
