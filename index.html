@@ -1215,7 +1215,7 @@ function showDialog(textOrLines, idToMark, opts = {}) {
 playBtn.addEventListener('click', () => {
   // Hide title screen
   titleScreen.style.display = 'none';
-  achievementsMap['kill_enemies'].progress++;
+  achievementsMap['played'].progress++;
 
   // Set starting level and spawn coordinates (adjust if different)
   currentLevelIndex = 0;
