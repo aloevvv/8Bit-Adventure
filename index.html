@@ -274,6 +274,14 @@
     .item-use-button:hover {
       background-color: #555;
     }
+    #battle-blackout {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2500; /* above canvas but can be below battle UI if you want */
+  background: black;
+  pointer-events: none; /* doesn't block clicks unless you want it to */
+}
     #game-over-overlay {
   position: fixed;
   top: 0;
@@ -447,6 +455,9 @@
     </div>
   </div>
 </div>
+
+  <!-- Battle blackout overlay (hidden by default) -->
+<div id="battle-blackout" style="display:none; position:fixed; inset:0; z-index:2500; background:black; pointer-events:none;"></div>
   
 <div id="mobile-controls" style="display:none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); width: 220px; user-select:none; z-index: 3000;">
 
@@ -2309,11 +2320,10 @@ function lifeStealBossBehavior(enemy, target) {
 }
 // Cave boss 
 function caveBossBehavior(enemy, target) {
-  // Spawn logic: every 1.5s spawn a shard while in combat
+  // Spawn shards
   if (!enemy._shardIntervalId) {
     enemy._shardIntervalId = setInterval(() => {
       if (!inBattle) return;
-      // spawn a Crystal Shard that targets player or ally
       const shardBase = enemyTypes['CrystalShard'];
       const mult = getDifficultyMultipliers();
       const shard = {
@@ -2337,38 +2347,36 @@ function caveBossBehavior(enemy, target) {
     }, 1500);
   }
 
-  // Blackout behavior: when Cavern Shade at <=50% HP, start repeating blackout cycle
+  // Blackout cycle
   const hpPercent = (enemy.currentHp / enemy.maxHp) * 100;
   if (hpPercent <= 50) {
     if (!enemy._blackoutRunning) {
       enemy._blackoutRunning = true;
-      // blackout cycle: black for 9s, visible for 1s, repeat every 10s
-      //  implement cycle with setInterval and internal state
-      enemy._blackoutIntervalId = setInterval(() => {
-        // start blackout
-        enemy._isBlackout = true;
-        // force draw to show black overlay (draw checks this global)
-        draw();
-        showTemporaryText('Darkness covers the battlefield!');
 
-        // end blackout after 9s -> visible 1s
+      // Start the repeating cycle
+      enemy._blackoutIntervalId = setInterval(() => {
+        // begin blackout
+        showBattleBlackout();
+        showTemporaryText('Darkness covers the battlefield!');
+        // end blackout after 9s (1s visibility remains)
         setTimeout(() => {
-          enemy._isBlackout = false;
-          draw();
+          hideBattleBlackout();
           showTemporaryText('You can see for a moment...');
         }, 9000);
       }, 10000);
 
-      // Immediately trigger first blackout cycle
-      enemy._isBlackout = true;
-      draw();
-      setTimeout(() => { enemy._isBlackout = false; draw(); }, 9000);
+      // trigger the first cycle immediately
+      showBattleBlackout();
+      showTemporaryText('Darkness covers the battlefield!');
+      setTimeout(() => {
+        hideBattleBlackout();
+        showTemporaryText('You can see for a moment...');
+      }, 9000);
     }
   }
 
-  // Behavior attack: if not stunned, perform usual attack against chosen target
+  // Regular attacks while not stunned
   if (!enemy.stunned) {
-    // Cavern Shade attacks with base attack
     const dmg = enemy.damage || 0;
     if (target === playerStats) {
       playerTakeDamage(dmg);
@@ -2412,6 +2420,18 @@ function critBossBehavior(enemy, target) {
   }
 }
 
+
+  const battleBlackoutEl = document.getElementById('battle-blackout');
+
+function showBattleBlackout() {
+  if (!battleBlackoutEl) return;
+  battleBlackoutEl.style.display = 'block';
+}
+
+function hideBattleBlackout() {
+  if (!battleBlackoutEl) return;
+  battleBlackoutEl.style.display = 'none';
+}
 // Override endBattle to check for second stage boss this is the defunct endbattle idk why i have 2 of em why doesnt the game crash idk
 function endBattle(outcome) {
   inBattle = false;
@@ -2632,7 +2652,7 @@ function enemyAttack(enemy, target) {
 
 if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
 if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
-enemy._isBlackout = false;
+hideBattleBlackout();
   // award XP immediately
   if (enemy && enemy.xpReward) gainXP(enemy.xpReward);
 
@@ -3591,18 +3611,6 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-function isBattleBlackout() {
-  if (!inBattle) return false;
-  for (const e of activeEnemies) {
-    if (e && e._isBlackout) return true;
-  }
-  return false;
-}
-if (isBattleBlackout()) {
-  ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  return; // skip further visual cues so battle is fully black
-}
   // draw smashable stones (name matches what you added earlier)
   currentLevel.interactables.forEach(obj => {
     if (obj.name === "big_stone" || obj.name === "bigStone") {
