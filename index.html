@@ -544,6 +544,8 @@ let extraLifeTimerId = null;
 let battleRounds = 0;                // number of rounds remaining
 let currentRoundEncounters = [];     // array of rounds (each round = array of enemy defs)
 let currentRoundIndex = 0;           // index of current round
+let maxRaftHp = 12;
+let raftHp = maxRaftHp;
 
   const armorTypes = {
   retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
@@ -1677,7 +1679,7 @@ function drawInventoryBattlePopup() {
   battleInventoryList.innerHTML = "";
 
   // whitelist: items that are allowed in battle (exact names or prefixes)
-  const allowedExact = new Set(['bandaid','emp_grenade','poison_vial','extra_life']);
+  const allowedExact = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'driftwood']);
   const allowedPrefix = ['battle_']; // add prefixes for any future battle-only items
 
   // build list of entries that are allowed and have qty > 0
@@ -1814,7 +1816,7 @@ function useItem(itemName) {
   // at the top of useItem(itemName) function, add:
 if (inBattle) {
   // only allow explicit battle items while in battle
-  const battleAllowed = new Set(['bandaid','emp_grenade','poison_vial','extra_life']);
+  const battleAllowed = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'driftwood']);
   if (!battleAllowed.has(itemName) && !itemName.startsWith('battle_')) {
     showTemporaryText("You can't use that item during battle.");
     return;
@@ -1899,6 +1901,15 @@ if (inBattle) {
   });
 
   showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
+    } else if (itemName === 'driftwood') {
+  if (!inBattle) {
+    showTemporaryText('You can only use driftwood during the Nekark fight to repair the raft.');
+  } else {
+    // repair raft by 1, up to max
+    raftHp = Math.min(maxRaftHp, (raftHp || 0) + 1);
+    showTemporaryText(`Repaired raft by 1. Raft HP: ${raftHp}/${maxRaftHp}`);
+  }
+}
 } else if (itemName === 'extra_life') {
   if (extraLifeTimerId) {
     clearTimeout(extraLifeTimerId);
@@ -2009,7 +2020,30 @@ function drawPlayerBattleStatus() {
   // Append player + ally blocks
   playerBattleStatusDiv.appendChild(leftBlock);
   playerBattleStatusDiv.appendChild(rightBlock);
+    // Raft HP (brown) — shown only when raftHp is defined/used (i.e., Nekark fight)
+  if (typeof raftHp !== 'undefined' && raftHp < maxRaftHp + 1) {
+    const raftContainer = document.createElement('div');
+    raftContainer.className = 'hp-bar-container';
+    raftContainer.style.marginTop = '8px';
+    raftContainer.style.width = '100%';
+    raftContainer.style.height = '12px';
+    raftContainer.style.position = 'relative';
 
+    const raftBar = document.createElement('div');
+    raftBar.className = 'hp-bar';
+    const raftPercent = (maxRaftHp > 0) ? (raftHp / maxRaftHp) * 100 : 0;
+    raftBar.style.width = `${raftPercent}%`;
+    raftBar.style.height = '100%';
+    raftBar.style.backgroundColor = '#8B5A2B'; // brown
+
+    const raftText = document.createElement('div');
+    raftText.className = 'hp-text';
+    raftText.textContent = `Raft ${raftHp}/${maxRaftHp}`;
+
+    raftContainer.appendChild(raftBar);
+    raftContainer.appendChild(raftText);
+    playerBattleStatusDiv.appendChild(raftContainer);
+  }
   // Stamina bar (separate and explicitly cyan)
   const staminaContainer = document.createElement('div');
   staminaContainer.className = 'hp-bar-container';
@@ -2129,6 +2163,28 @@ function drawPlayerBattleStatus() {
 // normal enemy attack
 function normalAttack(enemy, target) {
   const damage = enemy.damage || 0;
+
+  // Special raft mechanic for IslandBoss / Nekark
+  if ((enemy.type === 'IslandBoss' || enemy.type === 'Nekark') && target === playerStats) {
+    // default hit: 75% normal, 25% piercing (piercing does +1 raft damage)
+    const isPiercing = Math.random() < 0.25;
+    const raftLoss = isPiercing ? 2 : 1;
+
+    // Deduct raft HP (if raft present)
+    if (raftHp > 0) {
+      raftHp = Math.max(0, raftHp - raftLoss);
+      // both player and raft take damage (player always takes damage)
+      playerTakeDamage(damage);
+      showTemporaryText(`${enemy.name} ${isPiercing ? 'pierces' : 'attacks'}! You took ${damage} dmg. Raft -${raftLoss} (HP ${raftHp}/${maxRaftHp})`);
+    } else {
+      // raft destroyed: only player takes damage, no raft deduction
+      playerTakeDamage(damage);
+      showTemporaryText(`${enemy.name} attacks you for ${damage} damage! (raft destroyed)`);
+    }
+    return;
+  }
+  if (raftHp === 0) showGameOver();
+  // fallback normal behavior
   if (target === playerStats) {
     playerTakeDamage(damage);
     showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
@@ -3202,6 +3258,13 @@ function initiateBattle(zoneType, zoneObject) {
   battleRounds = currentRoundEncounters.length;
   currentRoundIndex = 0;
 
+    // reset raft only if this encounter involves the IslandBoss (Nekark)
+  const encounterFlat = (zoneObject && zoneObject.encounter) ? ([]).concat(...(Array.isArray(zoneObject.encounter[0]) ? zoneObject.encounter.flat() : zoneObject.encounter)) : [];
+  const hasIslandBoss = encounterFlat.some(e => e && (e.type === 'IslandBoss' || e.type === 'Nekark'));
+  if (hasIslandBoss) {
+    maxRaftHp = 12;
+    raftHp = maxRaftHp;
+  }
   // Spawn first round
   spawnRound(currentRoundIndex);
 
