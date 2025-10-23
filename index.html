@@ -1675,6 +1675,9 @@ function showGameOver() {
 
 // Battle inventory popup draw
 function drawInventoryBattlePopup() {
+ 
+console.log('drawInventoryBattlePopup called, entries:', Array.from(inventory.entries()));
+
   const battleInventoryList = document.getElementById('inventory-list');
   battleInventoryList.innerHTML = "";
 
