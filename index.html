@@ -1901,30 +1901,31 @@ if (inBattle) {
 
   showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
 } else if (itemName === 'driftwood') {
-  if (!IslandBossPresent()) {
-    showTemporaryText("This driftwood seems useless here.");
-    return;
+    if (!IslandBossPresent()) {
+      showTemporaryText("This driftwood seems useless here.");
+      return;
+    }
+    if (!window._raft) window._raft = { maxHp: 12, hp: 12 };
+    if (window._raft.hp >= window._raft.maxHp) {
+      showTemporaryText("Your raft is already at full health.");
+    } else {
+      window._raft.hp = Math.min(window._raft.maxHp, window._raft.hp + 1);
+      showTemporaryText(`You repair the raft with driftwood. Raft HP +1 (${window._raft.hp}/${window._raft.maxHp})`);
+      // reflect UI updates
+      drawPlayerBattleStatus();
+      drawBattleUI();
+    }
+  } else if (itemName === 'extra_life') {
+    if (extraLifeTimerId) {
+      clearTimeout(extraLifeTimerId);
+      extraLifeTimerId = null;
+    }
+    showTemporaryText('Used an Extra Life! You have 3 seconds of invincibility!');
+    extraLifeTimerId = setTimeout(() => {
+      extraLifeTimerId = null;
+    }, 3000);
   }
-  if (!window._raft) window._raft = { maxHp: 12, hp: 12 };
-  if (window._raft.hp >= window._raft.maxHp) {
-    showTemporaryText("Your raft is already at full health.");
-  } else {
-    window._raft.hp = Math.min(window._raft.maxHp, window._raft.hp + 1);
-    showTemporaryText(`You repair the raft with driftwood. Raft HP +1 (${window._raft.hp}/${window._raft.maxHp})`);
-    // reflect UI updates
-    drawPlayerBattleStatus();
-    drawBattleUI();
-  }
-}
 
-} else if (itemName === 'extra_life') {
-  if (extraLifeTimerId) {
-    clearTimeout(extraLifeTimerId);
-    extraLifeTimerId = null;
-  }
-  showTemporaryText('Used an Extra Life! You have 3 seconds of invincibility!');
-  extraLifeTimerId = setTimeout(() => { extraLifeTimerId = null; }, 3000);
-}
   inventory.set(itemName, Math.max(0, (inventory.get(itemName) || 0) - 1));
   drawInventoryBattlePopup();
   drawBattleUI();
