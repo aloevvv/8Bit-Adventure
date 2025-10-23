@@ -2050,30 +2050,32 @@ function drawPlayerBattleStatus() {
   staminaContainer.appendChild(staminaBar);
   staminaContainer.appendChild(staminaText);
   playerBattleStatusDiv.appendChild(staminaContainer);
-}
-if (window._raft) {
-  const raftContainer = document.createElement('div');
-  raftContainer.className = 'hp-bar-container';
-  raftContainer.style.width = '100%';
-  raftContainer.style.height = '12px';
-  raftContainer.style.position = 'relative';
-  raftContainer.style.marginTop = '6px';
 
-  const raftBar = document.createElement('div');
-  raftBar.className = 'hp-bar';
-  const raftPercent = (window._raft.hp / window._raft.maxHp) * 100;
-  raftBar.style.width = `${Math.max(0, raftPercent)}%`;
-  raftBar.style.height = '100%';
-  raftBar.style.backgroundColor = '#8B5A2B'; // brown color
+  
+  if (window._raft) {
+    const raftContainer = document.createElement('div');
+    raftContainer.className = 'hp-bar-container';
+    raftContainer.style.width = '100%';
+    raftContainer.style.height = '12px';
+    raftContainer.style.position = 'relative';
+    raftContainer.style.marginTop = '6px';
 
-  const raftText = document.createElement('div');
-  raftText.className = 'hp-text';
-  raftText.style.fontSize = '0.7em';
-  raftText.textContent = `Raft: ${window._raft.hp}/${window._raft.maxHp}`;
+    const raftBar = document.createElement('div');
+    raftBar.className = 'hp-bar';
+    const raftPercent = (window._raft.hp / window._raft.maxHp) * 100;
+    raftBar.style.width = `${Math.max(0, raftPercent)}%`;
+    raftBar.style.height = '100%';
+    raftBar.style.backgroundColor = '#8B5A2B'; // brown color
 
-  raftContainer.appendChild(raftBar);
-  raftContainer.appendChild(raftText);
-  playerBattleStatusDiv.appendChild(raftContainer);
+    const raftText = document.createElement('div');
+    raftText.className = 'hp-text';
+    raftText.style.fontSize = '0.7em';
+    raftText.textContent = `Raft: ${window._raft.hp}/${window._raft.maxHp}`;
+
+    raftContainer.appendChild(raftBar);
+    raftContainer.appendChild(raftText);
+    playerBattleStatusDiv.appendChild(raftContainer);
+  }
 }
 
 
