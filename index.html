@@ -3090,7 +3090,46 @@ function endBattle(outcome) {
       return; // continue battle
     }
   }
+  if (activeEnemies.length === 0) {
+  // If a hidden ghost was prepared (from spawnRound) and still hidden, reveal it instead of ending battle.
+  const ghost = window._lastGhostRef;
+  if (ghost && ghost._isHidden) {
+    // Reveal ghost now (don't end battle). Ensure ghost stats were scaled earlier (see spawnRound fix below).
+    if (!activeEnemies.includes(ghost)) activeEnemies.push(ghost);
+    ghost._isHidden = false;
+    ghost._hostTrainSpawned = false;
 
+    // Start ghost's spectral minion spawner if not running
+    if (ghost._spectralIntervalId) clearInterval(ghost._spectralIntervalId);
+    ghost._spectralIntervalId = setInterval(() => {
+      if (!inBattle || !activeEnemies.includes(ghost) || ghost.currentHp <= 0) {
+        if (ghost._spectralIntervalId) { clearInterval(ghost._spectralIntervalId); ghost._spectralIntervalId = null; }
+        return;
+      }
+      const base = enemyTypes.SpectralMinion;
+      const m = {
+        type: 'SpectralMinion',
+        name: base.name,
+        maxHp: Math.max(1, Math.floor(base.maxHp * getDifficultyMultipliers().enemyHp)),
+        currentHp: Math.max(1, Math.floor(base.maxHp * getDifficultyMultipliers().enemyHp)),
+        damage: Math.max(0, Math.floor(base.damage * getDifficultyMultipliers().enemyDmg)),
+        xpReward: base.xpReward || 0,
+        shieldActive: false, stunned: false, poisoned: false
+      };
+      activeEnemies.push(m);
+      showTemporaryText('A spectral minion emerges!');
+      drawBattleUI();
+    }, 3000);
+
+    // ensure selection index safe and continue battle
+    selectedEnemyIndex = Math.max(0, Math.min(selectedEnemyIndex, activeEnemies.length - 1));
+    inBattle = true;
+    if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+    enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+    drawBattleUI();
+    drawPlayerBattleStatus();
+    return; // bail out of normal end flow
+  }
   // --- Normal battle end cleanup (no rounds left or lost) ---
   inBattle = false;
   document.getElementById('battle-overlay').style.display = 'none';
