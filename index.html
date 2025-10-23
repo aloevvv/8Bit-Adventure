@@ -663,7 +663,11 @@ const enemyTypes = {
   LifeStealBoss: { name: "Soul Slasher", maxHp: 100, damage: 5, xpReward: 1, behavior: "lifeStealBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   CritBoss: { name: "Deadshot", maxHp: 100, damage: 7, xpReward: 1, behavior: "critBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   CaveBoss: { name: "Stoneforce", maxHp: 200, damage: 4, xpReward: 150, isBoss: true, behavior: "caveBossBehavior", defaultResistances: { stun: true, poison: true }},
-  CrystalShard: { name: "Crystal Shard", maxHp: 5, damage: 2, xpReward: 1, behavior: "normalAttack" }
+  CrystalShard: { name: "Crystal Shard", maxHp: 5, damage: 2, xpReward: 1, behavior: "normalAttack" },
+  MountainBoss: { name: "Autoyvern", maxHP: 250, damage: 9, xpReward: 200, behavior: "mountainBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
+  GhostBoss: { name: "The Maestro", maxHp: 160, damage: 6, xpReward: 150, behavior: "ghostBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
+  Train: { name: "Train Carriage", maxHp: 40, damage: 0, xpReward: 0, behavior: "normalAttack"},
+  SpectralMinion: { name: "Spirit", maxHp: 12, damage: 3, xpReward: 1, behavior: "normalAttack" }
 };
 
 
@@ -2402,6 +2406,318 @@ function caveBossBehavior(enemy, target) {
     }
   }
 }
+//mystic mountain boss
+function mountainBossBehavior(enemy, target) {
+  // set up on first tick
+  if (!enemy._initialized) {
+    enemy._initialized = true;
+    enemy._spawnAt = Date.now();
+    enemy._fireTicks = []; // track active fire tick intervals (so we can clear)
+    enemy.enraged = false;
+    // after 30s become enraged if still alive
+    enemy._enrageTimeout = setTimeout(() => {
+      if (activeEnemies.includes(enemy) && enemy.currentHp > 0) {
+        enemy.enraged = true;
+        showTemporaryText(`${enemy.name} becomes enraged! Its attacks deal double damage!`);
+      }
+    }, 30000);
+  }
+
+  // If shield active, skip other actions
+  if (enemy.shieldActive) return;
+
+  // 33% chance to spit fire each action -> apply a DOT tick every 1s for 4 ticks (massive)
+  if (Math.random() < 0.33) {
+    const DOT_TICKS = 4;
+    const DOT_INTERVAL = 1000;
+    const baseDot = Math.max(5, Math.round(enemy.damage * 0.8)); // base per tick
+    let ticks = 0;
+    showTemporaryText(`${enemy.name} spits a cone of fire!`);
+    const id = setInterval(() => {
+      if (!activeEnemies.includes(enemy) || ticks >= DOT_TICKS) {
+        clearInterval(id);
+        return;
+      }
+      // apply to chosen target(s)
+      const dotDamage = baseDot;
+      // prefer player, if ally present sometimes hit them
+      const dotTarget = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
+      if (dotTarget === playerStats) {
+        playerTakeDamage(dotDamage);
+        showTemporaryText(`${enemy.name}'s fire scorches you for ${dotDamage} damage!`);
+      } else {
+        activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dotDamage);
+        showTemporaryText(`${enemy.name}'s fire scorches ${activeAlly.name} for ${dotDamage} damage!`);
+      }
+      ticks++;
+      drawBattleUI();
+      drawPlayerBattleStatus();
+      drawPartyStatus();
+    }, DOT_INTERVAL);
+    enemy._fireTicks.push(id);
+  }
+
+  // normal attack (double damage if enraged)
+  const baseDamage = enemy.damage || 0;
+  const finalDamage = enemy.enraged ? baseDamage * 2 : baseDamage;
+  // choose target
+  let chosen = playerStats;
+  if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.4) chosen = activeAlly;
+  if (chosen === playerStats) {
+    playerTakeDamage(finalDamage);
+    showTemporaryText(`${enemy.name} bites and smashes you for ${finalDamage} damage!`);
+  } else {
+    activeAlly.currentHp = Math.max(0, activeAlly.currentHp - finalDamage);
+    showTemporaryText(`${enemy.name} bites ${activeAlly.name} for ${finalDamage} damage!`);
+    if (activeAlly.currentHp === 0) {
+      showTemporaryText(`${activeAlly.name} has been defeated!`);
+      clearInterval(activeAlly.attackTimerId);
+      activeAlly.attackTimerId = null;
+    }
+  }
+}
+
+// Ensure cleanup in handleEnemyDeath for MountainBoss (clear timers)
+const _orig_handleEnemyDeath = handleEnemyDeath;
+handleEnemyDeath = function(enemy, idx) {
+  // clear boss-specific timers/intervals safely
+  try {
+    if (enemy._enrageTimeout) { clearTimeout(enemy._enrageTimeout); enemy._enrageTimeout = null; }
+    if (enemy._fireTicks && enemy._fireTicks.length) {
+      enemy._fireTicks.forEach(id => clearInterval(id));
+      enemy._fireTicks = [];
+    }
+    if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
+    if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
+  } catch (e) { console.warn('cleanup error', e); }
+  return _orig_handleEnemyDeath(enemy, idx);
+};
+
+// ghost
+function spawnGhostTrains(ghostEnemy) {
+  // remove any leftover trains for safety
+  activeEnemies = activeEnemies.filter(e => !(e && e._isGhostTrain));
+  // spawn 3 trains; one will carry the ghost (ghost._hiddenIn = index)
+  const trains = [];
+  for (let i = 0; i < 3; i++) {
+    const base = enemyTypes.Train;
+    const t = {
+      type: "Train",
+      name: `${base.name} #${i+1}`,
+      maxHp: Math.max(1, Math.floor(base.maxHp)),
+      currentHp: Math.max(1, Math.floor(base.maxHp)),
+      damage: 0,
+      xpReward: 0,
+      shieldActive: false,
+      rocketActive: false,
+      stunned: false,
+      poisoned: false,
+      _isGhostTrain: true,
+      _trainIndex: i
+    };
+    trains.push(t);
+    activeEnemies.push(t);
+  }
+  // choose hiding strategy: random index
+  ghostEnemy._hiddenInIndex = (typeof ghostEnemy._hiddenInIndex === 'number') ? ghostEnemy._hiddenInIndex : Math.floor(Math.random()*3);
+  ghostEnemy._isHidden = true;
+  ghostEnemy._hostTrainSpawned = true;
+  showTemporaryText(`${ghostEnemy.name} hides among the phantom carriages!`);
+  drawBattleUI();
+  return trains;
+}
+
+function trainBehavior(train, target) {
+  // trains do nothing. They can have simple taunt text occasionally
+  if (!train._tauntTick) train._tauntTick = 0;
+  train._tauntTick++;
+  if (train._tauntTick % 6 === 0) {
+    showTemporaryText(`${train.name} rattles...`);
+    drawBattleUI();
+  }
+}
+
+// called when a train that might be hosting the ghost dies
+function revealGhostFromTrain(train) {
+  // find ghost in activeEnemies (hidden)
+  const ghost = activeEnemies.find(e => e && e.type === 'GhostBoss');
+  if (!ghost) return;
+  if (!ghost._isHidden) return;
+  // only reveal if this is the train that contains ghost (index match)
+  if (train._trainIndex !== ghost._hiddenInIndex) {
+    // dead train wasn't hosting the ghost; nothing to do (but remove that train)
+    return;
+  }
+  // reveal ghost: remove trains that are not the host (or remove all trains, then spawn ghost)
+  activeEnemies = activeEnemies.filter(e => !(e && e._isGhostTrain));
+  // spawn the ghost with its retained hp (ghost object exists already — ensure it's in activeEnemies)
+  if (!activeEnemies.includes(ghost)) {
+    activeEnemies.push(ghost);
+  }
+  ghost._isHidden = false;
+  ghost._hostTrainSpawned = false;
+  showTemporaryText(`${ghost.name} is revealed!`);
+  // start ghost active timers (spectral minions)
+  if (ghost._spectralIntervalId) clearInterval(ghost._spectralIntervalId);
+  ghost._spectralIntervalId = setInterval(() => {
+    if (!inBattle || !activeEnemies.includes(ghost) || ghost.currentHp <= 0) {
+      if (ghost._spectralIntervalId) { clearInterval(ghost._spectralIntervalId); ghost._spectralIntervalId = null; }
+      return;
+    }
+    // spawn a spectral minion
+    const base = enemyTypes.SpectralMinion;
+    const m = {
+      type: 'SpectralMinion',
+      name: base.name,
+      maxHp: base.maxHp,
+      currentHp: base.maxHp,
+      damage: base.damage,
+      xpReward: base.xpReward,
+      shieldActive: false,
+      stunned: false,
+      poisoned: false
+    };
+    activeEnemies.push(m);
+    showTemporaryText('A spectral minion emerges!');
+    drawBattleUI();
+  }, 3000);
+  drawBattleUI();
+}
+
+// ghost hides back into trains after some time (preserve hp)
+function ghostHideCycle(ghost) {
+  // clear any existing hide timer
+  if (ghost._hideTimeout) { clearTimeout(ghost._hideTimeout); ghost._hideTimeout = null; }
+  // ghost will hide after e.g. 8-12 seconds (random) if still alive
+  ghost._hideTimeout = setTimeout(() => {
+    if (!inBattle || ghost.currentHp <= 0) return;
+    // remove any spectral spawn interval
+    if (ghost._spectralIntervalId) { clearInterval(ghost._spectralIntervalId); ghost._spectralIntervalId = null; }
+    // ghost hides: spawn new trains and keep ghost object but mark hidden
+    ghost._isHidden = true;
+    ghost._hostTrainSpawned = false;
+    // choose a new hide index
+    ghost._hiddenInIndex = Math.floor(Math.random()*3);
+    // remove ghost from activeEnemies (it hides), leave its current HP stored
+    activeEnemies = activeEnemies.filter(e => !(e && e === ghost));
+    // spawn 3 trains
+    spawnGhostTrains(ghost);
+    drawBattleUI();
+  }, 8000 + Math.floor(Math.random()*4000));
+}
+
+// Ghost boss primary behavior
+function ghostBossBehavior(enemy, target) {
+  if (!enemy._initialized) {
+    enemy._initialized = true;
+    enemy._isHidden = true;
+    enemy._hostTrainSpawned = false;
+    enemy._hiddenInIndex = Math.floor(Math.random()*3);
+    // place the ghost object into activeEnemies but hide immediately by replacing with trains
+    // remove ghost from activeEnemies if present (we'll manage ghost instance separately)
+    if (activeEnemies.includes(enemy)) {
+      activeEnemies = activeEnemies.filter(e => e !== enemy);
+    }
+    spawnGhostTrains(enemy);
+    // spawn spectral minions while hidden (the requirement: when in the trains, spectral minions spawn every 3s)
+    enemy._hiddenSpectralIntervalId = setInterval(() => {
+      // only spawn while still hidden AND battle active
+      if (!inBattle || !enemy._isHidden || enemy.currentHp <= 0) {
+        if (enemy._hiddenSpectralIntervalId) { clearInterval(enemy._hiddenSpectralIntervalId); enemy._hiddenSpectralIntervalId = null; }
+        return;
+      }
+      // spawn a spectral minion each 3s while hidden (they act immediately)
+      const base = enemyTypes.SpectralMinion;
+      const m = {
+        type: 'SpectralMinion',
+        name: base.name,
+        maxHp: base.maxHp,
+        currentHp: base.maxHp,
+        damage: base.damage,
+        xpReward: base.xpReward,
+        shieldActive: false,
+        stunned: false,
+        poisoned: false
+      };
+      activeEnemies.push(m);
+      showTemporaryText('A spectral minion emerges from the trains!');
+      drawBattleUI();
+    }, 3000);
+    // also plan to auto-hide back after reveal via ghostHideCycle when revealed
+  }
+
+  // If hidden, do nothing (behavior handled by trains/minion spawner)
+  if (enemy._isHidden) {
+    // nothing to do per-turn here
+    return;
+  }
+
+  // When revealed, ghost attacks like a normal boss but with occasional vanish attempt:
+  // attack
+  const dmg = enemy.damage || 0;
+  let chosen = playerStats;
+  if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) chosen = activeAlly;
+  if (chosen === playerStats) {
+    playerTakeDamage(dmg);
+    showTemporaryText(`${enemy.name} lashes you with ethereal claws for ${dmg} damage!`);
+  } else {
+    activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dmg);
+    showTemporaryText(`${enemy.name} slashes ${activeAlly.name} for ${dmg} damage!`);
+    if (activeAlly.currentHp === 0) {
+      showTemporaryText(`${activeAlly.name} has been defeated!`);
+      clearInterval(activeAlly.attackTimerId);
+      activeAlly.attackTimerId = null;
+    }
+  }
+
+  // Periodically attempt to hide back into trains (random small chance each turn)
+  if (!enemy._hideTimerScheduled && Math.random() < 0.15) {
+    enemy._hideTimerScheduled = true;
+    // schedule hide after 4-7s to give the player a chance to kill
+    setTimeout(() => {
+      enemy._hideTimerScheduled = false;
+      if (!inBattle || enemy.currentHp <= 0) return;
+      // remove any spectral spawning while hiding
+      if (enemy._spectralIntervalId) { clearInterval(enemy._spectralIntervalId); enemy._spectralIntervalId = null; }
+      // hide
+      enemy._isHidden = true;
+      activeEnemies = activeEnemies.filter(e => !(e && e.type === 'Train'));
+      spawnGhostTrains(enemy);
+      // while hidden, spectral spawner should already be running (we ensured earlier)
+      showTemporaryText(`${enemy.name} fades into the phantom carriages!`);
+      drawBattleUI();
+    }, 4000 + Math.floor(Math.random()*3000));
+  }
+}
+const __orig_handleEnemyDeath = handleEnemyDeath;
+handleEnemyDeath = function(enemy, idx) {
+  const res = __orig_handleEnemyDeath(enemy, idx);
+
+  // If a train died and a ghost is present (hidden), attempt to reveal
+  if (enemy && enemy._isGhostTrain) {
+    let ghost = activeEnemies.find(e => e && e.type === 'GhostBoss');
+    if (!ghost) {
+      ghost = window._lastGhostRef;
+    }
+    if (ghost && ghost._isHidden) {
+      // If the dead train was the host, reveal; otherwise nothing
+      if (enemy._trainIndex === ghost._hiddenInIndex) {
+        revealGhostFromTrain(enemy);
+        // schedule ghost to maybe hide again later
+        ghostHideCycle(ghost);
+      } else {
+        // dead non-host train: simply remove it; if it was the last train and host still hidden, respawn trains
+        const remainingTrains = activeEnemies.filter(e => e && e._isGhostTrain);
+        if (remainingTrains.length === 0 && ghost && ghost._isHidden) {
+          // respawn new trains and keep ghost hidden
+          spawnGhostTrains(ghost);
+        }
+      }
+    }
+  }
+
+  return res;
+};
 //battlefield boss
 function critBossBehavior(enemy, target) {
   if (enemy.shieldActive) {
@@ -2849,6 +3165,30 @@ function spawnRound(roundIdx) {
       isBoss: !!baseStats.isBoss
     };
   });
+  
+if (enemyData.type === 'GhostBoss') {
+  const baseStats = enemyTypes['GhostBoss'] || {};
+  const ghost = {
+    ...enemyData,
+    type: 'GhostBoss',
+    name: baseStats.name || 'Spectral Conductor',
+    maxHp: baseStats.maxHp || 180,
+    currentHp: (enemyData.currentHp != null) ? enemyData.currentHp : (baseStats.maxHp || 180),
+    damage: baseStats.damage || 6,
+    xpReward: baseStats.xpReward || 180,
+    shieldActive: false, stunned: false, poisoned: false,
+    // hidden state
+    _isHidden: true,
+    _hiddenInIndex: Math.floor(Math.random()*3),
+    _hostTrainSpawned: false
+  };
+
+  // keep a global reference so reveal logic can re-add the exact same object preserving HP
+  window._lastGhostRef = ghost;
+
+  spawnGhostTrains(ghost);
+  return null;
+}
 
   selectedEnemyIndex = 0;
   // restart enemy turn timer
