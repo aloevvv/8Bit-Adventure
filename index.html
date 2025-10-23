@@ -3139,19 +3139,22 @@ function spawnRound(roundIdx) {
   const encounter = currentRoundEncounters[roundIdx] || [];
   const mult = getDifficultyMultipliers();
 
-  // Build enemies; handle GhostBoss as a special case inside the map callback
+  
   const built = encounter.map(enemyData => {
-    // Special-case GhostBoss before the normal creation flow
-    if (enemyData && enemyData.type === 'GhostBoss') {
+    if (!enemyData) return null;
+
+    // Special-case GhostBoss
+    if (enemyData.type === 'GhostBoss') {
       const baseStats = enemyTypes['GhostBoss'] || {};
       const ghost = {
         ...enemyData,
         type: 'GhostBoss',
-        name: baseStats.name || 'Spectral Conductor',
-        maxHp: baseStats.maxHp || 180,
-        currentHp: (enemyData.currentHp != null) ? enemyData.currentHp : (baseStats.maxHp || 180),
-        damage: baseStats.damage || 6,
-        xpReward: baseStats.xpReward || 180,
+        name: baseStats.name || 'The Maestro',
+        // accept either maxHp or maxHP from definitions
+        maxHp: (enemyData.maxHp != null) ? enemyData.maxHp : (baseStats.maxHp != null ? baseStats.maxHp : (baseStats.maxHP || 180)),
+        currentHp: (enemyData.currentHp != null) ? enemyData.currentHp : (baseStats.maxHp != null ? baseStats.maxHp : (baseStats.maxHP || 180)),
+        damage: (baseStats.damage != null) ? baseStats.damage : (enemyData.damage || 6),
+        xpReward: baseStats.xpReward || enemyData.xpReward || 180,
         shieldActive: false,
         stunned: false,
         poisoned: false,
@@ -3160,19 +3163,16 @@ function spawnRound(roundIdx) {
         _hostTrainSpawned: false
       };
 
-      // keep a stable global reference so reveal logic can re-add same object (preserves HP)
+    
       window._lastGhostRef = ghost;
 
-      // spawn trains that will represent the hidden ghost (spawnGhostTrains will add trains to activeEnemies)
-      spawnGhostTrains(ghost);
-
-      // return null here so this map slot doesn't add a ghost entry directly
+     
       return null;
     }
 
-    // Normal enemy creation:
+    
     const baseStats = enemyTypes[enemyData.type] || {};
-    const baseHp = (baseStats.maxHp != null) ? baseStats.maxHp : (enemyData.maxHp || 1);
+    const baseHp = (baseStats.maxHp != null) ? baseStats.maxHp : (baseStats.maxHP != null ? baseStats.maxHP : (enemyData.maxHp || 1));
     const baseDmg = (baseStats.damage != null) ? baseStats.damage : (enemyData.damage || 1);
 
     const finalMaxHp = Math.max(1, Math.floor(baseHp * mult.enemyHp));
@@ -3197,8 +3197,16 @@ function spawnRound(roundIdx) {
     };
   });
 
-  // Filter out nulls (GhostBoss entries returned null because spawnGhostTrains handled it)
+  // Assign built enemies (filter out nulls)
   activeEnemies = built.filter(Boolean);
+
+  // If a GhostBoss ref was prepared earlier, spawn its trains now (so they are not overwritten)
+  if (window._lastGhostRef && window._lastGhostRef._isHidden && !window._lastGhostRef._hostTrainSpawned) {
+    spawnGhostTrains(window._lastGhostRef);
+    // mark spawned
+    window._lastGhostRef._hostTrainSpawned = true;
+    // ensure ghost object itself is preserved (it stays in window._lastGhostRef for later reveal)
+  }
 
   selectedEnemyIndex = 0;
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
