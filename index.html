@@ -164,7 +164,11 @@
 }
     .enemy-target.poisoned {
   box-shadow: 0 0 10px 10px rgba(0, 120, 0, 0.8);
-  border-color: ##007800;
+  border-color: #007800;
+}
+    .enemy-target.enraged {
+  box-shadow: 0 0 10px 10px rgba(255, 0, 0, 0.8);
+  border-color: #FF0000;
 }
     #player-battle-status .hp-bar-container:last-of-type .hp-bar {
       background-color: #00FFFF;
@@ -664,7 +668,7 @@ const enemyTypes = {
   CritBoss: { name: "Deadshot", maxHp: 100, damage: 7, xpReward: 1, behavior: "critBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   CaveBoss: { name: "Stoneforce", maxHp: 200, damage: 4, xpReward: 150, isBoss: true, behavior: "caveBossBehavior", defaultResistances: { stun: true, poison: true }},
   CrystalShard: { name: "Crystal Shard", maxHp: 5, damage: 2, xpReward: 1, behavior: "normalAttack" },
-  MountainBoss: { name: "Autoyvern", maxHp: 250, damage: 9, xpReward: 200, behavior: "mountainBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
+  MountainBoss: { name: "Autoyvern", maxHp: 250, damage: 1, xpReward: 200, behavior: "mountainBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   GhostBoss: { name: "The Maestro", maxHp: 160, damage: 3, xpReward: 150, behavior: "ghostBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   Train: { name: "Train Carriage", maxHp: 40, damage: 0, xpReward: 0, behavior: "normalAttack"},
   SpectralMinion: { name: "Spirit", maxHp: 12, damage: 3, xpReward: 1, behavior: "normalAttack" }
@@ -1907,6 +1911,7 @@ function drawBattleUI() {
     if (enemy.shieldActive) enemyButton.classList.add('shielded');
     if (enemy.stunned) enemyButton.classList.add('stunned');
     if (enemy.poisoned) enemyButton.classList.add('poisoned');
+    if (enemy.enraged) enemyButton.classList.add('enraged');
     enemyButton.dataset.enemyIndex = index;
     enemyDisplay.appendChild(enemyButton);
     if (index === selectedEnemyIndex) enemyButton.classList.add('selected');
