@@ -1129,6 +1129,24 @@ levels.forEach(level => {
     progress: 0,
     unlocked: false,
     checkCondition: () => achievementsMap['kill_caveboss'].progress >= 1
+  },
+    {
+    id: 'kill_mountainboss',
+    name: 'Reduced to Pebbles',
+    description: 'Kill Autoyvern on Ultimate Difficulty',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['kill_mountainboss'].progress >= 1
+  },
+  {
+    id: 'kill_ghostboss',
+    name: 'Reduced to Pebbles',
+    description: 'Kill The Maestro on Ultimate Difficulty',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['kill_ghostboss'].progress >= 1
   }
 ];
 
@@ -3054,6 +3072,8 @@ if (willHideBattleBlackout) {
   if (enemy.type === 'LifeStealBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_lifestealboss'].progress = 1;
   if (enemy.type === 'CritBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_critboss'].progress = 1;
   if (enemy.type === 'CaveBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_caveboss'].progress = 1;
+  if (enemy.type === 'MountainBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_mountainboss'].progress = 1;
+  if (enemy.type === 'GhostBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_ghostboss'].progress = 1;
   if (enemy.type === 'Dummy') achievementsMap['kill_tutorial_dummy'].progress = 1;
   checkAchievements();
 
