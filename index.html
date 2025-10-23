@@ -2727,7 +2727,7 @@ function ghostBossBehavior(enemy, target) {
   }
 
   // Periodically attempt to hide back into trains (random small chance each turn)
-  if (!enemy._hideTimerScheduled && Math.random() < 0.15) {
+  if (!enemy._hideTimerScheduled && Math.random() < 0.90) {
     enemy._hideTimerScheduled = true;
     // schedule hide after 4-7s to give the player a chance to kill
     setTimeout(() => {
