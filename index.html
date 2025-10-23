@@ -671,7 +671,8 @@ const enemyTypes = {
   MountainBoss: { name: "Autoyvern", maxHp: 250, damage: 1, xpReward: 200, behavior: "mountainBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   GhostBoss: { name: "The Maestro", maxHp: 450, damage: 3, xpReward: 150, behavior: "ghostBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   Train: { name: "Train Carriage", maxHp: 40, damage: 0, xpReward: 0, behavior: "normalAttack"},
-  SpectralMinion: { name: "Spirit", maxHp: 12, damage: 3, xpReward: 1, behavior: "normalAttack" }
+  SpectralMinion: { name: "Spirit", maxHp: 12, damage: 3, xpReward: 1, behavior: "normalAttack" },
+  IslandBoss: { name: "Nekark of the Seas", maxHp: 320, damage: 3, xpReward: 180, behavior: "islandBossBehavior", isBoss: true, defaultResistances: { stun: true, poison: true }}
 };
 
 
@@ -998,7 +999,7 @@ const levels = [
       { x: 0, y: 0, width: 640, height: 480 }
     ],
     battleZones: [
-      { x: 80, y: 80, width: 64, height: 64, encounter: [{ type: "MountainBoss" }], sprite: 'fail' } //LifeStealBoss, CritBoss, CaveBoss
+      { x: 80, y: 80, width: 64, height: 64, encounter: [{ type: "IslandBoss" }], sprite: 'fail' } //LifeStealBoss, CritBoss, CaveBoss
     ],
     dialogZones: [],
     interactables: []
@@ -1677,7 +1678,7 @@ function drawInventoryBattlePopup() {
   battleInventoryList.innerHTML = "";
 
   // whitelist: items that are allowed in battle (exact names or prefixes)
-  const allowedExact = new Set(['bandaid','emp_grenade','poison_vial','extra_life']);
+  const allowedExact = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'driftwood']);
   const allowedPrefix = ['battle_']; // add prefixes for any future battle-only items
 
   // build list of entries that are allowed and have qty > 0
@@ -1814,7 +1815,7 @@ function useItem(itemName) {
   // at the top of useItem(itemName) function, add:
 if (inBattle) {
   // only allow explicit battle items while in battle
-  const battleAllowed = new Set(['bandaid','emp_grenade','poison_vial','extra_life']);
+  const battleAllowed = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'driftwood']);
   if (!battleAllowed.has(itemName) && !itemName.startsWith('battle_')) {
     showTemporaryText("You can't use that item during battle.");
     return;
@@ -1899,6 +1900,23 @@ if (inBattle) {
   });
 
   showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
+} else if (itemName === 'driftwood') {
+  if (!IslandBossPresent()) {
+    showTemporaryText("This driftwood seems useless here.");
+    return;
+  }
+  if (!window._raft) window._raft = { maxHp: 12, hp: 12 };
+  if (window._raft.hp >= window._raft.maxHp) {
+    showTemporaryText("Your raft is already at full health.");
+  } else {
+    window._raft.hp = Math.min(window._raft.maxHp, window._raft.hp + 1);
+    showTemporaryText(`You repair the raft with driftwood. Raft HP +1 (${window._raft.hp}/${window._raft.maxHp})`);
+    // reflect UI updates
+    drawPlayerBattleStatus();
+    drawBattleUI();
+  }
+}
+
 } else if (itemName === 'extra_life') {
   if (extraLifeTimerId) {
     clearTimeout(extraLifeTimerId);
@@ -2031,6 +2049,30 @@ function drawPlayerBattleStatus() {
   staminaContainer.appendChild(staminaBar);
   staminaContainer.appendChild(staminaText);
   playerBattleStatusDiv.appendChild(staminaContainer);
+}
+if (window._raft) {
+  const raftContainer = document.createElement('div');
+  raftContainer.className = 'hp-bar-container';
+  raftContainer.style.width = '100%';
+  raftContainer.style.height = '12px';
+  raftContainer.style.position = 'relative';
+  raftContainer.style.marginTop = '6px';
+
+  const raftBar = document.createElement('div');
+  raftBar.className = 'hp-bar';
+  const raftPercent = (window._raft.hp / window._raft.maxHp) * 100;
+  raftBar.style.width = `${Math.max(0, raftPercent)}%`;
+  raftBar.style.height = '100%';
+  raftBar.style.backgroundColor = '#8B5A2B'; // brown color
+
+  const raftText = document.createElement('div');
+  raftText.className = 'hp-text';
+  raftText.style.fontSize = '0.7em';
+  raftText.textContent = `Raft: ${window._raft.hp}/${window._raft.maxHp}`;
+
+  raftContainer.appendChild(raftBar);
+  raftContainer.appendChild(raftText);
+  playerBattleStatusDiv.appendChild(raftContainer);
 }
 
 
@@ -2764,6 +2806,65 @@ handleEnemyDeath = function(enemy, idx) {
 
   return res;
 };
+  
+function IslandBossPresent() {
+  return activeEnemies && activeEnemies.some(e => e && e.type === 'IslandBoss');
+}
+
+function islandBossBehavior(enemy, target) {
+  if (enemy.shieldActive || enemy.stunned) return;
+
+  // ensure raft exists for this fight; if not, initialize safe default
+  if (!window._raft) window._raft = { maxHp: 12, hp: 12 };
+
+  // per-action cooldown so boss doesn't attack every tick (tune ms)
+  if (!enemy._lastAction) enemy._lastAction = 0;
+  const now = Date.now();
+  if (now - enemy._lastAction < 800) return; // boss acts at most ~once per 800ms
+  enemy._lastAction = now;
+
+  // choose target (50/50 preference for ally if present)
+  let chosen = playerStats;
+  if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) chosen = activeAlly;
+
+  // Attack landing logic only reduces raft when it damages the player (not ally)
+  const isPiercing = Math.random() < 0.25; // 25% piercing
+  const baseDamage = Math.max(0, Number(enemy.damage) || 0);
+
+  if (chosen === playerStats) {
+    // damage player
+    playerTakeDamage(baseDamage);
+    // drain raft HP: 1 normal, 2 piercing
+    const drain = isPiercing ? 2 : 1;
+    window._raft.hp = Math.max(0, window._raft.hp - drain);
+    showTemporaryText(`${enemy.name} attacks your raft and you for ${baseDamage} damage! Raft -${drain}.`);
+    // piercing special message
+    if (isPiercing) showTemporaryText(`${enemy.name} pierced through the raft!`);
+    drawPlayerBattleStatus();
+    drawBattleUI();
+
+    // raft destroyed => player dies immediately
+    if (window._raft.hp <= 0) {
+      showTemporaryText('Your raft breaks apart — you are lost to the sea!');
+      // Force player death/instant lose
+      playerStats.currentHp = 0;
+      updateHp(0);
+      endBattle('lose');
+      return;
+    }
+  } else {
+    // hit ally only, does not drain raft
+    activeAlly.currentHp = Math.max(0, activeAlly.currentHp - baseDamage);
+    showTemporaryText(`${enemy.name} hits ${activeAlly.name} for ${baseDamage} damage!`);
+    if (activeAlly.currentHp === 0) {
+      showTemporaryText(`${activeAlly.name} has been defeated!`);
+      clearInterval(activeAlly.attackTimerId);
+      activeAlly.attackTimerId = null;
+    }
+    drawPartyStatus();
+    drawBattleUI();
+  }
+}
 
 //battlefield boss
 function critBossBehavior(enemy, target) {
@@ -2919,8 +3020,8 @@ if (behavior === 'normalAttack') {
   lifeStealBossBehavior(enemy, target);
 } else if (behavior === 'critBossBehavior') {
   critBossBehavior(enemy, target);
-} else if (behavior === 'lifeStealBossBehavior') {
-  lifeStealBossBehavior(enemy, target);
+} else if (behavior === 'islandBossBehavior') {
+  islandBossBehavior(enemy, target);
 } else if (behavior === 'mountainBossBehavior') {
   mountainBossBehavior(enemy, target);
 } else if (behavior === 'ghostBossBehavior') {
@@ -3145,6 +3246,9 @@ function endBattle(outcome) {
   // --- Normal battle end cleanup (no rounds left or lost) ---
   inBattle = false;
   document.getElementById('battle-overlay').style.display = 'none';
+  if (window._raft) {
+  window._raft = null;
+}
 
   if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
   if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
@@ -3300,6 +3404,14 @@ function spawnRound(roundIdx) {
     window._lastGhostRef._hostTrainSpawned = true;
     // ensure ghost object itself is preserved (it stays in window._lastGhostRef for later reveal)
   }
+  
+if (IslandBossPresent()) {
+  // global per-battle raft state
+  window._raft = { maxHp: 12, hp: 12 };
+} else {
+  // clear any leftover raft state
+  window._raft = null;
+}
 
   selectedEnemyIndex = 0;
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
