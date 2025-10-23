@@ -2517,13 +2517,15 @@ handleEnemyDeath = function(enemy, idx) {
 };
 
 // ghost
+// ---------- spawnGhostTrains ----------
 function spawnGhostTrains(ghostEnemy) {
   // remove any leftover trains for safety
   activeEnemies = activeEnemies.filter(e => !(e && e._isGhostTrain));
-  // spawn 3 trains; one will carry the ghost (ghost._hiddenIn = index)
+
+  // spawn 3 trains; one will host the ghost (ghostEnemy._hiddenInIndex)
   const trains = [];
+  const base = enemyTypes['Train'];
   for (let i = 0; i < 3; i++) {
-    const base = enemyTypes.Train;
     const t = {
       type: "Train",
       name: `${base.name} #${i+1}`,
@@ -2541,79 +2543,82 @@ function spawnGhostTrains(ghostEnemy) {
     trains.push(t);
     activeEnemies.push(t);
   }
-  // choose hiding strategy: random index
-  ghostEnemy._hiddenInIndex = (typeof ghostEnemy._hiddenInIndex === 'number') ? ghostEnemy._hiddenInIndex : Math.floor(Math.random()*3);
+
+  // ensure ghost has a host index
+  ghostEnemy._hiddenInIndex = (typeof ghostEnemy._hiddenInIndex === 'number')
+    ? ghostEnemy._hiddenInIndex
+    : Math.floor(Math.random() * 3);
+
+  // mark the ghost as hidden and note trains spawned
   ghostEnemy._isHidden = true;
   ghostEnemy._hostTrainSpawned = true;
+
   showTemporaryText(`${ghostEnemy.name} hides among the phantom carriages!`);
   drawBattleUI();
   return trains;
 }
 
-function trainBehavior(train, target) {
-  // trains do nothing. They can have simple taunt text occasionally
-  if (!train._tauntTick) train._tauntTick = 0;
-  train._tauntTick++;
-  if (train._tauntTick % 6 === 0) {
-    showTemporaryText(`${train.name} rattles...`);
-    drawBattleUI();
+// ---------- ghostHideCycle ----------
+function ghostHideCycle(ghost) {
+  // clear any existing hide timer
+  if (ghost._hideTimeout) {
+    clearTimeout(ghost._hideTimeout);
+    ghost._hideTimeout = null;
   }
+  ghost._hideTimeoutScheduled = false;
+
+  // only schedule when currently revealed, alive, and battle active
+  if (ghost._isHidden || ghost.currentHp <= 0 || !inBattle) return;
+
+  const delay = 8000 + Math.floor(Math.random() * 4000); // 8-12s
+  ghost._hideTimeout = setTimeout(() => {
+    ghost._hideTimeout = null;
+    ghost._hideTimeoutScheduled = false;
+    if (!inBattle || ghost.currentHp <= 0) return;
+
+    // stop any visible spectral spawner
+    if (ghost._spectralIntervalId) { clearInterval(ghost._spectralIntervalId); ghost._spectralIntervalId = null; }
+
+    // hide: remove ghost from activeEnemies and spawn trains
+    ghost._isHidden = true;
+    ghost._hostTrainSpawned = false;
+    ghost._hiddenInIndex = Math.floor(Math.random() * 3);
+    activeEnemies = activeEnemies.filter(e => e !== ghost);
+    spawnGhostTrains(ghost);
+
+    showTemporaryText(`${ghost.name} slips back into the phantom carriages...`);
+    drawBattleUI();
+  }, delay);
 }
 
-// called when a train that might be hosting the ghost dies
-function revealGhostFromTrain(train) {
-  const ghost = activeEnemies.find(e => e && e.type === 'GhostBoss') || window._lastGhostRef;
+// ---------- revealGhostFromTrain ----------
+function revealGhostFromTrain(deadTrain) {
+  // find ghost reference
+  let ghost = activeEnemies.find(e => e && e.type === 'GhostBoss');
+  if (!ghost) ghost = window._lastGhostRef;
   if (!ghost) return;
 
-  // If this train is not the host, and there are still trains remaining, just remove this train.
-  if (train._trainIndex !== ghost._hiddenInIndex) {
-    // remove the dead train
-    activeEnemies = activeEnemies.filter(e => !(e && e._isGhostTrain && e._trainIndex === train._trainIndex));
-    // If no trains left and the ghost is still hidden, reveal the ghost now (don't respawn trains)
+  // If train is not host and other trains remain, just remove the dead train
+  if (deadTrain._trainIndex !== ghost._hiddenInIndex) {
+    activeEnemies = activeEnemies.filter(e => !(e && e._isGhostTrain && e._trainIndex === deadTrain._trainIndex));
+    // if no trains left and ghost still hidden, respawn trains
     const remainingTrains = activeEnemies.filter(e => e && e._isGhostTrain);
     if (remainingTrains.length === 0 && ghost._isHidden) {
-      // reveal ghost (use stored ghost ref)
-      if (!activeEnemies.includes(ghost)) activeEnemies.push(ghost);
-      ghost._isHidden = false;
-      ghost._hostTrainSpawned = false;
-      // start ghost active timers
-      if (ghost._spectralIntervalId) clearInterval(ghost._spectralIntervalId);
-      ghost._spectralIntervalId = setInterval(() => {
-        if (!inBattle || !activeEnemies.includes(ghost) || ghost.currentHp <= 0) {
-          if (ghost._spectralIntervalId) { clearInterval(ghost._spectralIntervalId); ghost._spectralIntervalId = null; }
-          return;
-        }
-        const base = enemyTypes.SpectralMinion;
-        const m = {
-          type: 'SpectralMinion',
-          name: base.name,
-          maxHp: base.maxHp,
-          currentHp: base.maxHp,
-          damage: base.damage,
-          xpReward: base.xpReward,
-          shieldActive: false,
-          stunned: false,
-          poisoned: false
-        };
-        activeEnemies.push(m);
-        showTemporaryText('A spectral minion emerges!');
-        drawBattleUI();
-      }, 3000);
-      showTemporaryText(`${ghost.name} is revealed!`);
-      drawBattleUI();
-    } else {
-      drawBattleUI();
+      spawnGhostTrains(ghost);
     }
+    drawBattleUI();
     return;
   }
 
-  // If the dead train was the host, reveal immediately:
+  // If dead train was the host, reveal immediately
   activeEnemies = activeEnemies.filter(e => !(e && e._isGhostTrain));
   if (!activeEnemies.includes(ghost)) activeEnemies.push(ghost);
+
   ghost._isHidden = false;
   ghost._hostTrainSpawned = false;
 
-  if (ghost._spectralIntervalId) clearInterval(ghost._spectralIntervalId);
+  // start spectral minion spawner for revealed ghost (if not already)
+  if (ghost._spectralIntervalId) { clearInterval(ghost._spectralIntervalId); ghost._spectralIntervalId = null; }
   ghost._spectralIntervalId = setInterval(() => {
     if (!inBattle || !activeEnemies.includes(ghost) || ghost.currentHp <= 0) {
       if (ghost._spectralIntervalId) { clearInterval(ghost._spectralIntervalId); ghost._spectralIntervalId = null; }
@@ -2638,51 +2643,30 @@ function revealGhostFromTrain(train) {
 
   showTemporaryText(`${ghost.name} is revealed!`);
   drawBattleUI();
+
+  // schedule a future hide now that the ghost is visible
+  ghostHideCycle(ghost);
 }
 
-// ghost hides back into trains after some time (preserve hp)
-function ghostHideCycle(ghost) {
-  // clear any existing hide timer
-  if (ghost._hideTimeout) { clearTimeout(ghost._hideTimeout); ghost._hideTimeout = null; }
-  // ghost will hide after e.g. 8-12 seconds (random) if still alive
-  ghost._hideTimeout = setTimeout(() => {
-    if (!inBattle || ghost.currentHp <= 0) return;
-    // remove any spectral spawn interval
-    if (ghost._spectralIntervalId) { clearInterval(ghost._spectralIntervalId); ghost._spectralIntervalId = null; }
-    // ghost hides: spawn new trains and keep ghost object but mark hidden
-    ghost._isHidden = true;
-    ghost._hostTrainSpawned = false;
-    // choose a new hide index
-    ghost._hiddenInIndex = Math.floor(Math.random()*3);
-    // remove ghost from activeEnemies (it hides), leave its current HP stored
-    activeEnemies = activeEnemies.filter(e => !(e && e === ghost));
-    // spawn 3 trains
-    spawnGhostTrains(ghost);
-    drawBattleUI();
-  }, 8000 + Math.floor(Math.random()*4000));
-}
-
-// Ghost boss primary behavior
+// ---------- ghostBossBehavior ----------
 function ghostBossBehavior(enemy, target) {
+  // initialization (only once)
   if (!enemy._initialized) {
     enemy._initialized = true;
     enemy._isHidden = true;
     enemy._hostTrainSpawned = false;
-    enemy._hiddenInIndex = Math.floor(Math.random()*3);
-    // place the ghost object into activeEnemies but hide immediately by replacing with trains
-    // remove ghost from activeEnemies if present (we'll manage ghost instance separately)
-    if (activeEnemies.includes(enemy)) {
-      activeEnemies = activeEnemies.filter(e => e !== enemy);
-    }
+    enemy._hiddenInIndex = Math.floor(Math.random() * 3);
+    // if the boss is present in activeEnemies, remove it and spawn trains instead
+    if (activeEnemies.includes(enemy)) activeEnemies = activeEnemies.filter(e => e !== enemy);
     spawnGhostTrains(enemy);
-    // spawn spectral minions while hidden (the requirement: when in the trains, spectral minions spawn every 3s)
-    enemy._hiddenSpectralIntervalId = setInterval(() => {
-      // only spawn while still hidden AND battle active
+
+    // spawn spectral minions while hidden
+    if (enemy._spectralIntervalId) { clearInterval(enemy._spectralIntervalId); enemy._spectralIntervalId = null; }
+    enemy._spectralIntervalId = setInterval(() => {
       if (!inBattle || !enemy._isHidden || enemy.currentHp <= 0) {
-        if (enemy._hiddenSpectralIntervalId) { clearInterval(enemy._hiddenSpectralIntervalId); enemy._hiddenSpectralIntervalId = null; }
+        if (enemy._spectralIntervalId) { clearInterval(enemy._spectralIntervalId); enemy._spectralIntervalId = null; }
         return;
       }
-      // spawn a spectral minion each 3s while hidden (they act immediately)
       const base = enemyTypes.SpectralMinion;
       const m = {
         type: 'SpectralMinion',
@@ -2699,17 +2683,16 @@ function ghostBossBehavior(enemy, target) {
       showTemporaryText('A spectral minion emerges from the trains!');
       drawBattleUI();
     }, 3000);
-    // also plan to auto-hide back after reveal via ghostHideCycle when revealed
-  }
-
-  // If hidden, do nothing (behavior handled by trains/minion spawner)
-  if (enemy._isHidden) {
-    // nothing to do per-turn here
+    // Ensure global reference for spawn/reveal handlers
+    window._lastGhostRef = enemy;
     return;
   }
 
-  // When revealed, ghost attacks like a normal boss but with occasional vanish attempt:
-  // attack
+  // If hidden, behavior is managed by trains and spectral spawner; do nothing per-turn
+  if (enemy._isHidden) return;
+
+  // revealed behavior: normal attack like other bosses
+  if (enemy.shieldActive || enemy.stunned) return;
   const dmg = enemy.damage || 0;
   let chosen = playerStats;
   if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) chosen = activeAlly;
@@ -2725,48 +2708,55 @@ function ghostBossBehavior(enemy, target) {
       activeAlly.attackTimerId = null;
     }
   }
+  drawBattleUI();
+  drawPlayerBattleStatus();
+  drawPartyStatus();
 
-  // Periodically attempt to hide back into trains (random small chance each turn)
-  if (!enemy._hideTimerScheduled && Math.random() < 0.90) {
-    enemy._hideTimerScheduled = true;
-    // schedule hide after 4-7s to give the player a chance to kill
-    setTimeout(() => {
-      enemy._hideTimerScheduled = false;
+  // small per-turn chance to schedule a hide (10%); ghostHideCycle handles deterministic hides too
+  if (!enemy._hideTimeoutScheduled && Math.random() < 0.10) {
+    enemy._hideTimeoutScheduled = true;
+    enemy._hideTimeout = setTimeout(() => {
+      enemy._hideTimeoutScheduled = false;
+      if (enemy._hideTimeout) { clearTimeout(enemy._hideTimeout); enemy._hideTimeout = null; }
       if (!inBattle || enemy.currentHp <= 0) return;
-      // remove any spectral spawning while hiding
+
+      // stop visible spectral spawner while hiding (if any)
       if (enemy._spectralIntervalId) { clearInterval(enemy._spectralIntervalId); enemy._spectralIntervalId = null; }
-      // hide
+
+      // hide and spawn trains
       enemy._isHidden = true;
       activeEnemies = activeEnemies.filter(e => !(e && e.type === 'Train'));
       spawnGhostTrains(enemy);
-      // while hidden, spectral spawner should already be running (we ensured earlier)
+
       showTemporaryText(`${enemy.name} fades into the phantom carriages!`);
       drawBattleUI();
-    }, 4000 + Math.floor(Math.random()*3000));
+    }, 4000 + Math.floor(Math.random() * 3000));
   }
 }
+
+// ---------- handleEnemyDeath wrapper (ensure trains and reveal logic) ----------
 const __orig_handleEnemyDeath = handleEnemyDeath;
 handleEnemyDeath = function(enemy, idx) {
+  // call original logic first to handle XP, removal, etc.
   const res = __orig_handleEnemyDeath(enemy, idx);
 
-  // If a train died and a ghost is present (hidden), attempt to reveal
+  // If a train died and a hidden ghost exists, handle reveal/respawn
   if (enemy && enemy._isGhostTrain) {
     let ghost = activeEnemies.find(e => e && e.type === 'GhostBoss');
-    if (!ghost) {
-      ghost = window._lastGhostRef;
-    }
-    if (ghost && ghost._isHidden) {
-      // If the dead train was the host, reveal; otherwise nothing
+    if (!ghost) ghost = window._lastGhostRef;
+    if (!ghost) return res;
+
+    // If ghost is hidden and host train died -> reveal
+    if (ghost._isHidden) {
       if (enemy._trainIndex === ghost._hiddenInIndex) {
-        revealGhostFromTrain(enemy);
-        // schedule ghost to maybe hide again later
-        ghostHideCycle(ghost);
+        revealGhostFromTrain(enemy); // reveals and schedules next hide
+        // guard: ensure hide cycle will be called again after reveal (revealGhostFromTrain does this)
       } else {
-        // dead non-host train: simply remove it; if it was the last train and host still hidden, respawn trains
+        // non-host train died: remove it; if none remain, respawn trains
         const remainingTrains = activeEnemies.filter(e => e && e._isGhostTrain);
         if (remainingTrains.length === 0 && ghost && ghost._isHidden) {
-          // respawn new trains and keep ghost hidden
           spawnGhostTrains(ghost);
+          ghost._hostTrainSpawned = true;
         }
       }
     }
@@ -2774,6 +2764,7 @@ handleEnemyDeath = function(enemy, idx) {
 
   return res;
 };
+
 //battlefield boss
 function critBossBehavior(enemy, target) {
   if (enemy.shieldActive) {
