@@ -2712,8 +2712,8 @@ function ghostBossBehavior(enemy, target) {
   drawPlayerBattleStatus();
   drawPartyStatus();
 
-  // small per-turn chance to schedule a hide (10%); ghostHideCycle handles deterministic hides too
-  if (!enemy._hideTimeoutScheduled && Math.random() < 0.10) {
+
+  if (!enemy._hideTimeoutScheduled && Math.random() < 0.95) {
     enemy._hideTimeoutScheduled = true;
     enemy._hideTimeout = setTimeout(() => {
       enemy._hideTimeoutScheduled = false;
