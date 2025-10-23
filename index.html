@@ -3139,7 +3139,38 @@ function spawnRound(roundIdx) {
   const encounter = currentRoundEncounters[roundIdx] || [];
   const mult = getDifficultyMultipliers();
 
-  activeEnemies = encounter.map(enemyData => {
+  // Build enemies; handle GhostBoss as a special case inside the map callback
+  const built = encounter.map(enemyData => {
+    // Special-case GhostBoss before the normal creation flow
+    if (enemyData && enemyData.type === 'GhostBoss') {
+      const baseStats = enemyTypes['GhostBoss'] || {};
+      const ghost = {
+        ...enemyData,
+        type: 'GhostBoss',
+        name: baseStats.name || 'Spectral Conductor',
+        maxHp: baseStats.maxHp || 180,
+        currentHp: (enemyData.currentHp != null) ? enemyData.currentHp : (baseStats.maxHp || 180),
+        damage: baseStats.damage || 6,
+        xpReward: baseStats.xpReward || 180,
+        shieldActive: false,
+        stunned: false,
+        poisoned: false,
+        _isHidden: true,
+        _hiddenInIndex: Math.floor(Math.random() * 3),
+        _hostTrainSpawned: false
+      };
+
+      // keep a stable global reference so reveal logic can re-add same object (preserves HP)
+      window._lastGhostRef = ghost;
+
+      // spawn trains that will represent the hidden ghost (spawnGhostTrains will add trains to activeEnemies)
+      spawnGhostTrains(ghost);
+
+      // return null here so this map slot doesn't add a ghost entry directly
+      return null;
+    }
+
+    // Normal enemy creation:
     const baseStats = enemyTypes[enemyData.type] || {};
     const baseHp = (baseStats.maxHp != null) ? baseStats.maxHp : (enemyData.maxHp || 1);
     const baseDmg = (baseStats.damage != null) ? baseStats.damage : (enemyData.damage || 1);
@@ -3165,33 +3196,11 @@ function spawnRound(roundIdx) {
       isBoss: !!baseStats.isBoss
     };
   });
-  
-if (enemyData.type === 'GhostBoss') {
-  const baseStats = enemyTypes['GhostBoss'] || {};
-  const ghost = {
-    ...enemyData,
-    type: 'GhostBoss',
-    name: baseStats.name || 'Spectral Conductor',
-    maxHp: baseStats.maxHp || 180,
-    currentHp: (enemyData.currentHp != null) ? enemyData.currentHp : (baseStats.maxHp || 180),
-    damage: baseStats.damage || 6,
-    xpReward: baseStats.xpReward || 180,
-    shieldActive: false, stunned: false, poisoned: false,
-    // hidden state
-    _isHidden: true,
-    _hiddenInIndex: Math.floor(Math.random()*3),
-    _hostTrainSpawned: false
-  };
 
-  // keep a global reference so reveal logic can re-add the exact same object preserving HP
-  window._lastGhostRef = ghost;
-
-  spawnGhostTrains(ghost);
-  return null;
-}
+  // Filter out nulls (GhostBoss entries returned null because spawnGhostTrains handled it)
+  activeEnemies = built.filter(Boolean);
 
   selectedEnemyIndex = 0;
-  // restart enemy turn timer
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
   enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 
