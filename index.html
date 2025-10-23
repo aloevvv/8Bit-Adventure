@@ -3233,10 +3233,9 @@ function spawnRound(roundIdx) {
         ...enemyData,
         type: 'GhostBoss',
         name: baseStats.name || 'The Maestro',
-        // accept either maxHp or maxHP from definitions
-        maxHp: (enemyData.maxHp != null) ? enemyData.maxHp : (baseStats.maxHp != null ? baseStats.maxHp : (baseStats.maxHP || 180)),
-        currentHp: (enemyData.currentHp != null) ? enemyData.currentHp : (baseStats.maxHp != null ? baseStats.maxHp : (baseStats.maxHP || 180)),
-        damage: (baseStats.damage != null) ? baseStats.damage : (enemyData.damage || 6),
+        maxHp: Math.max(1, Math.floor(baseHp * mult.enemyHp)),
+        currentHp: Math.max(1, Math.floor(baseHp * mult.enemyHp)),
+        damage: Math.max(0, Math.floor(baseDmg * mult.enemyDmg)),
         xpReward: baseStats.xpReward || enemyData.xpReward || 180,
         shieldActive: false,
         stunned: false,
