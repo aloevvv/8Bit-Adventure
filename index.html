@@ -3223,32 +3223,37 @@ function spawnRound(roundIdx) {
   const built = encounter.map(enemyData => {
     if (!enemyData) return null;
 
-    // Special-case GhostBoss
-    if (enemyData.type === 'GhostBoss') {
-      const baseStats = enemyTypes['GhostBoss'] || {};
-      const ghost = {
-        ...enemyData,
-        type: 'GhostBoss',
-        name: baseStats.name || 'The Maestro',
-        // accept either maxHp or maxHP from definitions
-        maxHp: (enemyData.maxHp != null) ? enemyData.maxHp : (baseStats.maxHp != null ? baseStats.maxHp : (baseStats.maxHP || 180)),
-        currentHp: (enemyData.currentHp != null) ? enemyData.currentHp : (baseStats.maxHp != null ? baseStats.maxHp : (baseStats.maxHP || 180)),
-        damage: (baseStats.damage != null) ? baseStats.damage : (enemyData.damage || 6),
-        xpReward: baseStats.xpReward || enemyData.xpReward || 180,
-        shieldActive: false,
-        stunned: false,
-        poisoned: false,
-        _isHidden: true,
-        _hiddenInIndex: Math.floor(Math.random() * 3),
-        _hostTrainSpawned: false
-      };
-
     
-      window._lastGhostRef = ghost;
+if (enemyData.type === 'GhostBoss') {
+  const baseStats = enemyTypes['GhostBoss'] || {};
+  const mult = getDifficultyMultipliers();
+  const baseHp = (baseStats.maxHp != null) ? baseStats.maxHp : 450;
+  const baseDmg = (baseStats.damage != null) ? baseStats.damage : 3;
 
-     
-      return null;
-    }
+  const ghost = {
+    ...enemyData,
+    type: 'GhostBoss',
+    name: baseStats.name || 'The Maestro',
+    maxHp: Math.max(1, Math.floor(baseHp * mult.enemyHp)),
+    currentHp: Math.max(1, Math.floor(baseHp * mult.enemyHp)),
+    damage: Math.max(0, Math.floor(baseDmg * mult.enemyDmg)),
+    xpReward: baseStats.xpReward || enemyData.xpReward || 180,
+    behavior: baseStats.behavior || 'ghostBossBehavior',
+    shieldActive: false,
+    stunned: false,
+    poisoned: false,
+    resistances: baseStats.defaultResistances || {}
+  };
+
+  
+  window._lastGhostRef = ghost;
+  
+  spawnGhostTrains(ghost);
+  // mark as spawned to avoid double-spawning
+  ghost._hostTrainSpawned = true;
+  // return null to skip pushing a ghost object in built[]
+  return null;
+}
 
     
     const baseStats = enemyTypes[enemyData.type] || {};
