@@ -4521,12 +4521,19 @@ function doCleanse() {
 
   // Key binding: 'x' opens overlay when not in battle
   document.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'x') {
-      if (!inBattle && !isGameOver && tpAttemptsLeft > 0 && !tpWon) {
-        openTargetPractice();
-      }
+  if (e.key.toLowerCase() === 'x') {
+    e.preventDefault();
+    const obj = checkInteraction(x - 16, y) || checkInteraction(x + 16, y) || checkInteraction(x, y - 16) || checkInteraction(x, y + 16) || checkInteraction(x, y);
+    if (obj && obj.action === 'target_practice') openTargetPractice();
+    else if (obj) handleInteraction(obj);
+    else {
+      const zone = findNearbyDialogZone(x, y);
+      if (zone) showDialog(zone.text, zone.id, { style: zone.style || 'dialog', speaker: zone.speaker || null });
+      else showTemporaryText('Nothing to interact with.');
     }
-  });
+  }
+});
+
 
   // Expose functions
   window.openTargetPractice = openTargetPractice;
