@@ -623,21 +623,6 @@ inventory.set("weapon_saloon", 1);
 inventory.set("weapon_haunted", 1);
 inventory.set("weapon_virus", 1);
 
-  const ABILITIES = {
-  block: { cooldownMs: 10000, effectMs: 1000 },  
-  counter: { cooldownMs: 8000, windowMs: 700, stunMs: 3000 }, 
-  cleanse: { cooldownMs: 15000 }                 
-};
-
-  let abilityCooldowns = {
-  block: 0, 
-  counter: 0,
-  cleanse: 0
-};
-let abilityRegenIntervalId = null;
-let blockActive = false;
-let counterWindowActive = false;
-  
 let playerStats = {
   level: 1,
   currentHp: 8,
@@ -1243,6 +1228,26 @@ function normalizeDialogLines(textOrLines, defaultStyle) {
     };
   });
 }
+  function findNearbyDialogZone(px, py) {
+  // reuse existing findDialogZone but allow manual triggers (ignore autoShow if present)
+  const level = currentLevel;
+  if (!level || !level.dialogZones) return null;
+  const hitboxX = px + (typeof hitboxOffsetX !== 'undefined' ? hitboxOffsetX : 0);
+  const hitboxY = py + (typeof hitboxOffsetY !== 'undefined' ? hitboxOffsetY : 0);
+  const hw = typeof hitboxWidth !== 'undefined' ? hitboxWidth : 16;
+  const hh = typeof hitboxHeight !== 'undefined' ? hitboxHeight : 16;
+  for (const zone of level.dialogZones) {
+    if (!zone || !zone.id) continue;
+    if (shownDialogs.has(zone.id)) continue;
+    if (
+      hitboxX < zone.x + zone.width &&
+      hitboxX + hw > zone.x &&
+      hitboxY < zone.y + zone.height &&
+      hitboxY + hh > zone.y
+    ) return zone;
+  }
+  return null;
+}
 
 function applyDialogStyle(box, style) {
   box.style.maxWidth = '640px';
@@ -1251,6 +1256,9 @@ function applyDialogStyle(box, style) {
     box.style.background = '#223344';
     box.style.fontSize = '14px';
   } else if (style === 'lou') {
+    box.style.background = '#78bdff';
+    box.style.fontSize = '14px';
+  } else if (style === 'Unit318920') {
     box.style.background = '#78bdff';
     box.style.fontSize = '14px';
   } else if (style === 'boss') {
@@ -1264,7 +1272,36 @@ function applyDialogStyle(box, style) {
     box.style.fontSize = '12px';
   }
 }
+function tryTriggerDialogOnX() {
+  if (inBattle || isGameOver) return;
 
+  const interactableObject =
+    checkInteraction(x - 16, y) ||
+    checkInteraction(x + 16, y) ||
+    checkInteraction(x, y - 16) ||
+    checkInteraction(x, y + 16) ||
+    checkInteraction(x, y);
+
+  if (interactableObject) {
+    const lines = interactableObject.recruitDialog || interactableObject.dialog || null;
+    if (lines) {
+      showDialog(lines, interactableObject.id || null, { style: interactableObject.dialogStyle || 'dialog', speaker: interactableObject.speaker || null });
+      return;
+    }
+    handleInteraction(interactableObject);
+    return;
+  }
+
+  const zone = findNearbyDialogZone(x, y);
+  if (zone) {
+    showDialog(zone.text, zone.id, { style: zone.style || 'dialog', speaker: zone.speaker || null });
+    return;
+  }
+
+  // 3) nothing to interact with
+  showTemporaryText("Nothing to interact with.");
+}
+  
 function showDialog(textOrLines, idToMark, opts = {}) {
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
@@ -1297,7 +1334,6 @@ playBtn.addEventListener('click', () => {
   titleScreen.style.display = 'none';
   achievementsMap['played'].progress++;
   checkAchievements();
-  updateAbilityButtonsUI();
 
   // Set starting level and spawn coordinates (adjust if different)
   currentLevelIndex = 0;
@@ -2196,19 +2232,6 @@ function drawPlayerBattleStatus() {
 // normal enemy attack
 function normalAttack(enemy, target) {
   const damage = enemy.damage || 0;
-   if (typeof normalAttack === 'function') {
-    const _orig_normalAttack = normalAttack;
-    normalAttack = function(enemy, target) {
-      if (target === playerStats) {
-        const dmg = enemy.damage || 0;
-        if (typeof playerTakeDamage === 'function') playerTakeDamage(dmg, enemy);
-        else _orig_normalAttack(enemy, target);
-      } else {
-        // fallback to original (for ally)
-        _orig_normalAttack(enemy, target);
-      }
-    };
-  }
   if (target === playerStats) {
     playerTakeDamage(damage);
     showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
@@ -2225,20 +2248,6 @@ function normalAttack(enemy, target) {
 }
 
 function sniperAttack(enemy, target) {
-  if (typeof sniperAttack === 'function') {
-    const _orig_sniperAttack = sniperAttack;
-    sniperAttack = function(enemy, target) {
-      // compute damage like original wrapper did
-      const isCritical = Math.random() < 0.3;
-      const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
-      if (target === playerStats) {
-        if (typeof playerTakeDamage === 'function') playerTakeDamage(damage, enemy);
-        else _orig_sniperAttack(enemy, target);
-      } else {
-        _orig_sniperAttack(enemy, target);
-      }
-    };
-  }
   const isCritical = Math.random() < 0.3;
   const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
   if (target === playerStats) {
@@ -3357,112 +3366,7 @@ if (behavior === 'normalAttack') {
   }
     });
 }
-(function ensureAbilityButtons() {
-  const controls = document.getElementById('battle-controls');
-  if (!controls) return;
 
-  // helper to create a button with overlay
-  function makeBtn(id, text) {
-    if (document.getElementById(id)) return document.getElementById(id);
-    const btn = document.createElement('button');
-    btn.id = id;
-    btn.className = 'ability-button';
-    btn.style.position = 'relative';
-    btn.style.overflow = 'hidden';
-    btn.style.minWidth = '90px';
-    btn.style.fontSize = '10px';
-    btn.textContent = text;
-    // cooldown overlay
-    const overlay = document.createElement('div');
-    overlay.className = id + '-overlay';
-    overlay.style.position = 'absolute';
-    overlay.style.left = '0';
-    overlay.style.top = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.background = 'rgba(0,0,0,0.6)';
-    overlay.style.display = 'none';
-    overlay.style.pointerEvents = 'none';
-    overlay.style.transition = 'width 0.2s linear';
-    overlay.style.zIndex = '100';
-    btn.appendChild(overlay);
-    controls.insertBefore(btn, controls.querySelector('#inventory-battle-button')); // place before inventory button
-    return btn;
-  }
-
-  makeBtn('ability-block', 'Block');
-  makeBtn('ability-counter', 'Counter');
-  makeBtn('ability-cleanse', 'Cleanse');
-})();
-
-// Update ability buttons UI (disabled, overlay)
-function updateAbilityButtonsUI() {
-  const now = Date.now();
-  ['block','counter','cleanse'].forEach(name => {
-    const btn = document.getElementById(`ability-${name}`);
-    if (!btn) return;
-    const overlay = btn.querySelector(`.${btn.id}-overlay`);
-    const cd = abilityCooldowns[name] || 0;
-    if (cd <= 0) {
-      btn.disabled = false;
-      if (overlay) overlay.style.display = 'none';
-      btn.style.opacity = '1';
-    } else {
-      btn.disabled = true;
-      if (overlay) {
-        overlay.style.display = 'block';
-        // width corresponds to fraction remaining
-        const frac = Math.max(0, Math.min(1, cd / ABILITIES[name].cooldownMs));
-        overlay.style.width = `${frac * 100}%`;
-      }
-      btn.style.opacity = '0.6';
-    }
-  });
-
-  // show active indicators for block/counter windows
-  const blockBtn = document.getElementById('ability-block');
-  if (blockBtn) blockBtn.style.boxShadow = blockActive ? '0 0 10px 3px rgba(0,200,255,0.7)' : '';
-  const counterBtn = document.getElementById('ability-counter');
-  if (counterBtn) counterBtn.style.boxShadow = counterWindowActive ? '0 0 10px 3px rgba(255,200,0,0.7)' : '';
-}
-
-// Start per-battle ability regeneration loop
-function startAbilityRegen() {
-  if (abilityRegenIntervalId) clearInterval(abilityRegenIntervalId);
-  // tick every 200ms for smoother overlay updates
-  abilityRegenIntervalId = setInterval(() => {
-    let changed = false;
-    ['block','counter','cleanse'].forEach(name => {
-      if (abilityCooldowns[name] > 0) {
-        abilityCooldowns[name] = Math.max(0, abilityCooldowns[name] - 200);
-        changed = true;
-      } else {
-        // ensure it's clamped to zero
-        abilityCooldowns[name] = 0;
-      }
-    });
-    if (changed) updateAbilityButtonsUI();
-  }, 200);
-}
-
-// Stop regen when battle ends
-function stopAbilityRegen() {
-  if (abilityRegenIntervalId) {
-    clearInterval(abilityRegenIntervalId);
-    abilityRegenIntervalId = null;
-  }
-}
-
-  function resetAbilitiesForBattle() {
-  abilityCooldowns.block = 0;
-  abilityCooldowns.counter = 0;
-  abilityCooldowns.cleanse = 0;
-  blockActive = false;
-  counterWindowActive = false;
-  updateAbilityButtonsUI();
-  startAbilityRegen();
-}
-  
 function enemyAttack(enemy, target) {
   const damage = enemy.damage || 0;
   if (target === playerStats) {
@@ -3496,48 +3400,6 @@ function enemyAttack(enemy, target) {
     }
   }
 
-    if (typeof playerTakeDamage === 'function') {
-  const _orig_playerTakeDamage = playerTakeDamage;
-  playerTakeDamage = function(amount, attacker) {
-    // If block active -> ignore damage
-    if (blockActive) {
-      showTemporaryText('Blocked incoming damage!');
-      return;
-    }
-
-    // If counter window active -> reflect and stun attacker
-    if (counterWindowActive) {
-      showTemporaryText('Counter! Damage reflected!');
-      // reflect to attacker if valid object reference with hp
-      if (attacker && typeof attacker.currentHp === 'number') {
-        attacker.currentHp = Math.max(0, attacker.currentHp - amount);
-        // stun attacker if possible
-        attacker.stunned = true;
-        // schedule unstun
-        setTimeout(() => { if (attacker) attacker.stunned = false; drawBattleUI(); }, ABILITIES.counter.stunMs);
-        if (attacker.currentHp === 0) {
-          handleEnemyDeath(attacker);
-        }
-        drawBattleUI();
-      } else {
-        const targetAtt = activeEnemies[selectedEnemyIndex];
-        if (targetAtt) {
-          targetAtt.currentHp = Math.max(0, targetAtt.currentHp - amount);
-          targetAtt.stunned = true;
-          setTimeout(() => { if (targetAtt) targetAtt.stunned = false; drawBattleUI(); }, ABILITIES.counter.stunMs);
-          if (targetAtt.currentHp === 0) handleEnemyDeath(targetAtt);
-          drawBattleUI();
-        }
-      }
-      
-      return;
-    }
-
-    // Else normal behavior
-    return _orig_playerTakeDamage(amount);
-  };
-}
-    
   playerStats.currentHp -= amount;
 
   // If Extra Life active, prevent death and clamp HP at 1
@@ -3666,8 +3528,6 @@ if (willHideBattleBlackout) {
   if (enemy.type === 'CaveBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_caveboss'].progress = 1;
   if (enemy.type === 'MountainBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_mountainboss'].progress = 1;
   if (enemy.type === 'GhostBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_ghostboss'].progress = 1;
-  if (enemy.type === 'SecondStageBossStage2' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_ghostboss'].progress = 1; //edit latter
-  if (enemy.type === 'IslandBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_ghostboss'].progress = 1;
   if (enemy.type === 'Dummy') achievementsMap['kill_tutorial_dummy'].progress = 1;
   checkAchievements();
 
@@ -3750,17 +3610,6 @@ function endBattle(outcome) {
   if (window._raft) {
   window._raft = null;
 }
-  if (typeof endBattle === 'function') {
-  const _orig_endBattle = endBattle;
-  endBattle = function(outcome) {
-    // cleanup active ability windows
-    blockActive = false;
-    counterWindowActive = false;
-    stopAbilityRegen();
-    updateAbilityButtonsUI();
-    return _orig_endBattle(outcome);
-  };
-}
 
   if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
   if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
@@ -3793,17 +3642,13 @@ function endBattle(outcome) {
 function initiateBattle(zoneType, zoneObject) {
   inBattle = true;
   defeatedZone = { type: zoneType, object: zoneObject };
-  resetAbilitiesForBattle();
 
   // stamina regen
   staminaRegenIntervalId = setInterval(() => {
     updateStamina(playerStats.currentStamina + 1);
     drawPlayerBattleStatus();
   }, 100);
-  
-setInterval(() => {
-  if (inBattle) updateAbilityButtonsUI();
-}, 250);
+
 
   if (zoneObject && Array.isArray(zoneObject.encounter) && Array.isArray(zoneObject.encounter[0])) {
     currentRoundEncounters = zoneObject.encounter.map(round => Array.isArray(round) ? round.slice() : []);
@@ -3816,13 +3661,6 @@ setInterval(() => {
   // Spawn first round
   spawnRound(currentRoundIndex);
 
-  const _orig_initiateBattle = typeof initiateBattle === 'function' ? initiateBattle : null;
-initiateBattle = function(zoneType, zoneObject) {
-  if (_orig_initiateBattle) _orig_initiateBattle(zoneType, zoneObject);
-  // reset and start per-battle ability regen
-  resetAbilitiesForBattle();
-};
-  
   // Setup activeAlly if equipped
   if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
     const allyBase = alliesData.find(a => a.id === equippedAllyId);
@@ -3984,97 +3822,7 @@ function checkAchievements() {
     }
   });
 }
-function triggerAbilityCooldown(name) {
-  if (!ABILITIES[name]) return;
-  abilityCooldowns[name] = ABILITIES[name].cooldownMs;
-  updateAbilityButtonsUI();
-}
 
-// Implement ability effects
-function doBlock() {
-  if (abilityCooldowns.block > 0 || blockActive) {
-    showTemporaryText('Block not ready.');
-    return;
-  }
-  triggerAbilityCooldown('block');
-  blockActive = true;
-  showTemporaryText('Block active! No damage for 1s.');
-  updateAbilityButtonsUI();
-  setTimeout(() => {
-    blockActive = false;
-    showTemporaryText('Block ended.');
-    updateAbilityButtonsUI();
-  }, ABILITIES.block.effectMs);
-}
-
-// Counter: opens a small timing window where incoming damage is countered
-function doCounter() {
-  if (abilityCooldowns.counter > 0 || counterWindowActive) {
-    showTemporaryText('Counter not ready.');
-    return;
-  }
-  triggerAbilityCooldown('counter');
-  counterWindowActive = true;
-  showTemporaryText('Counter window open! Time it well (~0.7s).');
-  updateAbilityButtonsUI();
-
-  setTimeout(() => {
-    counterWindowActive = false;
-    showTemporaryText('Counter window closed.');
-    updateAbilityButtonsUI();
-  }, ABILITIES.counter.windowMs);
-}
-
-// Cleanse: remove fire/burn/poison status from player and ally
-function doCleanse() {
-  if (abilityCooldowns.cleanse > 0) {
-    showTemporaryText('Cleanse not ready.');
-    return;
-  }
-  triggerAbilityCooldown('cleanse');
-
-  // remove player status flags (poisoned, burned, burning etc)
-  const removed = [];
-  if (playerStats && playerStats._burned) { playerStats._burned = false; removed.push('burn'); }
-  if (playerStats && playerStats._poisoned) { playerStats._poisoned = false; removed.push('poison'); }
-  // other code in your project may use flags like playerStats.burning; clear common names.
-  ['burned','burning','poisoned'].forEach(k => {
-    if (playerStats && playerStats[k]) { playerStats[k] = false; if (!removed.includes(k)) removed.push(k); }
-  });
-
-  if (activeAlly) {
-    if (activeAlly._burned) { activeAlly._burned = false; removed.push(`${activeAlly.name}: burn`); }
-    if (activeAlly._poisoned) { activeAlly._poisoned = false; removed.push(`${activeAlly.name}: poison`); }
-    ['burned','burning','poisoned'].forEach(k => {
-      if (activeAlly && activeAlly[k]) { activeAlly[k] = false; if (!removed.includes(k)) removed.push(k); }
-    });
-  }
-
-  // Also remove DOT intervals attached to player if you used any (example: player._burnIntervalId)
-  if (playerStats && playerStats._burnIntervalId) {
-    clearInterval(playerStats._burnIntervalId);
-    playerStats._burnIntervalId = null;
-  }
-  if (activeAlly && activeAlly._burnIntervalId) {
-    clearInterval(activeAlly._burnIntervalId);
-    activeAlly._burnIntervalId = null;
-  }
-
-  showTemporaryText(removed.length ? `Cleanse removed: ${removed.join(', ')}` : 'Nothing to cleanse.');
-  updateAbilityButtonsUI();
-  drawPlayerBattleStatus();
-  drawPartyStatus();
-}
-
-  (function wireAbilityButtons() {
-  const b = document.getElementById('ability-block');
-  const c = document.getElementById('ability-counter');
-  const cl = document.getElementById('ability-cleanse');
-  if (b) b.addEventListener('click', doBlock);
-  if (c) c.addEventListener('click', doCounter);
-  if (cl) cl.addEventListener('click', doCleanse);
-})();
-  
 function drawAchievementsUI() {
   achievementsPopup.innerHTML = '';
   achievements.forEach(ach => {
@@ -5123,6 +4871,7 @@ canvas.addEventListener('keydown', function(e) {
 
   if (key === 'x') {
     e.preventDefault();
+    tryTriggerDialogOnX();
     const interactableObject =
       checkInteraction(x - 16, y) ||
       checkInteraction(x + 16, y) ||
