@@ -4190,17 +4190,19 @@ function doCleanse() {
   // ---------- Target Practice Mini-game ----------
 (function installTargetPractice() {
   // Tunables
-  const TP_DURATION_MS = 30_000;         // 30s round
-  const TP_MIN_SPAWN_MS = 700;           // spawn interval min
-  const TP_MAX_SPAWN_MS = 1200;          // spawn interval max
-  const TP_TARGET_LIFETIME_MS = 1500;    // normal target lifetime
-  const TP_GOLD_LIFETIME_MS = 750;       // golden target lifetime
+  const TP_DURATION_MS = 30_000;
+  const TP_MIN_SPAWN_MS = 700;
+  const TP_MAX_SPAWN_MS = 1200;
+  const TP_TARGET_LIFETIME_MS = 1500;
+  const TP_GOLD_LIFETIME_MS = 750;
   const TP_NORMAL_SCORE = 100;
   const TP_GOLD_SCORE = 300;
   const TP_ATTEMPTS_MAX = 5;
-  const TP_GOAL_MIN = 30000;              // adjustable random goal min impossible to beat to gauge what score to put here
-  const TP_GOAL_MAX = 30000;              // adjustable random goal max
-  const GOLD_TIMES = [10_000, 20_000];   // spawn golden at these elapsed times
+  const TP_GOAL_FIXED = 5000;       // fixed hard goal
+  const TP_GOAL_RANDOMIZE = false; 
+  const TP_GOAL_MIN = 1200;
+  const TP_GOAL_MAX = 1800;
+  const GOLD_TIMES = [10_000, 20_000];
 
   // State
   let tpAttemptsLeft = TP_ATTEMPTS_MAX;
@@ -4213,6 +4215,7 @@ function doCleanse() {
   let tpRemainingTimeMs = TP_DURATION_MS;
   let tpWon = false;
   let tpGoldenSpawnedAt = new Set();
+  let tpThreeSecondWaveSpawned = false;
 
   // Elements
   const overlay = document.getElementById('target-practice-overlay');
@@ -4230,8 +4233,11 @@ function doCleanse() {
   function openTargetPractice() {
     if (tpWon) { showTemporaryText && showTemporaryText('You already beat this challenge!'); return; }
     if (tpAttemptsLeft <= 0) {
-      // final dialog from NPC after exhausted attempts
-      showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style: 'unit', speaker: Unit318920 });
+      showDialog && showDialog(
+        ["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"],
+        null,
+        { style: 'unit', speaker: Unit318920 || null }
+      );
       return;
     }
     overlay.style.display = 'flex';
@@ -4244,15 +4250,14 @@ function doCleanse() {
   }
 
   function startRound() {
-    stopRound(); // reset
+    stopRound();
     tpActive = true;
     tpRoundStart = performance.now();
     tpScore = 0;
     tpRemainingTimeMs = TP_DURATION_MS;
     tpGoldenSpawnedAt.clear();
-    // random goal per round but persistent while not beaten; easy to adjust constants above
-    tpGoal = randInt(TP_GOAL_MIN, TP_GOAL_MAX);
-    // If user already has a permanent set goal you can store pref here
+    tpThreeSecondWaveSpawned = false;
+    tpGoal = TP_GOAL_RANDOMIZE ? randInt(TP_GOAL_MIN, TP_GOAL_MAX) : TP_GOAL_FIXED;
     scoreEl.textContent = `Score: ${tpScore}`;
     goalEl.textContent = `Goal: ${tpGoal}`;
     attemptsEl.textContent = tpAttemptsLeft;
@@ -4281,6 +4286,14 @@ function doCleanse() {
       }
     }
 
+    // 3-second burst: spawn 12 normal targets once
+    if (!tpThreeSecondWaveSpawned && tpRemainingTimeMs <= 3000) {
+      tpThreeSecondWaveSpawned = true;
+      for (let i = 0; i < 12; i++) {
+        setTimeout(() => { if (tpActive) spawnTarget(false); }, i * 40 + Math.floor(Math.random() * 80));
+      }
+    }
+
     if (tpRemainingTimeMs <= 0) {
       endRound();
     }
@@ -4301,8 +4314,8 @@ function doCleanse() {
   }
 
   function spawnTarget(isGolden) {
+    if (!playfield) return;
     const pfRect = playfield.getBoundingClientRect();
-    // small padding so target is fully visible
     const pad = 8;
     const tw = isGolden ? 72 : 64;
     const th = isGolden ? 72 : 64;
@@ -4312,21 +4325,19 @@ function doCleanse() {
     const y = randBetween(pad, maxY);
     const el = document.createElement('div');
     el.className = `tp-target ${isGolden ? 'golden' : 'normal'}`;
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
+    el.style.left = `${Math.round(x)}px`;
+    el.style.top = `${Math.round(y)}px`;
     const label = document.createElement('div');
     label.className = 'tp-target-label';
-    label.textContent = isGolden ? '300' : '100';
+    label.textContent = isGolden ? String(TP_GOLD_SCORE) : String(TP_NORMAL_SCORE);
     el.appendChild(label);
     playfield.appendChild(el);
 
-    // lifetime
     const life = isGolden ? TP_GOLD_LIFETIME_MS : TP_TARGET_LIFETIME_MS;
     let removed = false;
     const remove = () => { if (!removed) { removed = true; el.remove(); } };
     const lifeTimer = setTimeout(remove, life);
 
-    // click handler
     function onClick() {
       if (!tpActive) return;
       clearTimeout(lifeTimer);
@@ -4335,9 +4346,7 @@ function doCleanse() {
       const gained = isGolden ? TP_GOLD_SCORE : TP_NORMAL_SCORE;
       tpScore += gained;
       scoreEl.textContent = `Score: ${tpScore}`;
-      // quick feedback
       showTemporaryText && showTemporaryText(`+${gained}`);
-      // immediate win check if we surpassed goal early
       if (tpScore >= tpGoal) {
         endRound(true);
       }
@@ -4346,6 +4355,7 @@ function doCleanse() {
   }
 
   function clearAllTargets() {
+    if (!playfield) return;
     while (playfield.firstChild) playfield.firstChild.remove();
   }
 
@@ -4354,58 +4364,56 @@ function doCleanse() {
     stopRound();
     if (didWin || tpScore >= tpGoal) {
       tpWon = true;
-      // award achievement if exists
       if (achievementsMap && achievementsMap['tp_beat_master']) {
         achievementsMap['tp_beat_master'].progress = 1;
         checkAchievements && checkAchievements();
       } else if (achievementsMap) {
-        // create a small achievement entry if not present
         achievementsMap['tp_beat_master'] = { id:'tp_beat_master', name:'Sharp Shooter', description:'Beat the target practice score', target:1, progress:1, unlocked:false, checkCondition: function(){ return this.progress>=1; } };
         checkAchievements && checkAchievements();
       }
       showTemporaryText && showTemporaryText('You beat the goal! Achievement unlocked!');
-      // stop attempts permanently
       tpAttemptsLeft = 0;
       attemptsEl.textContent = tpAttemptsLeft;
-      // close overlay after short delay
-      setTimeout(() => overlay.style.display = 'none', 1300);
+      setTimeout(() => overlay.style.display = 'none', 1100);
     } else {
-      // failed attempt
       tpAttemptsLeft = Math.max(0, tpAttemptsLeft - 1);
       attemptsEl.textContent = tpAttemptsLeft;
       if (tpAttemptsLeft <= 0) {
-        showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style:'dialog', speaker:null });
+        showDialog && showDialog(
+          ["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"],
+          null,
+          { style: 'unit', speaker: Unit318920 || null }
+        );
         overlay.style.display = 'none';
       } else {
-        // let player choose restart or close; keep overlay open (we already stopped round)
         showTemporaryText && showTemporaryText('Attempt failed. Restart or close.');
       }
     }
   }
 
   // UI wiring
-  restartBtn.addEventListener('click', () => {
+  if (restartBtn) restartBtn.addEventListener('click', () => {
     if (tpAttemptsLeft <= 0 || tpWon) { showTemporaryText && showTemporaryText('No more attempts.'); return; }
     startRound();
   });
-  closeBtn.addEventListener('click', () => {
+  if (closeBtn) closeBtn.addEventListener('click', () => {
     closeTargetPractice();
   });
 
-  // Key binding: press 'x' to open target practice when not in battle (consistent with interact button)
+  // Key binding: 'x' opens overlay when not in battle
   document.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() === 'x') {
-      // reasonable assumption: user wants to open the popup if not in battle and attempts remain
       if (!inBattle && !isGameOver && tpAttemptsLeft > 0 && !tpWon) {
         openTargetPractice();
       }
     }
   });
 
-  // Expose open function (optional) so other interactables can call it
+  // Expose functions
   window.openTargetPractice = openTargetPractice;
   window.closeTargetPractice = closeTargetPractice;
 })();
+
 
 function drawAchievementsUI() {
   achievementsPopup.innerHTML = '';
