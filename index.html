@@ -4190,19 +4190,22 @@ function doCleanse() {
   // ---------- Target Practice Mini-game ----------
 (function installTargetPractice() {
   // Tunables
-  const TP_DURATION_MS = 30_000;
-  const TP_MIN_SPAWN_MS = 700;
-  const TP_MAX_SPAWN_MS = 1200;
-  const TP_TARGET_LIFETIME_MS = 1500;
-  const TP_GOLD_LIFETIME_MS = 750;
+  const TP_DURATION_MS = 30_000;         // 30s round
+  const TP_MIN_SPAWN_MS = 700;           // spawn interval min
+  const TP_MAX_SPAWN_MS = 1200;          // spawn interval max
+  const TP_TARGET_LIFETIME_MS = 1500;    // normal target lifetime
+  const TP_GOLD_LIFETIME_MS = 750;       // golden target lifetime
   const TP_NORMAL_SCORE = 100;
   const TP_GOLD_SCORE = 300;
   const TP_ATTEMPTS_MAX = 5;
-  const TP_GOAL_FIXED = 4500;       // fixed hard goal
-  const TP_GOAL_RANDOMIZE = false; 
+  const TP_GOAL_FIXED = 4500;            // fixed hard goal (used if TP_GOAL_RANDOMIZE false)
+  const TP_GOAL_RANDOMIZE = false;
   const TP_GOAL_MIN = 1200;
   const TP_GOAL_MAX = 1800;
-  const GOLD_TIMES = [10_000, 20_000];
+  const GOLD_TIMES = [10_000, 20_000];   // golden spawn times (ms)
+  const WAVE_COUNT = 12;                 // number of targets in final 3s burst
+  const WAVE_SPREAD_MS = 40;             // base delay between burst spawns
+  const WAVE_JITTER_MS = 80;             // added random jitter per spawn
 
   // State
   let tpAttemptsLeft = TP_ATTEMPTS_MAX;
@@ -4233,21 +4236,24 @@ function doCleanse() {
   function openTargetPractice() {
     if (tpWon) { showTemporaryText && showTemporaryText('You already beat this challenge!'); return; }
     if (tpAttemptsLeft <= 0) {
-      // final dialog from NPC after exhausted attempts
-      showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style: 'unit', speaker: Unit318920 });
+      showDialog && showDialog(
+        ["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"],
+        null,
+        { style: 'unit', speaker: typeof Unit318920 !== 'undefined' ? Unit318920 : null }
+      );
       return;
     }
-    overlay.style.display = 'flex';
+    overlay && (overlay.style.display = 'flex');
     startRound();
   }
 
   function closeTargetPractice() {
     stopRound();
-    overlay.style.display = 'none';
+    overlay && (overlay.style.display = 'none');
   }
 
   function startRound() {
-    stopRound();
+    stopRound(); // reset any existing timers/targets
     tpActive = true;
     tpRoundStart = performance.now();
     tpScore = 0;
@@ -4255,9 +4261,9 @@ function doCleanse() {
     tpGoldenSpawnedAt.clear();
     tpThreeSecondWaveSpawned = false;
     tpGoal = TP_GOAL_RANDOMIZE ? randInt(TP_GOAL_MIN, TP_GOAL_MAX) : TP_GOAL_FIXED;
-    scoreEl.textContent = `Score: ${tpScore}`;
-    goalEl.textContent = `Goal: ${tpGoal}`;
-    attemptsEl.textContent = tpAttemptsLeft;
+    scoreEl && (scoreEl.textContent = `Score: ${tpScore}`);
+    goalEl && (goalEl.textContent = `Goal: ${tpGoal}`);
+    attemptsEl && (attemptsEl.textContent = tpAttemptsLeft);
     updateTimerDisplay(tpRemainingTimeMs);
     scheduleNextSpawn();
     tpTimerId = setInterval(tickRound, 100);
@@ -4275,7 +4281,7 @@ function doCleanse() {
     tpRemainingTimeMs = Math.max(0, TP_DURATION_MS - elapsed);
     updateTimerDisplay(tpRemainingTimeMs);
 
-    // golden spawns at 10s and 20s
+    // Golden spawns at configured times
     for (const t of GOLD_TIMES) {
       if (elapsed >= t && !tpGoldenSpawnedAt.has(t)) {
         tpGoldenSpawnedAt.add(t);
@@ -4283,11 +4289,11 @@ function doCleanse() {
       }
     }
 
-    // 3-second burst: spawn 12 normal targets once
+    // Final 3-second burst: spawn WAVE_COUNT normal targets once
     if (!tpThreeSecondWaveSpawned && tpRemainingTimeMs <= 3000) {
       tpThreeSecondWaveSpawned = true;
-      for (let i = 0; i < 12; i++) {
-        setTimeout(() => { if (tpActive) spawnTarget(false); }, i * 40 + Math.floor(Math.random() * 80));
+      for (let i = 0; i < WAVE_COUNT; i++) {
+        setTimeout(() => { if (tpActive) spawnTarget(false); }, i * WAVE_SPREAD_MS + Math.floor(Math.random() * WAVE_JITTER_MS));
       }
     }
 
@@ -4298,7 +4304,7 @@ function doCleanse() {
 
   function updateTimerDisplay(ms) {
     const sec = Math.ceil(ms / 1000);
-    timerEl.textContent = String(sec);
+    timerEl && (timerEl.textContent = String(sec));
   }
 
   function scheduleNextSpawn() {
@@ -4342,7 +4348,7 @@ function doCleanse() {
       el.removeEventListener('click', onClick);
       const gained = isGolden ? TP_GOLD_SCORE : TP_NORMAL_SCORE;
       tpScore += gained;
-      scoreEl.textContent = `Score: ${tpScore}`;
+      scoreEl && (scoreEl.textContent = `Score: ${tpScore}`);
       showTemporaryText && showTemporaryText(`+${gained}`);
       if (tpScore >= tpGoal) {
         endRound(true);
@@ -4366,25 +4372,33 @@ function doCleanse() {
         achievementsMap['tp_beat_master'].progress = 1;
         checkAchievements && checkAchievements();
       } else if (achievementsMap) {
-        // create a small achievement entry if not present
-        achievementsMap['tp_beat_master'] = { id:'tp_beat_master', name:'Sharp Shooter', description:'Beat Unit318920s score in Target Practice', target:1, progress:1, unlocked:false, checkCondition: function(){ return this.progress>=1; } };
+        achievementsMap['tp_beat_master'] = {
+          id: 'tp_beat_master',
+          name: 'Sharp Shooter',
+          description: 'Beat Unit318920s score in Target Practice',
+          target: 1,
+          progress: 1,
+          unlocked: false,
+          checkCondition: function() { return this.progress >= 1; }
+        };
         checkAchievements && checkAchievements();
       }
       showTemporaryText && showTemporaryText('You beat the goal! Achievement unlocked!');
-      // stop attempts permanently
       tpAttemptsLeft = 0;
-      attemptsEl.textContent = tpAttemptsLeft;
-      // close overlay after short delay
-      setTimeout(() => overlay.style.display = 'none', 1300);
+      attemptsEl && (attemptsEl.textContent = tpAttemptsLeft);
+      setTimeout(() => overlay && (overlay.style.display = 'none'), 1300);
     } else {
       // failed attempt
       tpAttemptsLeft = Math.max(0, tpAttemptsLeft - 1);
-      attemptsEl.textContent = tpAttemptsLeft;
+      attemptsEl && (attemptsEl.textContent = tpAttemptsLeft);
       if (tpAttemptsLeft <= 0) {
-        showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style:'unit', speaker:Unit318920 });
-        overlay.style.display = 'none';
+        showDialog && showDialog(
+          ["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"],
+          null,
+          { style: 'unit', speaker: typeof Unit318920 !== 'undefined' ? Unit318920 : null }
+        );
+        overlay && (overlay.style.display = 'none');
       } else {
-        // let player choose restart or close; keep overlay open (we already stopped round)
         showTemporaryText && showTemporaryText('Attempt failed. Restart or close.');
       }
     }
@@ -4412,6 +4426,7 @@ function doCleanse() {
   window.openTargetPractice = openTargetPractice;
   window.closeTargetPractice = closeTargetPractice;
 })();
+
 
 
 function drawAchievementsUI() {
