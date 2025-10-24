@@ -2196,6 +2196,19 @@ function drawPlayerBattleStatus() {
 // normal enemy attack
 function normalAttack(enemy, target) {
   const damage = enemy.damage || 0;
+   if (typeof normalAttack === 'function') {
+    const _orig_normalAttack = normalAttack;
+    normalAttack = function(enemy, target) {
+      if (target === playerStats) {
+        const dmg = enemy.damage || 0;
+        if (typeof playerTakeDamage === 'function') playerTakeDamage(dmg, enemy);
+        else _orig_normalAttack(enemy, target);
+      } else {
+        // fallback to original (for ally)
+        _orig_normalAttack(enemy, target);
+      }
+    };
+  }
   if (target === playerStats) {
     playerTakeDamage(damage);
     showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
@@ -2212,6 +2225,20 @@ function normalAttack(enemy, target) {
 }
 
 function sniperAttack(enemy, target) {
+  if (typeof sniperAttack === 'function') {
+    const _orig_sniperAttack = sniperAttack;
+    sniperAttack = function(enemy, target) {
+      // compute damage like original wrapper did
+      const isCritical = Math.random() < 0.3;
+      const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
+      if (target === playerStats) {
+        if (typeof playerTakeDamage === 'function') playerTakeDamage(damage, enemy);
+        else _orig_sniperAttack(enemy, target);
+      } else {
+        _orig_sniperAttack(enemy, target);
+      }
+    };
+  }
   const isCritical = Math.random() < 0.3;
   const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
   if (target === playerStats) {
