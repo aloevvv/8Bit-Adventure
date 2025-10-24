@@ -1332,29 +1332,36 @@ function tryTriggerDialogOnX() {
   showTemporaryText("Nothing to interact with.");
 }
   
+window._dialogQueue = window._dialogQueue || [];
+window._dialogIndex = window._dialogIndex || 0;
+
 function showDialog(textOrLines, idToMark, opts = {}) {
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
+  if (!overlay || !box || !textDiv) {
+    if (typeof showTemporaryText === 'function') showTemporaryText('Dialog UI missing');
+    return;
+  }
 
   const defaultStyle = opts.style || 'dialog';
-  _dialogQueue = normalizeDialogLines(textOrLines, defaultStyle);
+  // keep the whole array, do NOT shift here
+  window._dialogQueue = normalizeDialogLines(textOrLines, defaultStyle);
+  window._dialogIndex = 0;
 
-  if (_dialogQueue.length > 0) {
-    const line = _dialogQueue.shift();
-    applyDialogStyle(box, line.style);
-    if (line.speaker) {
-      textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
-    } else {
-      textDiv.textContent = line.text;
-    }
+  // render first line (index 0) if present
+  if (window._dialogQueue.length > 0) {
+    const line = window._dialogQueue[0];
+    try { applyDialogStyle(box, line.style || defaultStyle); } catch (e) {}
+    if (line.speaker) textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
+    else textDiv.textContent = line.text || '';
   } else {
     textDiv.textContent = '';
   }
 
-  overlay.style.display = 'flex';
   overlay._markId = idToMark || null;
-  draw();
+  overlay.style.display = 'flex';
+  draw && typeof draw === 'function' && draw();
 }
 
 
@@ -4623,41 +4630,42 @@ function dialogNextHandler() {
     return;
   }
 
-  // If queued lines remain, show the next one
-  if (window._dialogQueue && window._dialogQueue.length > 0) {
-    const line = window._dialogQueue.shift();
-    try { applyDialogStyle(box, line.style || 'dialog'); } catch (e) { /* ignore */ }
+  // if no queue, just close
+  if (!Array.isArray(window._dialogQueue) || window._dialogQueue.length === 0) {
+    overlay.style.display = 'none';
+    return;
+  }
+
+  // advance index
+  window._dialogIndex = (typeof window._dialogIndex === 'number') ? window._dialogIndex + 1 : 1;
+
+  // if still have a line to show, render it
+  if (window._dialogIndex < window._dialogQueue.length) {
+    const line = window._dialogQueue[window._dialogIndex];
+    try { applyDialogStyle(box, line.style || 'dialog'); } catch (e) {}
     if (line.speaker) textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
     else textDiv.textContent = line.text || '';
     return;
   }
 
-  // No more lines: close overlay and run follow-up
+  // no more lines: close and run follow-up
   const markId = overlay._markId || null;
   overlay._markId = null;
   overlay.style.display = 'none';
-  if (typeof draw === 'function') draw();
+  draw && typeof draw === 'function' && draw();
 
-  // mark one-off dialog zones / interactables as shown
-  if (markId) {
-    try { shownDialogs.add(markId); } catch (e) { /* ignore */ }
-  }
+  // mark as shown
+  if (markId) try { shownDialogs.add(markId); } catch (e) {}
 
-  // If triggered by an interactable, run its follow-up action safely
+  // follow-up for interactable if present
   if (markId && currentLevel && Array.isArray(currentLevel.interactables)) {
     const interact = currentLevel.interactables.find(it => it && it.id === markId);
     if (interact) {
       try {
         if (interact.action === 'recruit') {
-          if (!interact.opened && interact.allyId) {
-            unlockAlly(interact.allyId);
-            interact.opened = true;
-          }
+          if (!interact.opened && interact.allyId) { unlockAlly(interact.allyId); interact.opened = true; }
         } else if (interact.action === 'chest') {
-          if (!interact.opened) {
-            handleInteraction(interact);
-            interact.opened = true;
-          }
+          if (!interact.opened) { handleInteraction(interact); interact.opened = true; }
         } else {
           if (typeof handleInteraction === 'function') handleInteraction(interact);
         }
@@ -4666,24 +4674,10 @@ function dialogNextHandler() {
       }
     }
   }
-}
 
-// Detach any previous listener then attach the new one (defensive)
-const oldNextBtn = document.getElementById('dialog-next');
-if (oldNextBtn) {
-  // Attempt to remove prior inline listener by replacing element reference:
-  // (can't remove anonymous listeners reliably, so re-assign handler)
-  oldNextBtn.onclick = null;
-  oldNextBtn.addEventListener('click', dialogNextHandler);
-} else {
-  // If the element isn't in DOM yet, defer attaching until DOM ready
-  document.addEventListener('DOMContentLoaded', () => {
-    const nb = document.getElementById('dialog-next');
-    if (nb) {
-      nb.onclick = null;
-      nb.addEventListener('click', dialogNextHandler);
-    }
-  });
+  // clear queue
+  window._dialogQueue = [];
+  window._dialogIndex = 0;
 }
 
 
