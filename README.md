@@ -1,5 +1,5 @@
 Bugs present:
-Allies don't retain XP if it's not equal to the XP they need to level up
+Allies don't retain XP if it's not equal to the XP they need to level up; battle doesn't end properly if an enemy is both stunned and poisoned when killed
 ```
 Things I'm working on now:
 Obstacles (levers, etc)
