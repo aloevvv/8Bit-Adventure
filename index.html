@@ -958,19 +958,7 @@ const levels = [
     style: 'dialog'
   }
       ],
-    interactables: [
-      {
-      id: "o_001",
-      name: "ao",
-      x: 100, y: 100,
-      width: 64, height: 64,
-      dialog: [
-        { speaker: '8-Bit', text: "Yeah, more test code." },
-        { speaker: '8-Bit', text: "Ain't that fun." }
-      ],
-      dialogStyle: 'other',
-    }
-  ]
+    interactables: []
   },
   {
     bgSrc: "caves3_6.png",
@@ -1332,36 +1320,29 @@ function tryTriggerDialogOnX() {
   showTemporaryText("Nothing to interact with.");
 }
   
-window._dialogQueue = window._dialogQueue || [];
-window._dialogIndex = window._dialogIndex || 0;
-
 function showDialog(textOrLines, idToMark, opts = {}) {
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
-  if (!overlay || !box || !textDiv) {
-    if (typeof showTemporaryText === 'function') showTemporaryText('Dialog UI missing');
-    return;
-  }
 
   const defaultStyle = opts.style || 'dialog';
-  // keep the whole array, do NOT shift here
-  window._dialogQueue = normalizeDialogLines(textOrLines, defaultStyle);
-  window._dialogIndex = 0;
+  _dialogQueue = normalizeDialogLines(textOrLines, defaultStyle);
 
-  // render first line (index 0) if present
-  if (window._dialogQueue.length > 0) {
-    const line = window._dialogQueue[0];
-    try { applyDialogStyle(box, line.style || defaultStyle); } catch (e) {}
-    if (line.speaker) textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
-    else textDiv.textContent = line.text || '';
+  if (_dialogQueue.length > 0) {
+    const line = _dialogQueue.shift();
+    applyDialogStyle(box, line.style);
+    if (line.speaker) {
+      textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
+    } else {
+      textDiv.textContent = line.text;
+    }
   } else {
     textDiv.textContent = '';
   }
 
-  overlay._markId = idToMark || null;
   overlay.style.display = 'flex';
-  draw && typeof draw === 'function' && draw();
+  overlay._markId = idToMark || null;
+  draw();
 }
 
 
@@ -4620,66 +4601,28 @@ document.getElementById('inventory-battle-button').addEventListener('click', () 
   }
 });
 
-
-function dialogNextHandler() {
+  document.getElementById('dialog-next').addEventListener('click', () => {
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
-  if (!overlay || !box || !textDiv) {
-    if (typeof showTemporaryText === 'function') showTemporaryText('Dialog UI missing');
+
+  if (_dialogQueue.length > 0) {
+    const line = _dialogQueue.shift();
+    applyDialogStyle(box, line.style);
+    if (line.speaker) {
+      textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
+    } else {
+      textDiv.textContent = line.text;
+    }
     return;
   }
 
-  // if no queue, just close
-  if (!Array.isArray(window._dialogQueue) || window._dialogQueue.length === 0) {
-    overlay.style.display = 'none';
-    return;
-  }
-
-  // advance index
-  window._dialogIndex = (typeof window._dialogIndex === 'number') ? window._dialogIndex + 1 : 1;
-
-  // if still have a line to show, render it
-  if (window._dialogIndex < window._dialogQueue.length) {
-    const line = window._dialogQueue[window._dialogIndex];
-    try { applyDialogStyle(box, line.style || 'dialog'); } catch (e) {}
-    if (line.speaker) textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
-    else textDiv.textContent = line.text || '';
-    return;
-  }
-
-  // no more lines: close and run follow-up
-  const markId = overlay._markId || null;
+  const id = overlay._markId;
   overlay._markId = null;
   overlay.style.display = 'none';
-  draw && typeof draw === 'function' && draw();
-
-  // mark as shown
-  if (markId) try { shownDialogs.add(markId); } catch (e) {}
-
-  // follow-up for interactable if present
-  if (markId && currentLevel && Array.isArray(currentLevel.interactables)) {
-    const interact = currentLevel.interactables.find(it => it && it.id === markId);
-    if (interact) {
-      try {
-        if (interact.action === 'recruit') {
-          if (!interact.opened && interact.allyId) { unlockAlly(interact.allyId); interact.opened = true; }
-        } else if (interact.action === 'chest') {
-          if (!interact.opened) { handleInteraction(interact); interact.opened = true; }
-        } else {
-          if (typeof handleInteraction === 'function') handleInteraction(interact);
-        }
-      } catch (e) {
-        if (typeof showTemporaryText === 'function') showTemporaryText('Dialog follow-up error');
-      }
-    }
-  }
-
-  // clear queue
-  window._dialogQueue = [];
-  window._dialogIndex = 0;
-}
-
+  draw();
+  if (id) shownDialogs.add(id);
+});
 
 document.addEventListener('keydown', function(e) {
   if (isGameOver && e.key.toLowerCase() === 'r') {
