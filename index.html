@@ -795,7 +795,7 @@ const levels = [
       { name: "arcade_machine", x: 340, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] },
       { name: "steel_block", x: 400, y: 300, width: 100, height: 100, action: "break", requiredItem: "laser_cutter" },
       { name: "hammer", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "hammer"},
-      { name: "security_panel", x: 500, y: 100, width: 40, height: 40, action: "open_door", requiresKeycard: false, destLevel: 2, destX: 50, destY: 50 },
+      { name: "security_panel", x: 500, y: 100, width: 40, height: 40, action: "open_door", requiresKeycard: true, destLevel: 2, destX: 50, destY: 50 },
       { id: "chest_001", name: "wooden_chest", x: 220, y: 220, width: 64, height: 64, action: "chest",
     rewards: [["bandaid",2], ["emp_grenade",1], ["extra_life",1]], opened: false }
     ]
@@ -803,6 +803,7 @@ const levels = [
   {
     bgSrc: "arcadeA2.png",
     walls: [
+      { id: 'wall_multi_a_1', x: 300, y: 150, width: 32, height: 16 }
       { x: 0, y: 460, width: 640, height: 20 },
       { x: 620, y: 0, width: 20, height: 220 },
       { x: 580, y: 250, width: 64, height: 64 },
@@ -849,7 +850,43 @@ const levels = [
       }
 ],
     interactables: [
-      { name: "big_stone", x: 580, y: 250, width: 64, height: 64, interactRect: { x: 560, y: 230, width: 120, height: 96 }, action: "break", requiredItem: "hammer" }
+      { name: "big_stone", x: 580, y: 250, width: 64, height: 64, interactRect: { x: 560, y: 230, width: 120, height: 96 }, action: "break", requiredItem: "hammer" },
+      {
+  id: 'lever_group_a_1',
+  action: 'lever',
+  leverType: 'multi',
+  groupId: 'A',
+  indexInGroup: 0,
+  initialState: false,
+  x: 200, y: 150, width: 16, height: 16
+},
+{
+  id: 'lever_group_a_2',
+  action: 'lever',
+  leverType: 'multi',
+  groupId: 'A',
+  indexInGroup: 1,
+  initialState: false,
+  x: 240, y: 150, width: 16, height: 16
+},
+{
+  id: 'lever_group_a_3',
+  action: 'lever',
+  leverType: 'multi',
+  groupId: 'A',
+  indexInGroup: 2,
+  initialState: false,
+  x: 280, y: 150, width: 16, height: 16
+},
+{
+  id: 'lever_group_a_controller',
+  name: 'lever_group_controller',
+  action: 'lever_controller',
+  groupId: 'A',
+  targetCombo: [true, true, false],
+  linkedWallId: 'wall_multi_a_1',
+  x: 260, y: 180, width: 16, height: 16
+}
     ]
   },
   { bgSrc: "arcadeB2_3.png",
@@ -1458,6 +1495,12 @@ torchImg.src = 'torch.png';
 const drillImg = new Image();
 drillImg.src = 'drill.png';
 
+const leverOnImg = new Image();
+leverOnImg.src = 'leveron.png';
+const leverOffImg = new Image();
+leverOffImg.src = 'leveroff.png';
+
+
 let activeEnemies = [];
 
 // Utility: text wrapping for canvas
@@ -1691,6 +1734,69 @@ function removeZone(zone) {
     const index = currentLevel.interactables.indexOf(zone.object);
     if (index > -1) currentLevel.interactables.splice(index, 1);
   }
+}
+
+  function arraysEqual(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b)) return false;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+function findLeversInGroup(groupId) {
+  if (!groupId) return [];
+  const arr = [];
+  (currentLevel.interactables || []).forEach(obj => {
+    if (obj && obj.action === 'lever' && obj.leverType === 'multi' && obj.groupId === groupId) {
+      // initialize runtime state if missing
+      if (typeof obj.currentState === 'undefined') obj.currentState = !!obj.initialState;
+      arr[obj.indexInGroup] = obj;
+    }
+  });
+  return arr;
+}
+
+function toggleWallById(wallId, present) {
+  if (!wallId) return;
+  const walls = currentLevel.walls || [];
+  const idx = walls.findIndex(w => w.id === wallId);
+  if (present) {
+    if (idx === -1) {
+      // restore a placeholder wall at same position as controller if available,
+      // otherwise create a default small wall. Try to use saved data if you keep it.
+      // Here we create a basic fallback wall (adjust x/y/size as needed).
+      currentLevel.walls.push({ id: wallId, x: 300, y: 200, width: 32, height: 32 });
+    }
+  } else {
+    if (idx !== -1) {
+      removedWallIds.add(wallId);
+      currentLevel.walls.splice(idx, 1);
+    }
+  }
+}
+
+function evaluateMultiLeverGroup(groupId, controllerObj = null) {
+  const levers = findLeversInGroup(groupId);
+  if (!levers.length) {
+    showTemporaryText('Nothing happens.');
+    return;
+  }
+  const currentCombo = levers.map(l => !!(l && l.currentState));
+  const controller = controllerObj || (currentLevel.interactables || []).find(o => o.action === 'lever_controller' && o.groupId === groupId);
+  if (!controller || !Array.isArray(controller.targetCombo)) {
+    showTemporaryText('This lever group is not configured.');
+    return;
+  }
+  const target = controller.targetCombo.map(v => !!v);
+  const matches = arraysEqual(currentCombo, target);
+  if (matches) {
+    showTemporaryText('Correct combination!');
+    if (controller.linkedWallId) toggleWallById(controller.linkedWallId, false);
+  } else {
+    showTemporaryText('Nothing happens.');
+    if (controller.linkedWallId) toggleWallById(controller.linkedWallId, true);
+  }
+  draw();
 }
 
 // Scale enemy stats with level
@@ -4495,6 +4601,36 @@ if (object.action === 'target_practice') {
   return;
 }
 
+// Lever interactions
+if (object.action === 'lever') {
+  // ensure runtime state exists
+  if (typeof object.currentState === 'undefined') object.currentState = !!object.initialState;
+  object.currentState = !object.currentState;
+  showTemporaryText(object.currentState ? 'Lever turned on.' : 'Lever turned off.');
+  // Single lever toggles its linked wall: design choice -> when lever ON remove wall
+  if (object.leverType === 'single') {
+    if (object.linkedWallId) toggleWallById(object.linkedWallId, !object.currentState);
+    // The above ensures: currentState true => pass present=false to remove wall.
+  }
+  // Multi lever flips and triggers group evaluation
+  if (object.leverType === 'multi' && object.groupId) {
+    evaluateMultiLeverGroup(object.groupId);
+  }
+  draw();
+  return;
+}
+
+
+if (object.action === 'lever_controller') {
+  if (object.groupId) {
+    evaluateMultiLeverGroup(object.groupId, object);
+  } else {
+    showTemporaryText('Controller not linked to a group.');
+  }
+  return;
+}
+
+
 
   if (object.action === "use_drill") {
   if ((inventory.get("drill") || 0) > 0) {
@@ -5119,7 +5255,33 @@ if (gameSettings.showZones) {
     }
   }
 });
-// inside draw(), where you draw interactables
+
+  // Draw levers and controllers
+(currentLevel.interactables || []).forEach(obj => {
+  if (!obj) return;
+  if (obj.action === 'lever') {
+    if (typeof obj.currentState === 'undefined') obj.currentState = !!obj.initialState;
+    const imgToDraw = obj.currentState ? leverOnImg : leverOffImg;
+    if (imgToDraw && imgToDraw.complete && imgToDraw.naturalWidth > 0) {
+      // draw using object rect if provided, otherwise use image size
+      const w = obj.width || 16;
+      const h = obj.height || 16;
+      ctx.drawImage(imgToDraw, obj.x, obj.y, w, h);
+    } else {
+      ctx.fillStyle = obj.currentState ? '#00cc00' : '#663300';
+      ctx.fillRect(obj.x, obj.y, obj.width || 12, obj.height || 12);
+    }
+  } else if (obj.action === 'lever_controller') {
+    // simple controller visual
+    ctx.fillStyle = '#8844ff';
+    ctx.fillRect(obj.x, obj.y, obj.width || 12, obj.height || 12);
+    ctx.fillStyle = 'white';
+    ctx.font = '10px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.fillText('C', (obj.x + (obj.width || 12) / 2), obj.y + (obj.height || 12) / 1.4);
+  }
+});
+
 currentLevel.interactables.forEach(obj => {
   if (obj.action === "chest") {
     if (obj.opened) {
