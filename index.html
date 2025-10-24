@@ -661,8 +661,8 @@ const enemyTypes = {
   Mousebot: { name: "Quickbot", maxHp: 30, damage: 2, xpReward: 5, behavior: "normalAttack" },
   BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior", defaultResistances: {stun: true, poison:true }},
   Summoner: { name: "Factory", maxHp: 80, damage: 0, xpReward: 20, behavior: "summonerBehavior" },
-  SecondStageBossStage1: { name: "Stage1 Boss", maxHp: 50, damage: 3, xpReward: 0, behavior: "secondStageBossBehavior", secondStageType: "SecondStageBossStage2" },
-  SecondStageBossStage2: { name: "Stage2 Boss", maxHp: 80, damage: 6, xpReward: 50, behavior: "normalAttack" },
+  SecondStageBossStage1: { name: "The Works Plant", maxHp: 50, damage: 3, xpReward: 0, behavior: "secondStageBossBehavior", secondStageType: "SecondStageBossStage2" },
+  SecondStageBossStage2: { name: "The Heated Works Plant", maxHp: 80, damage: 6, xpReward: 50, behavior: "normalAttack" },
   Healer: { name: "Barbot", maxHp: 35, damage: 1, xpReward: 15, behavior: "healerBehavior" },
   IceBoss: { name: "Frozen Metal", maxHp: 100, damage: 6, xpReward: 1, behavior: "iceBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   LifeStealBoss: { name: "Soul Slasher", maxHp: 100, damage: 5, xpReward: 1, behavior: "lifeStealBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
@@ -673,7 +673,9 @@ const enemyTypes = {
   GhostBoss: { name: "The Maestro", maxHp: 450, damage: 3, xpReward: 150, behavior: "ghostBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   Train: { name: "Train Carriage", maxHp: 40, damage: 0, xpReward: 0, behavior: "normalAttack"},
   SpectralMinion: { name: "Spirit", maxHp: 12, damage: 3, xpReward: 1, behavior: "normalAttack" },
-  IslandBoss: { name: "Nekark of the Seas", maxHp: 320, damage: 3, xpReward: 180, behavior: "islandBossBehavior", isBoss: true, defaultResistances: { stun: true, poison: true }}
+  IslandBoss: { name: "Nekark of the Seas", maxHp: 320, damage: 3, xpReward: 180, behavior: "islandBossBehavior", isBoss: true, defaultResistances: { stun: true, poison: true }},
+  Roboworker: { name: "Roboworker", maxHp: 40, damage: 0, xpReward: 0, behavior: "normalAttack" },
+  LifeCore: { name: "Train Carriage", maxHp: 40, damage: 0, xpReward: 0, behavior: "lifeCoreBehavior" }
 };
 
 
@@ -1000,7 +1002,7 @@ const levels = [
       { x: 0, y: 0, width: 640, height: 480 }
     ],
     battleZones: [
-      { x: 80, y: 80, width: 64, height: 64, encounter: [{ type: "IslandBoss" }], sprite: 'fail' } //LifeStealBoss, CritBoss, CaveBoss
+      { x: 80, y: 80, width: 64, height: 64, encounter: [{ type: "SecondStageBossStage1" }], sprite: 'fail' } //LifeStealBoss, CritBoss, CaveBoss, IceBoss, MountainBoss
     ],
     dialogZones: [],
     interactables: []
@@ -2873,6 +2875,132 @@ function islandBossBehavior(enemy, target) {
   }
 }
 
+  function factoryBehavior(enemy, target) {
+  // one-time init
+  if (!enemy._initialized) {
+    enemy._initialized = true;
+    enemy._robospawnInterval = null;
+    enemy._lifecoreInterval = null;
+    enemy._robospawnCount = 0;
+    enemy._lifeCoreRefs = []; // track active life cores
+    enemy._spawnedEntities = []; // track spawned enemies for cleanup
+
+    // spawn roboworkers every 500ms
+    enemy._robospawnInterval = setInterval(() => {
+      if (!inBattle || enemy.currentHp <= 0) return;
+      // keep spawn rate bounded to avoid runaway
+      if (enemy._robospawnCount > 60) return;
+
+      const base = enemyTypes.Roboworker;
+      const mult = getDifficultyMultipliers();
+      const r = {
+        type: 'Roboworker',
+        name: base.name,
+        maxHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
+        currentHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
+        damage: Math.max(0, Math.floor(base.damage * mult.enemyDmg)),
+        xpReward: base.xpReward || 0,
+        shieldActive: false,
+        stunned: false,
+        poisoned: false,
+        resistances: base.defaultResistances || {}
+      };
+      enemy._robospawnCount++;
+      enemy._spawnedEntities.push(r);
+      activeEnemies.push(r);
+      drawBattleUI();
+    }, 500);
+
+    // spawn a Life Core every 5000ms
+    enemy._lifecoreInterval = setInterval(() => {
+      if (!inBattle || enemy.currentHp <= 0) return;
+
+      // create a Life Core and link it to the factory as a protector
+      const base = enemyTypes.LifeCore;
+      const mult = getDifficultyMultipliers();
+      const lc = {
+        type: 'LifeCore',
+        name: base.name,
+        maxHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
+        currentHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
+        damage: base.damage || 0,
+        xpReward: base.xpReward || 0,
+        shieldActive: false,
+        stunned: false,
+        poisoned: false,
+        resistances: base.defaultResistances || {}
+      };
+
+      // track
+      enemy._lifeCoreRefs.push(lc);
+      enemy._spawnedEntities.push(lc);
+      activeEnemies.push(lc);
+
+      // when a life core dies, we'll remove references (handled elsewhere)
+      drawBattleUI();
+    }, 5000);
+
+    // initial shield state: if any lifeCore exists, keep shield active
+    enemy.shieldActive = (enemy._lifeCoreRefs.length > 0);
+  }
+
+  // Maintain shield while any LifeCore exists
+  // Purge stale refs (in case quality of references changes)
+  enemy._lifeCoreRefs = enemy._lifeCoreRefs.filter(ref => ref && ref.currentHp > 0 && activeEnemies.includes(ref));
+  const anyLifeCoreAlive = enemy._lifeCoreRefs.length > 0;
+
+  if (anyLifeCoreAlive) {
+    if (!enemy.shieldActive) {
+      enemy.shieldActive = true;
+      showTemporaryText(`${enemy.name} draws power from its Life Cores and shields itself!`);
+    }
+  } else {
+    if (enemy.shieldActive) {
+      enemy.shieldActive = false;
+      showTemporaryText(`${enemy.name}'s Life Cores are gone — its shield drops!`);
+    }
+  }
+
+  // Factory performs occasional direct attacks if not shielded
+  if (!enemy.shieldActive && !enemy.stunned) {
+    // basic attack behaviour: pick a target (player or ally)
+    const now = Date.now();
+    if (!enemy._lastAttack || (now - enemy._lastAttack) > 1200) {
+      enemy._lastAttack = now;
+      const chosen = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
+      const dmg = enemy.damage || 0;
+      if (chosen === playerStats) {
+        playerTakeDamage(dmg);
+        showTemporaryText(`${enemy.name} slams you for ${dmg} damage!`);
+      } else {
+        activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dmg);
+        showTemporaryText(`${enemy.name} smashes ${activeAlly.name} for ${dmg} damage!`);
+        if (activeAlly.currentHp === 0) {
+          showTemporaryText(`${activeAlly.name} has been defeated!`);
+          clearInterval(activeAlly.attackTimerId);
+          activeAlly.attackTimerId = null;
+        }
+      }
+      drawBattleUI();
+      drawPlayerBattleStatus();
+      drawPartyStatus();
+    }
+  }
+}
+
+  function lifeCoreBehavior(enemy, target) {
+    if (!enemy || enemy.currentHp == null) return;
+
+  
+  if (!enemy.stunned && !enemy.shieldActive) {
+    const regen = Math.max(0, Math.floor(enemy.maxHp * 0.05));
+    if (regen > 0) {
+      enemy.currentHp = Math.min(enemy.maxHp, enemy.currentHp + regen);
+      
+      if (regen >= 2) showTemporaryText(`${enemy.name} hums and regains ${regen} HP.`);
+    }
+  }
+}
 //battlefield boss
 function critBossBehavior(enemy, target) {
   if (enemy.shieldActive) {
@@ -3021,6 +3149,10 @@ if (behavior === 'normalAttack') {
   summonerBehavior(enemy, target);
 } else if (behavior === 'secondStageBossBehavior') {
   secondStageBossBehavior(enemy, target);
+} else if (behavior === 'FactoryBehavior') {
+  FactoryBehavior(enemy, target);
+} else if (behavior === 'lifeCoreBehavior') {
+  lifeCoreBehavior(enemy, target);
 } else if (behavior === 'iceBossBehavior') {
   iceBossBehavior(enemy, target);
 } else if (behavior === 'lifeStealBossBehavior') {
@@ -3032,7 +3164,7 @@ if (behavior === 'normalAttack') {
 } else if (behavior === 'mountainBossBehavior') {
   mountainBossBehavior(enemy, target);
 } else if (behavior === 'ghostBossBehavior') {
-  critBossBehavior(enemy, target);
+  ghostBossBehavior(enemy, target);
 } else if (behavior === 'healerBehavior') {
   healerBehavior(enemy, target);
 }
@@ -3104,10 +3236,42 @@ function enemyAttack(enemy, target) {
 }
   function handleEnemyDeath(enemy) {
   // Stage1 -> Stage2 special handling
+  if (!enemy) return;
+
+  // Stage1 special: explode and spawn Stage2 (explosion happens when Stage1 dies)
   if (enemy.type === "SecondStageBossStage1") {
+    // Explosion damage: 5% of player's max HP (rounded up)
+    const explosionDamage = Math.max(1, Math.ceil(playerStats.maxHp * 0.05));
+
+    // Apply damage to player (respect extra-life/invincibility flags)
+    if (inBattle) {
+      // Player
+      if (playerStats && typeof playerStats.currentHp === 'number') {
+        playerStats.currentHp -= explosionDamage;
+        // If Extra Life active, ensure we don't kill below 1 (existing helper)
+        if (!canGoBelow1Hp() && playerStats.currentHp <= 0) {
+          playerStats.currentHp = 1;
+        }
+        if (playerStats.currentHp < 0) playerStats.currentHp = 0;
+        updateHp(playerStats.currentHp);
+      }
+      showTemporaryText(`${enemy.name} explodes on defeat for ${explosionDamage} damage!`);
+
+      // Active ally also takes explosion damage (if present)
+      if (activeAlly && typeof activeAlly.currentHp === 'number') {
+        activeAlly.currentHp = Math.max(0, activeAlly.currentHp - explosionDamage);
+        showTemporaryText(`${activeAlly.name} takes ${explosionDamage} explosion damage!`);
+        // Ally death handling
+        if (activeAlly.currentHp === 0 && activeAlly.attackTimerId) {
+          clearInterval(activeAlly.attackTimerId);
+          activeAlly.attackTimerId = null;
+        }
+      }
+    }
+
+    // Now spawn Stage2
     const stage2Base = enemyTypes[enemyTypes.SecondStageBossStage1.secondStageType];
     const stage2Stats = scaleEnemyStats(stage2Base);
-
     const stage2Enemy = {
       type: "SecondStageBossStage2",
       name: stage2Stats.name,
@@ -3124,13 +3288,22 @@ function enemyAttack(enemy, target) {
       resistances: stage2Base.defaultResistances || {}
     };
 
-    // Remove Stage1 then push Stage2 immediately
+    // Remove the dead stage1 and insert stage2
     activeEnemies = activeEnemies.filter(e => e !== enemy);
     activeEnemies.push(stage2Enemy);
-    showTemporaryText(`${stage2Enemy.name} emerges!`);
+
+    // Re-init enemy attack loop if needed
+    showTemporaryText(`${stage2Enemy.name} emerges from the core!`);
     drawBattleUI();
     drawPlayerBattleStatus();
-    return; // skip normal death handling for stage1
+    drawPartyStatus();
+
+    // Ensure battle continues
+    inBattle = true;
+    if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+    enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+
+    return;
   }
 
 if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
