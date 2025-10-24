@@ -4376,13 +4376,10 @@ function doCleanse() {
       tpAttemptsLeft = Math.max(0, tpAttemptsLeft - 1);
       attemptsEl.textContent = tpAttemptsLeft;
       if (tpAttemptsLeft <= 0) {
-        showDialog && showDialog(
-          ["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"],
-          null,
-          { style: 'unit', speaker: Unit318920 || null }
-        );
+        showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style:'unit', speaker:Unit318920 });
         overlay.style.display = 'none';
       } else {
+        
         showTemporaryText && showTemporaryText('Attempt failed. Restart or close.');
       }
     }
