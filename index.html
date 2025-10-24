@@ -4596,10 +4596,11 @@ if (object.action === "recruit") {
   return;
 }
   
-if (object.action === 'target_practice') {
-  openTargetPractice(); // opens the overlay and starts a round
+if (object.action === 'target_practice' && object.name === 'target_board') {
+  openTargetPractice();
   return;
 }
+
 
 // Lever interactions
 if (object.action === 'lever') {
