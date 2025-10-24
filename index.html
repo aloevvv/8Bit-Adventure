@@ -1762,10 +1762,7 @@ function toggleWallById(wallId, present) {
   const idx = walls.findIndex(w => w.id === wallId);
   if (present) {
     if (idx === -1) {
-      // restore a placeholder wall at same position as controller if available,
-      // otherwise create a default small wall. Try to use saved data if you keep it.
-      // Here we create a basic fallback wall (adjust x/y/size as needed).
-      currentLevel.walls.push({ id: wallId, x: 300, y: 200, width: 32, height: 32 });
+      currentLevel.walls.push({ id: wallId, x: 0, y: 0, width: 0, height: 0 });
     }
   } else {
     if (idx !== -1) {
