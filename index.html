@@ -4361,25 +4361,30 @@ function doCleanse() {
     stopRound();
     if (didWin || tpScore >= tpGoal) {
       tpWon = true;
+      // award achievement if exists
       if (achievementsMap && achievementsMap['tp_beat_master']) {
         achievementsMap['tp_beat_master'].progress = 1;
         checkAchievements && checkAchievements();
       } else if (achievementsMap) {
-        achievementsMap['tp_beat_master'] = { id:'tp_beat_master', name:'Sharp Shooter', description:'Beat the target practice score', target:1, progress:1, unlocked:false, checkCondition: function(){ return this.progress>=1; } };
+        // create a small achievement entry if not present
+        achievementsMap['tp_beat_master'] = { id:'tp_beat_master', name:'Sharp Shooter', description:'Beat Unit318920s score in Target Practice', target:1, progress:1, unlocked:false, checkCondition: function(){ return this.progress>=1; } };
         checkAchievements && checkAchievements();
       }
       showTemporaryText && showTemporaryText('You beat the goal! Achievement unlocked!');
+      // stop attempts permanently
       tpAttemptsLeft = 0;
       attemptsEl.textContent = tpAttemptsLeft;
-      setTimeout(() => overlay.style.display = 'none', 1100);
+      // close overlay after short delay
+      setTimeout(() => overlay.style.display = 'none', 1300);
     } else {
+      // failed attempt
       tpAttemptsLeft = Math.max(0, tpAttemptsLeft - 1);
       attemptsEl.textContent = tpAttemptsLeft;
       if (tpAttemptsLeft <= 0) {
         showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style:'unit', speaker:Unit318920 });
         overlay.style.display = 'none';
       } else {
-        
+        // let player choose restart or close; keep overlay open (we already stopped round)
         showTemporaryText && showTemporaryText('Attempt failed. Restart or close.');
       }
     }
