@@ -4228,7 +4228,7 @@ function doCleanse() {
     if (tpWon) { showTemporaryText && showTemporaryText('You already beat this challenge!'); return; }
     if (tpAttemptsLeft <= 0) {
       // final dialog from NPC after exhausted attempts
-      showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style: 'dialog', speaker: null });
+      showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style: 'dialog', speaker: Unit318920 });
       return;
     }
     overlay.style.display = 'flex';
