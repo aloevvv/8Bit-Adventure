@@ -1307,6 +1307,9 @@ function applyDialogStyle(box, style) {
   } else if (style === 'lou') {
     box.style.background = '#78bdff';
     box.style.fontSize = '14px';
+  } else if (style === 'unit') {
+    box.style.background = '#4c4c4c';
+    box.style.fontSize = '14px';
   } else if (style === 'boss') {
     box.style.background = '#330000';
     box.style.fontSize = '12px';
@@ -4228,7 +4231,7 @@ function doCleanse() {
     if (tpWon) { showTemporaryText && showTemporaryText('You already beat this challenge!'); return; }
     if (tpAttemptsLeft <= 0) {
       // final dialog from NPC after exhausted attempts
-      showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style: 'dialog', speaker: Unit318920 });
+      showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style: 'unit', speaker: Unit318920 });
       return;
     }
     overlay.style.display = 'flex';
