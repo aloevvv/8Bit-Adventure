@@ -278,6 +278,25 @@
     .item-use-button:hover {
       background-color: #555;
     }
+    /* Target Practice - target styles */
+.tp-target {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.6);
+  transition: transform 0.08s ease;
+}
+.tp-target:active { transform: scale(0.92); }
+.tp-target.normal { background: radial-gradient(circle at 30% 30%, #fff, #ffcccc 30%, #dd3333 60%); border:2px solid #fff; }
+.tp-target.golden { background: radial-gradient(circle at 30% 30%, #fff9d6, #ffd24d 40%, #ffb400 70%); border:2px solid #fff2a8; width:72px; height:72px; }
+.tp-target-label { font-size:12px; color:#000; font-weight:bold; text-shadow:1px 1px 0 rgba(255,255,255,0.2); pointer-events:none; }
+
     #battle-blackout {
   display: none;
   position: fixed;
@@ -456,6 +475,30 @@
         <button id="password-cancel" style="font-family:'Press Start 2P',sans-serif; padding:8px 12px; cursor:pointer; margin-left:10px;">Cancel</button>
       </div>
       <p id="password-message" style="color:#ff4444; margin-top:10px; height:18px;"></p>
+    </div>
+  </div>
+</div>
+  
+<div id="target-practice-overlay" style="display:none; position:fixed; inset:0; z-index:4000; background:rgba(0,0,0,0.85); align-items:center; justify-content:center;">
+  <div id="target-practice-ui" style="width:86vw; max-width:900px; height:86vh; background:#112244; border:2px solid #fff; padding:16px; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; font-family: 'Press Start 2P', sans-serif; color:white;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div style="font-size:13px;">Target Practice</div>
+        <div id="tp-timer" style="font-size:12px; background:#000a34; padding:6px 10px; border:1px solid #888;">30</div>
+        <div id="tp-score" style="font-size:12px; background:#001a00; padding:6px 10px; border:1px solid #888;">Score: 0</div>
+        <div id="tp-goal" style="font-size:12px; padding:6px 10px; border:1px solid #888;">Goal: 0</div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button id="tp-restart" class="item-use-button">Restart</button>
+        <button id="tp-close" class="item-use-button">Close</button>
+      </div>
+    </div>
+    <div id="tp-playfield" style="flex:1; position:relative; background:linear-gradient(#223355,#112233); border:1px solid #000; overflow:hidden;">
+      <!-- targets appended here -->
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-size:11px;">Attempts left: <span id="tp-attempts">5</span></div>
+      <div style="font-size:11px;">Click targets to score</div>
     </div>
   </div>
 </div>
@@ -861,6 +904,8 @@ const levels = [
   destX: 100,
   destY: 100
 },
+    
+{ name: 'target_board', x: 360, y: 120, width: 96, height: 96, action: 'target_practice' },
       { id: "chest_001", name: "wooden_chest", x: 78, y: 70, width: 64, height: 64, action: "chest",
     rewards: [["bandaid",1], ["emp_grenade",1]], opened: false }
     ]
@@ -4129,7 +4174,227 @@ function doCleanse() {
   if (c) c.addEventListener('click', doCounter);
   if (cl) cl.addEventListener('click', doCleanse);
 })();
-  
+
+  // ---------- Target Practice Mini-game ----------
+(function installTargetPractice() {
+  // Tunables
+  const TP_DURATION_MS = 30_000;         // 30s round
+  const TP_MIN_SPAWN_MS = 700;           // spawn interval min
+  const TP_MAX_SPAWN_MS = 1200;          // spawn interval max
+  const TP_TARGET_LIFETIME_MS = 1500;    // normal target lifetime
+  const TP_GOLD_LIFETIME_MS = 750;       // golden target lifetime
+  const TP_NORMAL_SCORE = 100;
+  const TP_GOLD_SCORE = 300;
+  const TP_ATTEMPTS_MAX = 5;
+  const TP_GOAL_MIN = 1200;              // adjustable random goal min
+  const TP_GOAL_MAX = 1800;              // adjustable random goal max
+  const GOLD_TIMES = [10_000, 20_000];   // spawn golden at these elapsed times
+
+  // State
+  let tpAttemptsLeft = TP_ATTEMPTS_MAX;
+  let tpActive = false;
+  let tpTimerId = null;
+  let tpSpawnTimeout = null;
+  let tpRoundStart = 0;
+  let tpScore = 0;
+  let tpGoal = 0;
+  let tpRemainingTimeMs = TP_DURATION_MS;
+  let tpWon = false;
+  let tpGoldenSpawnedAt = new Set();
+
+  // Elements
+  const overlay = document.getElementById('target-practice-overlay');
+  const playfield = document.getElementById('tp-playfield');
+  const timerEl = document.getElementById('tp-timer');
+  const scoreEl = document.getElementById('tp-score');
+  const goalEl = document.getElementById('tp-goal');
+  const attemptsEl = document.getElementById('tp-attempts');
+  const restartBtn = document.getElementById('tp-restart');
+  const closeBtn = document.getElementById('tp-close');
+
+  function randBetween(a, b) { return a + Math.random() * (b - a); }
+  function randInt(a, b) { return Math.floor(randBetween(a, b + 1)); }
+
+  function openTargetPractice() {
+    if (tpWon) { showTemporaryText && showTemporaryText('You already beat this challenge!'); return; }
+    if (tpAttemptsLeft <= 0) {
+      // final dialog from NPC after exhausted attempts
+      showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style: 'dialog', speaker: null });
+      return;
+    }
+    overlay.style.display = 'flex';
+    startRound();
+  }
+
+  function closeTargetPractice() {
+    stopRound();
+    overlay.style.display = 'none';
+  }
+
+  function startRound() {
+    stopRound(); // reset
+    tpActive = true;
+    tpRoundStart = performance.now();
+    tpScore = 0;
+    tpRemainingTimeMs = TP_DURATION_MS;
+    tpGoldenSpawnedAt.clear();
+    // random goal per round but persistent while not beaten; easy to adjust constants above
+    tpGoal = randInt(TP_GOAL_MIN, TP_GOAL_MAX);
+    // If user already has a permanent set goal you can store pref here
+    scoreEl.textContent = `Score: ${tpScore}`;
+    goalEl.textContent = `Goal: ${tpGoal}`;
+    attemptsEl.textContent = tpAttemptsLeft;
+    updateTimerDisplay(tpRemainingTimeMs);
+    scheduleNextSpawn();
+    tpTimerId = setInterval(tickRound, 100);
+  }
+
+  function stopRound() {
+    tpActive = false;
+    if (tpTimerId) { clearInterval(tpTimerId); tpTimerId = null; }
+    if (tpSpawnTimeout) { clearTimeout(tpSpawnTimeout); tpSpawnTimeout = null; }
+    clearAllTargets();
+  }
+
+  function tickRound() {
+    const elapsed = performance.now() - tpRoundStart;
+    tpRemainingTimeMs = Math.max(0, TP_DURATION_MS - elapsed);
+    updateTimerDisplay(tpRemainingTimeMs);
+
+    // golden spawns at 10s and 20s
+    for (const t of GOLD_TIMES) {
+      if (elapsed >= t && !tpGoldenSpawnedAt.has(t)) {
+        tpGoldenSpawnedAt.add(t);
+        spawnTarget(true);
+      }
+    }
+
+    if (tpRemainingTimeMs <= 0) {
+      endRound();
+    }
+  }
+
+  function updateTimerDisplay(ms) {
+    const sec = Math.ceil(ms / 1000);
+    timerEl.textContent = String(sec);
+  }
+
+  function scheduleNextSpawn() {
+    const delay = randBetween(TP_MIN_SPAWN_MS, TP_MAX_SPAWN_MS);
+    tpSpawnTimeout = setTimeout(() => {
+      if (!tpActive) return;
+      spawnTarget(false);
+      scheduleNextSpawn();
+    }, delay);
+  }
+
+  function spawnTarget(isGolden) {
+    const pfRect = playfield.getBoundingClientRect();
+    // small padding so target is fully visible
+    const pad = 8;
+    const tw = isGolden ? 72 : 64;
+    const th = isGolden ? 72 : 64;
+    const maxX = Math.max(0, pfRect.width - tw - pad);
+    const maxY = Math.max(0, pfRect.height - th - pad);
+    const x = randBetween(pad, maxX);
+    const y = randBetween(pad, maxY);
+    const el = document.createElement('div');
+    el.className = `tp-target ${isGolden ? 'golden' : 'normal'}`;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    const label = document.createElement('div');
+    label.className = 'tp-target-label';
+    label.textContent = isGolden ? '300' : '100';
+    el.appendChild(label);
+    playfield.appendChild(el);
+
+    // lifetime
+    const life = isGolden ? TP_GOLD_LIFETIME_MS : TP_TARGET_LIFETIME_MS;
+    let removed = false;
+    const remove = () => { if (!removed) { removed = true; el.remove(); } };
+    const lifeTimer = setTimeout(remove, life);
+
+    // click handler
+    function onClick() {
+      if (!tpActive) return;
+      clearTimeout(lifeTimer);
+      remove();
+      el.removeEventListener('click', onClick);
+      const gained = isGolden ? TP_GOLD_SCORE : TP_NORMAL_SCORE;
+      tpScore += gained;
+      scoreEl.textContent = `Score: ${tpScore}`;
+      // quick feedback
+      showTemporaryText && showTemporaryText(`+${gained}`);
+      // immediate win check if we surpassed goal early
+      if (tpScore >= tpGoal) {
+        endRound(true);
+      }
+    }
+    el.addEventListener('click', onClick);
+  }
+
+  function clearAllTargets() {
+    while (playfield.firstChild) playfield.firstChild.remove();
+  }
+
+  function endRound(didWin = false) {
+    if (!tpActive) return;
+    stopRound();
+    if (didWin || tpScore >= tpGoal) {
+      tpWon = true;
+      // award achievement if exists
+      if (achievementsMap && achievementsMap['tp_beat_master']) {
+        achievementsMap['tp_beat_master'].progress = 1;
+        checkAchievements && checkAchievements();
+      } else if (achievementsMap) {
+        // create a small achievement entry if not present
+        achievementsMap['tp_beat_master'] = { id:'tp_beat_master', name:'Sharp Shooter', description:'Beat the target practice score', target:1, progress:1, unlocked:false, checkCondition: function(){ return this.progress>=1; } };
+        checkAchievements && checkAchievements();
+      }
+      showTemporaryText && showTemporaryText('You beat the goal! Achievement unlocked!');
+      // stop attempts permanently
+      tpAttemptsLeft = 0;
+      attemptsEl.textContent = tpAttemptsLeft;
+      // close overlay after short delay
+      setTimeout(() => overlay.style.display = 'none', 1300);
+    } else {
+      // failed attempt
+      tpAttemptsLeft = Math.max(0, tpAttemptsLeft - 1);
+      attemptsEl.textContent = tpAttemptsLeft;
+      if (tpAttemptsLeft <= 0) {
+        showDialog && showDialog(["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"], null, { style:'dialog', speaker:null });
+        overlay.style.display = 'none';
+      } else {
+        // let player choose restart or close; keep overlay open (we already stopped round)
+        showTemporaryText && showTemporaryText('Attempt failed. Restart or close.');
+      }
+    }
+  }
+
+  // UI wiring
+  restartBtn.addEventListener('click', () => {
+    if (tpAttemptsLeft <= 0 || tpWon) { showTemporaryText && showTemporaryText('No more attempts.'); return; }
+    startRound();
+  });
+  closeBtn.addEventListener('click', () => {
+    closeTargetPractice();
+  });
+
+  // Key binding: press 'x' to open target practice when not in battle (consistent with interact button)
+  document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'x') {
+      // reasonable assumption: user wants to open the popup if not in battle and attempts remain
+      if (!inBattle && !isGameOver && tpAttemptsLeft > 0 && !tpWon) {
+        openTargetPractice();
+      }
+    }
+  });
+
+  // Expose open function (optional) so other interactables can call it
+  window.openTargetPractice = openTargetPractice;
+  window.closeTargetPractice = closeTargetPractice;
+})();
+
 function drawAchievementsUI() {
   achievementsPopup.innerHTML = '';
   achievements.forEach(ach => {
@@ -4188,6 +4453,11 @@ if (object.action === "recruit") {
   // remove the interactable so it can't be recruited repeatedly
   currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
   draw();
+  return;
+}
+  
+if (object.action === 'target_practice') {
+  openTargetPractice(); // opens the overlay and starts a round
   return;
 }
 
