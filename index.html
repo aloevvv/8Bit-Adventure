@@ -3545,36 +3545,47 @@ drawPlayerBattleStatus();
 
 // Stage 2 behavior: orb + dark-timer mechanics
 function finalBossStage2Behavior(enemy, target) {
+  // safe defaults
+  if (!enemy) return;
+  const now = Date.now();
+  const ORB_COOLDOWN_MS = 10000; // 10s cooldown
+  const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp: 1, enemyDmg: 1 };
 
-  // Orb spawning: spawn 1-2 shadow orbs per boss turn
-  if (enemy._canSpawnOrbs !== false && !enemy.stunned) {
-    const spawnCount = (Math.random() < 0.5) ? 1 : 2;
-    for (let i = 0; i < spawnCount; i++) {
-      const base = enemyTypes.ShadowOrb || { maxHp: 40, damage: 2, name: 'Shadow Orb' };
-      const mult = getDifficultyMultipliers();
-      const orb = {
-        type: 'ShadowOrb',
-        name: base.name,
-        maxHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
-        currentHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
-        damage: Math.max(0, Math.floor(base.damage * mult.enemyDmg)),
-        xpReward: base.xpReward || 0,
-        shieldActive: false,
-        stunned: false,
-        poisoned: false,
-        resistances: base.defaultResistances || {}
-      };
-      activeEnemies.push(orb);
-    }
-    if (spawnCount > 0) {
-      showTemporaryText(`${enemy.name} spawns ${spawnCount} Shadow Orb${spawnCount > 1 ? 's' : ''}!`);
-      drawBattleUI();
+  // Orb spawning: spawn 1-2 shadow orbs once per cooldown window
+  if (!enemy.stunned && enemy._canSpawnOrbs !== false) {
+    if (!enemy._lastOrbAt) enemy._lastOrbAt = 0;
+    if (now - enemy._lastOrbAt >= ORB_COOLDOWN_MS) {
+      enemy._lastOrbAt = now;
+      const spawnCount = (Math.random() < 0.5) ? 1 : 2;
+      const base = (enemyTypes && enemyTypes.ShadowOrb) || { maxHp: 40, damage: 2, name: 'Shadow Orb' };
+
+      // build and push orbs
+      for (let i = 0; i < spawnCount; i++) {
+        const orb = {
+          type: 'ShadowOrb',
+          name: base.name || 'Shadow Orb',
+          maxHp: Math.max(1, Math.floor((base.maxHp || 40) * (mult.enemyHp || 1))),
+          currentHp: Math.max(1, Math.floor((base.maxHp || 40) * (mult.enemyHp || 1))),
+          damage: Math.max(0, Math.floor((base.damage || 0) * (mult.enemyDmg || 1))),
+          xpReward: base.xpReward || 0,
+          shieldActive: false,
+          stunned: false,
+          poisoned: false,
+          resistances: base.defaultResistances ? { ...base.defaultResistances } : {}
+        };
+        activeEnemies.push(orb);
+      }
+
+      if (spawnCount > 0) {
+        showTemporaryText(`${enemy.name} spawns ${spawnCount} Shadow Orb${spawnCount > 1 ? 's' : ''}!`);
+        drawBattleUI();
+      }
     }
   }
 
-  // normal attack
+  // normal attack (separate from orb cooldown)
   if (!enemy.stunned && !enemy.shieldActive) {
-    const dmg = enemy.damage || 0;
+    const dmg = Number(enemy.damage) || 0;
     if (target === playerStats) {
       playerTakeDamage(dmg);
       showTemporaryText(`${enemy.name} slashes you for ${dmg} damage!`);
@@ -3587,9 +3598,11 @@ function finalBossStage2Behavior(enemy, target) {
       }
     }
   }
+
   drawBattleUI();
   drawPlayerBattleStatus();
 }
+
 
 // Stage 3 behavior placeholder (no mechanics yet)
 function finalBossStage3Behavior(enemy, target) {
