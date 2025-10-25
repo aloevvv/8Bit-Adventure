@@ -5517,14 +5517,14 @@ function doCleanse() {
           // telegraph red translucent
           ctx.fillStyle = 'rgba(255, 60, 60, 0.45)';
         } else {
-          ctx.fillStyle = 'rgba(19, 40, 77, 0.8)';
+          ctx.fillStyle = 'rgba(36, 76, 146, 0.8)';
         }
         ctx.beginPath();
         ctx.arc(h.x, h.y, h.r, 0, Math.PI*2);
         ctx.fill();
       } else {
         // simple projectile draw
-        ctx.fillStyle = '#f1c40f';
+        ctx.fillStyle = '#509b6c';
         ctx.beginPath();
         ctx.arc(h.x, h.y, h.radius || 5, 0, Math.PI*2);
         ctx.fill();
@@ -5533,7 +5533,7 @@ function doCleanse() {
 
     // draw HUD: player hp
     ctx.fillStyle = '#fff';
-    ctx.font = '14px sans-serif';
+    ctx.font = '20px sans-serif';
     const hpText = `HP: ${player.hp}${playerStats ? ' / ' + (playerStats.currentHp || player.hp) : ''}`;
     ctx.fillText(hpText, 20, canvas.height - 20);
   }
