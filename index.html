@@ -4352,23 +4352,6 @@ if (enemy && enemy.type === 'ShadowOrb' && !enemy._lightSpawned) {
 
   // Reduce the dark timer by 5 seconds if helper exists, else adjust darkTimerRemaining
   // Reduce dark timer by 5s using game API or safe fallback
-try {
-  const REDUCE_MS = 5000;
-  if (typeof reduceDarkTimer === 'function') {
-    reduceDarkTimer(REDUCE_MS);
-    console.log('[FinalBossHook] reduceDarkTimer() called for', REDUCE_MS, 'ms');
-  } else if (typeof darkTimerActive !== 'undefined' && darkTimerActive) {
-    // fallback: mirror reduceDarkTimer behavior
-    darkTimerMs = Math.max(0, (typeof darkTimerMs === 'number' ? darkTimerMs : 0) - REDUCE_MS);
-    if (typeof updateProgressiveDarknessUI === 'function') updateProgressiveDarknessUI();
-    if (typeof showTemporaryText === 'function') showTemporaryText(`Dark Timer reduced by ${Math.round(REDUCE_MS/1000)}s!`);
-    console.log('[FinalBossHook] darkTimerMs reduced by', REDUCE_MS, 'ms (fallback)');
-  } else {
-    console.log('[FinalBossHook] dark timer not active; no reduction applied');
-  }
-} catch (e) {
-  console.error('[FinalBossHook] error reducing dark timer', e);
-}
 
 
   showTemporaryText('A Shadow Orb collapses into a Light Orb!');
@@ -4376,7 +4359,30 @@ try {
   console.log('[FinalBossHook] ShadowOrb converted. activeEnemies:', activeEnemies.map(e => e && e.type).join(','));
 }
 
+if (t === 'LightOrb' && !enemy._lightConsumed) {
+    enemy._lightConsumed = true;
+    console.log('[FinalBossHook] LightOrb died, applying dark-timer reduction');
 
+    try {
+      const REDUCE_MS = 5000;
+      if (typeof reduceDarkTimer === 'function') {
+        // preferred API
+        reduceDarkTimer(REDUCE_MS);
+        console.log('[FinalBossHook] reduceDarkTimer called:', REDUCE_MS);
+      } else if (typeof darkTimerActive !== 'undefined' && darkTimerActive) {
+        // fallback mirrors reduceDarkTimer behavior
+        darkTimerMs = Math.max(0, (typeof darkTimerMs === 'number' ? darkTimerMs : 0) - REDUCE_MS);
+        if (typeof updateProgressiveDarknessUI === 'function') updateProgressiveDarknessUI();
+        if (typeof showTemporaryText === 'function') showTemporaryText(`Dark Timer reduced by ${Math.round(REDUCE_MS/1000)}s!`);
+        console.log('[FinalBossHook] darkTimerMs reduced by (fallback):', REDUCE_MS);
+      } else {
+        console.log('[FinalBossHook] dark timer not active; no reduction applied');
+      }
+    } catch (e) {
+      console.error('[FinalBossHook] error reducing dark timer', e);
+    }
+  }
+}
       // -- FinalBossStage2 -> Stage3 or other special conversions can use earlier patterns --
       if (enemy.type === 'FinalBossStage2' && !enemy._stageProgressed) {
         enemy._stageProgressed = true;
