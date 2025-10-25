@@ -5420,29 +5420,7 @@ function doCleanse() {
 
 })();
 
-  // UI wiring
-  if (restartBtn) restartBtn.addEventListener('click', () => {
-    if (tpAttemptsLeft <= 0 || tpWon) { showTemporaryText && showTemporaryText('No more attempts.'); return; }
-    startRound();
-  });
-  if (closeBtn) closeBtn.addEventListener('click', () => {
-    closeTargetPractice();
-  });
-
-  // Key binding: 'x' opens overlay when not in battle
-  document.addEventListener('keydown', (e) => {
-  if (e.key.toLowerCase() === 'x') {
-    e.preventDefault();
-    const obj = checkInteraction(x - 16, y) || checkInteraction(x + 16, y) || checkInteraction(x, y - 16) || checkInteraction(x, y + 16) || checkInteraction(x, y);
-    if (obj && obj.action === 'target_practice') openTargetPractice();
-    else if (obj) handleInteraction(obj);
-    else {
-      const zone = findNearbyDialogZone(x, y);
-      if (zone) showDialog(zone.text, zone.id, { style: zone.style || 'dialog', speaker: zone.speaker || null });
-      else showTemporaryText('Nothing to interact with.');
-    }
-  }
-});
+  
   // ---------- Target Practice Mini-game ----------
 (function installTargetPractice() {
   // Tunables
