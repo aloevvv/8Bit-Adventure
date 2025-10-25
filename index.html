@@ -3985,13 +3985,7 @@ function stopAbilityRegen() {
   if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
   if (abilityRegenIntervalId) { clearInterval(abilityRegenIntervalId); abilityRegenIntervalId = null; }
   if (activeAlly && activeAlly.attackTimerId) { clearInterval(activeAlly.attackTimerId); activeAlly.attackTimerId = null; }
-  
-if (darkTimerTickInterval) {
-  // compute remaining ms until limit
-  _pausedDarkTimerRemainingMs = Math.max(0, darkTimerLimitMs - darkTimerMs);
-  clearInterval(darkTimerTickInterval);
-  darkTimerTickInterval = null;
-}
+
 
 
   const attackBtn = document.getElementById('attack-button');
@@ -4014,28 +4008,7 @@ function resumeBattleTimersAfterDialog() {
   }
   if (!abilityRegenIntervalId) startAbilityRegen();
   if (_battleDialogPausedState.allyAttackTimerId && activeAlly && !activeAlly.attackTimerId) startAllyAttacking();
-  // restore dark timer if it was active before dialog
-if (_pausedDarkTimerRemainingMs !== null) {
-  // set darkTimerMs so the resumed tick continues from the same state
-  darkTimerMs = Math.max(0, darkTimerLimitMs - _pausedDarkTimerRemainingMs);
-
-  // start ticking again using your existing tick function (example uses 100ms)
-  darkTimerTickInterval = setInterval(() => {
-    darkTimerMs += darkTimerTickMs;
-    if (darkTimerMs >= darkTimerLimitMs) {
-      clearInterval(darkTimerTickInterval);
-      darkTimerTickInterval = null;
-      darkTimerActive = false;
-      // call your dark-timer-complete handler here
-      try { onDarkTimerComplete(); } catch (e) {}
-    } else {
-      // optional: update UI tick
-      try { drawDarkTimerUI && drawDarkTimerUI(); } catch(e){}
-    }
-  }, darkTimerTickMs);
-
-  _pausedDarkTimerRemainingMs = null;
-}
+ 
 
   const attackBtn = document.getElementById('attack-button');
   const sp1 = document.getElementById('special-attack-button-1');
