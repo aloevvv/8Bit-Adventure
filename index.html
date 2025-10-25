@@ -3507,28 +3507,6 @@ function finalBossStage1Behavior(enemy, target) {
 
 // Stage 2 behavior: orb + dark-timer mechanics
 function finalBossStage2Behavior(enemy, target) {
-  // spawn Eye once on stage2 entry if desired (optional)
-  if (!enemy._stage2Initialized) {
-    enemy._stage2Initialized = true;
-    // Optionally spawn the Eye as a stage1 sub-enemy; comment out if not wanted
-    const base = enemyTypes.Eye || { maxHp: 100, damage: 6, name: 'Eye' };
-    const mult = getDifficultyMultipliers();
-    const eyeStats = {
-      type: 'Eye',
-      name: base.name,
-      maxHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
-      currentHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
-      damage: Math.max(0, Math.floor(base.damage * mult.enemyDmg)),
-      xpReward: base.xpReward || 0,
-      shieldActive: false,
-      stunned: false,
-      poisoned: false,
-      resistances: base.defaultResistances || {}
-    };
-    // spawn Eye as a separate enemy if you want the Eye as a stage2 minion
-    activeEnemies.push(eyeStats);
-    showTemporaryText(`${enemy.name} calls a Watcher Eye!`);
-  }
 
   // Orb spawning: spawn 1-2 shadow orbs per boss turn
   if (enemy._canSpawnOrbs !== false && !enemy.stunned) {
