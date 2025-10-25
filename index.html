@@ -1289,6 +1289,24 @@ levels.forEach(level => {
     unlocked: false,
     checkCondition: () => achievementsMap['kill_mountainboss'].progress >= 1
   },
+    {
+    id: 'kill_islandboss',
+    name: 'Last Fire Breath',
+    description: 'Kill Nekark of the Seas on Ultimate Difficulty',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['kill_islandboss'].progress >= 1
+  },
+    {
+    id: 'kill_factoryboss',
+    name: 'Last Fire Breath',
+    description: 'Kill The Works Plant on Ultimate Difficulty',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['kill_factoryboss'].progress >= 1
+  },
   {
     id: 'kill_ghostboss',
     name: 'Whack-a-ghost',
@@ -1297,6 +1315,15 @@ levels.forEach(level => {
     progress: 0,
     unlocked: false,
     checkCondition: () => achievementsMap['kill_ghostboss'].progress >= 1
+  },
+    {
+    id: 'kill_finaleboss',
+    name: 'Last Fire Breath',
+    description: 'Kill Corruptus Caliginis Aeternae on Ultimate Difficulty',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['kill_finaleboss'].progress >= 1
   }
 ];
 
@@ -4475,8 +4502,9 @@ if (willHideBattleBlackout) {
   if (enemy.type === 'CaveBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_caveboss'].progress = 1;
   if (enemy.type === 'MountainBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_mountainboss'].progress = 1;
   if (enemy.type === 'GhostBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_ghostboss'].progress = 1;
-  if (enemy.type === 'SecondStageBossStage2' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_ghostboss'].progress = 1; //edit latter
-  if (enemy.type === 'IslandBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_ghostboss'].progress = 1;
+  if (enemy.type === 'SecondStageBossStage2' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_factoryboss'].progress = 1;
+  if (enemy.type === 'IslandBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_islandboss'].progress = 1;
+  if (enemy.type === 'FinalBossStage3' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_finaleboss'].progress = 1;
   if (enemy.type === 'Dummy') achievementsMap['kill_tutorial_dummy'].progress = 1;
   checkAchievements();
 
