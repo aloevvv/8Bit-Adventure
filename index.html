@@ -4916,6 +4916,7 @@ function doCleanse() {
   let activeHazards = [];
   let running = false;
   let onEndCallback = null;
+  let _lastPlayerHitAt = 0;
 
   // Utility
   function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
@@ -5346,50 +5347,82 @@ function doCleanse() {
 
   // Collision resolution: bullets vs boss/hazards vs player
   function resolveCollisions() {
-    // player bullets hitting hazards or boss
-    for (let i = playerBullets.length - 1; i >= 0; i--) {
-      const b = playerBullets[i];
-      // hit boss?
-      if (distance(b, bossObj) <= (b.radius + bossObj.radius)) {
-        // damage boss
-        bossObj.hp = Math.max(0, bossObj.hp - (b.dmg || 1));
-        playerBullets.splice(i,1);
-        // check boss dead
-        if (bossObj.hp <= 0) {
-          stopFinalBoss('victory');
-          return;
-        }
-        continue;
-      }
-      // else player bullets don't hit small hazards (optional)
-    }
+  // player bullets hitting boss
+  for (let i = playerBullets.length - 1; i >= 0; i--) {
+    const b = playerBullets[i];
+    if (bossObj && distance(b, bossObj) <= (b.radius + bossObj.radius)) {
+      bossObj.hp = Math.max(0, bossObj.hp - (b.dmg || 1));
+      playerBullets.splice(i, 1);
 
-    // hazards hitting player
-    for (let i = activeHazards.length - 1; i >= 0; i--) {
-      const h = activeHazards[i];
-      // telegraph circle active damage window
-      if (h.type === 'telegraphCircle') {
-        const elapsed = now() - h.spawnAt;
-        if (elapsed >= h.teleMs && elapsed < (h.teleMs + h.activeMs)) {
-          if (distance(h, player) <= h.r + player.radius) {
-            applyDamageToPlayer(h.dmg || Math.max(1, Math.floor(bossObj.dmg * 0.6)));
-          }
+      // boss death from player bullets
+      if (bossObj.hp <= 0) {
+        // sync with global enemy object if present
+        if (typeof enemyObj === 'object' && enemyObj) {
+          if (typeof enemyObj.currentHp === 'number') enemyObj.currentHp = 0;
         }
-        // remove after full duration
-        if (elapsed >= (h.teleMs + h.activeMs)) {
-          activeHazards.splice(i,1);
-        }
-        continue;
+        stopFinalBoss && stopFinalBoss('victory');
+        return;
       }
-
-      // normal projectile collisions
-      if (distance(h, player) <= (h.radius + player.radius)) {
-        applyDamageToPlayer(h.dmg || Math.max(1, Math.floor(bossObj.dmg * 0.6)));
-        // spikes and non-homing projectiles should remove on hit
-        activeHazards.splice(i,1);
-      }
+      continue;
     }
   }
+
+  // hazards hitting player
+  const nowMs = now();
+  for (let i = activeHazards.length - 1; i >= 0; i--) {
+    const h = activeHazards[i];
+
+    // telegraphed circle handling
+    if (h.type === 'telegraphCircle') {
+      const elapsed = nowMs - (h.spawnAt || 0);
+      if (elapsed >= (h.teleMs || 1000) && elapsed < ((h.teleMs || 1000) + (h.activeMs || 5000))) {
+        if (distance(h, player) <= (h.r + player.radius)) {
+          // telegraph damage scale
+          const dmg = h.dmg || Math.max(1, Math.floor((bossObj && bossObj.dmg) ? bossObj.dmg * 0.6 : 2));
+          applyDamageToPlayer(dmg);
+        }
+      }
+      // remove telegraph after full duration
+      if (elapsed >= ((h.teleMs || 1000) + (h.activeMs || 5000))) {
+        activeHazards.splice(i, 1);
+      }
+      continue;
+    }
+
+    // basic collision radius check
+    if (distance(h, player) <= ((h.radius || 0) + player.radius)) {
+      // homing hazards may have an activation delay
+      const spawnAt = h.spawnAt || 0;
+      const elapsed = nowMs - spawnAt;
+      const activeAfter = h.activeAfter || 0;
+
+      // prevent immediate damage for very-new homers
+      if (h.homing && activeAfter && elapsed < activeAfter) {
+        // warmup period; ignore collision for damage
+        continue;
+      }
+
+      // simple player invulnerability after a hit to avoid instant death from clustered hazards
+      const invulWindow = 400; // ms
+      if (typeof window._lastPlayerHitAt === 'undefined') window._lastPlayerHitAt = 0;
+      if ((nowMs - window._lastPlayerHitAt) < invulWindow) {
+        // still invulnerable
+        continue;
+      }
+
+      // apply damage
+      const dmg = h.dmg || Math.max(1, Math.floor((bossObj && bossObj.dmg) ? bossObj.dmg * 0.6 : 2));
+      applyDamageToPlayer(dmg);
+      window._lastPlayerHitAt = nowMs;
+
+      // remove most hazards on hit (spikes, homers, small projectiles)
+      activeHazards.splice(i, 1);
+
+      // check player death handled inside applyDamageToPlayer -> stopFinalBoss('defeat') will be called there
+      continue;
+    }
+  }
+}
 
   function applyDamageToPlayer(dmg) {
     // keep player's hp/damage persistent with original game state
