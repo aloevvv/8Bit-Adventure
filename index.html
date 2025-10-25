@@ -4280,7 +4280,7 @@ if (enemy.type === 'FinalBossStage1' && !enemy._stageProgressed) {
     if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
     enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 
-    // Draw immediately so player never sees the victory screen
+    
     drawBattleUI();
     drawPlayerBattleStatus();
     drawPartyStatus();
