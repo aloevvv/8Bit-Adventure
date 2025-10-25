@@ -4928,7 +4928,7 @@ function doCleanse() {
   const WORLD_PADDING = 20; // wall padding inside popup
   const SPIKE_SPEED = 280;
   const BALL_SPEED = 280;
-  const HOMING_SPEED = 50;
+  const HOMING_SPEED = 100;
   const TICK_MS = 16; // ~60fps
 
   // Internal state
@@ -5188,50 +5188,63 @@ function doCleanse() {
 
   // Boss movement & attacks
   function updateBoss(dt, nowMs) {
-    if (!bossObj) return;
+  if (!bossObj) return;
 
-    // If boss hits a wall (we consider its center reaching bounds), set moveTarget toward player and keep moving
-    // boss moves with constant vx/vy until hitting a wall; when it hits, it picks a direct line to the current player pos
-    if (!bossObj.moveTarget) {
-      // default slow wandering: choose a random wall contact target to bounce toward
-      // set to nearest wall intersection: pick a corner-ish along current direction if stationary
-      bossObj.vx = 0; bossObj.vy = 0;
-    }
-
-    // advance boss
-    bossObj.x += bossObj.vx * dt;
-    bossObj.y += bossObj.vy * dt;
-
-    // wall collision check
-    const left = bounds.x + bossObj.radius, right = bounds.x + bounds.w - bossObj.radius;
-    const top = bounds.y + bossObj.radius, bottom = bounds.y + bounds.h - bossObj.radius;
-    let hitWall = false;
-    if (bossObj.x <= left) { bossObj.x = left; hitWall = true; }
-    if (bossObj.x >= right) { bossObj.x = right; hitWall = true; }
-    if (bossObj.y <= top) { bossObj.y = top; hitWall = true; }
-    if (bossObj.y >= bottom) { bossObj.y = bottom; hitWall = true; }
-
-    // On hit wall, compute trajectory to current player pos until next wall
-    if (hitWall || (!bossObj.vx && !bossObj.vy)) {
-      const target = { x: player.x, y: player.y };
-      const dir = normalize(target.x - bossObj.x, target.y - bossObj.y);
-      bossObj.vx = dir.x * BOSS_SPEED;
-      bossObj.vy = dir.y * BOSS_SPEED;
-    }
-
-    // Attacks scheduling:
-    // ball/spill every 3-5s (random choose one of the two)
-    if (nowMs - bossObj.lastBallOrSpillAt >= randInt(3000,5000)) {
-      bossObj.lastBallOrSpillAt = nowMs;
-      if (Math.random() < 0.5) bossSpillSpikes(); else bossThrowBall();
-    }
-
-    // circle/homing every 7-9s (50% choose)
-    if (nowMs - bossObj.lastCircleOrHomingAt >= randInt(7000,9000)) {
-      bossObj.lastCircleOrHomingAt = nowMs;
-      if (Math.random() < 0.5) bossCircleTelegraph(); else bossHomingSpikes();
-    }
+  // ensure boss has an initial movement vector on first tick
+  if (bossObj._initMovement !== true) {
+    bossObj._initMovement = true;
+    // aim roughly toward center or random direction so it will hit a wall soon
+    const startDir = normalize((player.x || (canvas.width/2)) - bossObj.x, (player.y || 100) - bossObj.y);
+    bossObj.vx = startDir.x * BOSS_SPEED;
+    bossObj.vy = startDir.y * BOSS_SPEED;
+    bossObj.moveTarget = { x: bossObj.x + bossObj.vx * 2, y: bossObj.y + bossObj.vy * 2 };
   }
+
+  // advance boss
+  bossObj.x += bossObj.vx * dt;
+  bossObj.y += bossObj.vy * dt;
+
+  // bounds for boss center
+  const left = bounds.x + bossObj.radius, right = bounds.x + bounds.w - bossObj.radius;
+  const top = bounds.y + bossObj.radius, bottom = bounds.y + bounds.h - bossObj.radius;
+  let hitWall = false;
+  if (bossObj.x <= left) { bossObj.x = left; hitWall = true; }
+  if (bossObj.x >= right) { bossObj.x = right; hitWall = true; }
+  if (bossObj.y <= top) { bossObj.y = top; hitWall = true; }
+  if (bossObj.y >= bottom) { bossObj.y = bottom; hitWall = true; }
+
+  // On hit wall, compute a straight-line trajectory toward the current player pos
+  // and keep that vx/vy until the next wall collision
+  if (hitWall) {
+    const target = { x: player.x, y: player.y };
+    const dir = normalize(target.x - bossObj.x, target.y - bossObj.y);
+    bossObj.vx = dir.x * BOSS_SPEED;
+    bossObj.vy = dir.y * BOSS_SPEED;
+    bossObj.moveTarget = { x: bossObj.x + bossObj.vx * 1000, y: bossObj.y + bossObj.vy * 1000 };
+  }
+
+  // If boss somehow stopped (zero velocity), give it a small nudge toward player
+  if (Math.abs(bossObj.vx) < 1e-3 && Math.abs(bossObj.vy) < 1e-3) {
+    const n = normalize(player.x - bossObj.x, player.y - bossObj.y);
+    bossObj.vx = n.x * (BOSS_SPEED * 0.8);
+    bossObj.vy = n.y * (BOSS_SPEED * 0.8);
+  }
+
+  // Attacks scheduling
+  if (!bossObj.lastBallOrSpillAt) bossObj.lastBallOrSpillAt = nowMs;
+  if (!bossObj.lastCircleOrHomingAt) bossObj.lastCircleOrHomingAt = nowMs;
+
+  if (nowMs - bossObj.lastBallOrSpillAt >= randInt(3000,5000)) {
+    bossObj.lastBallOrSpillAt = nowMs;
+    if (Math.random() < 0.5) bossSpillSpikes(); else bossThrowBall();
+  }
+
+  if (nowMs - bossObj.lastCircleOrHomingAt >= randInt(7000,9000)) {
+    bossObj.lastCircleOrHomingAt = nowMs;
+    if (Math.random() < 0.5) bossCircleTelegraph(); else bossHomingSpikes();
+  }
+}
+
 
   // Attack: spill 16 spikes from boss position outwards (deload OOB)
   function bossSpillSpikes() {
