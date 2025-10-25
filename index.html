@@ -4308,6 +4308,75 @@ if (enemy.type === 'FinalBossStage1' && !enemy._stageProgressed) {
   return; // avoid calling original handler again
 }
 
+ // ShadowOrb -> LightOrb conversion 
+if (enemy && enemy.type === 'ShadowOrb' && !enemy._lightSpawned) {
+  enemy._lightSpawned = true;
+  console.log('[FinalBossHook] converting ShadowOrb -> LightOrb for', enemy.name);
+
+  // clear any running timers from the ShadowOrb
+  if (enemy._poisonIntervalId) { clearInterval(enemy._poisonIntervalId); enemy._poisonIntervalId = null; }
+  if (enemy._spectralIntervalId) { clearInterval(enemy._spectralIntervalId); enemy._spectralIntervalId = null; }
+  if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
+
+  
+  const lightBase = (enemyTypes && enemyTypes.LightOrb) || { name: 'Light Orb', maxHp: 40, damage: 0, xpReward: 0, defaultResistances: {} };
+  const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp: 1 };
+  const light = {
+    type: 'LightOrb',
+    name: lightBase.name || 'Light Orb',
+    maxHp: Math.max(1, Math.floor((lightBase.maxHp || 40) * mult.enemyHp)),
+    currentHp: Math.max(1, Math.floor((lightBase.maxHp || 40) * mult.enemyHp)),
+    damage: lightBase.damage || 0,
+    xpReward: lightBase.xpReward || 0,
+    shieldActive: false, stunned: false, poisoned: false,
+    resistances: lightBase.defaultResistances || {}
+  };
+
+  // Determine index of the corpse (prefer provided insertIndex)
+  let corpseIdx = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length)
+    ? insertIndex
+    : activeEnemies.indexOf(enemy);
+  if (corpseIdx === -1) corpseIdx = activeEnemies.length;
+
+  // Remove corpse slot first to avoid later cleanup removing the wrong object
+  if (corpseIdx >= 0 && corpseIdx < activeEnemies.length && activeEnemies[corpseIdx] === enemy) {
+    activeEnemies.splice(corpseIdx, 1);
+  }
+
+  // Insert the LightOrb at the former corpse position
+  if (corpseIdx >= activeEnemies.length) {
+    activeEnemies.push(light);
+  } else {
+    activeEnemies.splice(corpseIdx, 0, light);
+  }
+
+  // Reduce the dark timer by 5 seconds if helper exists, else adjust darkTimerRemaining
+  try {
+    if (typeof reduceDarkTimer === 'function') {
+      reduceDarkTimer(5000);
+      console.log('[FinalBossHook] reduced dark timer by 5000ms via reduceDarkTimer()');
+    } else if (typeof darkTimerRemaining === 'number') {
+      darkTimerRemaining = Math.max(0, darkTimerRemaining - 5000);
+      console.log('[FinalBossHook] reduced darkTimerRemaining by 5000ms');
+    } else if (typeof darkTimer === 'number') {
+      darkTimer = Math.max(0, darkTimer - 5000);
+      console.log('[FinalBossHook] reduced darkTimer by 5000ms');
+    } else if (typeof darkTimerId !== 'undefined' && darkTimerId === null && typeof startDarkTimer === 'function') {
+      // no-op: timer not running, nothing to reduce
+      console.log('[FinalBossHook] dark timer not running; no reduction applied');
+    } else {
+      console.log('[FinalBossHook] no dark timer API found to reduce');
+    }
+  } catch (e) {
+    console.error('[FinalBossHook] error reducing dark timer', e);
+  }
+
+  showTemporaryText('A Shadow Orb collapses into a Light Orb!');
+  drawBattleUI();
+  console.log('[FinalBossHook] ShadowOrb converted. activeEnemies:', activeEnemies.map(e => e && e.type).join(','));
+}
+
+
       // -- FinalBossStage2 -> Stage3 or other special conversions can use earlier patterns --
       if (enemy.type === 'FinalBossStage2' && !enemy._stageProgressed) {
         enemy._stageProgressed = true;
