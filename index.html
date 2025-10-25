@@ -564,6 +564,9 @@ let isPowered = false;
 let shownDialogs = new Set();
 let _dialogQueue = [];
 let removedWallIds = new Set();
+let _battleDialogQueue = [];
+let _battleDialogPausedState = null;
+
 
 const zoneSprites = {
   fail: new Image (),
@@ -1413,7 +1416,46 @@ function tryTriggerDialogOnX() {
   // 3) nothing to interact with
   showTemporaryText("Nothing to interact with.");
 }
-  
+  function showBattleDialog(textOrLines, idToMark, opts = {}) {
+  if (!inBattle) {
+    showDialog(textOrLines, idToMark, opts);
+    return;
+  }
+
+  const overlay = document.getElementById('dialog-overlay');
+  const box = document.getElementById('dialog-box');
+  const textDiv = document.getElementById('dialog-text');
+
+  function normalize(line, fallbackStyle) {
+    if (typeof line === 'string') return { speaker: null, text: line, style: fallbackStyle };
+    return { speaker: line.speaker || null, text: line.text != null ? String(line.text) : '', style: line.style || fallbackStyle };
+  }
+
+  const fallbackStyle = opts.style || 'dialog';
+  const lines = Array.isArray(textOrLines) ? textOrLines.slice() : [textOrLines];
+  _battleDialogQueue = lines.map(l => normalize(l, fallbackStyle));
+
+  pauseBattleTimersForDialog();
+
+  if (_battleDialogQueue.length > 0) {
+    const line = _battleDialogQueue.shift();
+    applyDialogStyle(box, line.style || fallbackStyle);
+    if (line.speaker) {
+      textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
+    } else {
+      textDiv.textContent = line.text;
+    }
+  } else {
+    textDiv.textContent = '';
+  }
+
+  overlay.style.display = 'flex';
+  overlay._markId = idToMark || null;
+
+  drawBattleUI();
+  drawPlayerBattleStatus();
+}
+
 function showDialog(textOrLines, idToMark, opts = {}) {
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
@@ -3677,6 +3719,52 @@ function stopAbilityRegen() {
   updateAbilityButtonsUI();
   startAbilityRegen();
 }
+  function pauseBattleTimersForDialog() {
+  _battleDialogPausedState = {
+    enemyAttackIntervalId,
+    staminaRegenIntervalId,
+    abilityRegenIntervalId,
+    allyAttackTimerId: activeAlly && activeAlly.attackTimerId ? activeAlly.attackTimerId : null
+  };
+
+  if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
+  if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
+  if (abilityRegenIntervalId) { clearInterval(abilityRegenIntervalId); abilityRegenIntervalId = null; }
+  if (activeAlly && activeAlly.attackTimerId) { clearInterval(activeAlly.attackTimerId); activeAlly.attackTimerId = null; }
+
+  const attackBtn = document.getElementById('attack-button');
+  const sp1 = document.getElementById('special-attack-button-1');
+  const sp2 = document.getElementById('special-attack-button-2');
+  const invBtn = document.getElementById('inventory-battle-button');
+  if (attackBtn) attackBtn.disabled = true;
+  if (sp1) sp1.disabled = true;
+  if (sp2) sp2.disabled = true;
+  if (invBtn) invBtn.disabled = true;
+}
+
+function resumeBattleTimersAfterDialog() {
+  if (!inBattle) return;
+  if (!_battleDialogPausedState) return;
+
+  if (!enemyAttackIntervalId) enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+  if (!staminaRegenIntervalId) {
+    staminaRegenIntervalId = setInterval(() => { updateStamina(playerStats.currentStamina + 1); drawPlayerBattleStatus(); }, 100);
+  }
+  if (!abilityRegenIntervalId) startAbilityRegen();
+  if (_battleDialogPausedState.allyAttackTimerId && activeAlly && !activeAlly.attackTimerId) startAllyAttacking();
+
+  const attackBtn = document.getElementById('attack-button');
+  const sp1 = document.getElementById('special-attack-button-1');
+  const sp2 = document.getElementById('special-attack-button-2');
+  const invBtn = document.getElementById('inventory-battle-button');
+  if (attackBtn) attackBtn.disabled = false;
+  if (sp1) sp1.disabled = false;
+  if (sp2) sp2.disabled = false;
+  if (invBtn) invBtn.disabled = false;
+
+  _battleDialogPausedState = null;
+}
+
   
 function enemyAttack(enemy, target) {
   const damage = enemy.damage || 0;
@@ -3773,7 +3861,16 @@ function enemyAttack(enemy, target) {
   function handleEnemyDeath(enemy) {
   // Stage1 -> Stage2 special handling
   if (!enemy) return;
-
+    
+  if (enemy.type === 'MountainBoss') {
+  showBattleDialog(
+    [
+      { speaker: enemy.name, text: "Nooo..." },
+      { speaker: '8-Bit', text: "More test code?" }
+    ],
+    null,
+    { style: 'boss' }
+  );
   // Stage1 special: explode and spawn Stage2 (explosion happens when Stage1 dies)
   if (enemy.type === "SecondStageBossStage1") {
     // Explosion damage: 5% of player's max HP (rounded up)
@@ -5046,28 +5143,38 @@ document.getElementById('inventory-battle-button').addEventListener('click', () 
   }
 });
 
-  document.getElementById('dialog-next').addEventListener('click', () => {
-  const overlay = document.getElementById('dialog-overlay');
-  const box = document.getElementById('dialog-box');
-  const textDiv = document.getElementById('dialog-text');
+  const dialogNextBtn = document.getElementById('dialog-next');
+if (dialogNextBtn) {
+  dialogNextBtn.addEventListener('click', () => {
+    const overlay = document.getElementById('dialog-overlay');
+    const textDiv = document.getElementById('dialog-text');
+    const box = document.getElementById('dialog-box');
 
-  if (_dialogQueue.length > 0) {
-    const line = _dialogQueue.shift();
-    applyDialogStyle(box, line.style);
-    if (line.speaker) {
-      textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
-    } else {
-      textDiv.textContent = line.text;
+    if (_battleDialogQueue && _battleDialogQueue.length > 0) {
+      const line = _battleDialogQueue.shift();
+      applyDialogStyle(box, line.style || 'dialog');
+      if (line.speaker) {
+        textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
+      } else {
+        textDiv.textContent = line.text;
+      }
+      return;
     }
-    return;
-  }
 
-  const id = overlay._markId;
-  overlay._markId = null;
-  overlay.style.display = 'none';
-  draw();
-  if (id) shownDialogs.add(id);
-});
+    const id = overlay._markId;
+    overlay._markId = null;
+    overlay.style.display = 'none';
+    draw();
+    if (id) shownDialogs.add(id);
+
+    if (inBattle) {
+      resumeBattleTimersAfterDialog();
+      drawBattleUI();
+      drawPlayerBattleStatus();
+      if (typeof drawPartyStatus === 'function') drawPartyStatus();
+    }
+  });
+}
 
 document.addEventListener('keydown', function(e) {
   if (isGameOver && e.key.toLowerCase() === 'r') {
