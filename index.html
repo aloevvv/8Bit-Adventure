@@ -4251,99 +4251,44 @@ if (typeof handleEnemyDeath === 'function' && !handleEnemyDeath._isWrapped) {
         }
       }
 
-      // 4) FinalBoss Stage2 -> Stage3
-if (enemy.type === 'FinalBossStage2') {
-  if (!enemy._stageProgressed) {
-    enemy._stageProgressed = true;
+      // 4) FinalBoss Stage2 -> Stage3 (spawn once, exactly one)
+      if (enemy.type === 'FinalBossStage2') {
+        if (!enemy._stageProgressed) {
+          enemy._stageProgressed = true;
 
-    // safe base lookup with fallback
-    const base = (enemyTypes && enemyTypes.FinalBossStage3) || { name: 'FinalBossStage3', maxHp: 1, damage: 0 };
-    const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp: 1, enemyDmg: 1 };
-    const stage3 = {
-      type: 'FinalBossStage3',
-      name: base.name || 'FinalBossStage3',
-      maxHp: Math.max(1, Math.floor((base.maxHp || 1) * mult.enemyHp)),
-      currentHp: Math.max(1, Math.floor((base.maxHp || 1) * mult.enemyHp)),
-      damage: Math.max(0, Math.floor((base.damage || 0) * mult.enemyDmg)),
-      xpReward: base.xpReward || 0,
-      shieldActive: false,
-      stunned: false,
-      poisoned: false,
-      resistances: base.defaultResistances || {}
-    };
+          const base = enemyTypes.FinalBossStage3 || enemyTypes.FinalBossStage3;
+          const mult = getDifficultyMultipliers();
+          const stage3 = {
+            type: 'FinalBossStage3',
+            name: base.name,
+            maxHp: Math.max(1, Math.floor((base.maxHp || 1) * mult.enemyHp)),
+            currentHp: Math.max(1, Math.floor((base.maxHp || 1) * mult.enemyHp)),
+            damage: Math.max(0, Math.floor((base.damage || 0) * mult.enemyDmg)),
+            xpReward: base.xpReward || 0,
+            shieldActive: false,
+            stunned: false,
+            poisoned: false,
+            resistances: base.defaultResistances || {}
+          };
 
-    // pause timers BEFORE inserting so the popup controls time
-    if (typeof pauseBattleTimersForDialog === 'function') pauseBattleTimersForDialog();
-
-    // compute a robust insertIndex (prefer provided idx, else use corpse slot, else end)
-    let insertIndex = (typeof idx === 'number' && idx >= 0 && idx <= activeEnemies.length) ? idx : activeEnemies.indexOf(enemy);
-    if (insertIndex === -1) insertIndex = activeEnemies.length;
-
-    // clear per-enemy intervals to avoid reentry/race conditions (minimal known timers)
-    if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
-    if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
-    if (enemy._poisonIntervalId) { clearInterval(enemy._poisonIntervalId); enemy._poisonIntervalId = null; }
-
-    // remove corpse if still present and use that exact slot
-    const corpseIdx = activeEnemies.indexOf(enemy);
-    if (corpseIdx !== -1) {
-      activeEnemies.splice(corpseIdx, 1);
-      insertIndex = corpseIdx;
-    }
-
-    // insert or push (replace-or-push) to avoid duplicate accumulation
-    if (insertIndex >= activeEnemies.length) {
-      activeEnemies.push(stage3);
-    } else {
-      activeEnemies.splice(insertIndex, 1, stage3);
-    }
-
-    showTemporaryText(`${stage3.name} rises from the shadows!`);
-    drawBattleUI();
-
-    // find the actual spawned reference (placeSpawnAt-style helpers may differ)
-    let spawned = null;
-    if (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length) {
-      spawned = activeEnemies[insertIndex];
-    }
-    if (!spawned) spawned = activeEnemies.find(e => e && e.type === 'FinalBossStage3');
-
-    // start the bullet-hell popup if available
-    if (spawned && typeof startFinalBossBulletHell === 'function') {
-      startFinalBossBulletHell({
-        bossEnemy: spawned,
-        onEnd: (mode) => {
-          // resume timers/UI immediately
-          if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
-
-          // If the popup ended in victory, remove the spawned boss cleanly and run minimal cleanup
-          if (mode === 'victory') {
-            const idx2 = activeEnemies.indexOf(spawned);
-            if (idx2 !== -1) {
-              // remove spawned without re-entering wrapped handleEnemyDeath
-              activeEnemies.splice(idx2, 1);
-
-              // Try to call a direct removal/cleanup helper if present
-              if (typeof removeEnemy === 'function') {
-                try { removeEnemy(spawned, idx2); } catch (e) { /* non-fatal */ }
-              } else {
-                // fallback: grant XP if you have a helper; otherwise noop to avoid double-wrapping
-                if (typeof grantXpToPlayer === 'function') {
-                  try { grantXpToPlayer(spawned.xpReward || 0); } catch (e) { /* non-fatal */ }
-                }
-              }
-            }
-          }
-
+          placeSpawnAt(insertIndex, stage3);
+          showTemporaryText(`${stage3.name} rises from the shadows!`);
           drawBattleUI();
-          drawPlayerBattleStatus();
         }
-      });
-    } else {
-      // nothing to show; just resume timers
-      if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
+      }
+
+    } catch (e) {
+      console.error('FinalBoss death hook error', e);
     }
-  }
+
+    // Finally call original to perform cleanup (AWAIT original; original will remove enemy etc.)
+    return __orig_handleEnemyDeath(enemy, idx);
+  };
+
+  // mark as wrapped to avoid multiple wraps
+  handleEnemyDeath._isWrapped = true;
+} else if (typeof handleEnemyDeath !== 'function') {
+  console.warn('FinalBoss module: handleEnemyDeath not found to wrap.');
 }
 
   if (enemy.type === 'MountainBoss') {
@@ -4875,6 +4820,629 @@ function doCleanse() {
   if (cl) cl.addEventListener('click', doCleanse);
 })();
 
+  // FINAL BOSS BULLETHELL MODULE
+(function() {
+  // Config
+  const POPUP_ID = 'final-boss-bullethell';
+  const SHOOT_COOLDOWN = 200; // ms (0.2s)
+  const PLAYER_RADIUS = 12;
+  const PLAYER_SPEED = 220; // px/s
+  const PROJECTILE_SPEED = 420; // px/s (player bullets go up)
+  const PLAYER_BULLET_COLOR = '#3aa0ff';
+  const BOSS_RADIUS = 48; // big hitbox radius
+  const BOSS_SPEED = 180; // px/s while moving toward target
+  const WORLD_PADDING = 20; // wall padding inside popup
+  const SPIKE_SPEED = 280;
+  const BALL_SPEED = 280;
+  const HOMING_SPEED = 200;
+  const TICK_MS = 16; // ~60fps
+
+  // Internal state
+  let popup, canvas, ctx, lastTs, rafId, tickInterval;
+  let player = null;
+  let keys = {};
+  let canShoot = true;
+  let playerBullets = [];
+  let bossObj = null;
+  let enemyObj = null;
+  let bounds = null;
+  let activeHazards = [];
+  let running = false;
+  let onEndCallback = null;
+
+  // Utility
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function now() { return performance.now(); }
+  function randInt(a,b){return Math.floor(a + Math.random()*(b-a+1));}
+  function distance(a,b){const dx=a.x-b.x, dy=a.y-b.y; return Math.hypot(dx,dy);}
+  function normalize(vx,vy){const L=Math.hypot(vx,vy)||1; return {x:vx/L,y:vy/L};}
+
+  // DOM create
+  function createPopup() {
+    // prevent creating twice
+    if (document.getElementById(POPUP_ID)) return document.getElementById(POPUP_ID);
+
+    popup = document.createElement('div');
+    popup.id = POPUP_ID;
+    Object.assign(popup.style, {
+      position: 'fixed',
+      left: 0, top: 0, right: 0, bottom: 0,
+      zIndex: 999999,
+      background: 'rgba(0,0,0,0.85)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    });
+
+    canvas = document.createElement('canvas');
+    canvas.width = Math.min(window.innerWidth - 80, 1200);
+    canvas.height = Math.min(window.innerHeight - 80, 800);
+    Object.assign(canvas.style, {
+      background: '#06060a',
+      boxShadow: '0 0 30px rgba(0,0,0,0.8)',
+      borderRadius: '6px'
+    });
+
+    popup.appendChild(canvas);
+    document.body.appendChild(popup);
+    ctx = canvas.getContext('2d');
+    bounds = { x: WORLD_PADDING, y: WORLD_PADDING, w: canvas.width - WORLD_PADDING*2, h: canvas.height - WORLD_PADDING*2 };
+    return popup;
+  }
+
+  // Input
+  function onKeyDown(e){ if (e.code === 'Space') { keys.space = true; e.preventDefault(); } }
+  function onKeyUp(e){ if (e.code === 'Space') { keys.space = false; e.preventDefault(); } }
+
+  // Start function to call externally
+  window.startFinalBossBulletHell = function({ bossEnemy, onEnd } = {}) {
+    if (running) return;
+    enemyObj = bossEnemy || null;
+    onEndCallback = typeof onEnd === 'function' ? onEnd : null;
+
+    createPopup();
+    initEntities();
+    attachListeners();
+    running = true;
+    lastTs = now();
+    tickInterval = setInterval(tick, TICK_MS);
+  };
+
+  // Stop / cleanup
+  function stopFinalBoss(mode) {
+    running = false;
+    if (tickInterval) { clearInterval(tickInterval); tickInterval = null; }
+    if (document.getElementById(POPUP_ID)) {
+      document.getElementById(POPUP_ID).remove();
+    }
+    detachListeners();
+    playerBullets = [];
+    activeHazards = [];
+    bossObj = null;
+    enemyObj = null;
+    if (onEndCallback) onEndCallback(mode || 'ended');
+  }
+
+  // Initialize player and boss
+  function initEntities() {
+    const cx = canvas.width/2, cy = canvas.height - 120;
+    player = {
+      x: cx, y: cy, vx:0, vy:0,
+      radius: PLAYER_RADIUS,
+      hp: (playerStats && playerStats.currentHp) || 100,
+      dmg: (playerStats && playerStats.damage) || 10
+    };
+
+    // Boss spawn center
+    bossObj = {
+      x: canvas.width/2,
+      y: 120,
+      vx: 0, vy: 0,
+      radius: BOSS_RADIUS,
+      hp: enemyObj && typeof enemyObj.currentHp === 'number' ? enemyObj.currentHp : 500,
+      maxHp: enemyObj && enemyObj.maxHp ? enemyObj.maxHp : 500,
+      dmg: enemyObj && typeof enemyObj.damage === 'number' ? enemyObj.damage : 10,
+      state: 'idle',
+      // movement target when bouncing to wall
+      moveTarget: null,
+      // attack timers
+      lastBallOrSpillAt: 0,
+      lastCircleOrHomingAt: 0
+    };
+  }
+
+  // Listeners
+  function attachListeners() {
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    canvas.addEventListener('mousemove', onMouseMove);
+    // WASD movement for player
+    window.addEventListener('keydown', onMovementKey);
+    window.addEventListener('keyup', onMovementKeyUp);
+
+    // basic pause by pressing ESC to exit
+    window.addEventListener('keydown', function escExit(e){ if (e.key === 'Escape') { stopFinalBoss('escape'); }});
+  }
+
+  function detachListeners() {
+    window.removeEventListener('keydown', onKeyDown);
+    window.removeEventListener('keyup', onKeyUp);
+    canvas.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('keydown', onMovementKey);
+    window.removeEventListener('keyup', onMovementKeyUp);
+  }
+
+  // Player keyboard movement (arrow keys or WASD)
+  let moveState = { left:false, right:false, up:false, down:false };
+  function onMovementKey(e){
+    if (e.code === 'KeyA' || e.code === 'ArrowLeft') moveState.left = true;
+    if (e.code === 'KeyD' || e.code === 'ArrowRight') moveState.right = true;
+    if (e.code === 'KeyW' || e.code === 'ArrowUp') moveState.up = true;
+    if (e.code === 'KeyS' || e.code === 'ArrowDown') moveState.down = true;
+  }
+  function onMovementKeyUp(e){
+    if (e.code === 'KeyA' || e.code === 'ArrowLeft') moveState.left = false;
+    if (e.code === 'KeyD' || e.code === 'ArrowRight') moveState.right = false;
+    if (e.code === 'KeyW' || e.code === 'ArrowUp') moveState.up = false;
+    if (e.code === 'KeyS' || e.code === 'ArrowDown') moveState.down = false;
+  }
+
+  function onMouseMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    // allow optional mouse aim later
+  }
+
+  // Main tick
+  function tick() {
+    const nowTs = now();
+    const dt = Math.min(200, nowTs - lastTs) / 1000;
+    lastTs = nowTs;
+
+    updatePlayer(dt);
+    handleShooting(nowTs);
+    updateBullets(dt);
+    updateBoss(dt, nowTs);
+    cleanupOutOfBounds();
+    resolveCollisions();
+    render();
+  }
+
+  // Player movement update
+  function updatePlayer(dt) {
+    let ax = 0, ay = 0;
+    if (moveState.left) ax -= 1;
+    if (moveState.right) ax += 1;
+    if (moveState.up) ay -= 1;
+    if (moveState.down) ay += 1;
+    if (ax !== 0 || ay !== 0) {
+      const norm = normalize(ax, ay);
+      player.vx = norm.x * PLAYER_SPEED;
+      player.vy = norm.y * PLAYER_SPEED;
+    } else {
+      player.vx = 0; player.vy = 0;
+    }
+    player.x += player.vx * dt;
+    player.y += player.vy * dt;
+
+    // keep inside walls
+    player.x = clamp(player.x, bounds.x + player.radius, bounds.x + bounds.w - player.radius);
+    player.y = clamp(player.y, bounds.y + player.radius, bounds.y + bounds.h - player.radius);
+  }
+
+  // Shooting handling (space to shoot)
+  let lastShotAt = 0;
+  function handleShooting(nowMs) {
+    if (keys.space) {
+      if (nowMs - lastShotAt >= SHOOT_COOLDOWN) {
+        lastShotAt = nowMs;
+        spawnPlayerBullet();
+      }
+    }
+  }
+
+  function spawnPlayerBullet() {
+    const b = {
+      x: player.x,
+      y: player.y - player.radius - 6,
+      vx: 0,
+      vy: -PROJECTILE_SPEED,
+      radius: 6,
+      color: PLAYER_BULLET_COLOR,
+      owner: 'player',
+      dmg: player.dmg || 1
+    };
+    playerBullets.push(b);
+  }
+
+  // Bullets update
+  function updateBullets(dt) {
+    // player bullets
+    for (let i = playerBullets.length - 1; i >= 0; i--) {
+      const p = playerBullets[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      // remove out of bounds
+      if (p.x < bounds.x - 50 || p.x > bounds.x + bounds.w + 50 || p.y < bounds.y - 50 || p.y > bounds.y + bounds.h + 50) {
+        playerBullets.splice(i,1);
+      }
+    }
+
+    // hazards update
+    for (let i = activeHazards.length - 1; i >= 0; i--) {
+      const h = activeHazards[i];
+      h.x += (h.vx||0) * dt;
+      h.y += (h.vy||0) * dt;
+      // lifetime expiration
+      if (h.ttl && (now() - h.spawnAt) > h.ttl) {
+        activeHazards.splice(i,1);
+        continue;
+      }
+      // remove on OOB
+      if (h.x < bounds.x - 30 || h.x > bounds.x + bounds.w + 30 || h.y < bounds.y - 30 || h.y > bounds.y + bounds.h + 30) {
+        activeHazards.splice(i,1);
+      }
+      // homing adjustments
+      if (h.homing) {
+        const dir = normalize(player.x - h.x, player.y - h.y);
+        h.vx = dir.x * h.speed;
+        h.vy = dir.y * h.speed;
+      }
+    }
+  }
+
+  // Boss movement & attacks
+  function updateBoss(dt, nowMs) {
+    if (!bossObj) return;
+
+    // If boss hits a wall (we consider its center reaching bounds), set moveTarget toward player and keep moving
+    // boss moves with constant vx/vy until hitting a wall; when it hits, it picks a direct line to the current player pos
+    if (!bossObj.moveTarget) {
+      // default slow wandering: choose a random wall contact target to bounce toward
+      // set to nearest wall intersection: pick a corner-ish along current direction if stationary
+      bossObj.vx = 0; bossObj.vy = 0;
+    }
+
+    // advance boss
+    bossObj.x += bossObj.vx * dt;
+    bossObj.y += bossObj.vy * dt;
+
+    // wall collision check
+    const left = bounds.x + bossObj.radius, right = bounds.x + bounds.w - bossObj.radius;
+    const top = bounds.y + bossObj.radius, bottom = bounds.y + bounds.h - bossObj.radius;
+    let hitWall = false;
+    if (bossObj.x <= left) { bossObj.x = left; hitWall = true; }
+    if (bossObj.x >= right) { bossObj.x = right; hitWall = true; }
+    if (bossObj.y <= top) { bossObj.y = top; hitWall = true; }
+    if (bossObj.y >= bottom) { bossObj.y = bottom; hitWall = true; }
+
+    // On hit wall, compute trajectory to current player pos until next wall
+    if (hitWall || (!bossObj.vx && !bossObj.vy)) {
+      const target = { x: player.x, y: player.y };
+      const dir = normalize(target.x - bossObj.x, target.y - bossObj.y);
+      bossObj.vx = dir.x * BOSS_SPEED;
+      bossObj.vy = dir.y * BOSS_SPEED;
+    }
+
+    // Attacks scheduling:
+    // ball/spill every 3-5s (random choose one of the two)
+    if (nowMs - bossObj.lastBallOrSpillAt >= randInt(3000,5000)) {
+      bossObj.lastBallOrSpillAt = nowMs;
+      if (Math.random() < 0.5) bossSpillSpikes(); else bossThrowBall();
+    }
+
+    // circle/homing every 7-9s (50% choose)
+    if (nowMs - bossObj.lastCircleOrHomingAt >= randInt(7000,9000)) {
+      bossObj.lastCircleOrHomingAt = nowMs;
+      if (Math.random() < 0.5) bossCircleTelegraph(); else bossHomingSpikes();
+    }
+  }
+
+  // Attack: spill 16 spikes from boss position outwards (deload OOB)
+  function bossSpillSpikes() {
+    const count = 16;
+    for (let i=0;i<count;i++){
+      const ang = (Math.PI*2) * (i/count);
+      const dir = { x: Math.cos(ang), y: Math.sin(ang) };
+      activeHazards.push({
+        x: bossObj.x + dir.x*(bossObj.radius+8),
+        y: bossObj.y + dir.y*(bossObj.radius+8),
+        vx: dir.x * SPIKE_SPEED,
+        vy: dir.y * SPIKE_SPEED,
+        speed: SPIKE_SPEED,
+        radius: 6,
+        dmg: bossObj.dmg,
+        spawnAt: now(),
+        ttl: 7000
+      });
+    }
+  }
+
+  // Attack: throw a ball in straight line to player; after moderate travel spawn 8 small spikes from its endpoint
+  function bossThrowBall() {
+    const dir = normalize(player.x - bossObj.x, player.y - bossObj.y);
+    const ball = {
+      type: 'ball',
+      x: bossObj.x,
+      y: bossObj.y,
+      vx: dir.x * BALL_SPEED,
+      vy: dir.y * BALL_SPEED,
+      speed: BALL_SPEED,
+      radius: 12,
+      dmg: Math.max(1, Math.floor(bossObj.dmg * 1.2)),
+      traveled: 0,
+      spawnAt: now(),
+      explodeAfter: 600 // ms approximate travel before explode
+    };
+    activeHazards.push(ball);
+
+    // schedule explosion after travel time check inside update loop: we implement explode check in hazards processing
+    ball._explodeAt = now() + ball.explodeAfter;
+    ball.postExploded = false;
+
+    // explosion check done in hazards handling
+    // when explosion triggers, spawn 8 spikes outward from ball location
+    // spikes will be removed OOB as usual
+  }
+
+  // Attack: telegraphed circle at player's current location
+  function bossCircleTelegraph() {
+    const teleX = clamp(player.x, bounds.x + 20, bounds.x + bounds.w - 20);
+    const teleY = clamp(player.y, bounds.y + 20, bounds.y + bounds.h - 20);
+    // telegraph: show red circle for 1s, then active damage area for 5s
+    const tele = {
+      type: 'telegraphCircle',
+      x: teleX, y: teleY, r: 48,
+      spawnAt: now(),
+      state: 'telegraph', // telegraph -> active
+      teleMs: 1000,
+      activeMs: 5000
+    };
+    activeHazards.push(tele);
+  }
+
+  // Attack: homing spikes for 9s lifespan
+  function bossHomingSpikes() {
+    const count = 6;
+    for (let i=0;i<count;i++){
+      const dir = normalize(Math.random()-0.5, Math.random()-0.5);
+      const h = {
+        x: bossObj.x,
+        y: bossObj.y,
+        vx: dir.x * HOMING_SPEED,
+        vy: dir.y * HOMING_SPEED,
+        speed: HOMING_SPEED,
+        radius: 8,
+        dmg: Math.max(1, Math.floor(bossObj.dmg * 0.9)),
+        spawnAt: now(),
+        ttl: 9000,
+        homing: true
+      };
+      activeHazards.push(h);
+    }
+  }
+
+  // Clean up OOB hazards and do ball explosion check
+  function cleanupOutOfBounds() {
+    for (let i = activeHazards.length - 1; i >= 0; i--) {
+      const h = activeHazards[i];
+      // ball explosion check
+      if (h.type === 'ball' && !h.postExploded) {
+        if (now() >= h._explodeAt) {
+          // explode: spawn 8 spikes outward
+          for (let j=0;j<8;j++){
+            const ang = (Math.PI*2) * (j/8);
+            const dir = { x: Math.cos(ang), y: Math.sin(ang) };
+            activeHazards.push({
+              x: h.x,
+              y: h.y,
+              vx: dir.x * SPIKE_SPEED,
+              vy: dir.y * SPIKE_SPEED,
+              speed: SPIKE_SPEED,
+              radius: 5,
+              dmg: Math.max(1, Math.floor(bossObj.dmg * 0.8)),
+              spawnAt: now(),
+              ttl: 7000
+            });
+          }
+          h.postExploded = true;
+          // remove the ball itself
+          activeHazards.splice(i,1);
+          continue;
+        } else {
+          // advance ball travel for explosion timing
+          h.x += h.vx * (TICK_MS/1000);
+          h.y += h.vy * (TICK_MS/1000);
+        }
+      }
+
+      // other hazards moved in updateBullets; here we just remove OOB
+      if (h.x < bounds.x - 40 || h.x > bounds.x + bounds.w + 40 || h.y < bounds.y - 40 || h.y > bounds.y + bounds.h + 40) {
+        activeHazards.splice(i,1);
+      }
+    }
+  }
+
+  // Collision resolution: bullets vs boss/hazards vs player
+  function resolveCollisions() {
+    // player bullets hitting hazards or boss
+    for (let i = playerBullets.length - 1; i >= 0; i--) {
+      const b = playerBullets[i];
+      // hit boss?
+      if (distance(b, bossObj) <= (b.radius + bossObj.radius)) {
+        // damage boss
+        bossObj.hp = Math.max(0, bossObj.hp - (b.dmg || 1));
+        playerBullets.splice(i,1);
+        // check boss dead
+        if (bossObj.hp <= 0) {
+          stopFinalBoss('victory');
+          return;
+        }
+        continue;
+      }
+      // else player bullets don't hit small hazards (optional)
+    }
+
+    // hazards hitting player
+    for (let i = activeHazards.length - 1; i >= 0; i--) {
+      const h = activeHazards[i];
+      // telegraph circle active damage window
+      if (h.type === 'telegraphCircle') {
+        const elapsed = now() - h.spawnAt;
+        if (elapsed >= h.teleMs && elapsed < (h.teleMs + h.activeMs)) {
+          if (distance(h, player) <= h.r + player.radius) {
+            applyDamageToPlayer(h.dmg || Math.max(1, Math.floor(bossObj.dmg * 0.6)));
+          }
+        }
+        // remove after full duration
+        if (elapsed >= (h.teleMs + h.activeMs)) {
+          activeHazards.splice(i,1);
+        }
+        continue;
+      }
+
+      // normal projectile collisions
+      if (distance(h, player) <= (h.radius + player.radius)) {
+        applyDamageToPlayer(h.dmg || Math.max(1, Math.floor(bossObj.dmg * 0.6)));
+        // spikes and non-homing projectiles should remove on hit
+        activeHazards.splice(i,1);
+      }
+    }
+  }
+
+  function applyDamageToPlayer(dmg) {
+    // keep player's hp/damage persistent with original game state
+    if (playerStats) {
+      playerStats.currentHp = Math.max(0, playerStats.currentHp - dmg);
+    }
+    player.hp = Math.max(0, player.hp - dmg);
+    showTemporaryText && showTemporaryText(`You take ${dmg} damage!`);
+    if (player.hp <= 0 || (playerStats && playerStats.currentHp <= 0)) {
+      stopFinalBoss('defeat');
+    }
+  }
+
+  // Rendering
+  function render() {
+    if (!ctx) return;
+    // clear
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // draw bounds area
+    ctx.fillStyle = '#0b0b10';
+    ctx.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+
+    // draw wall border
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+
+    // draw player
+    ctx.fillStyle = '#ffd76b';
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2);
+    ctx.fill();
+
+    // draw player bullets
+    for (let b of playerBullets) {
+      ctx.fillStyle = b.color || PLAYER_BULLET_COLOR;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.radius, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // draw boss (big)
+    ctx.fillStyle = '#c84bff';
+    ctx.beginPath();
+    ctx.arc(bossObj.x, bossObj.y, bossObj.radius, 0, Math.PI*2);
+    ctx.fill();
+
+    // boss HP bar
+    const barW = 160, barH = 10;
+    const bx = canvas.width - barW - 20, by = 20;
+    ctx.fillStyle = '#333';
+    ctx.fillRect(bx, by, barW, barH);
+    ctx.fillStyle = '#ff4d4d';
+    ctx.fillRect(bx, by, barW * (bossObj.hp / bossObj.maxHp), barH);
+
+    // draw hazards
+    for (let h of activeHazards) {
+      if (h.type === 'telegraphCircle') {
+        const elapsed = now() - h.spawnAt;
+        if (elapsed < h.teleMs) {
+          // telegraph red translucent
+          ctx.fillStyle = 'rgba(255, 60, 60, 0.45)';
+        } else {
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.6)';
+        }
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, h.r, 0, Math.PI*2);
+        ctx.fill();
+      } else {
+        // simple projectile draw
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, h.radius || 5, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // draw HUD: player hp
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px sans-serif';
+    const hpText = `HP: ${player.hp}${playerStats ? ' / ' + (playerStats.currentHp || player.hp) : ''}`;
+    ctx.fillText(hpText, 20, canvas.height - 20);
+  }
+
+  // Expose stop function for manual cleanup
+  window.stopFinalBossBulletHell = stopFinalBoss;
+
+  // small tick to handle ball explosion movement and hazard homing motion every TICK_MS
+  // implement continuous update to move hazards toward their velocities
+  (function hazardMoverLoop(){
+    setInterval(() => {
+      if (!running) return;
+      // advance hazards that are not 'ball' (balls handled in cleanupOutOfBounds earlier)
+      for (let h of activeHazards) {
+        if (h.type === 'ball') continue;
+        if (h.homing) {
+          const dir = normalize(player.x - h.x, player.y - h.y);
+          h.vx = dir.x * h.speed;
+          h.vy = dir.y * h.speed;
+        }
+        h.x += (h.vx||0) * (TICK_MS/1000);
+        h.y += (h.vy||0) * (TICK_MS/1000);
+      }
+      // move boss separately if needed (some movement handled in updateBoss)
+    }, TICK_MS);
+  })();
+
+})();
+
+  // UI wiring
+  if (restartBtn) restartBtn.addEventListener('click', () => {
+    if (tpAttemptsLeft <= 0 || tpWon) { showTemporaryText && showTemporaryText('No more attempts.'); return; }
+    startRound();
+  });
+  if (closeBtn) closeBtn.addEventListener('click', () => {
+    closeTargetPractice();
+  });
+
+  // Key binding: 'x' opens overlay when not in battle
+  document.addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 'x') {
+    e.preventDefault();
+    const obj = checkInteraction(x - 16, y) || checkInteraction(x + 16, y) || checkInteraction(x, y - 16) || checkInteraction(x, y + 16) || checkInteraction(x, y);
+    if (obj && obj.action === 'target_practice') openTargetPractice();
+    else if (obj) handleInteraction(obj);
+    else {
+      const zone = findNearbyDialogZone(x, y);
+      if (zone) showDialog(zone.text, zone.id, { style: zone.style || 'dialog', speaker: zone.speaker || null });
+      else showTemporaryText('Nothing to interact with.');
+    }
+  }
+});
   // ---------- Target Practice Mini-game ----------
 (function installTargetPractice() {
   // Tunables
@@ -5091,6 +5659,32 @@ function doCleanse() {
       }
     }
   }
+
+  // UI wiring
+  if (restartBtn) restartBtn.addEventListener('click', () => {
+    if (tpAttemptsLeft <= 0 || tpWon) { showTemporaryText && showTemporaryText('No more attempts.'); return; }
+    startRound();
+  });
+  if (closeBtn) closeBtn.addEventListener('click', () => {
+    closeTargetPractice();
+  });
+
+  // Key binding: 'x' opens overlay when not in battle
+  document.addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 'x') {
+    e.preventDefault();
+    const obj = checkInteraction(x - 16, y) || checkInteraction(x + 16, y) || checkInteraction(x, y - 16) || checkInteraction(x, y + 16) || checkInteraction(x, y);
+    if (obj && obj.action === 'target_practice') openTargetPractice();
+    else if (obj) handleInteraction(obj);
+    else {
+      const zone = findNearbyDialogZone(x, y);
+      if (zone) showDialog(zone.text, zone.id, { style: zone.style || 'dialog', speaker: zone.speaker || null });
+      else showTemporaryText('Nothing to interact with.');
+    }
+  }
+});
+
+
   // Expose functions
   window.openTargetPractice = openTargetPractice;
   window.closeTargetPractice = closeTargetPractice;
