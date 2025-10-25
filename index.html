@@ -4312,6 +4312,18 @@ if (enemy.type === 'FinalBossStage1' && !enemy._stageProgressed) {
       if (enemy.type === 'FinalBossStage2' && !enemy._stageProgressed) {
         enemy._stageProgressed = true;
 
+        showBattleDialog(
+              [
+                { speaker: enemy.name, text: "Did you think that was the end of me?" },
+                { speaker: '8-Bit', text: "You're... still alive." },
+                { speaker: enemy.name, text: "Darn right! You have helped me reach my most powerful form!" },
+                { speaker: enemy.name, text: "Meet:" },
+                { speaker: 'Corruptus Calinigis Aeternae', text: "The corrupted one!" }
+              ],
+              null,
+              { style: 'dialog' }
+            );
+
         // Clear intervals on old object
         if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
         if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
@@ -4338,17 +4350,7 @@ if (enemy.type === 'FinalBossStage1' && !enemy._stageProgressed) {
         drawBattleUI();
 
         stopDarkTimer();
-        showBattleDialog(
-              [
-                { speaker: enemy.name, text: "Did you think that was the end of me?" },
-                { speaker: '8-Bit', text: "You're... still alive." },
-                { speaker: enemy.name, text: "Darn right! You have helped me reach my most powerful form!" },
-                { speaker: enemy.name, text: "Meet:" },
-                { speaker: 'Corruptus Calinigis Aeternae', text: "The corrupted one!" }
-              ],
-              null,
-              { style: 'dialog' }
-            );
+        
 
         // launch bullet hell if available
         let spawned = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length)
