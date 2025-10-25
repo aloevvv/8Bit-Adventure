@@ -4337,6 +4337,9 @@ if (enemy.type === 'FinalBossStage1' && !enemy._stageProgressed) {
         showTemporaryText(`${stage3.name} rises from the shadows!`);
         drawBattleUI();
 
+        if (typeof darkTimerId !== 'undefined' && darkTimerId) { clearInterval(darkTimerId); darkTimerId = null; }
+darkTimer = null;
+
         // launch bullet hell if available
         let spawned = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length)
           ? activeEnemies[insertIndex]
