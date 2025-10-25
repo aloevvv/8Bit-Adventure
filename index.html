@@ -4178,6 +4178,17 @@ if (typeof handleEnemyDeath === 'function' && !handleEnemyDeath._isWrapped) {
       if (enemy.type === 'FinalBossStage1') {
         if (!enemy._stageProgressed) {
           enemy._stageProgressed = true;
+          showBattleDialog(
+    [
+      { speaker: enemy.name, text: "Insolent robot. Do you see what happens when you mess with true power?" },
+      { speaker: '8-Bit', text: "What? What the hell did you do my friends! Come on!" },
+      { speaker: '8-Bit', text: "Wake up! We gotta kill him! Please!" },
+      { speaker: enemy.name, text: "They couldn't handle the dark power. Do not worry, dear 8-Bit. They are alive, barely. You will soon join them." },
+      { speaker: '8-Bit', text: "I'll never surrender to you! You know that! Bring it on, asshole! Let's fight!" },
+    ],
+    null,
+    { style: 'dialog' }
+  );
 
           const base = enemyTypes.FinalBossStage2 || enemyTypes.FinalBossStage2;
           const mult = getDifficultyMultipliers();
