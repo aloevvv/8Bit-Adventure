@@ -4952,8 +4952,8 @@ function doCleanse() {
   const BOSS_RADIUS = 48; // big hitbox radius
   const BOSS_SPEED = 280; // px/s while moving toward target
   const WORLD_PADDING = 20; // wall padding inside popup
-  const SPIKE_SPEED = 280;
-  const BALL_SPEED = 280;
+  const SPIKE_SPEED = 200;
+  const BALL_SPEED = 200;
   const HOMING_SPEED = 75;
   const TICK_MS = 16; // ~60fps
 
@@ -5286,7 +5286,7 @@ function doCleanse() {
         vx: dir.x * SPIKE_SPEED,
         vy: dir.y * SPIKE_SPEED,
         speed: SPIKE_SPEED,
-        radius: 6,
+        radius: 9,
         dmg: bossObj.dmg,
         spawnAt: now(),
         ttl: 7000
@@ -5304,7 +5304,7 @@ function doCleanse() {
       vx: dir.x * BALL_SPEED,
       vy: dir.y * BALL_SPEED,
       speed: BALL_SPEED,
-      radius: 12,
+      radius: 16,
       dmg: Math.max(1, Math.floor(bossObj.dmg * 1.2)),
       traveled: 0,
       spawnAt: now(),
@@ -5348,7 +5348,7 @@ function doCleanse() {
         vx: dir.x * HOMING_SPEED,
         vy: dir.y * HOMING_SPEED,
         speed: HOMING_SPEED,
-        radius: 8,
+        radius: 10,
         dmg: Math.max(1, Math.floor(bossObj.dmg * 0.9)),
         spawnAt: now(),
         ttl: 9000,
