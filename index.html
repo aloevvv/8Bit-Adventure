@@ -5017,6 +5017,7 @@ function doCleanse() {
 
   // Start function to call externally
   window.startFinalBossBulletHell = function({ bossEnemy, onEnd } = {}) {
+    if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
     if (running) return;
     enemyObj = bossEnemy || null;
     onEndCallback = typeof onEnd === 'function' ? onEnd : null;
