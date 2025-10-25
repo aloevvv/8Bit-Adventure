@@ -4131,7 +4131,10 @@ function enemyAttack(enemy, target) {
     endBattle('lose');
   }
 }
-  // Install the special-case wrapper once AFTER the original handleEnemyDeath is defined
+  function handleEnemyDeath(enemy) {
+  // Stage1 -> Stage2 special handling
+  if (!enemy) return;
+
 (function installFinalBossDeathWrapper() {
   if (typeof handleEnemyDeath !== 'function') {
     console.warn('FinalBoss module: handleEnemyDeath not found to wrap.');
@@ -4380,7 +4383,6 @@ function enemyAttack(enemy, target) {
 
   handleEnemyDeath._isWrapped = true;
 })();
-
 
 
   if (enemy.type === 'MountainBoss') {
