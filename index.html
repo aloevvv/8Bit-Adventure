@@ -3832,12 +3832,14 @@ function enemyAttack(enemy, target) {
   if (enemy.type === 'MountainBoss') {
   showBattleDialog(
     [
-      { speaker: enemy.name, text: "Nooo..." },
-      { speaker: '8-Bit', text: "More test code?" }
+      { speaker: enemy.name, text: "Nooo...", style: 'boss' },
+      { speaker: '8-Bit', text: "More test code?", style: 'dialog' }
     ],
     null,
-    { style: 'boss' }
+    { style: 'dialog' } // fallback if a line lacks style
   );
+}
+
   }
   // Stage1 special: explode and spawn Stage2 (explosion happens when Stage1 dies)
   if (enemy.type === "SecondStageBossStage1") {
