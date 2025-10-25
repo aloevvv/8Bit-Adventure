@@ -5487,6 +5487,7 @@ function doCleanse() {
     showTemporaryText && showTemporaryText(`You take ${dmg} damage!`);
     if (player.hp <= 0 || (playerStats && playerStats.currentHp <= 0)) {
       stopFinalBoss('defeat');
+      showGameOver();
     }
   }
 
