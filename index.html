@@ -4144,102 +4144,67 @@ function enemyAttack(enemy, target) {
 
   const __orig_handleEnemyDeath = handleEnemyDeath;
 
-  handleEnemyDeath = function(enemy, idx) {
+  handleEnemyDeath = function(arg0, arg1) {
     try {
-      if (!enemy) return __orig_handleEnemyDeath(enemy, idx);
+      // Resolve params: allow (enemy), (enemy, idx), or (idx)
+      let enemy = arg0;
+      let idx = (typeof arg1 === 'number') ? arg1 : undefined;
+      if (typeof arg0 === 'number') { idx = arg0; enemy = activeEnemies && activeEnemies[idx] ? activeEnemies[idx] : null; }
 
-      console.log('[FinalBossHook] wrapper enter for', enemy.type, 'idx=', idx);
+      // Robust logging (no misspells)
+      console.log('[FinalBossHook] wrapper enter. enemyExists=', !!enemy, 'enemyType=', enemy ? enemy.type : '<<none>>', 'resolvedIdx=', typeof idx === 'number' ? idx : '<<none>>');
 
-      // ensure deathHandled so original logic doesn't re-process
+      // If no enemy and no valid index, fallback to original
+      if (!enemy && (typeof idx !== 'number' || idx < 0 || idx >= (activeEnemies && activeEnemies.length || 0))) {
+        return __orig_handleEnemyDeath(arg0, arg1);
+      }
+      if (!enemy && typeof idx === 'number') enemy = activeEnemies[idx];
+
+      if (!enemy) return __orig_handleEnemyDeath(arg0, arg1);
+
+      // Prevent duplicate processing
       if (!enemy._deathHandled) enemy._deathHandled = true;
 
-      // normalize insert index (use safe fallback)
-      let insertIndex = (typeof idx === 'number' && idx >= 0 && idx <= activeEnemies.length)
-        ? idx
-        : activeEnemies.indexOf(enemy);
+      // Compute insertIndex safely
+      let insertIndex = (typeof idx === 'number' && idx >= 0 && idx <= activeEnemies.length) ? idx : activeEnemies.indexOf(enemy);
       if (insertIndex === -1) insertIndex = activeEnemies.length;
 
-      function placeSpawnAt(index, newObj) {
+      function placeSpawnAt(index, obj) {
         if (typeof index === 'number' && index >= 0 && index < activeEnemies.length) {
-          activeEnemies.splice(index, 1, newObj);
+          activeEnemies.splice(index, 1, obj);
         } else {
-          activeEnemies.push(newObj);
+          activeEnemies.push(obj);
         }
       }
 
-      // helper: temporarily guard removeEnemy so spawned sentinel objects are not removed by original cleanup
-      function withRemoveGuard(guardFn, workFn) {
-        const origRemoveEnemy = typeof removeEnemy === 'function' ? removeEnemy : null;
-        if (origRemoveEnemy) {
-          window.__orig_removeEnemy_for_finalboss = origRemoveEnemy;
-          window.removeEnemy = function(target, i) {
-            if (target && target._finalBossSpawn) {
-              console.log('[FinalBossHook] blocked removeEnemy on final-boss-spawn', target.type);
-              return;
-            }
-            return window.__orig_removeEnemy_for_finalboss(target, i);
-          };
+      // Example dialog for MountainBoss (unchanged behavior)
+      if (enemy.type === 'MountainBoss') {
+        console.log('[FinalBossHook] MountainBoss dialog for', enemy.name);
+        if (typeof showBattleDialog === 'function') {
+          showBattleDialog([
+            { speaker: enemy.name, text: "Nooo..." },
+            { speaker: '8-Bit', text: "More test code?" }
+          ], null, { style: 'boss' });
         }
-        try {
-          return workFn();
-        } finally {
-          if (origRemoveEnemy) {
-            window.removeEnemy = origRemoveEnemy;
-            delete window.__orig_removeEnemy_for_finalboss;
-          }
-        }
+        // allow original handler to run after this block (no early return)
       }
 
-      // ShadowOrb -> LightOrb
-      if (enemy.type === 'ShadowOrb' && !enemy._lightSpawned) {
-        enemy._lightSpawned = true;
-        if (enemy._poisonIntervalId) { clearInterval(enemy._poisonIntervalId); enemy._poisonIntervalId = null; }
-        if (enemy._spectralIntervalId) { clearInterval(enemy._spectralIntervalId); enemy._spectralIntervalId = null; }
-
-        const lightBase = (enemyTypes && enemyTypes.LightOrb) || { maxHp: 40, name: 'Light Orb', xpReward: 0 };
-        const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp:1 };
-        const light = {
-          type: 'LightOrb',
-          name: lightBase.name || 'Light Orb',
-          maxHp: Math.max(1, Math.floor((lightBase.maxHp||40) * mult.enemyHp)),
-          currentHp: Math.max(1, Math.floor((lightBase.maxHp||40) * mult.enemyHp)),
-          damage: 0,
-          xpReward: lightBase.xpReward || 0,
-          shieldActive: false, stunned: false, poisoned: false,
-          resistances: lightBase.defaultResistances || {}
-        };
-        placeSpawnAt(insertIndex, light);
-        showTemporaryText('A Shadow Orb collapses into a Light Orb!');
-        drawBattleUI();
-        console.log('[FinalBossHook] ShadowOrb -> LightOrb inserted. activeEnemies types:', activeEnemies.map(e=>e&&e.type).join(','));
-      }
-
-      // LightOrb -> reduce dark timer
-      if (enemy.type === 'LightOrb' && !enemy._lightConsumed) {
-        enemy._lightConsumed = true;
-        if (typeof reduceDarkTimer === 'function') reduceDarkTimer(5000);
-        console.log('[FinalBossHook] LightOrb consumed, reduced dark timer.');
-      }
-
-      // FinalBoss Stage1 -> Stage2 (dialog then spawn)
-      if (enemy.type === 'FinalBossStage1' && !enemy._stageProgressed) {
+      // SecondStageBossStage1 -> spawn Stage2 after dialog
+      if (enemy.type === 'SecondStageBossStage1' && !enemy._stageProgressed) {
         enemy._stageProgressed = true;
 
-        const dialogArr = [
-          { speaker: enemy.name, text: "Insolent robot. Do you see what happens when you mess with true power?" },
-          { speaker: '8-Bit', text: "What? What the hell did you do to my friends? Come on!" },
-          { speaker: '8-Bit', text: "Wake up! We gotta kill him! Please!" },
-          { speaker: enemy.name, text: "They couldn't handle the dark power. Do not worry, dear 8-Bit. They are alive, barely. You will soon join them." },
-          { speaker: '8-Bit', text: "I'll never surrender to you! You know that! Bring it on! Let's fight!" }
+        const dialog = [
+          { speaker: enemy.name, text: "Nooo..." },
+          { speaker: '8-Bit', text: "You won't get away with this!" }
         ];
 
         const spawnStage2 = function() {
-          console.log('[FinalBossHook] spawnStage2 running');
-          const base = (enemyTypes && enemyTypes.FinalBossStage2) || { name: 'FinalBossStage2', maxHp:1, damage:0 };
+          console.log('[FinalBossHook] spawnStage2 executing for', enemy.name);
+          const base = (enemyTypes && enemyTypes.SecondStageBossStage2) || { name: 'SecondStageBossStage2', maxHp: 1, damage: 0 };
           const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp:1, enemyDmg:1 };
           const stage2 = {
-            type: 'FinalBossStage2',
-            name: base.name || 'FinalBossStage2',
+            type: 'SecondStageBossStage2',
+            name: base.name || 'SecondStageBossStage2',
             maxHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
             currentHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
             damage: Math.max(0, Math.floor((base.damage||0) * mult.enemyDmg)),
@@ -4248,137 +4213,59 @@ function enemyAttack(enemy, target) {
             resistances: base.defaultResistances || {}
           };
 
-          // clear intervals from the stage1 enemy
           if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
           if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
 
-          // tag so it is protected during original cleanup
-          stage2._finalBossSpawn = true;
-
-          // insert under guard so original cleanup cannot remove it
-          withRemoveGuard(null, () => { placeSpawnAt(insertIndex, stage2); });
-
-          showTemporaryText(`${stage2.name} descends from the dark sigil!`);
-          stage2._canSpawnOrbs = true;
-
-          if (activeAlly) {
-            activeAlly.currentHp = 0;
-            if (activeAlly.attackTimerId) { clearInterval(activeAlly.attackTimerId); activeAlly.attackTimerId = null; }
-            showTemporaryText(`${activeAlly.name} is struck down by the dark power!`);
-            activeAlly = null;
-            if (typeof drawPartyStatus === 'function') drawPartyStatus();
-          }
-          if (typeof startDarkTimer === 'function') startDarkTimer();
+          stage2._finalBossSpawn = true; // sentinel to identify special spawn
+          placeSpawnAt(insertIndex, stage2);
+          showTemporaryText(`${stage2.name} emerges from the core!`);
           drawBattleUI();
+          drawPlayerBattleStatus();
+          drawPartyStatus();
 
-          console.log('[FinalBossHook] Stage2 spawned. activeEnemies types:', activeEnemies.map(e=>e&&e.type).join(','));
+          // ensure battle state and restart enemy loop
+          inBattle = true;
+          if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+          enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 
-          // ensure original cleanup runs AFTER spawn completes
-          // run original cleanup on next tick while guarding removal of the new spawn
+          // defer original cleanup one tick while protecting special spawn
           setTimeout(() => {
-            try {
-              withRemoveGuard(null, () => { __orig_handleEnemyDeath(enemy, idx); });
-            } catch (e) {
-              console.error('[FinalBossHook] original handleEnemyDeath threw during deferred cleanup', e);
-            }
+            try { __orig_handleEnemyDeath(enemy, insertIndex); }
+            catch (e) { console.error('[FinalBossHook] deferred original threw', e); }
           }, 0);
         };
 
-        // show dialog robustly; ensure spawnStage2 is always called afterwards
+        // show dialog and ensure spawn runs (safeCallback + fallback)
         if (typeof showBattleDialog === 'function') {
+          let invoked = false;
+          const safeCallback = function() {
+            if (invoked) return;
+            invoked = true;
+            setTimeout(spawnStage2, 0);
+          };
           try {
-            // prefer continuation callback; guard against implementations that ignore or throw
-            let fired = false;
-            const safeCallback = function() {
-              if (fired) return;
-              fired = true;
-              setTimeout(spawnStage2, 0);
-            };
-            showBattleDialog(dialogArr, safeCallback, { style: 'dialog' });
-            // fallback: ensure spawn runs even if dialog fails to call continuation
-            setTimeout(() => { if (!fired) safeCallback(); }, 2000);
+            showBattleDialog(dialog, safeCallback, { style: 'boss' });
+            setTimeout(() => { if (!invoked) safeCallback(); }, 2500);
           } catch (e) {
-            console.warn('[FinalBossHook] showBattleDialog threw, falling back to immediate spawn', e);
+            console.warn('[FinalBossHook] showBattleDialog threw, spawning immediately', e);
             setTimeout(spawnStage2, 0);
           }
+          // We deferred the original handler; return to avoid synchronous original call
+          return;
         } else {
           setTimeout(spawnStage2, 0);
-        }
-
-        // early return: we deferred original cleanup to spawnStage2's setTimeout
-        return;
-      }
-
-      // FinalBoss Stage2 -> Stage3 (unchanged except ensure original cleanup runs after)
-      if (enemy.type === 'FinalBossStage2' && !enemy._stageProgressed) {
-        enemy._stageProgressed = true;
-
-        const base = (enemyTypes && enemyTypes.FinalBossStage3) || { name: 'FinalBossStage3', maxHp:1, damage:0 };
-        const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp:1, enemyDmg:1 };
-        const stage3 = {
-          type: 'FinalBossStage3',
-          name: base.name || 'FinalBossStage3',
-          maxHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
-          currentHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
-          damage: Math.max(0, Math.floor((base.damage||0) * mult.enemyDmg)),
-          xpReward: base.xpReward || 0,
-          shieldActive: false, stunned: false, poisoned: false,
-          resistances: base.defaultResistances || {}
-        };
-
-        if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
-        if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
-
-        if (typeof pauseBattleTimersForDialog === 'function') pauseBattleTimersForDialog();
-
-        placeSpawnAt(insertIndex, stage3);
-        showTemporaryText(`${stage3.name} rises from the shadows!`);
-        drawBattleUI();
-
-        console.log('[FinalBossHook] Stage3 inserted. activeEnemies types:', activeEnemies.map(e=>e&&e.type).join(','));
-
-        // find the actual spawned object reference
-        let spawned = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length)
-          ? activeEnemies[insertIndex]
-          : activeEnemies.find(e => e && e.type === 'FinalBossStage3');
-
-        if (spawned && typeof startFinalBossBulletHell === 'function') {
-          startFinalBossBulletHell({
-            bossEnemy: spawned,
-            onEnd: (mode) => {
-              if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
-
-              if (mode === 'victory') {
-                const idx2 = activeEnemies.indexOf(spawned);
-                if (idx2 !== -1) {
-                  activeEnemies.splice(idx2, 1);
-                  if (typeof removeEnemy === 'function') {
-                    try { removeEnemy(spawned, idx2); } catch(e) {}
-                  } else if (typeof grantXpToPlayer === 'function') {
-                    try { grantXpToPlayer(spawned.xpReward || 0); } catch(e) {}
-                  }
-                }
-              }
-
-              drawBattleUI();
-              drawPlayerBattleStatus();
-            }
-          });
-        } else {
-          if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
+          return;
         }
       }
 
+      // other conversions or logic can go here
+
     } catch (e) {
-      console.error('FinalBoss death hook error', e);
+      console.error('[FinalBossHook] wrapper error', e);
     }
 
-    // delegate to original for normal cleanup (if not deferred earlier)
-    try {
-      return __orig_handleEnemyDeath(enemy, idx);
-    } catch (e) {
-      console.error('[FinalBossHook] original handleEnemyDeath threw at final delegation', e);
-    }
+    // default: call original handler
+    return __orig_handleEnemyDeath(arg0, arg1);
   };
 
   handleEnemyDeath._isWrapped = true;
