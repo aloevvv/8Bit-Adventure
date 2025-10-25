@@ -4149,9 +4149,11 @@ function enemyAttack(enemy, target) {
     try {
       if (!enemy) return __orig_handleEnemyDeath(enemy, idx);
 
-      // Per-enemy guard: ensure special-case hooks only run once per enemy instance
-      if (enemy._deathHandled) return __orig_handleEnemyDeath(enemy, idx);
-      enemy._deathHandled = true;
+      // DEBUG: trace calls into the wrapper
+      console.log('[FinalBossHook] handleEnemyDeath called for', enemy && enemy.type, 'idx=', idx, '_deathHandled=', !!(enemy && enemy._deathHandled), '_stageProgressed=', !!(enemy && enemy._stageProgressed));
+
+      // debug: allow spawn logic even if _deathHandled was set elsewhere
+      if (!enemy._deathHandled) enemy._deathHandled = true;
 
       // Normalize insertIndex: prefer provided idx, else find enemy index
       let insertIndex = (typeof idx === 'number' && idx >= 0 && idx <= activeEnemies.length)
@@ -4189,19 +4191,22 @@ function enemyAttack(enemy, target) {
         placeSpawnAt(insertIndex, light);
         showTemporaryText('A Shadow Orb collapses into a Light Orb!');
         drawBattleUI();
+
+        // debug log after insertion
+        console.log('[FinalBossHook] ShadowOrb -> LightOrb inserted. activeEnemies types:', activeEnemies.map(e=>e&&e.type).join(','));
       }
 
       // LightOrb -> reduce dark timer
       if (enemy.type === 'LightOrb' && !enemy._lightConsumed) {
         enemy._lightConsumed = true;
         if (typeof reduceDarkTimer === 'function') reduceDarkTimer(5000);
+        console.log('[FinalBossHook] LightOrb consumed, reduced dark timer.');
       }
 
       // FinalBoss Stage1 -> Stage2 (dialog then spawn)
       if (enemy.type === 'FinalBossStage1' && !enemy._stageProgressed) {
         enemy._stageProgressed = true;
 
-        // show dialog and spawn Stage2 after dialog completes (use callback if showBattleDialog supports it)
         const dialogArr = [
           { speaker: enemy.name, text: "Insolent robot. Do you see what happens when you mess with true power?" },
           { speaker: '8-Bit', text: "What? What the hell did you do to my friends? Come on!" },
@@ -4210,7 +4215,6 @@ function enemyAttack(enemy, target) {
           { speaker: '8-Bit', text: "I'll never surrender to you! You know that! Bring it on! Let's fight!" }
         ];
 
-        // If showBattleDialog takes a callback as the second parameter, use it; otherwise show dialog then spawn immediately.
         const spawnStage2 = function() {
           const base = (enemyTypes && enemyTypes.FinalBossStage2) || { name: 'FinalBossStage2', maxHp:1, damage:0 };
           const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp:1, enemyDmg:1 };
@@ -4225,7 +4229,6 @@ function enemyAttack(enemy, target) {
             resistances: base.defaultResistances || {}
           };
 
-          // clear per-enemy timers
           if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
           if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
 
@@ -4242,14 +4245,15 @@ function enemyAttack(enemy, target) {
           }
           if (typeof startDarkTimer === 'function') startDarkTimer();
           drawBattleUI();
+
+          // debug
+          console.log('[FinalBossHook] Stage2 spawned. activeEnemies types:', activeEnemies.map(e=>e&&e.type).join(','));
         };
 
         if (typeof showBattleDialog === 'function') {
-          // try to use callback signature if supported
           try {
             showBattleDialog(dialogArr, spawnStage2, { style: 'dialog' });
           } catch (e) {
-            // fallback: show dialog then spawn
             showBattleDialog(dialogArr, null, { style: 'dialog' });
             spawnStage2();
           }
@@ -4275,7 +4279,6 @@ function enemyAttack(enemy, target) {
           resistances: base.defaultResistances || {}
         };
 
-        // clear per-enemy timers to prevent reentry
         if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
         if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
 
@@ -4285,6 +4288,9 @@ function enemyAttack(enemy, target) {
         placeSpawnAt(insertIndex, stage3);
         showTemporaryText(`${stage3.name} rises from the shadows!`);
         drawBattleUI();
+
+        // debug
+        console.log('[FinalBossHook] Stage3 inserted. activeEnemies types:', activeEnemies.map(e=>e&&e.type).join(','));
 
         // find the actual spawned object reference
         let spawned = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length)
@@ -4328,6 +4334,7 @@ function enemyAttack(enemy, target) {
 
   handleEnemyDeath._isWrapped = true;
 })();
+
 
   if (enemy.type === 'MountainBoss') {
   showBattleDialog(
