@@ -3483,6 +3483,99 @@ function shadowOrbBehavior(enemy, target) {
 function lightOrbBehavior(enemy) {
   // idle: LightOrb primarily exists to reduce dark timer on death
 }
+function finalBossBehavior(enemy, target) {
+  if (!enemy._initialized) {
+    enemy._initialized = true;
+    enemy._stage = 1;
+    enemy._eyeSpawned = false;
+    enemy._canSpawnOrbs = false;
+
+    // After 5s spawn Eye, move to stage 2, kill ally, start dark timer
+    enemy._eyeSpawnTimeout = setTimeout(() => {
+      if (!inBattle) return;
+      const base = enemyTypes.Eye || { maxHp: 100, damage: 6, name: 'Eye' };
+      const mult = getDifficultyMultipliers();
+      const eyeStats = {
+        type: 'Eye',
+        name: base.name,
+        maxHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
+        currentHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
+        damage: Math.max(0, Math.floor(base.damage * mult.enemyDmg)),
+        xpReward: base.xpReward || 0,
+        shieldActive: false,
+        stunned: false,
+        poisoned: false,
+        resistances: base.defaultResistances || {}
+      };
+      activeEnemies.push(eyeStats);
+      enemy._eyeSpawned = true;
+      enemy._stage = 2;
+      showTemporaryText(`${enemy.name} summons a Watcher Eye!`);
+      drawBattleUI();
+
+      if (activeAlly) {
+        activeAlly.currentHp = 0;
+        if (activeAlly.attackTimerId) { clearInterval(activeAlly.attackTimerId); activeAlly.attackTimerId = null; }
+        showTemporaryText(`${activeAlly.name} is struck down by the dark power!`);
+        activeAlly = null;
+        if (typeof drawPartyStatus === 'function') drawPartyStatus();
+      }
+
+      startDarkTimer();
+      enemy._canSpawnOrbs = true;
+    }, 5000);
+  }
+
+  // Stage 2+: spawn 1-2 ShadowOrbs each boss turn
+  if (enemy._stage >= 2 && enemy._canSpawnOrbs && !enemy.stunned) {
+    const spawnCount = (Math.random() < 0.5) ? 1 : 2;
+    for (let i = 0; i < spawnCount; i++) {
+      const base = enemyTypes.ShadowOrb || { maxHp: 40, damage: 2, name: 'Shadow Orb' };
+      const mult = getDifficultyMultipliers();
+      const orb = {
+        type: 'ShadowOrb',
+        name: base.name,
+        maxHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
+        currentHp: Math.max(1, Math.floor(base.maxHp * mult.enemyHp)),
+        damage: Math.max(0, Math.floor(base.damage * mult.enemyDmg)),
+        xpReward: base.xpReward || 0,
+        shieldActive: false,
+        stunned: false,
+        poisoned: false,
+        resistances: base.defaultResistances || {}
+      };
+      activeEnemies.push(orb);
+    }
+    if (spawnCount > 0) {
+      showTemporaryText(`${enemy.name} spawns ${spawnCount} Shadow Orb${spawnCount > 1 ? 's' : ''}!`);
+      drawBattleUI();
+    }
+  }
+
+  // Boss attack
+  if (!enemy.stunned && !enemy.shieldActive) {
+    const dmg = enemy.damage || 0;
+    if (target === playerStats) {
+      playerTakeDamage(dmg);
+      showTemporaryText(`${enemy.name} slashes you for ${dmg} damage!`);
+    } else if (target === activeAlly) {
+      if (activeAlly) {
+        activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dmg);
+        showTemporaryText(`${enemy.name} slashes ${activeAlly.name} for ${dmg} damage!`);
+        if (activeAlly.currentHp === 0 && activeAlly.attackTimerId) {
+          clearInterval(activeAlly.attackTimerId);
+          activeAlly.attackTimerId = null;
+        }
+      }
+    }
+  }
+
+  // Cleanup on death
+  if (enemy.currentHp <= 0) {
+    stopDarkTimer();
+    if (enemy._eyeSpawnTimeout) { clearTimeout(enemy._eyeSpawnTimeout); enemy._eyeSpawnTimeout = null; }
+  }
+}
 
 //battlefield boss
 function critBossBehavior(enemy, target) {
