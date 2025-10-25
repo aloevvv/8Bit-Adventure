@@ -1404,12 +1404,14 @@ function findNearbyDialogZone(px, py) {
 
   pauseBattleTimersForDialog();
 
-  // Render first line
   if (_battleDialogQueue.length > 0) {
     const line = _battleDialogQueue.shift();
     applyDialogStyle(box, line.style || fallbackStyle);
-    if (line.speaker) textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
-    else textDiv.textContent = line.text;
+    if (line.speaker) {
+      textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
+    } else {
+      textDiv.textContent = line.text;
+    }
   } else {
     textDiv.textContent = '';
   }
@@ -1420,7 +1422,6 @@ function findNearbyDialogZone(px, py) {
   drawBattleUI();
   drawPlayerBattleStatus();
 }
-
 
 function showDialog(textOrLines, idToMark, opts = {}) {
   const overlay = document.getElementById('dialog-overlay');
@@ -3831,15 +3832,12 @@ function enemyAttack(enemy, target) {
   if (enemy.type === 'MountainBoss') {
   showBattleDialog(
     [
-      { speaker: enemy.name, text: "Nooo...", style: 'boss' },
-      { speaker: '8-Bit', text: "More test code?", style: 'dialog' }
+      { speaker: enemy.name, text: "Nooo..." },
+      { speaker: '8-Bit', text: "More test code?" }
     ],
     null,
-    { style: 'dialog' } // fallback if a line lacks style
+    { style: 'boss' }
   );
-}
-
-
   }
   // Stage1 special: explode and spawn Stage2 (explosion happens when Stage1 dies)
   if (enemy.type === "SecondStageBossStage1") {
@@ -5120,7 +5118,7 @@ if (dialogNextBtn) {
     const textDiv = document.getElementById('dialog-text');
     const box = document.getElementById('dialog-box');
 
-    // If we are showing a battle dialog sequence, advance that first
+    // 1) Battle dialog queue takes priority
     if (Array.isArray(_battleDialogQueue) && _battleDialogQueue.length > 0) {
       const line = _battleDialogQueue.shift();
       applyDialogStyle(box, line.style || 'dialog');
@@ -5129,23 +5127,29 @@ if (dialogNextBtn) {
       return;
     }
 
-    // Otherwise try the normal dialog queue (use your canonical queue variable name)
-    if (typeof dialogQueue !== 'undefined' && Array.isArray(dialogQueue) && dialogQueue.length > 0) {
-      const line = dialogQueue.shift();
+    // 2) Normal dialog queue (try common variable names safely)
+    // Your project used several names in different places; check them in order.
+    const normalQueue = (typeof dialogQueue !== 'undefined' && Array.isArray(dialogQueue)) ? dialogQueue
+                      : (typeof _dialogQueue !== 'undefined' && Array.isArray(_dialogQueue)) ? _dialogQueue
+                      : (typeof _dialogQueue_ !== 'undefined' && Array.isArray(_dialogQueue_)) ? _dialogQueue_
+                      : null;
+
+    if (normalQueue && normalQueue.length > 0) {
+      const line = normalQueue.shift();
       applyDialogStyle(box, line.style || 'dialog');
       if (line.speaker) textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
       else textDiv.textContent = line.text;
       return;
     }
 
-    // Nothing left: close overlay and mark shown id
+    // 3) Nothing left to show -> close overlay and mark shown dialog id if present
     const id = overlay._markId;
     overlay._markId = null;
     overlay.style.display = 'none';
     draw();
     if (id) shownDialogs.add(id);
 
-    // If we were in battle, resume timers and refresh UI
+    // 4) If we were in battle-dialog mode, resume battle timers and refresh UI
     if (inBattle) {
       resumeBattleTimersAfterDialog();
       drawBattleUI();
@@ -5154,7 +5158,6 @@ if (dialogNextBtn) {
     }
   });
 }
-
 
 
 document.addEventListener('keydown', function(e) {
