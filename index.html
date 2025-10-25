@@ -4126,8 +4126,7 @@ function enemyAttack(enemy, target) {
           resistances: lightBase.defaultResistances || {}
         };
         const insertIndex = (typeof idx === 'number' && idx >= 0 && idx <= activeEnemies.length) ? idx : activeEnemies.length;
-        if (insertIndex >= activeEnemies.length) activeEnemies.push(light);
-        else activeEnemies.splice(insertIndex, 1, light);
+        activeEnemies.splice(insertIndex, 0, light);
         showTemporaryText('A Shadow Orb collapses into a Light Orb!');
         drawBattleUI();
       }
@@ -4188,8 +4187,7 @@ function enemyAttack(enemy, target) {
           poisoned: false,
           resistances: base.defaultResistances || {}
         };
-        if (insertIndex >= activeEnemies.length) activeEnemies.push(stage3);
-        else activeEnemies.splice(insertIndex, 1, stage3);
+        activeEnemies.splice(insertIndex, 0, stage3);
         showTemporaryText(`${stage3.name} rises from the shadows!`);
         drawBattleUI();
       }
