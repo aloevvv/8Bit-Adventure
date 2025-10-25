@@ -5238,12 +5238,12 @@ function doCleanse() {
   if (!bossObj.lastBallOrSpillAt) bossObj.lastBallOrSpillAt = nowMs;
   if (!bossObj.lastCircleOrHomingAt) bossObj.lastCircleOrHomingAt = nowMs;
 
-  if (nowMs - bossObj.lastBallOrSpillAt >= randInt(3000,5000)) {
+  if (nowMs - bossObj.lastBallOrSpillAt >= randInt(1000,3000)) {
     bossObj.lastBallOrSpillAt = nowMs;
     if (Math.random() < 0.5) bossSpillSpikes(); else bossThrowBall();
   }
 
-  if (nowMs - bossObj.lastCircleOrHomingAt >= randInt(7000,9000)) {
+  if (nowMs - bossObj.lastCircleOrHomingAt >= randInt(3000,5000)) {
     bossObj.lastCircleOrHomingAt = nowMs;
     if (Math.random() < 0.5) bossCircleTelegraph(); else bossHomingSpikes();
   }
