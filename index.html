@@ -4197,98 +4197,105 @@ function enemyAttack(enemy, target) {
       }
 
       // -- FinalBossStage1 -> FinalBossStage2: sentinel technique to keep battle open synchronously --
-      if (enemy.type === 'FinalBossStage1' && !enemy._stageProgressed) {
-        enemy._stageProgressed = true;
+      // FinalBoss: keep battle open by temporarily suppressing endBattle
+if (enemy.type === 'FinalBossStage1' && !enemy._stageProgressed) {
+  enemy._stageProgressed = true;
 
-        // Prepare dialog
-        const dialogArr = [
-          { speaker: enemy.name, text: "Insolent robot. Do you see what happens when you mess with true power?" },
-          { speaker: '8-Bit', text: "What? What the hell did you do to my friends? Come on!" },
-          { speaker: '8-Bit', text: "Wake up! We gotta kill him! Please!" },
-          { speaker: enemy.name, text: "They couldn't handle the dark power. Do not worry, dear 8-Bit. They are alive, barely. You will soon join them." },
-          { speaker: '8-Bit', text: "I'll never surrender to you! You know that! Bring it on! Let's fight!" }
-        ];
+  const dialogArr = [
+    { speaker: enemy.name, text: "Insolent robot. Do you see what happens when you mess with true power?" },
+    { speaker: '8-Bit', text: "What? What the hell did you do to my friends? Come on!" },
+    { speaker: '8-Bit', text: "Wake up! We gotta kill him! Please!" },
+    { speaker: enemy.name, text: "They couldn't handle the dark power. Do not worry, dear 8-Bit. They are alive, barely. You will soon join them." },
+    { speaker: '8-Bit', text: "I'll never surrender to you! You know that! Bring it on! Let's fight!" }
+  ];
 
-        // Build real Stage2 synchronously
-        const base = (enemyTypes && enemyTypes.FinalBossStage2) || { name: 'FinalBossStage2', maxHp:1, damage:0 };
-        const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp:1, enemyDmg:1 };
-        const realStage2 = {
-          type: 'FinalBossStage2',
-          name: base.name || 'FinalBossStage2',
-          maxHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
-          currentHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
-          damage: Math.max(0, Math.floor((base.damage||0) * mult.enemyDmg)),
-          xpReward: base.xpReward || 0,
-          shieldActive: false, stunned: false, poisoned: false,
-          resistances: base.defaultResistances || {}
-        };
-        realStage2._finalBossSpawn = true;
-        realStage2._canSpawnOrbs = true;
+  // Build Stage2 synchronously
+  const base = (enemyTypes && enemyTypes.FinalBossStage2) || { name: 'FinalBossStage2', maxHp:1, damage:0 };
+  const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp:1, enemyDmg:1 };
+  const realStage2 = {
+    type: 'FinalBossStage2',
+    name: base.name || 'FinalBossStage2',
+    maxHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
+    currentHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
+    damage: Math.max(0, Math.floor((base.damage||0) * mult.enemyDmg)),
+    xpReward: base.xpReward || 0,
+    shieldActive: false, stunned: false, poisoned: false,
+    resistances: base.defaultResistances || {}
+  };
+  realStage2._finalBossSpawn = true;
+  realStage2._canSpawnOrbs = true;
 
-        // Sentinel that looks minimally like an enemy to keep activeEnemies non-empty
-        const sentinel = { type: '__FinalBossSentinel__', name: 'Sentinel', _isSentinel: true };
+  // Capture and temporarily override endBattle so original cleanup can't call victory
+  const origEndBattle = (typeof endBattle === 'function') ? endBattle : null;
+  let endBattleWasCalled = false;
+  let endBattleArgs = null;
 
-        // Insert sentinel at insertIndex synchronously
-        let safeInsertIndex = insertIndex;
-        if (safeInsertIndex < 0 || safeInsertIndex > activeEnemies.length) safeInsertIndex = activeEnemies.length;
-        activeEnemies.splice(safeInsertIndex, 0, sentinel);
+  const suppressEndBattle = function(...args) {
+    endBattleWasCalled = true;
+    endBattleArgs = args;
+    console.log('[FinalBossHook] suppressed endBattle call', args);
+    // do nothing else so battle won't close
+  };
 
-        // Call original cleanup immediately; original sees sentinel and should not close battle
-        try {
-          __orig_handleEnemyDeath(enemy, idx);
-        } catch (e) {
-          console.error('[FinalBossHook] original handleEnemyDeath threw for FinalBossStage1', e);
-        }
+  try {
+    if (origEndBattle) window.endBattle = suppressEndBattle;
 
-        // Replace sentinel immediately with real Stage2 synchronously
-        const sentIdx = activeEnemies.indexOf(sentinel);
-        if (sentIdx !== -1) {
-          activeEnemies.splice(sentIdx, 1, realStage2);
-        } else {
-          // sentinel disappeared unexpectedly; append real boss
-          activeEnemies.push(realStage2);
-        }
+    // Call original handler synchronously to perform the usual removal/XPs
+    try { __orig_handleEnemyDeath(enemy, idx); } catch (e) { console.error('[FinalBossHook] original handleEnemyDeath threw', e); }
 
-        // Clear intervals leftover on old enemy if present (defensive)
-        try {
-          if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
-          if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
-        } catch (e) { /* ignore */ }
+    // Determine safe insert index (use idx if valid else append)
+    let safeIndex = (typeof idx === 'number' && idx >= 0 && idx <= activeEnemies.length) ? idx : activeEnemies.indexOf(enemy);
+    if (safeIndex === -1) safeIndex = activeEnemies.length;
 
-        // Immediate post-spawn effects
-        showTemporaryText(`${realStage2.name} descends from the dark sigil!`);
+    // Insert Stage2 synchronously so the battle never sees zero enemies
+    if (safeIndex >= 0 && safeIndex < activeEnemies.length) {
+      activeEnemies.splice(safeIndex, 0, realStage2);
+    } else {
+      activeEnemies.push(realStage2);
+    }
 
-        if (activeAlly) {
-          activeAlly.currentHp = 0;
-          if (activeAlly.attackTimerId) { clearInterval(activeAlly.attackTimerId); activeAlly.attackTimerId = null; }
-          showTemporaryText(`${activeAlly.name} is struck down by the dark power!`);
-          activeAlly = null;
-          if (typeof drawPartyStatus === 'function') drawPartyStatus();
-        }
-        if (typeof startDarkTimer === 'function') startDarkTimer();
+    // Post-insert effects (knock out ally, timers, UI)
+    showTemporaryText(`${realStage2.name} descends from the dark sigil!`);
+    if (activeAlly) {
+      activeAlly.currentHp = 0;
+      if (activeAlly.attackTimerId) { clearInterval(activeAlly.attackTimerId); activeAlly.attackTimerId = null; }
+      showTemporaryText(`${activeAlly.name} is struck down by the dark power!`);
+      activeAlly = null;
+      if (typeof drawPartyStatus === 'function') drawPartyStatus();
+    }
+    if (typeof startDarkTimer === 'function') startDarkTimer();
 
-        // Ensure battle state and AI resume
-        inBattle = true;
-        if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
-        enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+    inBattle = true;
+    if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+    enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
 
-        // Redraw so player never sees victory screen
-        drawBattleUI();
-        drawPlayerBattleStatus();
-        drawPartyStatus();
+    // Draw immediately so player never sees the victory screen
+    drawBattleUI();
+    drawPlayerBattleStatus();
+    drawPartyStatus();
 
-        // Show dialog after Stage2 is present; dialog continuation not required for spawn
-        if (typeof showBattleDialog === 'function') {
-          try {
-            showBattleDialog(dialogArr, function(){ /* no-op */ }, { style: 'dialog' });
-          } catch (e) {
-            console.warn('[FinalBossHook] showBattleDialog threw in final stage branch', e);
-          }
-        }
-
-        // Done: avoid calling original handler again below
-        return;
+    // Show dialog now (Stage2 is already present)
+    if (typeof showBattleDialog === 'function') {
+      try {
+        showBattleDialog(dialogArr, function(){ /* no-op */ }, { style: 'dialog' });
+      } catch (e) {
+        console.warn('[FinalBossHook] showBattleDialog threw', e);
       }
+    }
+
+    // If endBattle was called by original handler, ignore it (we want to keep battle open).
+    // If you want to run original endBattle later, call origEndBattle(...endBattleArgs) at a controlled time.
+    if (endBattleWasCalled) {
+      console.log('[FinalBossHook] original handler attempted to end battle; suppressed to allow Stage2 spawn.');
+    }
+
+  } finally {
+    // Restore original endBattle
+    if (origEndBattle) window.endBattle = origEndBattle;
+  }
+
+  return; // avoid calling original handler again
+}
 
       // -- FinalBossStage2 -> Stage3 or other special conversions can use earlier patterns --
       if (enemy.type === 'FinalBossStage2' && !enemy._stageProgressed) {
