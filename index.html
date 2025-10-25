@@ -3484,26 +3484,63 @@ function lightOrbBehavior(enemy) {
   // idle — effect handled on death
 }
 
-  // Stage 1 behavior: basic attacks or idle (you can adjust)
+
 function finalBossStage1Behavior(enemy, target) {
-  // simple attack behavior
+  if (!enemy._initialized) {
+  enemy._initialized = true;
+  // clear any leftover timers just in case
+  if (enemy._eyeSpawnTimeout) { clearTimeout(enemy._eyeSpawnTimeout); enemy._eyeSpawnTimeout = null; }
+
+  enemy._eyeSpawnTimeout = setTimeout(() => {
+    // only spawn if this instance still exists and is alive
+    if (!inBattle) return;
+    if (enemy.currentHp <= 0) return;
+    if (!activeEnemies.includes(enemy)) return;
+
+    // build Eye using safe multipliers
+    const base = enemyTypes.Eye || { name: 'Watcher Eye', maxHp: 100, damage: 6, xpReward: 0 };
+    const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp: 1, enemyDmg: 1 };
+    const eye = {
+      type: 'Eye',
+      name: base.name,
+      maxHp: Math.max(1, Math.floor(base.maxHp * (mult.enemyHp || 1))),
+      currentHp: Math.max(1, Math.floor(base.maxHp * (mult.enemyHp || 1))),
+      damage: Math.max(0, Math.floor(base.damage * (mult.enemyDmg || 1))),
+      xpReward: base.xpReward || 0,
+      shieldActive: false,
+      stunned: false,
+      poisoned: false,
+      resistances: base.defaultResistances || {}
+    };
+
+    // insert Eye just after this enemy in the list
+    const idx = activeEnemies.indexOf(enemy);
+    const insertAt = (idx >= 0) ? idx + 1 : activeEnemies.length;
+    activeEnemies.splice(insertAt, 0, eye);
+
+    showTemporaryText(`${enemy.name} summons a Watcher Eye!`);
+    drawBattleUI();
+  }, 5000);
+}
   if (!enemy.stunned && !enemy.shieldActive) {
-    const dmg = enemy.damage || 0;
-    if (target === playerStats) {
-      playerTakeDamage(dmg);
-      showTemporaryText(`${enemy.name} lashes out for ${dmg} damage!`);
-    } else if (target === activeAlly && activeAlly) {
-      activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dmg);
-      showTemporaryText(`${enemy.name} hits ${activeAlly.name} for ${dmg} damage!`);
-      if (activeAlly.currentHp === 0 && activeAlly.attackTimerId) {
-        clearInterval(activeAlly.attackTimerId);
-        activeAlly.attackTimerId = null;
-      }
+  const dmg = enemy.damage || 0;
+
+  if (target === playerStats) {
+    playerTakeDamage(dmg);
+    showTemporaryText(`${enemy.name} lashes out for ${dmg} damage!`);
+  } else if (target === activeAlly && activeAlly) {
+    activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dmg);
+    showTemporaryText(`${enemy.name} hits ${activeAlly.name} for ${dmg} damage!`);
+
+    if (activeAlly.currentHp === 0 && activeAlly.attackTimerId) {
+      clearInterval(activeAlly.attackTimerId);
+      activeAlly.attackTimerId = null;
     }
   }
-  drawBattleUI();
-  drawPlayerBattleStatus();
 }
+
+drawBattleUI();
+drawPlayerBattleStatus();
 
 // Stage 2 behavior: orb + dark-timer mechanics
 function finalBossStage2Behavior(enemy, target) {
