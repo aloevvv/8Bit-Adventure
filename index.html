@@ -4897,7 +4897,7 @@ function doCleanse() {
   const PROJECTILE_SPEED = 420; // px/s (player bullets go up)
   const PLAYER_BULLET_COLOR = '#3aa0ff';
   const BOSS_RADIUS = 48; // big hitbox radius
-  const BOSS_SPEED = 360; // px/s while moving toward target
+  const BOSS_SPEED = 280; // px/s while moving toward target
   const WORLD_PADDING = 20; // wall padding inside popup
   const SPIKE_SPEED = 280;
   const BALL_SPEED = 280;
@@ -5273,7 +5273,7 @@ function doCleanse() {
     // telegraph: show red circle for 1s, then active damage area for 5s
     const tele = {
       type: 'telegraphCircle',
-      x: teleX, y: teleY, r: 48,
+      x: teleX, y: teleY, r: 72,
       spawnAt: now(),
       state: 'telegraph', // telegraph -> active
       teleMs: 1000,
