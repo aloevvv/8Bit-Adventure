@@ -5358,7 +5358,7 @@ function doCleanse() {
       if (bossObj.hp <= 0) {
         // sync with global enemy object if present
         if (typeof enemyObj === 'object' && enemyObj) {
-          if (typeof enemyObj.currentHp === 'number') enemyObj.currentHp = 0;
+          if (typeof enemyObj.currentHp === 'number') enemyObj.currentHp = 1;
         }
         stopFinalBoss && stopFinalBoss('victory');
         return;
