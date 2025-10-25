@@ -1382,40 +1382,7 @@ function findNearbyDialogZone(px, py) {
   return null;
 }
 
-function tryTriggerDialogOnX() {
 
-  if (inBattle || isGameOver) return;
-
-  const interactableObject =
-    checkInteraction(x - 16, y) ||
-    checkInteraction(x + 16, y) ||
-    checkInteraction(x, y - 16) ||
-    checkInteraction(x, y + 16) ||
-    checkInteraction(x, y);
-
-  if (interactableObject) {
-    // explicit dialog field on interactable
-    const lines = interactableObject.recruitDialog || interactableObject.dialog || null;
-    if (lines) {
-      // show dialog and mark the interactable id when closed
-      showDialog(lines, interactableObject.id || null, { style: interactableObject.dialogStyle || 'dialog', speaker: interactableObject.speaker || null });
-      return;
-    }
-    // fallback to existing behaviour for the object
-    handleInteraction(interactableObject);
-    return;
-  }
-
-  // 2) no interactable — check dialog zones at the player's position
-  const zone = findNearbyDialogZone(x, y);
-  if (zone) {
-    showDialog(zone.text, zone.id, { style: zone.style || 'dialog', speaker: zone.speaker || null });
-    return;
-  }
-
-  // 3) nothing to interact with
-  showTemporaryText("Nothing to interact with.");
-}
   function showBattleDialog(textOrLines, idToMark, opts = {}) {
   if (!inBattle) {
     showDialog(textOrLines, idToMark, opts);
@@ -5757,7 +5724,6 @@ canvas.addEventListener('keydown', function(e) {
 
   if (key === 'x') {
     e.preventDefault();
-    tryTriggerDialogOnX();
     const interactableObject =
       checkInteraction(x - 16, y) ||
       checkInteraction(x + 16, y) ||
