@@ -4252,43 +4252,98 @@ if (typeof handleEnemyDeath === 'function' && !handleEnemyDeath._isWrapped) {
       }
 
       // 4) FinalBoss Stage2 -> Stage3 (spawn once, exactly one)
-      if (enemy.type === 'FinalBossStage2') {
-        if (!enemy._stageProgressed) {
-          enemy._stageProgressed = true;
+     if (enemy.type === 'FinalBossStage2') {
+  if (!enemy._stageProgressed) {
+    enemy._stageProgressed = true;
 
-          const base = enemyTypes.FinalBossStage3 || enemyTypes.FinalBossStage3;
-          const mult = getDifficultyMultipliers();
-          const stage3 = {
-            type: 'FinalBossStage3',
-            name: base.name,
-            maxHp: Math.max(1, Math.floor((base.maxHp || 1) * mult.enemyHp)),
-            currentHp: Math.max(1, Math.floor((base.maxHp || 1) * mult.enemyHp)),
-            damage: Math.max(0, Math.floor((base.damage || 0) * mult.enemyDmg)),
-            xpReward: base.xpReward || 0,
-            shieldActive: false,
-            stunned: false,
-            poisoned: false,
-            resistances: base.defaultResistances || {}
-          };
+    // safe base lookup with fallback
+    const base = (enemyTypes && enemyTypes.FinalBossStage3) || { name: 'FinalBossStage3', maxHp: 1, damage: 0 };
+    const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp: 1, enemyDmg: 1 };
+    const stage3 = {
+      type: 'FinalBossStage3',
+      name: base.name || 'FinalBossStage3',
+      maxHp: Math.max(1, Math.floor((base.maxHp || 1) * mult.enemyHp)),
+      currentHp: Math.max(1, Math.floor((base.maxHp || 1) * mult.enemyHp)),
+      damage: Math.max(0, Math.floor((base.damage || 0) * mult.enemyDmg)),
+      xpReward: base.xpReward || 0,
+      shieldActive: false,
+      stunned: false,
+      poisoned: false,
+      resistances: base.defaultResistances || {}
+    };
 
-          placeSpawnAt(insertIndex, stage3);
-          showTemporaryText(`${stage3.name} rises from the shadows!`);
-          drawBattleUI();
-        }
-      }
+    // pause timers BEFORE inserting so the popup controls time
+    if (typeof pauseBattleTimersForDialog === 'function') pauseBattleTimersForDialog();
 
-    } catch (e) {
-      console.error('FinalBoss death hook error', e);
+    // compute a robust insertIndex (prefer provided idx, else use corpse slot, else end)
+    let insertIndex = (typeof idx === 'number' && idx >= 0 && idx <= activeEnemies.length) ? idx : activeEnemies.indexOf(enemy);
+    if (insertIndex === -1) insertIndex = activeEnemies.length;
+
+    // clear per-enemy intervals to avoid reentry/race conditions (minimal known timers)
+    if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
+    if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
+    if (enemy._poisonIntervalId) { clearInterval(enemy._poisonIntervalId); enemy._poisonIntervalId = null; }
+
+    // remove corpse if still present and use that exact slot
+    const corpseIdx = activeEnemies.indexOf(enemy);
+    if (corpseIdx !== -1) {
+      activeEnemies.splice(corpseIdx, 1);
+      insertIndex = corpseIdx;
     }
 
-    // Finally call original to perform cleanup (AWAIT original; original will remove enemy etc.)
-    return __orig_handleEnemyDeath(enemy, idx);
-  };
+    // insert or push (replace-or-push) to avoid duplicate accumulation
+    if (insertIndex >= activeEnemies.length) {
+      activeEnemies.push(stage3);
+    } else {
+      activeEnemies.splice(insertIndex, 1, stage3);
+    }
 
-  // mark as wrapped to avoid multiple wraps
-  handleEnemyDeath._isWrapped = true;
-} else if (typeof handleEnemyDeath !== 'function') {
-  console.warn('FinalBoss module: handleEnemyDeath not found to wrap.');
+    showTemporaryText(`${stage3.name} rises from the shadows!`);
+    drawBattleUI();
+
+    // find the actual spawned reference (placeSpawnAt-style helpers may differ)
+    let spawned = null;
+    if (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length) {
+      spawned = activeEnemies[insertIndex];
+    }
+    if (!spawned) spawned = activeEnemies.find(e => e && e.type === 'FinalBossStage3');
+
+    // start the bullet-hell popup if available
+    if (spawned && typeof startFinalBossBulletHell === 'function') {
+      startFinalBossBulletHell({
+        bossEnemy: spawned,
+        onEnd: (mode) => {
+          // resume timers/UI immediately
+          if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
+
+          // If the popup ended in victory, remove the spawned boss cleanly and run minimal cleanup
+          if (mode === 'victory') {
+            const idx2 = activeEnemies.indexOf(spawned);
+            if (idx2 !== -1) {
+              // remove spawned without re-entering wrapped handleEnemyDeath
+              activeEnemies.splice(idx2, 1);
+
+              // Try to call a direct removal/cleanup helper if present
+              if (typeof removeEnemy === 'function') {
+                try { removeEnemy(spawned, idx2); } catch (e) { /* non-fatal */ }
+              } else {
+                // fallback: grant XP if you have a helper; otherwise noop to avoid double-wrapping
+                if (typeof grantXpToPlayer === 'function') {
+                  try { grantXpToPlayer(spawned.xpReward || 0); } catch (e) { /* non-fatal */ }
+                }
+              }
+            }
+          }
+
+          drawBattleUI();
+          drawPlayerBattleStatus();
+        }
+      });
+    } else {
+      // nothing to show; just resume timers
+      if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
+    }
+  }
 }
 
   if (enemy.type === 'MountainBoss') {
