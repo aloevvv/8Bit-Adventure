@@ -5496,7 +5496,7 @@ function doCleanse() {
     }
 
     // draw boss (big)
-    ctx.fillStyle = '#c84bff';
+    ctx.fillStyle = '#4ab9ff';
     ctx.beginPath();
     ctx.arc(bossObj.x, bossObj.y, bossObj.radius, 0, Math.PI*2);
     ctx.fill();
@@ -5506,7 +5506,7 @@ function doCleanse() {
     const bx = canvas.width - barW - 20, by = 20;
     ctx.fillStyle = '#333';
     ctx.fillRect(bx, by, barW, barH);
-    ctx.fillStyle = '#ff4d4d';
+    ctx.fillStyle = '#ff0000';
     ctx.fillRect(bx, by, barW * (bossObj.hp / bossObj.maxHp), barH);
 
     // draw hazards
@@ -5517,7 +5517,7 @@ function doCleanse() {
           // telegraph red translucent
           ctx.fillStyle = 'rgba(255, 60, 60, 0.45)';
         } else {
-          ctx.fillStyle = 'rgba(255, 0, 0, 0.6)';
+          ctx.fillStyle = 'rgba(19, 40, 77, 0.8)';
         }
         ctx.beginPath();
         ctx.arc(h.x, h.y, h.r, 0, Math.PI*2);
