@@ -591,6 +591,28 @@ let battleRounds = 0;                // number of rounds remaining
 let currentRoundEncounters = [];     // array of rounds (each round = array of enemy defs)
 let currentRoundIndex = 0;           // index of current round
 
+  // Dark timer state (global)
+let darkTimerMs = 0;
+let darkTimerLimitMs = 30000;      // 30 seconds to lose
+let darkTimerTickInterval = null;
+const darkTimerTickMs = 100;       // tick resolution
+let darkTimerActive = false;
+
+
+const progressiveDarkEl = document.getElementById('battle-blackout') || (() => {
+  const el = document.createElement('div');
+  el.id = 'battle-blackout';
+  el.style.position = 'fixed';
+  el.style.inset = '0';
+  el.style.zIndex = '2500';
+  el.style.background = 'black';
+  el.style.pointerEvents = 'none';
+  el.style.display = 'none';
+  document.body.appendChild(el);
+  return el;
+})();
+
+
   const armorTypes = {
   retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
   v8:    { name: "V8 Armor", hpBonus: 0.20, passiveHealPercent: 0 },
@@ -736,7 +758,12 @@ const enemyTypes = {
   SpectralMinion: { name: "Spirit", maxHp: 12, damage: 3, xpReward: 1, behavior: "normalAttack" },
   IslandBoss: { name: "Nekark of the Seas", maxHp: 320, damage: 3, xpReward: 180, behavior: "islandBossBehavior", isBoss: true, defaultResistances: { stun: true, poison: true }},
   Roboworker: { name: "Roboworker", maxHp: 8, damage: 2, xpReward: 0, behavior: "normalAttack" },
-  LifeCore: { name: "Life Core", maxHp: 80, damage: 0, xpReward: 0, behavior: "lifeCoreBehavior" }
+  LifeCore: { name: "Life Core", maxHp: 80, damage: 0, xpReward: 0, behavior: "lifeCoreBehavior" },
+  FinalBoss: { name: "Dark Lord Spike", maxHp: 500, damage: 6,  xpReward: 300, isBoss: true, behavior: "finalBossBehavior", defaultResistances: { stun: true, poison: true }},
+  Eye: { name: "Watcher Eye", maxHp: 220, damage: 8,  xpReward:  80, behavior: "normalAttack", defaultResistances: { poison: true }},
+  ShadowOrb: { name: "Shadow Orb", maxHp:  60, damage: 2,  xpReward:   5, behavior: "shadowOrbBehavior" },
+  LightOrb: { name: "Light Orb", maxHp:  40, damage: 0,  xpReward:   8, behavior: "lightOrbBehavior" }
+
 };
 
 
@@ -2179,6 +2206,36 @@ if (inBattle) {
   drawPlayerBattleStatus();
 }
 
+function updateProgressiveDarknessUI() {
+  if (!progressiveDarkEl) return;
+  const frac = Math.min(1, Math.max(0, darkTimerMs / darkTimerLimitMs));
+  progressiveDarkEl.style.display = frac > 0 ? 'block' : 'none';
+  progressiveDarkEl.style.opacity = String(Math.min(0.95, frac * 0.95));
+
+  if (!document.getElementById('dark-timer-hud')) {
+    const hud = document.createElement('div');
+    hud.id = 'dark-timer-hud';
+    hud.style.position = 'fixed';
+    hud.style.top = '6px';
+    hud.style.left = '50%';
+    hud.style.transform = 'translateX(-50%)';
+    hud.style.zIndex = '4000';
+    hud.style.color = '#fff';
+    hud.style.fontFamily = "'Press Start 2P', sans-serif";
+    hud.style.fontSize = '12px';
+    hud.style.background = 'rgba(0,0,0,0.5)';
+    hud.style.padding = '6px 10px';
+    hud.style.border = '2px solid rgba(255,255,255,0.06)';
+    hud.style.borderRadius = '6px';
+    document.body.appendChild(hud);
+  }
+  const hud = document.getElementById('dark-timer-hud');
+  if (hud) {
+    const secondsLeft = Math.max(0, Math.ceil((darkTimerLimitMs - darkTimerMs) / 1000));
+    hud.textContent = `Dark Timer: ${secondsLeft}s`;
+    hud.style.opacity = frac > 0 ? '1' : '0';
+  }
+}
 
 
 // Draw battle enemies UI
@@ -3392,6 +3449,41 @@ function islandBossBehavior(enemy, target) {
     }
   }
 }
+  //final boss mechanics
+  function onShadowOrbTurnIncrementMultiplier(shadow) {
+  if (!shadow) return;
+  if (!shadow._attackMultiplier) shadow._attackMultiplier = 1;
+  else shadow._attackMultiplier++;
+}
+
+function shadowOrbBehavior(enemy, target) {
+  onShadowOrbTurnIncrementMultiplier(enemy);
+  const multiplier = enemy._attackMultiplier || 1;
+  const baseDmg = enemy.damage || 0;
+  const damage = baseDmg * multiplier;
+  if (target === playerStats) {
+    playerTakeDamage(damage);
+    showTemporaryText(`${enemy.name} attacks you for ${damage} dmg (x${multiplier})`);
+  } else if (target === activeAlly) {
+    if (activeAlly) {
+      activeAlly.currentHp = Math.max(0, activeAlly.currentHp - damage);
+      showTemporaryText(`${enemy.name} attacks ${activeAlly.name} for ${damage} dmg (x${multiplier})`);
+      if (activeAlly.currentHp === 0) {
+        showTemporaryText(`${activeAlly.name} has been defeated!`);
+        if (activeAlly.attackTimerId) { clearInterval(activeAlly.attackTimerId); activeAlly.attackTimerId = null; }
+        activeAlly = null;
+      }
+    }
+  }
+  drawBattleUI();
+  drawPlayerBattleStatus();
+  if (typeof drawPartyStatus === 'function') drawPartyStatus();
+}
+
+function lightOrbBehavior(enemy) {
+  // idle: LightOrb primarily exists to reduce dark timer on death
+}
+
 //battlefield boss
 function critBossBehavior(enemy, target) {
   if (enemy.shieldActive) {
@@ -3563,6 +3655,10 @@ if (behavior === 'normalAttack') {
   mountainBossBehavior(enemy, target);
 } else if (behavior === 'ghostBossBehavior') {
   ghostBossBehavior(enemy, target);
+} else if (behavior === 'finalBossBehavior') {
+  finalBossBehavior(enemy, target);
+} else if (behavior === 'shadowOrbBehavior') {
+  shadowOrbBehavior(enemy, target);
 } else if (behavior === 'healerBehavior') {
   healerBehavior(enemy, target);
 }
@@ -3732,6 +3828,44 @@ function resumeBattleTimersAfterDialog() {
   _battleDialogPausedState = null;
 }
 
+function startDarkTimer() {
+  if (darkTimerActive) return;
+  darkTimerActive = true;
+  darkTimerMs = 0;
+  updateProgressiveDarknessUI();
+  if (darkTimerTickInterval) clearInterval(darkTimerTickInterval);
+  darkTimerTickInterval = setInterval(() => {
+    if (!inBattle) { stopDarkTimer(); return; }
+    darkTimerMs += darkTimerTickMs;
+    updateProgressiveDarknessUI();
+    if (darkTimerMs >= darkTimerLimitMs) {
+      clearInterval(darkTimerTickInterval);
+      darkTimerTickInterval = null;
+      showTemporaryText('The darkness consumes you...');
+      playerStats.currentHp = 0;
+      updateHp(0);
+      stopDarkTimer();
+      endBattle('lose');
+    }
+  }, darkTimerTickMs);
+}
+
+function stopDarkTimer() {
+  darkTimerActive = false;
+  darkTimerMs = 0;
+  if (darkTimerTickInterval) { clearInterval(darkTimerTickInterval); darkTimerTickInterval = null; }
+  updateProgressiveDarknessUI();
+  const hud = document.getElementById('dark-timer-hud');
+  if (hud) hud.style.opacity = '0';
+}
+
+function reduceDarkTimer(ms) {
+  if (!darkTimerActive) return;
+  darkTimerMs = Math.max(0, darkTimerMs - ms);
+  updateProgressiveDarknessUI();
+  showTemporaryText(`Dark Timer reduced by ${Math.round(ms/1000)}s!`);
+}
+
   
 function enemyAttack(enemy, target) {
   const damage = enemy.damage || 0;
@@ -3839,6 +3973,45 @@ function enemyAttack(enemy, target) {
     { style: 'boss' }
   );
   }
+    if (typeof handleEnemyDeath === 'function') {
+  const __orig_handleEnemyDeath = handleEnemyDeath;
+  handleEnemyDeath = function(enemy, idx) {
+    try {
+      // ShadowOrb -> spawn LightOrb immediately at same list index
+      if (enemy && enemy.type === 'ShadowOrb') {
+        const lightBase = enemyTypes.LightOrb || { maxHp: 40, name: 'Light Orb', xpReward: 0 };
+        const mult = getDifficultyMultipliers();
+        const light = {
+          type: 'LightOrb',
+          name: lightBase.name,
+          maxHp: Math.max(1, Math.floor(lightBase.maxHp * mult.enemyHp)),
+          currentHp: Math.max(1, Math.floor(lightBase.maxHp * mult.enemyHp)),
+          damage: 0,
+          xpReward: lightBase.xpReward || 0,
+          shieldActive: false,
+          stunned: false,
+          poisoned: false,
+          resistances: lightBase.defaultResistances || {}
+        };
+        const insertIndex = (typeof idx === 'number' && idx >= 0 && idx <= activeEnemies.length) ? idx : activeEnemies.length;
+        activeEnemies.splice(insertIndex, 0, light);
+        showTemporaryText('A Shadow Orb collapses into a Light Orb!');
+        drawBattleUI();
+      }
+
+      // LightOrb -> reduce dark timer BEFORE original cleanup
+      if (enemy && enemy.type === 'LightOrb') {
+        reduceDarkTimer(5000); // reduce by 5 seconds
+      }
+    } catch (e) {
+      console.error('FinalBoss death hook error', e);
+    }
+    return __orig_handleEnemyDeath(enemy, idx);
+  };
+} else {
+  console.warn('FinalBoss module: handleEnemyDeath not found to wrap.');
+}
+
   // Stage1 special: explode and spawn Stage2 (explosion happens when Stage1 dies)
   if (enemy.type === "SecondStageBossStage1") {
     // Explosion damage: 5% of player's max HP (rounded up)
@@ -3962,6 +4135,9 @@ if (willHideBattleBlackout) {
 }
     
 function healAllyAfterBattle() {
+  
+try { stopDarkTimer(); } catch (e) { /* ignore */ }
+
   if (activeAlly && activeAlly.currentHp > 0) {
     const healAmount = Math.ceil(activeAlly.maxHp * 0.33);
     activeAlly.currentHp = Math.min(activeAlly.currentHp + healAmount, activeAlly.maxHp);
