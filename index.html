@@ -4351,25 +4351,25 @@ if (enemy && enemy.type === 'ShadowOrb' && !enemy._lightSpawned) {
   }
 
   // Reduce the dark timer by 5 seconds if helper exists, else adjust darkTimerRemaining
-  try {
-    if (typeof reduceDarkTimer === 'function') {
-      reduceDarkTimer(5000);
-      console.log('[FinalBossHook] reduced dark timer by 5000ms via reduceDarkTimer()');
-    } else if (typeof darkTimerRemaining === 'number') {
-      darkTimerRemaining = Math.max(0, darkTimerRemaining - 5000);
-      console.log('[FinalBossHook] reduced darkTimerRemaining by 5000ms');
-    } else if (typeof darkTimer === 'number') {
-      darkTimer = Math.max(0, darkTimer - 5000);
-      console.log('[FinalBossHook] reduced darkTimer by 5000ms');
-    } else if (typeof darkTimerId !== 'undefined' && darkTimerId === null && typeof startDarkTimer === 'function') {
-      // no-op: timer not running, nothing to reduce
-      console.log('[FinalBossHook] dark timer not running; no reduction applied');
-    } else {
-      console.log('[FinalBossHook] no dark timer API found to reduce');
-    }
-  } catch (e) {
-    console.error('[FinalBossHook] error reducing dark timer', e);
+  // Reduce dark timer by 5s using game API or safe fallback
+try {
+  const REDUCE_MS = 5000;
+  if (typeof reduceDarkTimer === 'function') {
+    reduceDarkTimer(REDUCE_MS);
+    console.log('[FinalBossHook] reduceDarkTimer() called for', REDUCE_MS, 'ms');
+  } else if (typeof darkTimerActive !== 'undefined' && darkTimerActive) {
+    // fallback: mirror reduceDarkTimer behavior
+    darkTimerMs = Math.max(0, (typeof darkTimerMs === 'number' ? darkTimerMs : 0) - REDUCE_MS);
+    if (typeof updateProgressiveDarknessUI === 'function') updateProgressiveDarknessUI();
+    if (typeof showTemporaryText === 'function') showTemporaryText(`Dark Timer reduced by ${Math.round(REDUCE_MS/1000)}s!`);
+    console.log('[FinalBossHook] darkTimerMs reduced by', REDUCE_MS, 'ms (fallback)');
+  } else {
+    console.log('[FinalBossHook] dark timer not active; no reduction applied');
   }
+} catch (e) {
+  console.error('[FinalBossHook] error reducing dark timer', e);
+}
+
 
   showTemporaryText('A Shadow Orb collapses into a Light Orb!');
   drawBattleUI();
