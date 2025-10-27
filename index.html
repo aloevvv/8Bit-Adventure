@@ -6001,15 +6001,13 @@ function doCleanse() {
   }
 
   btnClose.addEventListener('click', () => {
-    if (sjActive) {
-      // refund wager on forced close (safe behavior)
-      const cur = inventory.get('bolts') || 0;
-      inventory.set('bolts', cur + sjWager);
-      showTemporaryText('Wager refunded');
-    }
-    closeSlapJack();
-    draw();
-  });
+  if (sjActive) {
+    showTemporaryText('Wager forfeited');
+  }
+  closeSlapJack();
+  draw();
+});
+
 
   window.openSlapJack = openSlapJack;
 
