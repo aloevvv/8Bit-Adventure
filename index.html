@@ -5723,6 +5723,7 @@ function doCleanse() {
 
 })();
 // ---------------------- Slap Jack minigame ----------------------
+// ---------------------- Slap Jack minigame (reworked) ----------------------
 (function installSlapJack() {
   const overlay = document.getElementById('slapjack-overlay');
   const btnLock = document.getElementById('sj-lock-wager');
@@ -5739,19 +5740,19 @@ function doCleanse() {
   // Game state
   let sjActive = false;
   let sjWager = 0;
-  let sjMyCards = 0;
+  let sjMyCards = 10; // Start with 10 cards
   let sjPile = 0;
-  let sjPlayers = ['NPC1','NPC2','You','NPC3']; // turn order: top,right,you,left -> adapt rotation
-  let sjTurnIndex = 0; // index into sjPlayers whose card will be played to pile
-  let sjNpcDelays = {}; // per NPC response delay when Jack is played (ms)
-  let sjNpcActive = { NPC1:true, NPC2:true, NPC3:true }; // false when they run out of cards
-  let sjNpcCards = { NPC1:10, NPC2:10, NPC3:10 }; // starting counts (can be adjusted)
+  let sjPlayers = ['NPC1','NPC2','You','NPC3']; // turn order
+  let sjTurnIndex = 0;
+  let sjNpcCards = { NPC1: 10, NPC2: 10, NPC3: 10 }; // NPCs start with 10 cards
+  let sjNpcActive = { NPC1: true, NPC2: true, NPC3: true };
   let sjInterval = null;
-  let sjCardPlayIntervalMs = 1000; // every second a player contributes a card to pile
-  let sjJackChance = 0.08; // chance that the played card is a "Jack" triggering slap window
+  let sjCardPlayIntervalMs = 1000; // each turn 1s
+  let sjJackChance = 0.08; // chance the played card is a Jack
   let sjJackActive = false;
   let sjJackPlayedBy = null;
-  let sjJackTimeoutId = null;
+  let sjJackWindowTimeout = null;
+  let sjNpcSlapTimers = [];
   const WIN_TARGET = 30;
   const WRONG_SLAP_PENALTY = 3;
 
@@ -5760,13 +5761,12 @@ function doCleanse() {
     sjYouCounter.textContent = `Cards: ${sjMyCards}`;
     sjMidCounter.textContent = `Pile: ${sjPile}`;
     sjStatus.textContent = sjActive ? (sjJackActive ? 'JACK! SLAP!' : 'In game') : 'Wager bolts to play';
-    // show NPC states
+    sjLastPlayer.textContent = `Last: ${sjJackPlayedBy || '—'}`;
     document.getElementById('sj-npc-top').textContent = `NPC 1\n(${sjNpcActive.NPC1? sjNpcCards.NPC1 : 'out'})`;
     document.getElementById('sj-npc-right').textContent = `NPC 2\n(${sjNpcActive.NPC2? sjNpcCards.NPC2 : 'out'})`;
     document.getElementById('sj-npc-left').textContent = `NPC 3\n(${sjNpcActive.NPC3? sjNpcCards.NPC3 : 'out'})`;
-    sjLastPlayer.textContent = `Last: ${sjJackPlayedBy || '—'}`;
     btnStart.disabled = !sjWager || (inventory.get('bolts') || 0) < sjWager || sjActive;
-    btnSlap.disabled = !sjActive || !sjJackActive;
+    btnSlap.disabled = !sjActive; // can press slap anytime while game active
   }
 
   function openSlapJack() {
@@ -5778,7 +5778,6 @@ function doCleanse() {
     stopGame();
   }
 
-  // lock wager (just set wager and disable changes)
   btnLock.addEventListener('click', () => {
     const val = Math.max(1, Math.floor(Number(wagerInput.value) || 0));
     if (val <= 0) { showTemporaryText('Enter at least 1 bolt'); return; }
@@ -5791,43 +5790,48 @@ function doCleanse() {
     updateUi();
   });
 
-  // start the game: deduct wager and begin automatic card play loop
   btnStart.addEventListener('click', () => {
     if (sjActive) return;
     const bolts = inventory.get('bolts') || 0;
     if (sjWager <= 0 || bolts < sjWager) { showTemporaryText('Lock a valid wager first'); return; }
-    // Deduct wager now (locked and removed); if player wins they double (we'll credit on win)
     inventory.set('bolts', bolts - sjWager);
     showTemporaryText(`Wager placed: ${sjWager} bolts`);
-    // initial NPC card counts (simple equal distribution)
+    // reset state for new game
     sjNpcCards = { NPC1: 10, NPC2: 10, NPC3: 10 };
-    sjNpcActive = { NPC1: sjNpcCards.NPC1>0, NPC2: sjNpcCards.NPC2>0, NPC3: sjNpcCards.NPC3>0 };
-    // vary NPC reaction delays 300-700ms for receiving Jacks (used for "slap window" timing if needed)
-    sjNpcDelays = { NPC1: 300 + Math.floor(Math.random()*400), NPC2: 300 + Math.floor(Math.random()*400), NPC3: 300 + Math.floor(Math.random()*400) };
-    // reset player and pile counts
-    sjMyCards = 0; sjPile = 0; sjTurnIndex = 0; sjJackActive = false; sjJackPlayedBy = null;
+    sjNpcActive = { NPC1: true, NPC2: true, NPC3: true };
+    sjMyCards = 10;
+    sjPile = 0;
+    sjTurnIndex = 0;
+    sjJackActive = false;
+    sjJackPlayedBy = null;
+    clearAllNpcSlapTimers();
     sjActive = true;
     btnStart.disabled = true;
     wagerInput.disabled = true;
     btnLock.disabled = true;
     updateUi();
-    // every second a card is played into the middle from the next active player
     sjInterval = setInterval(playCardToPile, sjCardPlayIntervalMs);
     // immediate first play
     playCardToPile();
   });
 
-  // stop and cleanup
   function stopGame() {
     sjActive = false;
     if (sjInterval) { clearInterval(sjInterval); sjInterval = null; }
-    if (sjJackTimeoutId) { clearTimeout(sjJackTimeoutId); sjJackTimeoutId = null; }
+    if (sjJackWindowTimeout) { clearTimeout(sjJackWindowTimeout); sjJackWindowTimeout = null; }
+    clearAllNpcSlapTimers();
     wagerInput.disabled = false; btnLock.disabled = false; btnStart.disabled = false;
     sjWager = 0;
     updateUi();
   }
 
-  // rotate to next active player index
+  function clearAllNpcSlapTimers() {
+    while (sjNpcSlapTimers.length) {
+      const id = sjNpcSlapTimers.pop();
+      clearTimeout(id);
+    }
+  }
+
   function advanceTurnIndex() {
     const MAX = sjPlayers.length;
     for (let i=1;i<=MAX;i++){
@@ -5835,28 +5839,31 @@ function doCleanse() {
       const p = sjPlayers[idx];
       if (p === 'You' || sjNpcActive[p]) { sjTurnIndex = idx; return; }
     }
-    // no players left except you: keep your turn
+    // fallback
     sjTurnIndex = sjPlayers.indexOf('You');
   }
 
-  // each second this runs: player at turn index contributes one card (if has any), otherwise skipped
   function playCardToPile() {
     if (!sjActive) return;
-    // ensure at least one active participant exists (if NPCs all deactivated, you auto-collect until win or loss)
+
     const actor = sjPlayers[sjTurnIndex];
-    // if actor is NPC, decrement their cards; if 0 => mark inactive
+
+    // If actor is You: you must have a card to play; if you have none you skip
     if (actor === 'You') {
-      // You always contribute if you have cards; if you have none, draw from nothing (skip)
-      // For this simple implementation you don't auto-contribute, treat your deck as infinite passively: we treat your contribution as 1 card if you have any heuristic - to keep game flow, we'll treat You as having a notional deck unlimited for the automatic rotation (but only YOU collect when others fail).
-      sjPile += 1;
-      sjLastPlayer.textContent = `Last: You`;
+      if (sjMyCards > 0) {
+        sjMyCards -= 1;
+        sjPile += 1;
+        sjLastPlayer.textContent = 'Last: You';
+        // if you drop to zero you can still play 0 (zero doesn't add)
+      } else {
+        // you have no cards; skip
+      }
     } else {
       if (!sjNpcActive[actor]) {
         advanceTurnIndex();
         return;
       }
-      // NPC contributes a card if they have any
-      if ((sjNpcCards[actor]||0) > 0) {
+      if ((sjNpcCards[actor] || 0) > 0) {
         sjNpcCards[actor] -= 1;
         sjPile += 1;
         sjLastPlayer.textContent = `Last: ${actor}`;
@@ -5869,119 +5876,145 @@ function doCleanse() {
       }
     }
 
-    // Decide whether the played card is a Jack (random)
-    if (!sjJackActive && Math.random() < sjJackChance) {
-      // Jack was played by 'actor' -> set slap window
+    // Show which card was played in the pile UI (simple textual indicator)
+    // Randomly decide whether it's a Jack
+    const isJack = !sjJackActive && (Math.random() < sjJackChance);
+    if (isJack) {
       sjJackActive = true;
       sjJackPlayedBy = actor;
-      updateUi();
-      // Each NPC will attempt to "slap" after their delay; if they are active and faster than player, they win pile
-      // schedule NPC slap attempts
-      ['NPC1','NPC2','NPC3'].forEach(npc => {
-        if (!sjNpcActive[npc]) return;
-        const delay = 300 + Math.floor(Math.random()*400); // 300-700ms
-        setTimeout(() => {
-          if (!sjJackActive) return;
-          // NPC attempt to slap: simple RNG for success (we assume they always "slap")
-          // If NPC is still active and jack present, NPC grabs pile
-          if (sjJackActive) {
-            // NPC "slapped" first -> they take pile into their personal cards
-            const taken = sjPile;
-            sjPile = 0;
-            // assign to NPC (they gain)
-            sjNpcCards[npc] = (sjNpcCards[npc] || 0) + taken;
-            sjJackActive = false;
-            sjJackPlayedBy = null;
-            if (sjJackTimeoutId) { clearTimeout(sjJackTimeoutId); sjJackTimeoutId = null; }
-            showTemporaryText(`${npc} slapped the jack and grabbed ${taken} cards!`);
-            updateUi();
-          }
-        }, delay);
-      });
-
-      // Player has a short window to press SLAP; if they don't, the first NPC to respond will get it
-      // to avoid race complexity we also set a fallback timeout after 800ms: if still active then clear (pile stays).
-      sjJackTimeoutId = setTimeout(() => {
+      showTemporaryText(`${actor} played a JACK!`);
+      // schedule NPC slap attempts (they race to slap)
+      scheduleNpcSlaps();
+      // set a window timeout after which Jack is considered missed if no one slaps
+      if (sjJackWindowTimeout) clearTimeout(sjJackWindowTimeout);
+      sjJackWindowTimeout = setTimeout(() => {
         if (sjJackActive) {
-          // No one slapped within window; keep pile but clear jack state
           sjJackActive = false;
           sjJackPlayedBy = null;
-          showTemporaryText('Jack missed - nobody slapped in time');
+          showTemporaryText('Jack window expired');
+          clearAllNpcSlapTimers();
           updateUi();
         }
-      }, 900);
+      }, 900); // 900ms window
+    } else {
+      // not a Jack: show normal card label
+      showTemporaryText(`${actor} played a card`);
     }
 
-    // after processing, check win condition
+    // update visuals
+    updateUi();
+
+    // Check if anyone reached target (NPC win)
+    for (const npc of ['NPC1','NPC2','NPC3']) {
+      if (sjNpcCards[npc] >= WIN_TARGET) {
+        // NPC wins -> you lose immediately
+        showTemporaryText(`${npc} reached ${WIN_TARGET} cards — you lose the wager.`);
+        // no refund
+        stopGame();
+        return;
+      }
+    }
+
+    // Check if you reached target (shouldn't usually happen because you take pile; kept for symmetry)
     if (sjMyCards >= WIN_TARGET) {
-      winSlapJack();
+      // you win
+      showTemporaryText('You reached 30 cards and win!');
+      // award double wager
+      const cur = inventory.get('bolts') || 0;
+      inventory.set('bolts', cur + (sjWager * 2));
+      stopGame();
       return;
     }
-    // advance to next player
+
+    // Move to next player
     advanceTurnIndex();
     updateUi();
   }
 
-  // player presses slap
+  function scheduleNpcSlaps() {
+    clearAllNpcSlapTimers();
+    // each NPC attempts to slap after a small random delay; the earliest to fire takes it if still active
+    ['NPC1','NPC2','NPC3'].forEach(npc => {
+      if (!sjNpcActive[npc]) return;
+      const delay = 500 + Math.floor(Math.random() * 500); //
+      const t = setTimeout(() => {
+        if (!sjJackActive) return;
+        // NPC attempts to slap now
+        if (!sjActive) return;
+        // NPC "slap" resolves: they take the pile
+        const taken = sjPile;
+        sjPile = 0;
+        sjNpcCards[npc] = (sjNpcCards[npc] || 0) + taken;
+        sjJackActive = false;
+        sjJackPlayedBy = null;
+        clearAllNpcSlapTimers();
+        if (sjJackWindowTimeout) { clearTimeout(sjJackWindowTimeout); sjJackWindowTimeout = null; }
+        showTemporaryText(`${npc} slapped first and grabbed ${taken} cards!`);
+        updateUi();
+
+        // Check NPC win
+        if (sjNpcCards[npc] >= WIN_TARGET) {
+          showTemporaryText(`${npc} reached ${WIN_TARGET} cards — you lose.`);
+          stopGame();
+        }
+      }, delay);
+      sjNpcSlapTimers.push(t);
+    });
+  }
+
+  // Player pressing SLAP
   btnSlap.addEventListener('click', () => {
-    if (!sjActive || !sjJackActive) {
-      // wrong slap penalty
+    if (!sjActive) return;
+    if (sjJackActive) {
+      // Player slapped successfully and takes the pile
+      const taken = sjPile;
+      sjPile = 0;
+      sjMyCards += taken;
+      sjJackActive = false;
+      sjJackPlayedBy = null;
+      if (sjJackWindowTimeout) { clearTimeout(sjJackWindowTimeout); sjJackWindowTimeout = null; }
+      clearAllNpcSlapTimers();
+      showTemporaryText(`You slapped first and took ${taken} cards!`);
+      updateUi();
+
+      // Check win
+      if (sjMyCards >= WIN_TARGET) {
+        const cur = inventory.get('bolts') || 0;
+        inventory.set('bolts', cur + (sjWager * 2));
+        showTemporaryText('You achieved 30 cards — you win!');
+        stopGame();
+      }
+      return;
+    } else {
+      // Wrong slap: penalty
       sjMyCards = Math.max(0, sjMyCards - WRONG_SLAP_PENALTY);
       showTemporaryText(`Wrong slap! -${WRONG_SLAP_PENALTY} cards`);
       updateUi();
       return;
     }
-    // If jack active and player slapped: player collects pile
-    const taken = sjPile;
-    sjPile = 0;
-    sjMyCards += taken;
-    sjJackActive = false;
-    sjJackPlayedBy = null;
-    if (sjJackTimeoutId) { clearTimeout(sjJackTimeoutId); sjJackTimeoutId = null; }
-    showTemporaryText(`You slapped first and took ${taken} cards!`);
-    updateUi();
-
-    if (sjMyCards >= WIN_TARGET) {
-      winSlapJack();
-      return;
-    }
   });
 
   function winSlapJack() {
-    // Win: double wager back (gain equal to wager)
     const current = inventory.get('bolts') || 0;
-    inventory.set('bolts', current + (sjWager * 2)); // give back double as "you double your money" (net +wager)
+    inventory.set('bolts', current + (sjWager * 2));
     showTemporaryText(`You win! Collected ${sjMyCards} cards. Earned ${sjWager * 2} bolts`);
-    // cleanup and close
     stopGame();
-    updateUi();
   }
 
-  // If player closes while active, refund half wager (or nothing). We'll refund wager (safe).
   btnClose.addEventListener('click', () => {
     if (sjActive) {
-      // refund wager
+      // refund wager on forced close (safe behavior)
       const cur = inventory.get('bolts') || 0;
       inventory.set('bolts', cur + sjWager);
       showTemporaryText('Wager refunded');
     }
     closeSlapJack();
-    draw(); // refresh main UI
+    draw();
   });
 
-  // Expose a function to open overlay (useful for interactable)
   window.openSlapJack = openSlapJack;
 
-  // Add a simple interactable hook: you can wire a target_board like object or call openSlapJack()
-  // For convenience also bind key 'z' to open SlapJack when near an interactable named 'slap_jack_board'
-  document.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'z') {
-      // quick open for debug when not in battle
-      if (!inBattle && !isGameOver) openSlapJack();
-    }
-  });
-
-  // initialize displayed bolts
+  // Initialize UI values
   updateUi();
 })();
 
