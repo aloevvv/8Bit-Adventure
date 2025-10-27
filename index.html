@@ -5723,8 +5723,8 @@ function doCleanse() {
 
 })();
 // ---------------------- Slap Jack minigame ----------------------
-// ---------------------- Slap Jack minigame (reworked) ----------------------
-(function installSlapJack() {
+// ---------------------- Slap Jack minigame (text-only cards, no graphics) ----------------------
+(function installSlapJackTextOnly() {
   const overlay = document.getElementById('slapjack-overlay');
   const btnLock = document.getElementById('sj-lock-wager');
   const btnStart = document.getElementById('sj-start');
@@ -5734,7 +5734,6 @@ function doCleanse() {
   const sjPlayerBolts = document.getElementById('sj-player-bolts');
   const sjYouCounter = document.getElementById('sj-you-counter');
   const sjMidCounter = document.getElementById('sj-mid-counter');
-  const sjLastPlayer = document.getElementById('sj-last-player');
   const sjStatus = document.getElementById('sj-status');
 
   // Game state
@@ -5756,17 +5755,16 @@ function doCleanse() {
   const WIN_TARGET = 30;
   const WRONG_SLAP_PENALTY = 3;
 
+  // Card labels (text-only)
+  const CARD_LABELS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
   function updateUi() {
     sjPlayerBolts.textContent = (inventory.get('bolts') || 0);
     sjYouCounter.textContent = `Cards: ${sjMyCards}`;
     sjMidCounter.textContent = `Pile: ${sjPile}`;
-    sjStatus.textContent = sjActive ? (sjJackActive ? 'JACK! SLAP!' : 'In game') : 'Wager bolts to play';
-    sjLastPlayer.textContent = `Last: ${sjJackPlayedBy || '—'}`;
-    document.getElementById('sj-npc-top').textContent = `NPC 1\n(${sjNpcActive.NPC1? sjNpcCards.NPC1 : 'out'})`;
-    document.getElementById('sj-npc-right').textContent = `NPC 2\n(${sjNpcActive.NPC2? sjNpcCards.NPC2 : 'out'})`;
-    document.getElementById('sj-npc-left').textContent = `NPC 3\n(${sjNpcActive.NPC3? sjNpcCards.NPC3 : 'out'})`;
+    sjStatus.textContent = sjActive ? (sjJackActive ? `JACK! (${sjJackPlayedBy || '??'}) SLAP!` : 'In game') : 'Wager bolts to play';
     btnStart.disabled = !sjWager || (inventory.get('bolts') || 0) < sjWager || sjActive;
-    btnSlap.disabled = !sjActive; // can press slap anytime while game active
+    btnSlap.disabled = !sjActive;
   }
 
   function openSlapJack() {
@@ -5843,6 +5841,11 @@ function doCleanse() {
     sjTurnIndex = sjPlayers.indexOf('You');
   }
 
+  function pickRandomCardLabel() {
+    const i = Math.floor(Math.random() * CARD_LABELS.length);
+    return CARD_LABELS[i];
+  }
+
   function playCardToPile() {
     if (!sjActive) return;
 
@@ -5853,8 +5856,7 @@ function doCleanse() {
       if (sjMyCards > 0) {
         sjMyCards -= 1;
         sjPile += 1;
-        sjLastPlayer.textContent = 'Last: You';
-        // if you drop to zero you can still play 0 (zero doesn't add)
+        showTemporaryText('You played a card.');
       } else {
         // you have no cards; skip
       }
@@ -5866,20 +5868,23 @@ function doCleanse() {
       if ((sjNpcCards[actor] || 0) > 0) {
         sjNpcCards[actor] -= 1;
         sjPile += 1;
-        sjLastPlayer.textContent = `Last: ${actor}`;
         if (sjNpcCards[actor] <= 0) {
           sjNpcActive[actor] = false;
           showTemporaryText(`${actor} ran out of cards`);
+        } else {
+          showTemporaryText(`${actor} played a card`);
         }
       } else {
         sjNpcActive[actor] = false;
       }
     }
 
-    // Show which card was played in the pile UI (simple textual indicator)
-    // Randomly decide whether it's a Jack
-    const isJack = !sjJackActive && (Math.random() < sjJackChance);
-    if (isJack) {
+    // choose a textual card label for this play (no graphics)
+    const card = pickRandomCardLabel();
+
+    // Determine if this card is a "Jack"
+    const isJack = (card === 'J') || (Math.random() < sjJackChance);
+    if (isJack && !sjJackActive) {
       sjJackActive = true;
       sjJackPlayedBy = actor;
       // schedule NPC slap attempts (they race to slap)
@@ -5895,32 +5900,28 @@ function doCleanse() {
           updateUi();
         }
       }, 900); // 900ms window
+      showTemporaryText(`${actor} played: ${card}  —  JACK!`);
     } else {
-      // not a Jack: show normal card label
-      showTemporaryText(`${actor} played a card`);
+      showTemporaryText(`${actor} played: ${card}`);
     }
 
-    // update visuals
     updateUi();
 
     // Check if anyone reached target (NPC win)
     for (const npc of ['NPC1','NPC2','NPC3']) {
       if (sjNpcCards[npc] >= WIN_TARGET) {
-        // NPC wins -> you lose immediately
         showTemporaryText(`${npc} reached ${WIN_TARGET} cards — you lose the wager.`);
-        // no refund
         stopGame();
         return;
       }
     }
 
-    // Check if you reached target (shouldn't usually happen because you take pile; kept for symmetry)
+    // Check if you reached target
     if (sjMyCards >= WIN_TARGET) {
       // you win
-      showTemporaryText('You reached 30 cards and win!');
-      // award double wager
       const cur = inventory.get('bolts') || 0;
       inventory.set('bolts', cur + (sjWager * 2));
+      showTemporaryText('You reached 30 cards and win!');
       stopGame();
       return;
     }
@@ -5935,10 +5936,9 @@ function doCleanse() {
     // each NPC attempts to slap after a small random delay; the earliest to fire takes it if still active
     ['NPC1','NPC2','NPC3'].forEach(npc => {
       if (!sjNpcActive[npc]) return;
-      const delay = 500 + Math.floor(Math.random() * 500); //
+      const delay = 300 + Math.floor(Math.random() * 700); // NPC reaction delay
       const t = setTimeout(() => {
         if (!sjJackActive) return;
-        // NPC attempts to slap now
         if (!sjActive) return;
         // NPC "slap" resolves: they take the pile
         const taken = sjPile;
@@ -5993,28 +5993,19 @@ function doCleanse() {
     }
   });
 
-  function winSlapJack() {
-    const current = inventory.get('bolts') || 0;
-    inventory.set('bolts', current + (sjWager * 2));
-    showTemporaryText(`You win! Collected ${sjMyCards} cards. Earned ${sjWager * 2} bolts`);
-    stopGame();
-  }
-
   btnClose.addEventListener('click', () => {
-  if (sjActive) {
-    showTemporaryText('Wager forfeited');
-  }
-  closeSlapJack();
-  draw();
-});
-
+    if (sjActive) {
+      showTemporaryText('Wager forfeited');
+    }
+    closeSlapJack();
+    draw();
+  });
 
   window.openSlapJack = openSlapJack;
 
   // Initialize UI values
   updateUi();
 })();
-
   
   // ---------- Target Practice Mini-game ----------
 (function installTargetPractice() {
