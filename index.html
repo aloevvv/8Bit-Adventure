@@ -7043,15 +7043,17 @@ if (gameHud) {
 }
   
 // Keyboard movement and interaction
-canvas.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function(e) {
+  
+const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : null;
+  if (tag === 'input' || tag === 'textarea') return;
+
   if (inBattle || isGameOver) return;
+
+  // movement
   let nextX = x, nextY = y;
   const key = e.key.toLowerCase();
 
-  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : null;
-  if (tag === 'input' || tag === 'textarea') return;
-
-  // movement keys: prevent default for arrows/wasd
   if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(key)) {
     e.preventDefault();
   }
