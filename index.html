@@ -7024,8 +7024,6 @@ drawAchievementsUI();
   });
 }
 
-  
-
 // Create Save and Load buttons after DOM is ready (script at bottom so safe)
 const gameHud = document.getElementById('game-hud');
 if (gameHud) {
@@ -7044,17 +7042,16 @@ if (gameHud) {
   gameHud.appendChild(loadButton);
 }
   
-document.addEventListener('keydown', function(e) {
-  
-  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : null;
-  if (tag === 'input' || tag === 'textarea') return;
-
+// Keyboard movement and interaction
+canvas.addEventListener('keydown', function(e) {
   if (inBattle || isGameOver) return;
-
-  // movement
   let nextX = x, nextY = y;
   const key = e.key.toLowerCase();
 
+  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : null;
+  if (tag === 'input' || tag === 'textarea') return;
+
+  // movement keys: prevent default for arrows/wasd
   if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(key)) {
     e.preventDefault();
   }
@@ -7067,17 +7064,7 @@ document.addEventListener('keydown', function(e) {
       checkInteraction(x, y - 16) ||
       checkInteraction(x, y + 16) ||
       checkInteraction(x, y);
-    if (interactableObject) {
-      handleInteraction(interactableObject);
-      return;
-    }
-   
-    const zone = findNearbyDialogZone(x, y);
-    if (zone) {
-      showDialog(zone.text, zone.id, { style: zone.style || 'dialog', speaker: zone.speaker || null });
-      return;
-    }
-    showTemporaryText('Nothing to interact with.');
+    if (interactableObject) handleInteraction(interactableObject);
     return;
   }
 
@@ -7086,33 +7073,45 @@ document.addEventListener('keydown', function(e) {
   if (key === 'arrowup' || key === 'w') nextY -= speed;
   if (key === 'arrowdown' || key === 's') nextY += speed;
 
-  
+  // Check water crossing
   if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
     showTemporaryText("You need a raft to cross water!");
     return;
   }
+
+  // Check poison crossing
   if (isInPoison(nextX, nextY) && (inventory.get('gas_mask') || 0) <= 0) {
     showTemporaryText("You need a gas mask to cross poison!");
     return;
   }
 
+  // Existing collision checks
   if (!isCollidingWithWall(nextX, nextY)) {
     const door = checkDoorCollision(nextX, nextY);
-    if (door) { loadLevel(door.destLevel, door.destX, door.destY); return; }
+    if (door) {
+      loadLevel(door.destLevel, door.destX, door.destY);
+      return;
+    }
 
     const battleZone = findBattleZone(nextX, nextY);
-    if (battleZone) { initiateBattle('battleZone', battleZone); return; }
+    if (battleZone) {
+      initiateBattle('battleZone', battleZone);
+      return;
+    }
 
-  
-    x = nextX; y = nextY;
+    // move player
+    x = nextX;
+    y = nextY;
 
+    // dialog auto-trigger (autoShow only)
     const dialogZone = findDialogZone(nextX, nextY);
     if (dialogZone && dialogZone.autoShow) {
       showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
       return;
     }
-    draw();
   }
+
+  draw();
 });
   </script>
 </body>
