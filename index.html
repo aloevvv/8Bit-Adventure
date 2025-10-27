@@ -292,6 +292,9 @@
   box-shadow: 0 6px 12px rgba(0,0,0,0.6);
   transition: transform 0.08s ease;
 }
+    #slapjack-overlay .item-use-button { font-family: "Press Start 2P", sans-serif; padding:6px 8px; border:2px solid white; background:#333; color:white; cursor:pointer; }
+#slapjack-overlay .item-use-button:disabled { opacity:0.5; pointer-events:none; }
+
 .tp-target:active { transform: scale(0.92); }
 .tp-target.normal { background: radial-gradient(circle at 30% 30%, #fff, #ffcccc 30%, #dd3333 60%); border:2px solid #fff; }
 .tp-target.golden { background: radial-gradient(circle at 30% 30%, #fff9d6, #ffd24d 40%, #ffb400 70%); border:2px solid #fff2a8; width:72px; height:72px; }
@@ -502,6 +505,54 @@
     </div>
   </div>
 </div>
+
+  <!-- Slap Jack overlay -->
+<div id="slapjack-overlay" style="display:none; position:fixed; inset:0; z-index:4100;
+background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-family:'Press Start 2P',sans-serif;">
+  <div id="slapjack-ui" style="width:86vw; max-width:760px; height:66vh; background:#112244; border:2px solid #fff; padding:16px; box-sizing:border-box; color:white; display:flex; flex-direction:column; gap:10px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-size:13px;">Slap Jack</div>
+        <div id="sj-status" style="font-size:11px; opacity:0.9;">Wager bolts to play</div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <div style="font-size:11px;">Your bolts:</div>
+        <div id="sj-player-bolts" style="font-size:13px; padding:6px 10px; background:#001a00; border:1px solid #888;">0</div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; align-items:center; justify-content:center;">
+      <div id="sj-npc-top" style="width:110px; height:90px; background:#333; border:2px solid #555; display:flex; align-items:center; justify-content:center;">NPC 1<br>(Top)</div>
+      <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+        <div id="sj-pile" style="width:220px; height:120px; background:#222; border:2px solid #999; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+          <div id="sj-mid-counter" style="font-size:18px;">Pile: 0</div>
+          <div id="sj-last-player" style="font-size:11px; opacity:0.8;">Last: —</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div id="sj-npc-left" style="width:90px; height:60px; background:#333; border:2px solid #555; display:flex; align-items:center; justify-content:center;">NPC 3<br>(Left)</div>
+          <div id="sj-you" style="width:150px; height:60px; background:#004; border:2px solid #fff; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+            <div style="font-size:12px;">You (Bottom)</div>
+            <div id="sj-you-counter" style="font-size:11px;">Cards: 0</div>
+          </div>
+          <div id="sj-npc-right" style="width:90px; height:60px; background:#333; border:2px solid #555; display:flex; align-items:center; justify-content:center;">NPC 2<br>(Right)</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; justify-content:center; align-items:center; margin-top:6px;">
+      <input id="sj-wager-input" type="number" min="1" value="1" style="width:100px; font-family:'Press Start 2P'; padding:6px;" />
+      <button id="sj-lock-wager" class="item-use-button">Lock Wager</button>
+      <button id="sj-start" class="item-use-button" disabled>Start</button>
+      <button id="sj-slap" class="item-use-button" disabled>SLAP</button>
+      <button id="sj-close" class="item-use-button">Close</button>
+    </div>
+
+    <div style="font-size:11px; opacity:0.9; text-align:center;">
+      Win by collecting 30 cards in your pile. Wrong slap penalizes you (-3 cards).
+    </div>
+  </div>
+</div>
+
 
   <!-- Battle blackout overlay (hidden by default) -->
 <div id="battle-blackout" style="display:none; position:fixed; inset:0; z-index:2500; background:black; pointer-events:none;"></div>
@@ -972,6 +1023,7 @@ const levels = [
 },
     
 { name: 'target_board', x: 360, y: 120, width: 96, height: 96, action: 'target_practice' },
+{ id: "slap_board_1", name: "slap_board", x: 360, y: 220, width: 96, height: 96, action: "slap_jack" },
       { id: "chest_001", name: "wooden_chest", x: 78, y: 70, width: 64, height: 64, action: "chest",
     rewards: [["bandaid",1], ["emp_grenade",1]], opened: false }
     ]
@@ -5668,6 +5720,268 @@ function doCleanse() {
   })();
 
 })();
+// ---------------------- Slap Jack minigame ----------------------
+(function installSlapJack() {
+  const overlay = document.getElementById('slapjack-overlay');
+  const btnLock = document.getElementById('sj-lock-wager');
+  const btnStart = document.getElementById('sj-start');
+  const btnSlap = document.getElementById('sj-slap');
+  const btnClose = document.getElementById('sj-close');
+  const wagerInput = document.getElementById('sj-wager-input');
+  const sjPlayerBolts = document.getElementById('sj-player-bolts');
+  const sjYouCounter = document.getElementById('sj-you-counter');
+  const sjMidCounter = document.getElementById('sj-mid-counter');
+  const sjLastPlayer = document.getElementById('sj-last-player');
+  const sjStatus = document.getElementById('sj-status');
+
+  // Game state
+  let sjActive = false;
+  let sjWager = 0;
+  let sjMyCards = 0;
+  let sjPile = 0;
+  let sjPlayers = ['NPC1','NPC2','You','NPC3']; // turn order: top,right,you,left -> adapt rotation
+  let sjTurnIndex = 0; // index into sjPlayers whose card will be played to pile
+  let sjNpcDelays = {}; // per NPC response delay when Jack is played (ms)
+  let sjNpcActive = { NPC1:true, NPC2:true, NPC3:true }; // false when they run out of cards
+  let sjNpcCards = { NPC1:10, NPC2:10, NPC3:10 }; // starting counts (can be adjusted)
+  let sjInterval = null;
+  let sjCardPlayIntervalMs = 1000; // every second a player contributes a card to pile
+  let sjJackChance = 0.08; // chance that the played card is a "Jack" triggering slap window
+  let sjJackActive = false;
+  let sjJackPlayedBy = null;
+  let sjJackTimeoutId = null;
+  const WIN_TARGET = 30;
+  const WRONG_SLAP_PENALTY = 3;
+
+  function updateUi() {
+    sjPlayerBolts.textContent = (inventory.get('bolts') || 0);
+    sjYouCounter.textContent = `Cards: ${sjMyCards}`;
+    sjMidCounter.textContent = `Pile: ${sjPile}`;
+    sjStatus.textContent = sjActive ? (sjJackActive ? 'JACK! SLAP!' : 'In game') : 'Wager bolts to play';
+    // show NPC states
+    document.getElementById('sj-npc-top').textContent = `NPC 1\n(${sjNpcActive.NPC1? sjNpcCards.NPC1 : 'out'})`;
+    document.getElementById('sj-npc-right').textContent = `NPC 2\n(${sjNpcActive.NPC2? sjNpcCards.NPC2 : 'out'})`;
+    document.getElementById('sj-npc-left').textContent = `NPC 3\n(${sjNpcActive.NPC3? sjNpcCards.NPC3 : 'out'})`;
+    sjLastPlayer.textContent = `Last: ${sjJackPlayedBy || '—'}`;
+    btnStart.disabled = !sjWager || (inventory.get('bolts') || 0) < sjWager || sjActive;
+    btnSlap.disabled = !sjActive || !sjJackActive;
+  }
+
+  function openSlapJack() {
+    overlay.style.display = 'flex';
+    updateUi();
+  }
+  function closeSlapJack() {
+    overlay.style.display = 'none';
+    stopGame();
+  }
+
+  // lock wager (just set wager and disable changes)
+  btnLock.addEventListener('click', () => {
+    const val = Math.max(1, Math.floor(Number(wagerInput.value) || 0));
+    if (val <= 0) { showTemporaryText('Enter at least 1 bolt'); return; }
+    if ((inventory.get('bolts') || 0) < val) { showTemporaryText('Not enough bolts'); return; }
+    sjWager = val;
+    wagerInput.value = val;
+    wagerInput.disabled = true;
+    btnLock.disabled = true;
+    showTemporaryText(`Wager locked: ${val} bolts`);
+    updateUi();
+  });
+
+  // start the game: deduct wager and begin automatic card play loop
+  btnStart.addEventListener('click', () => {
+    if (sjActive) return;
+    const bolts = inventory.get('bolts') || 0;
+    if (sjWager <= 0 || bolts < sjWager) { showTemporaryText('Lock a valid wager first'); return; }
+    // Deduct wager now (locked and removed); if player wins they double (we'll credit on win)
+    inventory.set('bolts', bolts - sjWager);
+    showTemporaryText(`Wager placed: ${sjWager} bolts`);
+    // initial NPC card counts (simple equal distribution)
+    sjNpcCards = { NPC1: 10, NPC2: 10, NPC3: 10 };
+    sjNpcActive = { NPC1: sjNpcCards.NPC1>0, NPC2: sjNpcCards.NPC2>0, NPC3: sjNpcCards.NPC3>0 };
+    // vary NPC reaction delays 300-700ms for receiving Jacks (used for "slap window" timing if needed)
+    sjNpcDelays = { NPC1: 300 + Math.floor(Math.random()*400), NPC2: 300 + Math.floor(Math.random()*400), NPC3: 300 + Math.floor(Math.random()*400) };
+    // reset player and pile counts
+    sjMyCards = 0; sjPile = 0; sjTurnIndex = 0; sjJackActive = false; sjJackPlayedBy = null;
+    sjActive = true;
+    btnStart.disabled = true;
+    wagerInput.disabled = true;
+    btnLock.disabled = true;
+    updateUi();
+    // every second a card is played into the middle from the next active player
+    sjInterval = setInterval(playCardToPile, sjCardPlayIntervalMs);
+    // immediate first play
+    playCardToPile();
+  });
+
+  // stop and cleanup
+  function stopGame() {
+    sjActive = false;
+    if (sjInterval) { clearInterval(sjInterval); sjInterval = null; }
+    if (sjJackTimeoutId) { clearTimeout(sjJackTimeoutId); sjJackTimeoutId = null; }
+    wagerInput.disabled = false; btnLock.disabled = false; btnStart.disabled = false;
+    sjWager = 0;
+    updateUi();
+  }
+
+  // rotate to next active player index
+  function advanceTurnIndex() {
+    const MAX = sjPlayers.length;
+    for (let i=1;i<=MAX;i++){
+      const idx = (sjTurnIndex + i) % MAX;
+      const p = sjPlayers[idx];
+      if (p === 'You' || sjNpcActive[p]) { sjTurnIndex = idx; return; }
+    }
+    // no players left except you: keep your turn
+    sjTurnIndex = sjPlayers.indexOf('You');
+  }
+
+  // each second this runs: player at turn index contributes one card (if has any), otherwise skipped
+  function playCardToPile() {
+    if (!sjActive) return;
+    // ensure at least one active participant exists (if NPCs all deactivated, you auto-collect until win or loss)
+    const actor = sjPlayers[sjTurnIndex];
+    // if actor is NPC, decrement their cards; if 0 => mark inactive
+    if (actor === 'You') {
+      // You always contribute if you have cards; if you have none, draw from nothing (skip)
+      // For this simple implementation you don't auto-contribute, treat your deck as infinite passively: we treat your contribution as 1 card if you have any heuristic - to keep game flow, we'll treat You as having a notional deck unlimited for the automatic rotation (but only YOU collect when others fail).
+      sjPile += 1;
+      sjLastPlayer.textContent = `Last: You`;
+    } else {
+      if (!sjNpcActive[actor]) {
+        advanceTurnIndex();
+        return;
+      }
+      // NPC contributes a card if they have any
+      if ((sjNpcCards[actor]||0) > 0) {
+        sjNpcCards[actor] -= 1;
+        sjPile += 1;
+        sjLastPlayer.textContent = `Last: ${actor}`;
+        if (sjNpcCards[actor] <= 0) {
+          sjNpcActive[actor] = false;
+          showTemporaryText(`${actor} ran out of cards`);
+        }
+      } else {
+        sjNpcActive[actor] = false;
+      }
+    }
+
+    // Decide whether the played card is a Jack (random)
+    if (!sjJackActive && Math.random() < sjJackChance) {
+      // Jack was played by 'actor' -> set slap window
+      sjJackActive = true;
+      sjJackPlayedBy = actor;
+      updateUi();
+      // Each NPC will attempt to "slap" after their delay; if they are active and faster than player, they win pile
+      // schedule NPC slap attempts
+      ['NPC1','NPC2','NPC3'].forEach(npc => {
+        if (!sjNpcActive[npc]) return;
+        const delay = 300 + Math.floor(Math.random()*400); // 300-700ms
+        setTimeout(() => {
+          if (!sjJackActive) return;
+          // NPC attempt to slap: simple RNG for success (we assume they always "slap")
+          // If NPC is still active and jack present, NPC grabs pile
+          if (sjJackActive) {
+            // NPC "slapped" first -> they take pile into their personal cards
+            const taken = sjPile;
+            sjPile = 0;
+            // assign to NPC (they gain)
+            sjNpcCards[npc] = (sjNpcCards[npc] || 0) + taken;
+            sjJackActive = false;
+            sjJackPlayedBy = null;
+            if (sjJackTimeoutId) { clearTimeout(sjJackTimeoutId); sjJackTimeoutId = null; }
+            showTemporaryText(`${npc} slapped the jack and grabbed ${taken} cards!`);
+            updateUi();
+          }
+        }, delay);
+      });
+
+      // Player has a short window to press SLAP; if they don't, the first NPC to respond will get it
+      // to avoid race complexity we also set a fallback timeout after 800ms: if still active then clear (pile stays).
+      sjJackTimeoutId = setTimeout(() => {
+        if (sjJackActive) {
+          // No one slapped within window; keep pile but clear jack state
+          sjJackActive = false;
+          sjJackPlayedBy = null;
+          showTemporaryText('Jack missed - nobody slapped in time');
+          updateUi();
+        }
+      }, 900);
+    }
+
+    // after processing, check win condition
+    if (sjMyCards >= WIN_TARGET) {
+      winSlapJack();
+      return;
+    }
+    // advance to next player
+    advanceTurnIndex();
+    updateUi();
+  }
+
+  // player presses slap
+  btnSlap.addEventListener('click', () => {
+    if (!sjActive || !sjJackActive) {
+      // wrong slap penalty
+      sjMyCards = Math.max(0, sjMyCards - WRONG_SLAP_PENALTY);
+      showTemporaryText(`Wrong slap! -${WRONG_SLAP_PENALTY} cards`);
+      updateUi();
+      return;
+    }
+    // If jack active and player slapped: player collects pile
+    const taken = sjPile;
+    sjPile = 0;
+    sjMyCards += taken;
+    sjJackActive = false;
+    sjJackPlayedBy = null;
+    if (sjJackTimeoutId) { clearTimeout(sjJackTimeoutId); sjJackTimeoutId = null; }
+    showTemporaryText(`You slapped first and took ${taken} cards!`);
+    updateUi();
+
+    if (sjMyCards >= WIN_TARGET) {
+      winSlapJack();
+      return;
+    }
+  });
+
+  function winSlapJack() {
+    // Win: double wager back (gain equal to wager)
+    const current = inventory.get('bolts') || 0;
+    inventory.set('bolts', current + (sjWager * 2)); // give back double as "you double your money" (net +wager)
+    showTemporaryText(`You win! Collected ${sjMyCards} cards. Earned ${sjWager * 2} bolts`);
+    // cleanup and close
+    stopGame();
+    updateUi();
+  }
+
+  // If player closes while active, refund half wager (or nothing). We'll refund wager (safe).
+  btnClose.addEventListener('click', () => {
+    if (sjActive) {
+      // refund wager
+      const cur = inventory.get('bolts') || 0;
+      inventory.set('bolts', cur + sjWager);
+      showTemporaryText('Wager refunded');
+    }
+    closeSlapJack();
+    draw(); // refresh main UI
+  });
+
+  // Expose a function to open overlay (useful for interactable)
+  window.openSlapJack = openSlapJack;
+
+  // Add a simple interactable hook: you can wire a target_board like object or call openSlapJack()
+  // For convenience also bind key 'z' to open SlapJack when near an interactable named 'slap_jack_board'
+  document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'z') {
+      // quick open for debug when not in battle
+      if (!inBattle && !isGameOver) openSlapJack();
+    }
+  });
+
+  // initialize displayed bolts
+  updateUi();
+})();
 
   
   // ---------- Target Practice Mini-game ----------
@@ -5982,6 +6296,12 @@ if (object.action === "recruit") {
   
 if (object.action === 'target_practice' && object.name === 'target_board') {
   openTargetPractice();
+  return;
+}
+  
+if (object.action === 'slap_jack') {
+  // Open Slap Jack UI (wagering done in UI)
+  if (window.openSlapJack) window.openSlapJack();
   return;
 }
 
@@ -7043,17 +7363,12 @@ if (gameHud) {
 }
   
 // Keyboard movement and interaction
-document.addEventListener('keydown', function(e) {
-  
-const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : null;
-  if (tag === 'input' || tag === 'textarea') return;
-
+canvas.addEventListener('keydown', function(e) {
   if (inBattle || isGameOver) return;
-
-  // movement
   let nextX = x, nextY = y;
   const key = e.key.toLowerCase();
 
+  // movement keys: prevent default for arrows/wasd
   if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(key)) {
     e.preventDefault();
   }
