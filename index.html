@@ -5748,7 +5748,7 @@ function doCleanse() {
   let sjNpcActive = { NPC1: true, NPC2: true, NPC3: true };
   let sjInterval = null;
   let sjCardPlayIntervalMs = 1000; // each turn 1s
-  let sjJackChance = 0.08; // chance the played card is a Jack
+  let sjJackChance = 0.10; // chance the played card is a Jack
   let sjJackActive = false;
   let sjJackPlayedBy = null;
   let sjJackWindowTimeout = null;
@@ -5882,7 +5882,6 @@ function doCleanse() {
     if (isJack) {
       sjJackActive = true;
       sjJackPlayedBy = actor;
-      showTemporaryText(`${actor} played a JACK!`);
       // schedule NPC slap attempts (they race to slap)
       scheduleNpcSlaps();
       // set a window timeout after which Jack is considered missed if no one slaps
