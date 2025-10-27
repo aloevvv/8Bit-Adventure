@@ -994,6 +994,10 @@ const levels = [
       { x: 550, y: 460, width: 50, height: 20, destLevel: 2, destX: 550, destY: 50 },
       { x: 600, y: 460, width: 40, height: 20, destLevel: 2, destX: 600, destY: 50 }
     ],
+iceZones: [
+  { x: 400, y: 300, width: 80, height: 80 }
+],
+
     darkZones: [
     { x: 50, y: 50, width: 50, height: 50 },
       ],
@@ -6558,11 +6562,10 @@ mobileToggle.addEventListener('change', (e) => {
 
   function movePlayer(dx, dy) {
   if (inBattle || isGameOver) return;
+
   let nextX = x + dx * speed;
   let nextY = y + dy * speed;
 
-  // Insert your existing collision, door, battle zone, water, poison checks here
-  // Example:
   if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
     showTemporaryText("You need a raft to cross water!");
     return;
@@ -6571,28 +6574,108 @@ mobileToggle.addEventListener('change', (e) => {
     showTemporaryText("You need a gas mask to cross poison!");
     return;
   }
-  if (!isCollidingWithWall(nextX, nextY)) {
-    const door = checkDoorCollision(nextX, nextY);
-    if (door) {
-      loadLevel(door.destLevel, door.destX, door.destY);
-      return;
-    }
-    const battleZone = findBattleZone(nextX, nextY);
-    if (battleZone) {
-      initiateBattle('battleZone', battleZone);
-      return;
-    }
-    x = nextX;
-    y = nextY;
 
-    const dialogZone = findDialogZone(nextX, nextY);
+  if (isCollidingWithWall(nextX, nextY)) return;
+
+  // Door collision
+  const door = checkDoorCollision(nextX, nextY);
+  if (door) {
+    loadLevel(door.destLevel, door.destX, door.destY);
+    return;
+  }
+
+  // Battle zone collision
+  const battleZone = findBattleZone(nextX, nextY);
+  if (battleZone) {
+    initiateBattle('battleZone', battleZone);
+    return;
+  }
+
+  // Normal step
+  x = nextX;
+  y = nextY;
+
+  const steppedIntoIce = isInIce(x, y);
+  const hasIceBoots = (inventory.get('ice_boots') || 0) > 0;
+
+  if (steppedIntoIce && !hasIceBoots && (dx !== 0 || dy !== 0)) {
+    const slideDirX = Math.sign(dx);
+    const slideDirY = Math.sign(dy);
+
+    // Prevent overlapping slide intervals by storing a flag
+    if (window._isSliding) {
+      draw();
+      return;
+    }
+    window._isSliding = true;
+
+    const slideInterval = setInterval(() => {
+      let sx = x + slideDirX * speed;
+      let sy = y + slideDirY * speed;
+
+      if (isInWater(sx, sy) && (inventory.get('raft') || 0) <= 0) {
+        showTemporaryText("You slide to the water's edge and stop.");
+        clearInterval(slideInterval);
+        window._isSliding = false;
+        draw();
+        return;
+      }
+      if (isInPoison(sx, sy) && (inventory.get('gas_mask') || 0) <= 0) {
+        showTemporaryText("You slide to the poison's edge and stop.");
+        clearInterval(slideInterval);
+        window._isSliding = false;
+        draw();
+        return;
+      }
+
+      if (isCollidingWithWall(sx, sy)) {
+        // stop at edge
+        clearInterval(slideInterval);
+        window._isSliding = false;
+        draw();
+        return;
+      }
+      const ddoor = checkDoorCollision(sx, sy);
+      if (ddoor) {
+        clearInterval(slideInterval);
+        window._isSliding = false;
+        loadLevel(ddoor.destLevel, ddoor.destX, ddoor.destY);
+        return;
+      }
+      const dbattleZone = findBattleZone(sx, sy);
+      if (dbattleZone) {
+        clearInterval(slideInterval);
+        window._isSliding = false;
+        initiateBattle('battleZone', dbattleZone);
+        return;
+      }
+
+      x = sx;
+      y = sy;
+      draw();
+
+      const stillInIce = isInIce(x, y);
+      if (!stillInIce) {
+        clearInterval(slideInterval);
+        window._isSliding = false;
+        return;
+      }
+      if ((inventory.get('ice_boots') || 0) > 0) {
+        clearInterval(slideInterval);
+        window._isSliding = false;
+        return;
+      }
+
+  } else {
+    const dialogZone = findDialogZone(x, y);
     if (dialogZone && dialogZone.autoShow) {
       showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
       return;
     }
+    draw();
   }
-  draw();
 }
+
 
 document.getElementById('btn-up').addEventListener('click', () => movePlayer(0, -1));
 document.getElementById('btn-down').addEventListener('click', () => movePlayer(0, 1));
@@ -6871,6 +6954,10 @@ function isInWater(px, py) {
 function isInPoison(px, py) {
   return isInZone(currentLevel.poisonZones, px, py);
 }
+  function isInIce(px, py) {
+  return isInZone(currentLevel.iceZones, px, py);
+}
+
 
 // Wall collision detection
 function isCollidingWithWall(newX, newY) {
@@ -7064,6 +7151,13 @@ currentLevel.interactables.forEach(obj => {
     ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
   });
 }
+if (currentLevel.iceZones) {
+  ctx.fillStyle = "rgba(160, 240, 255, 0.45)";
+  currentLevel.iceZones.forEach(zone => {
+    ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
+  });
+}
+
 function isInDarkZone(px, py) {
   if (!currentLevel.darkZones) return false;
   const hitboxX = px + hitboxOffsetX;
