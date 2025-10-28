@@ -6670,6 +6670,10 @@ if (object.action === 'target_practice' && object.name === 'target_board') {
   window.openShop();
   return;
 } 
+  if (object.action === 'slot_machine') {
+  if (window.openSlotMachine) window.openSlotMachine();
+  return;
+}
 if (object.action === 'slap_jack') {
   // Open Slap Jack UI (wagering done in UI)
   if (window.openSlapJack) window.openSlapJack();
