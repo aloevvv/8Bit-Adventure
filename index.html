@@ -4206,10 +4206,7 @@ function enemyAttack(enemy, target) {
   // Stage1 -> Stage2 special handling
   if (!enemy) return;
 
-// FinalBoss handleEnemyDeath wrapper - drop-in replacement
-// Replace the existing installFinalBossDeathWrapper IIFE with this full wrapper.
-// Changes: ShadowOrb -> LightOrb conversion remains, but only LightOrb death reduces the dark timer.
-// That means the dark-timer reduction logic has been moved to the LightOrb branch (and guarded so it only runs once).
+
 
 (function installFinalBossDeathWrapper() {
   if (typeof handleEnemyDeath !== 'function') {
@@ -6032,7 +6029,133 @@ function doCleanse() {
   // Initialize UI values
   updateUi();
 })();
+  
+// --- Simple Shop Popup (buy bandaid, emp_grenade, extra_life, poison_vial) ---
+(function installSimpleShop() {
+  if (document.getElementById('simple-shop-popup')) return;
 
+  
+  const shopPrices = {
+    bandaid: 4,
+    emp_grenade: 12,
+    extra_life: 24,
+    poison_vial: 7
+  };
+
+  // Create DOM
+  const shopOverlay = document.createElement('div');
+  shopOverlay.id = 'simple-shop-popup';
+  Object.assign(shopOverlay.style, {
+    display: 'none',
+    position: 'fixed',
+    inset: '0',
+    zIndex: 5000,
+    background: 'rgba(0,0,0,0.8)',
+    alignItems: 'center',
+    justifyContent: 'center'
+  });
+
+  const shopBox = document.createElement('div');
+  Object.assign(shopBox.style, {
+    width: '320px',
+    maxWidth: '90vw',
+    background: '#002591',
+    border: '2px solid black',
+    padding: '12px',
+    boxSizing: 'border-box',
+    fontFamily: "'Press Start 2P', sans-serif",
+    color: 'white',
+    textAlign: 'center'
+  });
+
+  shopBox.innerHTML = `
+    <div style="margin-bottom:8px;"><strong>Battle Shop</strong></div>
+    <div id="simple-shop-items" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button id="simple-shop-close" style="padding:8px;border:2px solid white;background:#333;color:white;cursor:pointer;">Close</button>
+    </div>
+    <div id="simple-shop-message" style="margin-top:8px;font-size:11px;color:#ffd"></div>
+  `;
+
+  shopOverlay.appendChild(shopBox);
+  document.body.appendChild(shopOverlay);
+
+  const itemsContainer = shopBox.querySelector('#simple-shop-items');
+  const msgEl = shopBox.querySelector('#simple-shop-message');
+  const closeBtn = shopBox.querySelector('#simple-shop-close');
+
+  // Build item rows
+  function renderShopItems() {
+    itemsContainer.innerHTML = '';
+    Object.keys(shopPrices).forEach(key => {
+      const price = shopPrices[key];
+      const displayName = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const row = document.createElement('div');
+      Object.assign(row.style, { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' });
+      row.innerHTML = `
+        <div style="text-align:left;">
+          <div style="font-size:11px;">${displayName}</div>
+          <div style="font-size:10px;opacity:0.85;">Price: ${price} bolts</div>
+        </div>
+      `;
+      const buyBtn = document.createElement('button');
+      buyBtn.textContent = 'Buy';
+      buyBtn.className = 'item-use-button';
+      buyBtn.style.padding = '6px 8px';
+      buyBtn.addEventListener('click', () => buyItem(key, price));
+      row.appendChild(buyBtn);
+      itemsContainer.appendChild(row);
+    });
+  }
+
+  function buyItem(itemKey, price) {
+    const bolts = inventory.get('bolts') || 0;
+    if (bolts < price) {
+      showShopMessage('Not enough bolts!');
+      return;
+    }
+    // Deduct bolts and add item to inventory (or increase quantity)
+    inventory.set('bolts', bolts - price);
+    const current = inventory.get(itemKey) || 0;
+    inventory.set(itemKey, current + 1);
+
+    // UI updates
+    showTemporaryText(`Bought ${itemKey.replace(/_/g,' ')} +1`);
+    showShopMessage(`Purchased ${itemKey.replace(/_/g,' ')} for ${price} bolts.`);
+    console.log(`Shop: bought ${itemKey}, new qty: ${inventory.get(itemKey)}, bolts left: ${inventory.get('bolts')}`);
+    // refresh any inventory UIs that may be visible
+    try { drawInventoryBattlePopup(); drawGeneralInventory(); } catch (e) {}
+    updateHp(playerStats.currentHp); // in case you show bolts somewhere inside hud
+  }
+
+  function showShopMessage(s) {
+    if (!msgEl) return;
+    msgEl.textContent = s;
+    setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 2200);
+  }
+
+  closeBtn.addEventListener('click', () => {
+    shopOverlay.style.display = 'none';
+    draw(); // refresh canvas/hud
+  });
+
+  // Expose open function
+  window.openShop = function() {
+    renderShopItems();
+    shopOverlay.style.display = 'flex';
+  };
+
+  // Example: add a quick keyboard toggle (press 'p' to open shop) - optional, remove if undesired
+  document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'p') {
+      if (shopOverlay.style.display === 'none') window.openShop();
+      else shopOverlay.style.display = 'none';
+    }
+  });
+
+  // initial render
+  renderShopItems();
+})();
   
   // ---------- Target Practice Mini-game ----------
 (function installTargetPractice() {
