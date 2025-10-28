@@ -634,6 +634,12 @@ let darkTimerTickInterval = null;
 const darkTimerTickMs = 100;
 let darkTimerActive = false;
 
+let sliding = false;
+let slidingDirection = { dx: 0, dy: 0 };
+let slidingIntervalId = null;
+const SLIDE_STEP_MS = 120; 
+
+
 // reuse or create blackout overlay
 const progressiveDarkEl = document.getElementById('battle-blackout') || (() => {
   const el = document.createElement('div');
@@ -997,6 +1003,9 @@ const levels = [
     darkZones: [
     { x: 50, y: 50, width: 50, height: 50 },
       ],
+iceZones: [
+  { x: 400, y: 300, width: 160, height: 32 }
+],
     battleZones: [
       { x: 507, y: 70, width: 64, height: 64, encounter: [{ type: "Sniperbot" }, {type: "Sniperbot"}], sprite: 'fail' },
       { x: 240, y: 60, width: 80, height: 80, encounter: [{ type: "Sniperbot" }, {type: "Puncherbot"}, {type: "Sniperbot"}], sprite: 'fail'}
@@ -6871,6 +6880,20 @@ function isInWater(px, py) {
 function isInPoison(px, py) {
   return isInZone(currentLevel.poisonZones, px, py);
 }
+function isInIce(px, py) {
+  if (!currentLevel.iceZones) return false;
+  const hitboxX = px + hitboxOffsetX;
+  const hitboxY = py + hitboxOffsetY;
+  for (const zone of currentLevel.iceZones) {
+    if (
+      hitboxX < zone.x + zone.width &&
+      hitboxX + hitboxWidth > zone.x &&
+      hitboxY < zone.y + zone.height &&
+      hitboxY + hitboxHeight > zone.y
+    ) return true;
+  }
+  return false;
+}
 
 // Wall collision detection
 function isCollidingWithWall(newX, newY) {
@@ -6889,6 +6912,58 @@ function isCollidingWithWall(newX, newY) {
   return false;
 }
 
+  function startSlide(dx, dy) {
+  if ((inventory.get('ice_boots') || 0) > 0) return;
+  sliding = true;
+  slidingDirection = { dx: Math.sign(dx), dy: Math.sign(dy) };
+  if (slidingIntervalId) { clearInterval(slidingIntervalId); slidingIntervalId = null; }
+
+  slidingIntervalId = setInterval(() => {
+    if (!sliding) { stopSlide(); return; }
+
+    const nextX = x + slidingDirection.dx * speed;
+    const nextY = y + slidingDirection.dy * speed;
+
+    if (isCollidingWithWall(nextX, nextY)) { stopSlide(); return; }
+
+    const door = checkDoorCollision(nextX, nextY);
+    if (door) { loadLevel(door.destLevel, door.destX, door.destY); stopSlide(); return; }
+
+    const battleZone = findBattleZone(nextX, nextY);
+    if (battleZone) { x = nextX; y = nextY; initiateBattle('battleZone', battleZone); stopSlide(); return; }
+
+    // commit move
+    x = nextX;
+    y = nextY;
+
+    // stop sliding if we left ice
+    if (!isInIce(x, y)) { stopSlide(); return; }
+
+    draw();
+  }, SLIDE_STEP_MS);
+}
+
+  function stopSlide() {
+  if (!sliding) return;
+  sliding = false;
+  slidingDirection = { dx: 0, dy: 0 };
+  if (slidingIntervalId) {
+    clearInterval(slidingIntervalId);
+    slidingIntervalId = null;
+  }
+  draw();
+}
+function tryEnterSlideIfNeeded(oldX, oldY, newX, newY, dx, dy) {
+  if ((inventory.get('ice_boots') || 0) > 0) return false;
+  const wasInIce = isInIce(oldX, oldY);
+  const nowInIce = isInIce(newX, newY);
+  if (!wasInIce && nowInIce) {
+    startSlide(dx, dy);
+    return true;
+  }
+  return false;
+}
+  
 // Door collision detection
 function checkDoorCollision(newX, newY) {
   const newHitboxX = newX + hitboxOffsetX;
@@ -7397,6 +7472,10 @@ if (gameHud) {
 // Keyboard movement and interaction
 canvas.addEventListener('keydown', function(e) {
   if (inBattle || isGameOver) return;
+
+  // ignore input while sliding
+  if (sliding) return;
+
   let nextX = x, nextY = y;
   const key = e.key.toLowerCase();
 
@@ -7405,6 +7484,7 @@ canvas.addEventListener('keydown', function(e) {
     e.preventDefault();
   }
 
+  // interaction key
   if (key === 'x') {
     e.preventDefault();
     const interactableObject =
@@ -7417,10 +7497,19 @@ canvas.addEventListener('keydown', function(e) {
     return;
   }
 
-  if (key === 'arrowleft' || key === 'a') nextX -= speed;
-  if (key === 'arrowright' || key === 'd') nextX += speed;
-  if (key === 'arrowup' || key === 'w') nextY -= speed;
-  if (key === 'arrowdown' || key === 's') nextY += speed;
+  // compute directional intent (dirX/dirY)
+  let dirX = 0, dirY = 0;
+  if (key === 'arrowleft' || key === 'a') dirX = -1;
+  if (key === 'arrowright' || key === 'd') dirX = 1;
+  if (key === 'arrowup' || key === 'w') dirY = -1;
+  if (key === 'arrowdown' || key === 's') dirY = 1;
+
+  // if no movement key, ignore
+  if (dirX === 0 && dirY === 0) return;
+
+  // compute the intended next position
+  nextX = x + dirX * speed;
+  nextY = y + dirY * speed;
 
   // Check water crossing
   if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
@@ -7448,11 +7537,21 @@ canvas.addEventListener('keydown', function(e) {
       return;
     }
 
-    // move player
+    // Attempt to start sliding if stepping onto ice
+    const startedSlide = tryEnterSlideIfNeeded(x, y, nextX, nextY, dirX, dirY);
+
+    // move player immediately for snappy feedback; startSlide will continue movement if it started
     x = nextX;
     y = nextY;
 
-    // dialog auto-trigger (autoShow only)
+    if (startedSlide) {
+      // slide started: skip normal post-move interactions (dialogs etc) and redraw
+      if (typeof updateHp === 'function') updateHp(playerStats.currentHp);
+      draw();
+      return;
+    }
+
+    // dialog auto-trigger (autoShow only) - only when not sliding
     const dialogZone = findDialogZone(nextX, nextY);
     if (dialogZone && dialogZone.autoShow) {
       showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
