@@ -1032,6 +1032,7 @@ iceZones: [],
     
 { name: 'target_board', x: 360, y: 120, width: 96, height: 96, action: 'target_practice' },
 { id: "slap_board_1", name: "slap_board", x: 360, y: 220, width: 96, height: 96, action: "slap_jack" },
+{ id: "shop1", name: "shop", x: 400, y: 300, width: 50, height: 50, action: "shop" },
       { id: "chest_001", name: "wooden_chest", x: 78, y: 70, width: 64, height: 64, action: "chest",
     rewards: [["bandaid",1], ["emp_grenade",1]], opened: false }
     ]
@@ -6471,7 +6472,10 @@ if (object.action === 'target_practice' && object.name === 'target_board') {
   openTargetPractice();
   return;
 }
-  
+ if (object.action === 'shop') {
+  window.openShop();
+  return;
+} 
 if (object.action === 'slap_jack') {
   // Open Slap Jack UI (wagering done in UI)
   if (window.openSlapJack) window.openSlapJack();
