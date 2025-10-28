@@ -4,13 +4,11 @@ Demo - Late December
 ```
 
 Bugs present:
-Allies don't retain XP if it's not equal to the XP they need to level up; battle doesn't end properly if an enemy is stunned when killed
+Allies don't retain XP if it's not equal to the XP they need to level up; battle doesn't end properly if an enemy is stunned when killed, lever doesn't work unless the canvas is out of focus
 ```
 Things I'm working on now:
-Obstacles (levers, etc)
+Obstacles
 Levels
-Bosses
-Ice Mechanic
 ```
 ```
 This is a fangame for Brawl Stars, which is a game I have loved since 2019, and I don't think I will ever truly quit it.
