@@ -675,6 +675,10 @@ const progressiveDarkEl = document.getElementById('battle-blackout') || (() => {
   document.body.appendChild(el);
   return el;
 })();
+  
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('slot-machine-popup').style.display = 'none';
+});
 
   
 let tempText = "";
