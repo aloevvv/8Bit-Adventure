@@ -7141,7 +7141,7 @@ currentLevel.interactables.forEach(obj => {
 }
   if (currentLevel.iceZones) {
   ctx.fillStyle = "rgba(0, 255, 255, 0.3)";
-  currentLevel.waterZones.forEach(zone => {
+  currentLevel.iceZones.forEach(zone => {
     ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
   });
 }
