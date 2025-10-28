@@ -1507,7 +1507,38 @@ function findNearbyDialogZone(px, py) {
   return null;
 }
 
+function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
+  const overlay = document.getElementById('dialog-overlay');
+  const box = document.getElementById('dialog-box');
+  const textDiv = document.getElementById('dialog-text');
 
+  overlay.style.display = 'flex';
+  overlay._markId = idToMark || null;
+
+  // Clear previous content
+  textDiv.innerHTML = '';
+  applyDialogStyle(box, opts.style || 'dialog');
+
+  // Show main dialog text
+  const p = document.createElement('p');
+  p.textContent = dialogText;
+  textDiv.appendChild(p);
+
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.textContent = opt.label;
+    btn.className = 'item-use-button';
+    btn.style.marginTop = '8px';
+    btn.onclick = () => {
+      overlay.style.display = 'none';
+      if (opt.onSelect) opt.onSelect();
+      if (idToMark) shownDialogs.add(idToMark);
+      draw();
+    };
+    textDiv.appendChild(btn);
+  });
+}
+  
   function showBattleDialog(textOrLines, idToMark, opts = {}) {
   if (!inBattle) {
     showDialog(textOrLines, idToMark, opts);
