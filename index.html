@@ -506,6 +506,22 @@
   </div>
 </div>
 
+
+  <div id="slot-machine-popup" style="display:none; position:fixed; inset:0; z-index:5000; background:rgba(0,0,0,0.85); display:flex; flex-direction: column; align-items:center; justify-content:center; font-family:'Press Start 2P', sans-serif; color:white;">
+  <div style="background:#002591; border:2px solid black; padding:20px; width:300px; text-align:center; border-radius:8px;">
+    <h3>Slot Machine</h3>
+    <p>Bet: 5 bolts</p>
+    <div style="display:flex; justify-content:center; gap:40px; font-size:48px; user-select:none; margin-bottom:20px;">
+      <div id="slot-left">-</div>
+      <div id="slot-middle">-</div>
+      <div id="slot-right">-</div>
+    </div>
+    <p id="slot-msg" style="min-height:24px;"></p>
+    <button id="slot-play-button" style="font-family:'Press Start 2P',sans-serif; padding:8px 12px; cursor:pointer; margin-bottom:10px;">Play</button>
+    <button id="slot-close-button" style="font-family:'Press Start 2P',sans-serif; padding:8px 12px; cursor:pointer;">Close</button>
+  </div>
+</div>
+
   <!-- Slap Jack overlay -->
 <div id="slapjack-overlay" style="display:none; position:fixed; inset:0; z-index:4100;
 background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-family:'Press Start 2P',sans-serif;">
@@ -5775,8 +5791,149 @@ function doCleanse() {
   })();
 
 })();
+  
+//------ let's go gambling ----
+  (() => {
+  const slotPopup = document.getElementById('slot-machine-popup');
+  const slotLeft = document.getElementById('slot-left');
+  const slotMiddle = document.getElementById('slot-middle');
+  const slotRight = document.getElementById('slot-right');
+  const slotMsg = document.getElementById('slot-msg');
+  const slotPlayBtn = document.getElementById('slot-play-button');
+  const slotCloseBtn = document.getElementById('slot-close-button');
+
+  const PATTERN = [1, 3, 7, 4, 5, 9, 8, 6, 2];
+  const BET = 5;
+  let cycleIntervals = [null, null, null];
+  let indices = [0, 0, 0];
+  let locked = [false, false, false];
+  let currentSlot = 0;
+  let numbers = [null, null, null];
+  let playing = false;
+
+  function startCycle(slotIdx) {
+    if (cycleIntervals[slotIdx]) clearInterval(cycleIntervals[slotIdx]);
+    indices[slotIdx] = Math.floor(Math.random() * PATTERN.length);
+    locked[slotIdx] = false;
+    const slotEl = [slotLeft, slotMiddle, slotRight][slotIdx];
+    cycleIntervals[slotIdx] = setInterval(() => {
+      indices[slotIdx] = (indices[slotIdx] + 1) % PATTERN.length;
+      slotEl.textContent = PATTERN[indices[slotIdx]];
+    }, 150);
+  }
+
+  function stopCycle(slotIdx) {
+    if (cycleIntervals[slotIdx]) {
+      clearInterval(cycleIntervals[slotIdx]);
+      cycleIntervals[slotIdx] = null;
+    }
+    locked[slotIdx] = true;
+    numbers[slotIdx] = PATTERN[indices[slotIdx]];
+  }
+
+  function resetSlots() {
+    numbers = [null, null, null];
+    locked = [false, false, false];
+    currentSlot = 0;
+    slotLeft.textContent = '-';
+    slotMiddle.textContent = '-';
+    slotRight.textContent = '-';
+    slotMsg.textContent = 'Press Space to lock LEFT slot';
+  }
+
+  function calculatePayout() {
+    const [a, b, c] = numbers;
+    if (a == null || b == null || c == null) return 0;
+    let payout = 0;
+    if (a === b && b === c) payout = BET * 25;
+    else if (a === b || b === c || a === c) payout = BET * 5;
+    return payout;
+  }
+
+  function openSlotMachine() {
+    if ((inventory.get('bolts') || 0) < BET) {
+      showTemporaryText("Not enough bolts to play slot machine.");
+      return;
+    }
+    playing = true;
+    slotPopup.style.display = 'flex';
+    resetSlots();
+    startCycle(0);
+  }
+
+  function closeSlotMachine() {
+    playing = false;
+    slotPopup.style.display = 'none';
+    cycleIntervals.forEach((id, idx) => {
+      if (id) clearInterval(id);
+      cycleIntervals[idx] = null;
+    });
+    draw();
+  }
+
+  function onSlotMachineKeyDown(e) {
+    if (!playing) return;
+    if (e.code === 'Space' || e.key === ' ') {
+      e.preventDefault();
+      if (!locked[currentSlot]) {
+        stopCycle(currentSlot);
+        currentSlot++;
+        if (currentSlot < 3) {
+          startCycle(currentSlot);
+          const names = ['LEFT', 'MIDDLE', 'RIGHT'];
+          slotMsg.textContent = `Press Space to lock ${names[currentSlot]} slot`;
+        } else {
+          const payout = calculatePayout();
+          if (payout > 0) {
+            const curBolts = inventory.get('bolts') || 0;
+            inventory.set('bolts', curBolts + payout);
+            slotMsg.textContent = `You won ${payout} bolts!`;
+          } else {
+            slotMsg.textContent = 'No win this time. Try again!';
+          }
+          playing = false;
+        }
+      }
+    }
+  }
+
+  slotPlayBtn.addEventListener('click', () => {
+    if (playing) return;
+    if ((inventory.get('bolts') || 0) < BET) {
+      showTemporaryText("Not enough bolts to play slot machine.");
+      return;
+    }
+    const curBolts = inventory.get('bolts') || 0;
+    inventory.set('bolts', curBolts - BET);
+    drawInventoryBattlePopup?.();
+    drawGeneralInventory?.();
+    openSlotMachine();
+  });
+
+  slotCloseBtn.addEventListener('click', () => {
+    closeSlotMachine();
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (slotPopup.style.display === 'flex') {
+      onSlotMachineKeyDown(e);
+    }
+  });
+
+  window.openSlotMachine = () => {
+    if ((inventory.get('bolts') || 0) < BET) {
+      showTemporaryText("Not enough bolts to play slot machine.");
+      return;
+    }
+    const curBolts = inventory.get('bolts') || 0;
+    inventory.set('bolts', curBolts - BET);
+    drawInventoryBattlePopup?.();
+    drawGeneralInventory?.();
+    openSlotMachine();
+  };
+})();
+
 // ---------------------- Slap Jack minigame ----------------------
-// ---------------------- Slap Jack minigame (reworked) ----------------------
 (function installSlapJack() {
   const overlay = document.getElementById('slapjack-overlay');
   const btnLock = document.getElementById('sj-lock-wager');
