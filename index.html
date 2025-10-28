@@ -1632,6 +1632,9 @@ function showDialog(textOrLines, idToMark, opts = {}) {
 playBtn.addEventListener('click', () => {
   // Hide title screen
   titleScreen.style.display = 'none';
+  window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('slot-machine-popup').style.display = 'none';
+});
   achievementsMap['played'].progress++;
   checkAchievements();
   updateAbilityButtonsUI();
