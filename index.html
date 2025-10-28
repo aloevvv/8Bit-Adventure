@@ -6583,7 +6583,7 @@ if (object.action === 'lever_controller') {
   
   if (object.name === "power_box") {
     if (!gameFlags.isPowered) {
-      isPowered = true;
+      gameFlags.isPowered = true;
       showTemporaryText("You pressed something on the box. The lights flicker on.");
       draw();
     } else {
