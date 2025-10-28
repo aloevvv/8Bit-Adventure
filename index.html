@@ -610,7 +610,13 @@ const hpBar = document.getElementById('hp-bar');
 const hpText = document.getElementById('hp-text');
 
 let selectedEnemyIndex = 0;
-let isPowered = false;
+let gameFlags = {
+  isPowered: false,
+  louRecruited: false,
+  interactedWithDeadBody: false,
+  lightsFixed: false
+};
+
 
 let shownDialogs = new Set();
 let _dialogQueue = [];
