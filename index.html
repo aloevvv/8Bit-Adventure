@@ -733,7 +733,7 @@ inventory.set("keycard", 1);
 inventory.set("gas_mask", 0);
 inventory.set("drill", 1);
 inventory.set("torch", 0);
-inventory.set("ice_boots", 1);
+inventory.set("ice_boots", 0);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
@@ -772,7 +772,6 @@ let playerStats = {
   currentStamina: 50,
   maxStamina: 200,
 
-  // new base fields — always treat these as the canonical, unmodified stats
   baseMaxHp: 8,
   baseDamage: 2
 };
@@ -1003,9 +1002,7 @@ const levels = [
     darkZones: [
     { x: 50, y: 50, width: 50, height: 50 },
       ],
-iceZones: [
-  { x: 400, y: 300, width: 160, height: 32 }
-],
+iceZones: [],
     battleZones: [
       { x: 507, y: 70, width: 64, height: 64, encounter: [{ type: "Sniperbot" }, {type: "Sniperbot"}], sprite: 'fail' },
       { x: 240, y: 60, width: 80, height: 80, encounter: [{ type: "Sniperbot" }, {type: "Puncherbot"}, {type: "Sniperbot"}], sprite: 'fail'}
@@ -1082,11 +1079,11 @@ iceZones: [
   height: 32,
   interactRect: { x: 290, y: 190, width: 52, height: 52 },
   action: 'recruit',
-  allyId: 'ally1',               // must match alliesData id
+  allyId: 'ally1',         
   displayName: 'Lou',
   recruitDialog: [
-    { speaker: 'Lou', text: "Hey, looks like you could use a hand.", style: 'lou' },
-    { speaker: '8-Bit', text: "Welcome aboard, Lou.", style: 'dialog' }
+    { speaker: 'Lou', text: "hey", style: 'lou' },
+    { speaker: '8-Bit', text: "eeeee", style: 'dialog' }
   ],
   opened: false
 }
