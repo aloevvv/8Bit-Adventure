@@ -905,7 +905,7 @@ const levels = [
       { name: "arcade_machine", x: 340, y: 80, width: 100, height: 100, action: "start_battle", encounter: [{ type: "Dummy" }] },
       { name: "steel_block", x: 400, y: 300, width: 100, height: 100, action: "break", requiredItem: "laser_cutter" },
       { name: "hammer", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "hammer"},
-      { name: "door1", x: 535, y: 410, width: 40, height: 40, action: "open_door", destLevel: 11, destX: 50, destY: 50 },
+      { id: "door1", name: "door1", x: 535, y: 410, width: 40, height: 40, action: "open_door", destLevel: 11, destX: 50, destY: 50 },
       { name: "security_panel", x: 500, y: 100, width: 40, height: 40, action: "open_door", requiresKeycard: true, destLevel: 2, destX: 50, destY: 50 },
       { id: "chest_001", name: "wooden_chest", x: 220, y: 220, width: 64, height: 64, action: "chest",
     rewards: [["bandaid",2], ["emp_grenade",1], ["extra_life",1]], opened: false }
