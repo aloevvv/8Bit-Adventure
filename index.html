@@ -1998,18 +1998,19 @@ function findLeversInGroup(groupId) {
   return arr;
 }
 
-function toggleWallById(wallId, present) {
+function toggleWallById(wallId, present, levelIndex = currentLevelIndex) {
   if (!wallId) return;
-  const walls = currentLevel.walls || [];
+  const level = levels[levelIndex];
+  if (!level) return;
+  const walls = level.walls || [];
   const idx = walls.findIndex(w => w.id === wallId);
   if (present) {
     if (idx === -1) {
-      currentLevel.walls.push({ id: wallId, x: 0, y: 0, width: 0, height: 0 });
     }
   } else {
     if (idx !== -1) {
       removedWallIds.add(wallId);
-      currentLevel.walls.splice(idx, 1);
+      walls.splice(idx, 1);
     }
   }
 }
@@ -6767,8 +6768,10 @@ if (object.action === 'lever') {
   showTemporaryText(object.currentState ? 'Lever turned on.' : 'Lever turned off.');
   // Single lever toggles its linked wall: design choice -> when lever ON remove wall
   if (object.leverType === 'single') {
-    if (object.linkedWallId) toggleWallById(object.linkedWallId, !object.currentState);
-    // The above ensures: currentState true => pass present=false to remove wall.
+    if (object.linkedWallId) {
+      const targetLevelIndex = (typeof object.linkedLevelIndex === 'number') ? object.linkedLevelIndex : currentLevelIndex;
+      toggleWallById(object.linkedWallId, !object.currentState, targetLevelIndex);
+    }
   }
   // Multi lever flips and triggers group evaluation
   if (object.leverType === 'multi' && object.groupId) {
