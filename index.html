@@ -6705,6 +6705,11 @@ if (object.action === "recruit") {
   draw();
   return;
 }
+   if (object.action === "photo") {
+      showDialog("It's a photo of my friends!", null, { style: 'dialog', speaker: '8-Bit' });
+      return;
+    }
+
   
 if (object.action === 'target_practice' && object.name === 'target_board') {
   openTargetPractice();
