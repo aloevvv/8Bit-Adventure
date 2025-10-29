@@ -6706,7 +6706,11 @@ if (object.action === "recruit") {
   return;
 }
    if (object.action === "photo") {
-      showDialog("It's a photo of my friends!", null, { style: 'dialog', speaker: '8-Bit' });
+      showDialog([
+  { speaker: '8-Bit', text: "It's a photo of my friends!", style: 'dialog' },
+  { speaker: '8-Bit', text: "Where are they? They should be somewhere near, I have to assume.", style: 'dialog' },
+  { speaker: '8-Bit', text: "Oh... man, I hope nothing happened to them.", style: 'dialog' }
+]);
       return;
     }
 
