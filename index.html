@@ -6716,7 +6716,21 @@ if (object.action === "recruit") {
 ]);
       return;
     }
-
+      if (object.action === "arcadekey") {
+      showDialog([
+  { speaker: '8-Bit', text: "Oh, yeah, it's a key.", style: 'dialog' },
+  { speaker: '8-Bit', text: "I'm going to leave it there.", style: 'dialog' }
+]);
+      return;
+    }
+if (object.action === "arcadetrophy") {
+      showDialog([
+  { speaker: '8-Bit', text: "We won this little bad boy from a competition.", style: 'dialog' },
+  { speaker: '8-Bit', text: "A gaming competition.", style: 'dialog' },
+  { speaker: '8-Bit', text: "Us three, we make a great team.", style: 'dialog' }
+]);
+      return;
+    }
   
 if (object.action === 'target_practice' && object.name === 'target_board') {
   openTargetPractice();
