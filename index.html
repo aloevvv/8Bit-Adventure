@@ -970,6 +970,15 @@ const levels = [
   initialState: false,
   x: 200, y: 120, width: 32, height: 32
 },
+      {
+  action: 'lever',
+  leverType: 'single',
+  linkedWallId: 'wall_id_2',
+  x: 100,
+  y: 100,
+  width: 16,
+  height: 16
+},
 {
   id: 'lever_group_a_2',
   action: 'lever',
@@ -1002,6 +1011,7 @@ const levels = [
   { bgSrc: "arcadeB2_3.png",
     walls: [
       { id: 'wall_multi_a_1', x: 300, y: 150, width: 32, height: 120 },
+      { id: 'wall_id_2', x: 500, y: 150, width: 32, height: 120 },
       { x: 0, y: 0, width: 640, height: 20 },
       { x: 0, y: 0, width: 20, height: 480 },
       { x: 620, y: 0, width: 20, height: 480},
