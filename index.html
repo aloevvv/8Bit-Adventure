@@ -1267,7 +1267,7 @@ iceZones: [],
       { x: 0, y: 0, width: 20, height: 480 },
     ],
     doors: [
-      { x: 0, y: 0, width: 20, height: 640, destLevel: 12, destX: 40, destY: 40 }
+      { x: 0, y: 0, width: 640, height: 20, destLevel: 12, destX: 40, destY: 40 }
     ],
     darkZones: [],
     battleZones: [],
@@ -1285,7 +1285,10 @@ iceZones: [],
     darkZones: [],
     battleZones: [],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      { name: 'photo1', x: 60, y: 40, width: 30, height: 30, action: 'photo' },
+      { name: 'photo2', x: 350, y: 40, width: 60, height: 30, action: 'photo' }
+    ]
   }
 ];
 
