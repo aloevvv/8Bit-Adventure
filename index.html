@@ -6723,6 +6723,13 @@ if (object.action === 'lever_controller') {
   }
   return;
 }
+  
+  if (object.action === 'open_door' && !object.requiresKeycard) {
+  loadLevel(object.destLevel, object.destX, object.destY);
+  draw();
+  return;
+}
+
 
   if (object.requiresKeycard) {
     if ((inventory.get('keycard') || 0) > 0) {
