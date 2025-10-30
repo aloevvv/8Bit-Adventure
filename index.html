@@ -1324,7 +1324,24 @@ iceZones: [],
     battleZones: [],
     dialogZones: [],
     interactables: [
-      { id: "door2", name: "door", x: 486, y: 311, width: 80, height: 80, action: "open_door", destLevel: 1, destX: 527, destY: 300 }
+      { id: "door2", name: "door", x: 486, y: 311, width: 80, height: 80, action: "open_door", destLevel: 1, destX: 527, destY: 300 },
+      {
+  id: "gate_001",
+  name: "gate_to_secret_room",
+  x: 300,
+  y: 200,
+  width: 32,
+  height: 32,
+  action: "item_gate",
+  wallId: "wall_5",
+  requiredItems: ["keycard", "hammer"],
+  opened: false,
+  dialogId: "gate_001_dialog",
+  messages: {
+    needItems: "You need a keycard and a hammer to pass!",
+    opened: "The gate is open. You may go now."
+  }
+}
     ]
   },
   {
@@ -6797,6 +6814,28 @@ if (object.action === "recruit") {
   draw();
   return;
 }
+  if (object.action === "item_gate") {
+    if (object.opened) {
+      showDialog(object.messages?.opened || "You may go now.", object.dialogId);
+      return;
+    }
+
+    // check required items
+    const missingItems = (object.requiredItems || []).filter(item => (inventory.get(item) || 0) <= 0);
+    if (missingItems.length > 0) {
+      showDialog(object.messages?.needItems || "You need items to pass!", object.dialogId);
+      return;
+    }
+
+    object.opened = true;
+    if (object.wallId) {
+      // remove wall by id from currentLevel.walls
+      currentLevel.walls = currentLevel.walls.filter(wall => wall.id !== object.wallId);
+    }
+    showDialog(object.messages?.opened || "You may go now.", object.dialogId);
+    draw();
+    return;
+  }
    if (object.action === "photo") {
       showDialog([
   { speaker: '8-Bit', text: "It's a photo of my friends!", style: 'dialog' },
