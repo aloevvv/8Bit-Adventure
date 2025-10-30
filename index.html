@@ -934,7 +934,7 @@ const levels = [
       { x: 500, y: 0, width: 50, height: 20, destLevel: 3, destX: 500, destY: 400 },
       { x: 550, y: 0, width: 50, height: 20, destLevel: 3, destX: 550, destY: 400 },
       { x: 600, y: 0, width: 40, height: 20, destLevel: 3, destX: 600, destY: 400 },
-      { x: 0, y: 200, width: 20, height: 240, destLevel: 14, destX: 400, destY: 150 }
+      { x: 0, y: 200, width: 20, height: 240, destLevel: 13, destX: 400, destY: 150 }
     ],
      battleZones: [
       { x: 530, y: 80, width: 64, height: 64, encounter: [{ type: "Sniperbot" }], sprite: 'fail' },
@@ -1311,7 +1311,7 @@ iceZones: [],
     ]
   },
   {
-    bgSrc: "arcade_14.png",
+    bgSrc: "arcade_13.png",
     walls: [
       { x: 0, y: 0, width: 40, height: 480 },
       { x: 600, y: 0, width: 40, height: 480 },
@@ -1345,6 +1345,23 @@ iceZones: [],
     ]
   },
   {
+    bgSrc: "arcade_14.png",
+    walls: [
+      { x: 0, y: 0, width: 40, height: 480 },
+      { x: 600, y: 0, width: 40, height: 480 },
+      { x: 37, y: 101, width: 300, height: 102 },
+    ],
+    doors: [
+      { x: 0, y: 0, width: 640, height: 20, destLevel: 12, destX: 40, destY: 40 }
+    ],
+    darkZones: [],
+    battleZones: [],
+    dialogZones: [],
+    interactables: [
+      { id: "door2", name: "door", x: 486, y: 311, width: 80, height: 80, action: "open_door", destLevel: 1, destX: 527, destY: 300 }
+    ]
+  },
+  {
     bgSrc: "arcade_15.png",
     walls: [
       { x: 0, y: 0, width: 40, height: 480 },
@@ -1363,23 +1380,6 @@ iceZones: [],
   },
   {
     bgSrc: "arcade_16.png",
-    walls: [
-      { x: 0, y: 0, width: 40, height: 480 },
-      { x: 600, y: 0, width: 40, height: 480 },
-      { x: 37, y: 101, width: 300, height: 102 },
-    ],
-    doors: [
-      { x: 0, y: 0, width: 640, height: 20, destLevel: 12, destX: 40, destY: 40 }
-    ],
-    darkZones: [],
-    battleZones: [],
-    dialogZones: [],
-    interactables: [
-      { id: "door2", name: "door", x: 486, y: 311, width: 80, height: 80, action: "open_door", destLevel: 1, destX: 527, destY: 300 }
-    ]
-  },
-  {
-    bgSrc: "arcade_17.png",
     walls: [
       { x: 0, y: 0, width: 40, height: 480 },
       { x: 600, y: 0, width: 40, height: 480 },
