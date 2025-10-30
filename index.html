@@ -1327,14 +1327,14 @@ iceZones: [],
       { id: "door2", name: "door", x: 486, y: 311, width: 80, height: 80, action: "open_door", destLevel: 1, destX: 527, destY: 300 },
       {
   id: "gate_001",
-  name: "gate_to_secret_room",
+  name: "tester",
   x: 300,
   y: 200,
   width: 32,
   height: 32,
   action: "item_gate",
   wallId: "wall_5",
-  requiredItems: ["keycard", "hammer"],
+  requiredItems: ["hammer"],
   opened: false,
   dialogId: "gate_001_dialog",
   messages: {
@@ -1380,6 +1380,23 @@ iceZones: [],
   },
   {
     bgSrc: "arcade_16.png",
+    walls: [
+      { x: 0, y: 0, width: 40, height: 480 },
+      { x: 600, y: 0, width: 40, height: 480 },
+      { x: 37, y: 101, width: 300, height: 102 },
+    ],
+    doors: [
+      { x: 0, y: 0, width: 640, height: 20, destLevel: 12, destX: 40, destY: 40 }
+    ],
+    darkZones: [],
+    battleZones: [],
+    dialogZones: [],
+    interactables: [
+      { id: "door2", name: "door", x: 486, y: 311, width: 80, height: 80, action: "open_door", destLevel: 1, destX: 527, destY: 300 }
+    ]
+  },
+  {
+    bgSrc: "arcade_17.png",
     walls: [
       { x: 0, y: 0, width: 40, height: 480 },
       { x: 600, y: 0, width: 40, height: 480 },
