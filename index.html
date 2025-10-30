@@ -6763,7 +6763,7 @@ function doCleanse() {
     else {
       const zone = findNearbyDialogZone(x, y);
       if (zone) showDialog(zone.text, zone.id, { style: zone.style || 'dialog', speaker: zone.speaker || null });
-      else showTemporaryText('Nothing to interact with.');
+      else showTemporaryText('.');
     }
   }
 });
