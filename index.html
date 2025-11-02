@@ -7307,28 +7307,6 @@ function eraseObjectAt(x, y) {
   redrawEditor();
 }
 
-canvas.addEventListener('click', e => {
-  if (!editorMode) return;
-  const rect = canvas.getBoundingClientRect();
-  const pos = snapToGrid(e.clientX - rect.left, e.clientY - rect.top);
-  const tool = toolSelect.value;
-
-  if (tool === 'erase') {
-    eraseObjectAt(pos.x, pos.y);
-  } else if (tool === 'wall') {
-    addObject('walls', pos.x, pos.y);
-  } else if (tool === 'door') {
-    addObject('doors', pos.x, pos.y, {
-      destLevel: 0,
-      destX: 0,
-      destY: 0
-    });
-  } else if (tool === 'interactable') {
-    addObject('interactables', pos.x, pos.y, {
-      action: 'chest'
-    });
-  }
-});
 
   canvas.addEventListener('mousedown', e => {
   if (!editorMode) return;
