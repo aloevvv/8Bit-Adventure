@@ -522,6 +522,20 @@
   </div>
 </div>
 
+<div id="level-editor" style="position:fixed; top:0; left:640px; width:300px; height:480px; background:#222; color:#fff; font-family:'Press Start 2P', sans-serif; padding:10px; overflow:auto;">
+  <h3>Level Editor</h3>
+  <label for="tool-select">Tool:</label>
+  <select id="tool-select">
+    <option value="wall">Wall</option>
+    <option value="door">Door</option>
+    <option value="interactable">Interactable</option>
+    <option value="erase">Erase</option>
+  </select>
+  <div id="tool-properties" style="margin-top:10px;"></div>
+  <button id="export-level">Export Level JSON</button>
+  <pre id="export-output" style="white-space: pre-wrap; max-height: 300px; overflow-y: auto; background:#111; padding:5px; margin-top:10px;"></pre>
+</div>
+
   <!-- Slap Jack overlay -->
 <div id="slapjack-overlay" style="display:none; position:fixed; inset:0; z-index:4100;
 background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-family:'Press Start 2P',sans-serif;">
@@ -6106,6 +6120,130 @@ function doCleanse() {
     openSlotMachine();
   };
 })();
+
+
+const editorCanvas = canvas; // use existing game canvas
+const ctxEditor = ctx;       // existing context
+
+const gridSize = 20;
+let editorMode = false;
+
+const levelData = {
+  walls: [],
+  doors: [],
+  interactables: []
+};
+
+const toolSelect = document.getElementById('tool-select');
+const toolProperties = document.getElementById('tool-properties');
+const exportBtn = document.getElementById('export-level');
+const exportOutput = document.getElementById('export-output');
+
+function drawGrid() {
+  ctxEditor.strokeStyle = "#444";
+  ctxEditor.lineWidth = 1;
+  for (let x = 0; x < editorCanvas.width; x += gridSize) {
+    ctxEditor.beginPath();
+    ctxEditor.moveTo(x + 0.5, 0);
+    ctxEditor.lineTo(x + 0.5, editorCanvas.height);
+    ctxEditor.stroke();
+  }
+  for (let y = 0; y < editorCanvas.height; y += gridSize) {
+    ctxEditor.beginPath();
+    ctxEditor.moveTo(0, y + 0.5);
+    ctxEditor.lineTo(editorCanvas.width, y + 0.5);
+    ctxEditor.stroke();
+  }
+}
+
+function snapToGrid(x, y) {
+  return {
+    x: Math.floor(x / gridSize) * gridSize,
+    y: Math.floor(y / gridSize) * gridSize
+  };
+}
+
+function drawLevelObjects() {
+  ctxEditor.fillStyle = "rgba(255, 0, 0, 0.5)";
+  levelData.walls.forEach(w => {
+    ctxEditor.fillRect(w.x, w.y, w.width, w.height);
+  });
+  ctxEditor.fillStyle = "rgba(0, 0, 255, 0.5)";
+  levelData.doors.forEach(d => {
+    ctxEditor.fillRect(d.x, d.y, d.width, d.height);
+  });
+  ctxEditor.fillStyle = "rgba(0, 255, 0, 0.5)";
+  levelData.interactables.forEach(i => {
+    ctxEditor.fillRect(i.x, i.y, i.width, i.height);
+  });
+}
+
+function redrawEditor() {
+  // Clear canvas
+  ctxEditor.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+  // Redraw game background and player if needed (optional)
+  if (!inBattle && !isGameOver) {
+    draw();
+  }
+  drawGrid();
+  drawLevelObjects();
+}
+
+function addObject(type, x, y, width = gridSize, height = gridSize, extraProps = {}) {
+  const obj = { x, y, width, height, ...extraProps };
+  levelData[type].push(obj);
+  redrawEditor();
+}
+
+function eraseObjectAt(x, y) {
+  ['walls', 'doors', 'interactables'].forEach(type => {
+    levelData[type] = levelData[type].filter(obj => {
+      return !(x >= obj.x && x < obj.x + obj.width && y >= obj.y && y < obj.y + obj.height);
+    });
+  });
+  redrawEditor();
+}
+
+editorCanvas.addEventListener('click', e => {
+  if (!editorMode) return;
+  const rect = editorCanvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+  const pos = snapToGrid(mouseX, mouseY);
+
+  const tool = toolSelect.value;
+  if (tool === 'erase') {
+    eraseObjectAt(pos.x, pos.y);
+  } else if (tool === 'wall') {
+    addObject('walls', pos.x, pos.y, gridSize, gridSize);
+  } else if (tool === 'door') {
+    // Prompt for door destination or use default properties
+    const destLevel = parseInt(prompt("Enter destination level index:", "0")) || 0;
+    const destX = parseInt(prompt("Enter destination X:", "0")) || 0;
+    const destY = parseInt(prompt("Enter destination Y:", "0")) || 0;
+    addObject('doors', pos.x, pos.y, gridSize, gridSize, { destLevel, destX, destY });
+  } else if (tool === 'interactable') {
+    const action = prompt("Enter interactable action (e.g., 'chest'):", "chest") || "chest";
+    addObject('interactables', pos.x, pos.y, gridSize, gridSize, { action });
+  }
+});
+
+exportBtn.addEventListener('click', () => {
+  const json = JSON.stringify(levelData, null, 2);
+  exportOutput.textContent = json;
+});
+
+// Toggle editor mode with a key (e.g., E)
+document.addEventListener('keydown', e => {
+  if (e.key.toLowerCase() === 'e') {
+    editorMode = !editorMode;
+    showTemporaryText(editorMode ? "Level Editor Enabled" : "Level Editor Disabled");
+    redrawEditor();
+  }
+});
+
+// Initial draw
+redrawEditor();
 
 // ---------------------- Slap Jack minigame ----------------------
 (function installSlapJack() {
