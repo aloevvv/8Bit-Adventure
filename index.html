@@ -7230,6 +7230,9 @@ achievementsButton.addEventListener('click', () => {
 
 const gridSize = 20;
 let editorMode = false;
+let dragStart = null;
+let isDragging = false;
+
 
 const levelData = {
   walls: [],
@@ -7326,6 +7329,42 @@ canvas.addEventListener('click', e => {
     });
   }
 });
+
+  canvas.addEventListener('mousedown', e => {
+  if (!editorMode) return;
+  const rect = canvas.getBoundingClientRect();
+  const pos = snapToGrid(e.clientX - rect.left, e.clientY - rect.top);
+  dragStart = pos;
+  isDragging = true;
+});
+
+canvas.addEventListener('mouseup', e => {
+  if (!editorMode || !isDragging || !dragStart) return;
+  const rect = canvas.getBoundingClientRect();
+  const pos = snapToGrid(e.clientX - rect.left, e.clientY - rect.top);
+  isDragging = false;
+
+  const x = Math.min(dragStart.x, pos.x);
+  const y = Math.min(dragStart.y, pos.y);
+  const width = Math.abs(dragStart.x - pos.x) + gridSize;
+  const height = Math.abs(dragStart.y - pos.y) + gridSize;
+
+  const tool = toolSelect.value;
+
+  if (tool === 'wall') {
+    addObject('walls', x, y, width, height);
+  } else if (tool === 'door') {
+    addObject('doors', x, y, width, height, {
+      destLevel: 0,
+      destX: 0,
+      destY: 0
+    });
+  } else if (tool === 'interactable') {
+    const action = interactableTypeSelect.value;
+    addObject('interactables', x, y, width, height, { action });
+  }
+});
+
 
 document.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'e') {
