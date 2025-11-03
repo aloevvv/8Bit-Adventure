@@ -522,21 +522,6 @@
   </div>
 </div>
 
-  <div id="editor-ui" style="display:none; position:absolute; top:10px; left:10px; background:#222; color:#fff; padding:10px;">
-  <label>Tool:
-    <select id="tool-select">
-      <option value="wall">Wall</option>
-      <option value="door">Door</option>
-      <option value="interactable">Interactable</option>
-      <option value="erase">Erase</option>
-    </select>
-  </label>
-  <button id="export-level">Export</button>
-  <pre id="export-output"></pre>
-</div>
-
-
-
   <!-- Slap Jack overlay -->
 <div id="slapjack-overlay" style="display:none; position:fixed; inset:0; z-index:4100;
 background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-family:'Press Start 2P',sans-serif;">
@@ -6122,7 +6107,6 @@ function doCleanse() {
   };
 })();
 
-
 // ---------------------- Slap Jack minigame ----------------------
 (function installSlapJack() {
   const overlay = document.getElementById('slapjack-overlay');
@@ -7227,135 +7211,6 @@ achievementsButton.addEventListener('click', () => {
     achievementsPopup.style.display = 'none';
   }
 });
-
-const gridSize = 20;
-let editorMode = false;
-let dragStart = null;
-let isDragging = false;
-
-
-const levelData = {
-  walls: [],
-  doors: [],
-  interactables: []
-};
-
-const editorUI = document.getElementById('editor-ui');
-const toolSelect = document.getElementById('tool-select');
-const exportBtn = document.getElementById('export-level');
-const exportOutput = document.getElementById('export-output');
-
-function snapToGrid(x, y) {
-  return {
-    x: Math.floor(x / gridSize) * gridSize,
-    y: Math.floor(y / gridSize) * gridSize
-  };
-}
-
-function drawGrid(ctx) {
-  ctx.strokeStyle = "#444";
-  for (let x = 0; x < canvas.width; x += gridSize) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
-    ctx.stroke();
-  }
-  for (let y = 0; y < canvas.height; y += gridSize) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-  }
-}
-
-function drawLevelObjects(ctx) {
-  levelData.walls.forEach(w => {
-    ctx.fillStyle = "rgba(255,0,0,0.5)";
-    ctx.fillRect(w.x, w.y, w.width, w.height);
-  });
-  levelData.doors.forEach(d => {
-    ctx.fillStyle = "rgba(0,0,255,0.5)";
-    ctx.fillRect(d.x, d.y, d.width, d.height);
-  });
-  levelData.interactables.forEach(i => {
-    ctx.fillStyle = "rgba(0,255,0,0.5)";
-    ctx.fillRect(i.x, i.y, i.width, i.height);
-  });
-}
-
-function redrawEditor() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  draw(); // your game draw function
-  if (editorMode) {
-    drawGrid(ctx);
-    drawLevelObjects(ctx);
-  }
-}
-
-function addObject(type, x, y, extra = {}) {
-  const obj = { x, y, width: gridSize, height: gridSize, ...extra };
-  levelData[type].push(obj);
-  redrawEditor();
-}
-
-function eraseObjectAt(x, y) {
-  ['walls', 'doors', 'interactables'].forEach(type => {
-    levelData[type] = levelData[type].filter(obj => {
-      return !(x >= obj.x && x < obj.x + obj.width && y >= obj.y && y < obj.y + obj.height);
-    });
-  });
-  redrawEditor();
-}
-
-
-  canvas.addEventListener('mousedown', e => {
-  if (!editorMode) return;
-  const rect = canvas.getBoundingClientRect();
-  const pos = snapToGrid(e.clientX - rect.left, e.clientY - rect.top);
-  dragStart = pos;
-  isDragging = true;
-});
-
-canvas.addEventListener('mouseup', e => {
-  if (!editorMode || !isDragging || !dragStart) return;
-  const rect = canvas.getBoundingClientRect();
-  const pos = snapToGrid(e.clientX - rect.left, e.clientY - rect.top);
-  isDragging = false;
-
-  const x = Math.min(dragStart.x, pos.x);
-  const y = Math.min(dragStart.y, pos.y);
-  const width = Math.abs(dragStart.x - pos.x) + gridSize;
-  const height = Math.abs(dragStart.y - pos.y) + gridSize;
-
-  const tool = toolSelect.value;
-
-  if (tool === 'wall') {
-    addObject('walls', x, y, width, height);
-  } else if (tool === 'door') {
-    addObject('doors', x, y, width, height, {
-      destLevel: 0,
-      destX: 0,
-      destY: 0
-    });
-  } else if (tool === 'interactable') {
-    const action = interactableTypeSelect.value;
-    addObject('interactables', x, y, width, height, { action });
-  }
-});
-
-
-document.addEventListener('keydown', e => {
-  if (e.key.toLowerCase() === 'e') {
-    editorMode = !editorMode;
-    editorUI.style.display = editorMode ? 'block' : 'none';
-    redrawEditor();
-  }
-});
-
-exportBtn.addEventListener('click', () => {
-  exportOutput.textContent = JSON.stringify(levelData, null, 2);
-});
-
   
 // Attack buttons event listeners
 document.getElementById('attack-button').addEventListener('click', () => {
