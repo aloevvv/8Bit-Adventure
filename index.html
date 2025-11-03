@@ -6858,13 +6858,31 @@ if (object.action === "recruit") {
     return;
   }
    if (object.action === "photo") {
-      showDialog([
-  { speaker: '8-Bit', text: "It's a photo of my friends!", style: 'dialog' },
-  { speaker: '8-Bit', text: "Where are they? They should be somewhere near, I have to assume.", style: 'dialog' },
-  { speaker: '8-Bit', text: "Oh... man, I hope nothing happened to them.", style: 'dialog' }
-]);
-      return;
-    }
+      showDialogWithOptions(
+      "Lou tries to join u",
+      [
+        {
+          label: "Yes",
+          onSelect: () => {
+            unlockAlly('ally1');
+            gameFlags.louRecruited = true;
+            currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
+            draw();
+          }
+        },
+        {
+          label: "Not yet",
+          onSelect: () => {
+            showTemporaryText("You decide to wait before recruiting Lou.");
+          }
+        }
+      ],
+      object.id,
+      { style: 'dialog', speaker: 'Lou' }
+    );
+
+    return;
+  }
       if (object.action === "arcadekey") {
       showDialog([
   { speaker: '8-Bit', text: "Oh, yeah, it's a key.", style: 'dialog' },
