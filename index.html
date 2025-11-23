@@ -2053,11 +2053,9 @@ function levelUp() {
   playerStats.xp -= playerStats.xpToNextLevel;
   playerStats.xpToNextLevel = Math.floor(playerStats.xpToNextLevel * 1.5);
 
-  // increase base stats (affects final via applyEquipmentBonuses)
-  playerStats.baseMaxHp += Math.floor(3 + (playerStats.level / 2));
-  playerStats.baseDamage += Math.floor(1 + (playerStats.level / 6));
+  playerStats.baseMaxHp += Math.floor(3 + (playerStats.level / 1));
+  playerStats.baseDamage = Math.min(20, playerStats.baseDamage + 1);
 
-  // recompute final stats and heal
   applyEquipmentBonuses();
 
   playerStats.currentHp = playerStats.maxHp;
