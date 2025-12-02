@@ -2425,16 +2425,43 @@ if (inBattle) {
     updateHp(playerStats.currentHp + healAmount);
     showTemporaryText(`Used a Bandage to heal for ${healAmount} HP!`);
   } else if (itemName === 'emp_grenade') {
-    activeEnemies.forEach(enemy => {
-      if (!(enemy.resistances && enemy.resistances.stun)) enemy.stunned = true;
-    });
-    setTimeout(() => {
-      activeEnemies.forEach(enemy => {
-        if (!(enemy.resistances && enemy.resistances.stun)) enemy.stunned = false;
-      });
+  const STUN_DURATION_MS = 4000;
+
+  activeEnemies.forEach(enemy => {
+    if (enemy.resistances && enemy.resistances.stun) return;
+
+  
+    enemy.stunned = true;
+
+    if (enemy._stunTimeout != null) {
+      clearTimeout(enemy._stunTimeout);
+      enemy._stunTimeout = null;
+    }
+
+
+    enemy._stunTimeout = setTimeout(() => {
+     
+      if (!enemy || enemy.removed || enemy.currentHp == null) {
+        if (enemy && enemy._stunTimeout != null) {
+          clearTimeout(enemy._stunTimeout);
+          enemy._stunTimeout = null;
+        }
+        if (enemy) enemy.stunned = false;
+        drawBattleUI();
+        return;
+      }
+
+     
+      enemy.stunned = false;
+      enemy._stunTimeout = null;
       drawBattleUI();
-    }, 4000);
-    showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
+    }, STUN_DURATION_MS);
+  });
+
+  showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
+  drawBattleUI();
+}
+
   } else if (itemName === 'poison_vial') {
   const POISON_TICK_MS = 500;
   const POISON_DURATION_MS = 3000;
