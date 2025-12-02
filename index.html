@@ -4911,6 +4911,17 @@ if (willHideBattleBlackout) {
   if (enemy.type === 'Dummy') achievementsMap['kill_tutorial_dummy'].progress = 1;
   checkAchievements();
 
+  if (enemy._stunTimeout) {
+    clearTimeout(enemy._stunTimeout);
+    enemy._stunTimeout = null;
+  }
+  if (enemy._poisonIntervalId) {
+    clearInterval(enemy._poisonIntervalId);
+    enemy._poisonIntervalId = null;
+  }
+  enemy.stunned = false;
+  enemy.poisoned = false;
+
   // if no enemies remain, either end the battle round (endBattle('win') will check rounds) or spawn next round is handled in endBattle
   if (activeEnemies.length === 0) {
     endBattle('win');
