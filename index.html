@@ -2004,10 +2004,10 @@ function levelUpAlly(ally) {
     leveled = true;
     ally.level++;
     ally.xp -= ally.xpToNextLevel;
-    ally.xpToNextLevel = Math.floor(ally.xpToNextLevel * 1.05);
+    ally.xpToNextLevel = Math.floor(ally.xpToNextLevel * 1.2);
 
     // Stat growth
-    ally.baseMaxHp += Math.floor(2 + (ally.level / 2));
+    ally.baseMaxHp += Math.floor(3 + (ally.level / 2));
     ally.baseDamage += Math.floor(1 + (ally.level / 6));
 
     console.log('leveled one step', {
