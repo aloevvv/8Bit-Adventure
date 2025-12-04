@@ -1645,7 +1645,19 @@ iceZones: [],
     darkZones: [],
     battleZones: [],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      {
+  id: 'lever2',
+  action: 'lever',
+  leverType: 'single',
+  linkedWallId: 'wall_id_2',
+  linkedLevelIndex: 3,
+  x: 100,
+  y: 100,
+  width: 16,
+  height: 16
+}
+    ]
   },
   {
     bgSrc: "friendhouse3_21.png",
@@ -2127,6 +2139,9 @@ torchImg.src = 'torch.png';
 
 const drillImg = new Image();
 drillImg.src = 'drill.png';
+
+const blockadeImg = new Image();
+drillImg.src = 'blockade.png';
 
 const leverOnImg = new Image();
 leverOnImg.src = 'leveron.png';
@@ -7184,6 +7199,14 @@ if (object.action === "arcadetrophy") {
 ]);
       return;
     }
+  if (object.action === 'lever' && object.id === 'leverblockade') {
+  object.currentState = !object.currentState;
+
+  currentLevel.interactables = currentLevel.interactables.filter(i => i.name !== 'blockade');
+
+  draw();
+  return;
+}
   
 if (object.action === 'target_practice' && object.name === 'target_board') {
   openTargetPractice();
@@ -8041,7 +8064,18 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-  // draw smashable stones (name matches what you added earlier)
+  currentLevel.interactables.forEach(obj => {
+  if (obj.name === "blockade") {
+    if (blockadeImg && blockadeImg.complete) {
+      ctx.drawImage(blockadeImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#444";
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
+
+  // stone
   currentLevel.interactables.forEach(obj => {
     if (obj.name === "big_stone" || obj.name === "bigStone") {
       if (stoneImg.complete) ctx.drawImage(stoneImg, obj.x, obj.y, obj.width, obj.height);
