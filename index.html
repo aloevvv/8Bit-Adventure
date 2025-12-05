@@ -755,11 +755,11 @@ function applyEquipmentBonuses() {
 
   
 // Initialize inventory with items
-inventory.set("bandaid", 1);
-inventory.set("emp_grenade", 1);
-inventory.set("poison_vial", 1);
-inventory.set("extra_life", 1);
-inventory.set("driftwood", 1);
+inventory.set("bandaid", 0);
+inventory.set("emp_grenade", 0);
+inventory.set("poison_vial", 0);
+inventory.set("extra_life", 0);
+inventory.set("driftwood", 0);
 
 inventory.set("bolts", 20);
   
@@ -780,9 +780,9 @@ inventory.set("armor_virus", 0);
 
 inventory.set("weapon_retro", 0);
 inventory.set("weapon_v8", 0);
-inventory.set("weapon_saloon", 1);
-inventory.set("weapon_haunted", 1);
-inventory.set("weapon_virus", 1);
+inventory.set("weapon_saloon", 0);
+inventory.set("weapon_haunted", 0);
+inventory.set("weapon_virus", 0);
 
   const ABILITIES = {
   block: { cooldownMs: 10000, effectMs: 1000 },  
@@ -972,59 +972,11 @@ const levels = [
       }
 ],
     interactables: [
-      { name: "big_stone", x: 580, y: 250, width: 64, height: 64, interactRect: { x: 560, y: 230, width: 120, height: 96 }, action: "break", requiredItem: "hammer" },
-      {
-  id: 'lever_group_a_1',
-  action: 'lever',
-  leverType: 'multi',
-  groupId: 'A',
-  indexInGroup: 0,
-  initialState: false,
-  x: 200, y: 120, width: 32, height: 32
-},
-      {
-  action: 'lever',
-  leverType: 'single',
-  linkedWallId: 'wall_id_2',
-  linkedLevelIndex: 3,
-  x: 100,
-  y: 100,
-  width: 16,
-  height: 16
-},
-{
-  id: 'lever_group_a_2',
-  action: 'lever',
-  leverType: 'multi',
-  groupId: 'A',
-  indexInGroup: 1,
-  initialState: false,
-  x: 240, y: 120, width: 32, height: 32
-},
-{
-  id: 'lever_group_a_3',
-  action: 'lever',
-  leverType: 'multi',
-  groupId: 'A',
-  indexInGroup: 2,
-  initialState: false,
-  x: 280, y: 120, width: 32, height: 32
-},
-{
-  id: 'lever_group_a_controller',
-  name: 'lever_group_controller',
-  action: 'lever_controller',
-  groupId: 'A',
-  targetCombo: [true, true, false],
-  linkedWallId: 'wall_multi_a_1',
-  x: 0, y: 0, width: 16, height: 16
-}
+      { name: "big_stone", x: 580, y: 250, width: 64, height: 64, interactRect: { x: 560, y: 230, width: 120, height: 96 }, action: "break", requiredItem: "hammer" }
     ]
   },
   { bgSrc: "arcadeB2_3.png",
     walls: [
-      { id: 'wall_multi_a_1', x: 300, y: 150, width: 32, height: 120 },
-      { id: 'wall_id_2', x: 500, y: 150, width: 32, height: 120 },
       { x: 0, y: 0, width: 640, height: 20 },
       { x: 0, y: 0, width: 20, height: 480 },
       { x: 620, y: 0, width: 20, height: 480},
