@@ -4864,29 +4864,54 @@ function enemyAttack(enemy, target) {
     }
 
     // If counter window active -> reflect and stun attacker
-    if (counterWindowActive) {
-      showTemporaryText('Counter! Damage reflected!');
-      // reflect to attacker if valid object reference with hp
-      if (attacker && typeof attacker.currentHp === 'number') {
-        attacker.currentHp = Math.max(0, attacker.currentHp - amount);
-        // stun attacker if possible
-        attacker.stunned = true;
-        // schedule unstun
-        setTimeout(() => { if (attacker) attacker.stunned = false; drawBattleUI(); }, ABILITIES.counter.stunMs);
-        if (attacker.currentHp === 0) {
-          handleEnemyDeath(attacker);
-        }
-        drawBattleUI();
-      } else {
-        const targetAtt = activeEnemies[selectedEnemyIndex];
-        if (targetAtt) {
-          targetAtt.currentHp = Math.max(0, targetAtt.currentHp - amount);
-          targetAtt.stunned = true;
-          setTimeout(() => { if (targetAtt) targetAtt.stunned = false; drawBattleUI(); }, ABILITIES.counter.stunMs);
-          if (targetAtt.currentHp === 0) handleEnemyDeath(targetAtt);
-          drawBattleUI();
-        }
+   if (counterWindowActive) {
+  showTemporaryText('Counter! Damage reflected!');
+
+  // pick attacker reference (either explicit attacker or selected enemy)
+  const targetAtt = attacker && typeof attacker.currentHp === 'number'
+    ? attacker
+    : activeEnemies[selectedEnemyIndex];
+
+  if (targetAtt && typeof targetAtt.currentHp === 'number') {
+    // reflect damage
+    targetAtt.currentHp = Math.max(0, targetAtt.currentHp - amount);
+
+    // apply stun if not resistant
+    if (!(targetAtt.resistances && targetAtt.resistances.stun)) {
+      targetAtt.stunned = true;
+
+      // clear any existing stun timeout
+      if (targetAtt._stunTimeout != null) {
+        clearTimeout(targetAtt._stunTimeout);
+        targetAtt._stunTimeout = null;
       }
+
+      // schedule unstun
+      targetAtt._stunTimeout = setTimeout(() => {
+        if (!targetAtt || targetAtt.removed || targetAtt.currentHp == null) {
+          if (targetAtt && targetAtt._stunTimeout != null) {
+            clearTimeout(targetAtt._stunTimeout);
+            targetAtt._stunTimeout = null;
+          }
+          if (targetAtt) targetAtt.stunned = false;
+          drawBattleUI();
+          return;
+        }
+
+        targetAtt.stunned = false;
+        targetAtt._stunTimeout = null;
+        drawBattleUI();
+      }, ABILITIES.counter.stunMs);
+    }
+
+    // handle death
+    if (targetAtt.currentHp === 0) {
+      handleEnemyDeath(targetAtt);
+    }
+
+    drawBattleUI();
+  }
+}
       
       return;
     }
