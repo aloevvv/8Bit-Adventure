@@ -7235,7 +7235,7 @@ function handleInteraction(object) {
   if (object.action === 'lever' && object.id === 'leverblockade') {
   object.currentState = !object.currentState;
 
-  currentLevel.interactables = currentLevel.interactables.filter(i => i.name !== 'blockade');
+  currentLevel.interactables = currentLevel.interactables.filter(i => i.id !== 'blockade');
 
   draw();
   return;
