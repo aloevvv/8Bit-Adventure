@@ -5277,6 +5277,10 @@ if (willHideBattleBlackout) {
     const currentBolts = inventory.get('bolts') || 0;
     inventory.set('bolts', currentBolts + 1);
   }
+    if (enemy.type === 'Partybot' && Math.random() < DROP_CHANCE) {
+    const currentBolts = inventory.get('bolts') || 0;
+    inventory.set('bolts', currentBolts + 1);
+  }
 } catch (e) {
   console.warn('Bolt drop failed:', e);
 }
