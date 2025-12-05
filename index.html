@@ -4865,32 +4865,59 @@ function enemyAttack(enemy, target) {
 
     // If counter window active -> reflect and stun attacker
     if (counterWindowActive) {
-      showTemporaryText('Counter! Damage reflected!');
-      // reflect to attacker if valid object reference with hp
-      if (attacker && typeof attacker.currentHp === 'number') {
-        attacker.currentHp = Math.max(0, attacker.currentHp - amount);
-        // stun attacker if possible
-        attacker.stunned = true;
-        // schedule unstun
-        setTimeout(() => { if (attacker) attacker.stunned = false; drawBattleUI(); }, ABILITIES.counter.stunMs);
-        if (attacker.currentHp === 0) {
-          handleEnemyDeath(attacker);
-        }
+  showTemporaryText('Counter! Damage reflected!');
+  
+  // reflect to attacker if valid object reference with hp
+  if (attacker && typeof attacker.currentHp === 'number') {
+    attacker.currentHp = Math.max(0, attacker.currentHp - amount);
+    attacker.stunned = true;
+
+    // schedule unstun and store timer ID
+    attacker.stunTimer = setTimeout(() => {
+      if (attacker) {
+        attacker.stunned = false;
         drawBattleUI();
-      } else {
-        const targetAtt = activeEnemies[selectedEnemyIndex];
+      }
+    }, ABILITIES.counter.stunMs);
+
+    if (attacker.currentHp === 0) {
+      // cancel stun timer if dead
+      clearTimeout(attacker.stunTimer);
+      attacker.stunTimer = null;
+      attacker.stunned = false; 
+      handleEnemyDeath(attacker);
+    }
+
+    drawBattleUI();
+  } else {
+    const targetAtt = activeEnemies[selectedEnemyIndex];
+    if (targetAtt) {
+      targetAtt.currentHp = Math.max(0, targetAtt.currentHp - amount);
+      targetAtt.stunned = true;
+
+      // schedule unstun and store timer ID
+      targetAtt.stunTimer = setTimeout(() => {
         if (targetAtt) {
-          targetAtt.currentHp = Math.max(0, targetAtt.currentHp - amount);
-          targetAtt.stunned = true;
-          setTimeout(() => { if (targetAtt) targetAtt.stunned = false; drawBattleUI(); }, ABILITIES.counter.stunMs);
-          if (targetAtt.currentHp === 0) handleEnemyDeath(targetAtt);
           targetAtt.stunned = false;
           drawBattleUI();
         }
+      }, ABILITIES.counter.stunMs);
+
+      if (targetAtt.currentHp === 0) {
+        // cancel stun timer if dead
+        clearTimeout(targetAtt.stunTimer);
+        targetAtt.stunTimer = null;
+        targetAtt.stunned = false
+        handleEnemyDeath(targetAtt);
       }
-      
-      return;
+
+      drawBattleUI();
     }
+  }
+
+  return;
+}
+
 
     // Else normal behavior
     return _orig_playerTakeDamage(amount);
