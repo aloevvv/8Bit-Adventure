@@ -7143,35 +7143,32 @@ function checkInteraction(checkX, checkY) {
 // Handle interaction actions
 function handleInteraction(object) {
   if (!object) return;
-  // inside handleInteraction(object) add a branch for action === "recruit"
-if (object.action === "recruit") {
-  // optional short dialog before unlocking
-  const preText = object.recruitDialog || [`You meet ${object.displayName || 'someone'}.`, 'They might help you.'];
-  // showDialog accepts text or lines; here we mark the dialog id so it's not retriggered
-  showDialog(preText, object.id, { style: object.dialogStyle || 'dialog', speaker: object.speaker || null });
 
-  // unlock immediately so the player can equip right away after dialog closes
-  // store the allyId on the object as object.allyId (set in level data)
-  if (object.allyId) {
-    // if you want the unlock to happen only after dialog confirmed, move this call into dialog-next handler by checking overlay._markId
-    unlockAlly(object.allyId);
-  } else {
-    console.warn('recruit object missing allyId', object);
-    showTemporaryText('Nothing happened.');
+  if (object.action === "recruit") {
+    const preText = object.recruitDialog || [
+      `You meet ${object.displayName || 'someone'}.`,
+      'They might help you.'
+    ];
+    showDialog(preText, object.id, { style: object.dialogStyle || 'dialog', speaker: object.speaker || null });
+
+    if (object.allyId) {
+      unlockAlly(object.allyId);
+    } else {
+      console.warn('recruit object missing allyId', object);
+      showTemporaryText('Nothing happened.');
+    }
+
+    currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
+    draw();
+    return;
   }
 
-  // remove the interactable so it can't be recruited repeatedly
-  currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
-  draw();
-  return;
-}
   if (object.action === "item_gate") {
     if (object.opened) {
       showDialog(object.messages?.opened || "You may go now.", object.dialogId);
       return;
     }
 
-    // check required items
     const missingItems = (object.requiredItems || []).filter(item => (inventory.get(item) || 0) <= 0);
     if (missingItems.length > 0) {
       showDialog(object.messages?.needItems || "You need items to pass!", object.dialogId);
@@ -7180,40 +7177,45 @@ if (object.action === "recruit") {
 
     object.opened = true;
     if (object.wallId) {
-      // remove wall by id from currentLevel.walls
       currentLevel.walls = currentLevel.walls.filter(wall => wall.id !== object.wallId);
     }
     showDialog(object.messages?.opened || "You may go now.", object.dialogId);
     draw();
     return;
   }
-   if (object.action === "photo") {
-      showDialog([
-  { speaker: '8-Bit', text: "It's a photo of my friends!", style: 'dialog' },
-  { speaker: '8-Bit', text: "Where are they? They should be somewhere near, I have to assume.", style: 'dialog' },
-  { speaker: '8-Bit', text: "Oh... man, I hope nothing happened to them.", style: 'dialog' }
-]);
-      if (object.action === "blockade") {
-      showDialog([
-  { speaker: '8-Bit', text: "There's boxes in my way.", style: 'dialog' }
-]);
-      return;
-    }
-      if (object.action === "arcadekey") {
-      showDialog([
-  { speaker: '8-Bit', text: "Oh, yeah, it's a key.", style: 'dialog' },
-  { speaker: '8-Bit', text: "I'm going to leave it there.", style: 'dialog' }
-]);
-      return;
-    }
-if (object.action === "arcadetrophy") {
-      showDialog([
-  { speaker: '8-Bit', text: "We won this little bad boy from a competition.", style: 'dialog' },
-  { speaker: '8-Bit', text: "A gaming competition.", style: 'dialog' },
-  { speaker: '8-Bit', text: "Us three, we make a great team.", style: 'dialog' }
-]);
-      return;
-    }
+
+  if (object.action === "photo") {
+    showDialog([
+      { speaker: '8-Bit', text: "It's a photo of my friends!", style: 'dialog' },
+      { speaker: '8-Bit', text: "Where are they? They should be somewhere near, I have to assume.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Oh... man, I hope nothing happened to them.", style: 'dialog' }
+    ]);
+    return;
+  }
+
+  if (object.action === "blockade") {
+    showDialog([
+      { speaker: '8-Bit', text: "There's boxes in my way.", style: 'dialog' }
+    ]);
+    return;
+  }
+
+  if (object.action === "arcadekey") {
+    showDialog([
+      { speaker: '8-Bit', text: "Oh, yeah, it's a key.", style: 'dialog' },
+      { speaker: '8-Bit', text: "I'm going to leave it there.", style: 'dialog' }
+    ]);
+    return;
+  }
+
+  if (object.action === "arcadetrophy") {
+    showDialog([
+      { speaker: '8-Bit', text: "We won this little bad boy from a competition.", style: 'dialog' },
+      { speaker: '8-Bit', text: "A gaming competition.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Us three, we make a great team.", style: 'dialog' }
+    ]);
+    return;
+  }
   if (object.action === 'lever' && object.id === 'leverblockade') {
   object.currentState = !object.currentState;
 
