@@ -4863,28 +4863,14 @@ function enemyAttack(enemy, target) {
       return;
     }
 
-    // If counter window active -> reflect and stun attacker
+    // If counter window active -> reflect and supposed to stun but there was a bug w that
     if (counterWindowActive) {
-  showTemporaryText('Counter! Damage reflected!');
   
   // reflect to attacker if valid object reference with hp
   if (attacker && typeof attacker.currentHp === 'number') {
-    attacker.currentHp = Math.max(0, attacker.currentHp - amount);
-    attacker.stunned = true;
-
-    // schedule unstun and store timer ID
-    attacker.stunTimer = setTimeout(() => {
-      if (attacker) {
-        attacker.stunned = false;
-        drawBattleUI();
-      }
-    }, ABILITIES.counter.stunMs);
+    attacker.currentHp = Math.max(0, attacker.currentHp - (amount * 3));
 
     if (attacker.currentHp === 0) {
-      // cancel stun timer if dead
-      clearTimeout(attacker.stunTimer);
-      attacker.stunTimer = null;
-      attacker.stunned = false; 
       handleEnemyDeath(attacker);
     }
 
@@ -4892,22 +4878,9 @@ function enemyAttack(enemy, target) {
   } else {
     const targetAtt = activeEnemies[selectedEnemyIndex];
     if (targetAtt) {
-      targetAtt.currentHp = Math.max(0, targetAtt.currentHp - amount);
-      targetAtt.stunned = true;
-
-      // schedule unstun and store timer ID
-      targetAtt.stunTimer = setTimeout(() => {
-        if (targetAtt) {
-          targetAtt.stunned = false;
-          drawBattleUI();
-        }
-      }, ABILITIES.counter.stunMs);
+      targetAtt.currentHp = Math.max(0, targetAtt.currentHp - (amount * 3));
 
       if (targetAtt.currentHp === 0) {
-        // cancel stun timer if dead
-        clearTimeout(targetAtt.stunTimer);
-        targetAtt.stunTimer = null;
-        targetAtt.stunned = false
         handleEnemyDeath(targetAtt);
       }
 
@@ -4917,6 +4890,7 @@ function enemyAttack(enemy, target) {
 
   return;
 }
+
 
 
     // Else normal behavior
