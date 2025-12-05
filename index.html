@@ -7235,12 +7235,9 @@ function handleInteraction(object) {
   if (object.action === 'lever' && object.id === 'leverblockade') {
   object.currentState = !object.currentState;
 
-  const targetLevelIndex = 21;
-
-  const targetLevel = levels[targetLevelIndex];
+  const targetLevel = levels[21];
   if (targetLevel) {
     targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'blockade');
-    
   }
 
   draw();
