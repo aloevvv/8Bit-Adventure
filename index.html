@@ -7193,6 +7193,10 @@ if (object.action === "recruit") {
   { speaker: '8-Bit', text: "Where are they? They should be somewhere near, I have to assume.", style: 'dialog' },
   { speaker: '8-Bit', text: "Oh... man, I hope nothing happened to them.", style: 'dialog' }
 ]);
+      if (object.action === "blockade") {
+      showDialog([
+  { speaker: '8-Bit', text: "There's boxes in my way.", style: 'dialog' }
+]);
       return;
     }
       if (object.action === "arcadekey") {
