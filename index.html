@@ -4884,6 +4884,7 @@ function enemyAttack(enemy, target) {
           targetAtt.stunned = true;
           setTimeout(() => { if (targetAtt) targetAtt.stunned = false; drawBattleUI(); }, ABILITIES.counter.stunMs);
           if (targetAtt.currentHp === 0) handleEnemyDeath(targetAtt);
+          targetAtt.stunned = false;
           drawBattleUI();
         }
       }
