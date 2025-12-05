@@ -5586,19 +5586,19 @@ initiateBattle = function(zoneType, zoneObject) {
     activeAlly = null;
   }
 
-  if (activeEnemies.length > 0 && activeEnemies[0].type === 'Dummy') {
-    showBattleDialog([
-      { speaker: '8-Bit', text: "Oh damn, it's been a while since I've brawled." },
-      { speaker: '8-Bit', text: "There's an attack button I think I gotta press." }
-    ]);
-  }
-
   selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
 
   if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
   enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
+  
+  if (activeEnemies.length > 0 && activeEnemies[0].type === 'Dummy') {
+    showBattleDialog([
+      { speaker: '8-Bit', text: "Oh damn, it's been a while since I've brawled." },
+      { speaker: '8-Bit', text: "There's an attack button I think I gotta press." }
+    ]);
+  }
 }
 
 function spawnRound(roundIdx) {
