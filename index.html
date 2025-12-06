@@ -597,6 +597,7 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
   user-select: none;
   z-index: 4000;
   text-align: center;
+  display: none;
 ">
   <div id="objective-title" style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Objective:</div>
   <div id="objective-text" style="font-size: 14px;">Explore the arcade</div>
@@ -2268,6 +2269,7 @@ function showDialog(textOrLines, idToMark, opts = {}) {
 playBtn.addEventListener('click', () => {
   // Hide title screen
   titleScreen.style.display = 'none';
+  objectiveBox.style.display = 'block';
   achievementsMap['played'].progress++;
   checkAchievements();
   updateAbilityButtonsUI();
