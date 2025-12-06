@@ -600,7 +600,7 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
   display: none;
 ">
   <div id="objective-title" style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Objective:</div>
-  <div id="objective-text" style="font-size: 14px;">Explore the arcade</div>
+  <div id="objective-text" style="font-size: 14px;">Explore the arcade area</div>
   <div id="objective-status" style="margin-top: 15px; font-size: 24px; color: #00FF00; display: none;">&#10003;</div>
 </div>
 
@@ -2073,12 +2073,11 @@ function completeObjective() {
   objectiveBox.style.backgroundColor = '#37eb00';
 }
 
-// Example usage: set initial objective
-setObjective("Explore the arcade");
+setObjective("Explore the arcade area");
 
 
 function Reach18() {
-  if (currentObjective === "Explore the arcade") {
+  if (currentObjective === "Explore the arcade area") {
     completeObjective();
     setTimeout(() => {
       setObjective("Search the house for a lever to open the gate!");
