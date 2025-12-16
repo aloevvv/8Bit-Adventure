@@ -1,10 +1,10 @@
 ```
 Projected Release Date:
-Demo - Late December
+Demo - Late December to Early January
 ```
 
 Bugs present:
-Allies don't retain XP if it's not equal to the XP they need to level up; lever doesn't work unless the canvas is out of focus
+Allies don't retain XP if it's not equal to the XP they need to level up
 ```
 Things I'm working on now:
 Obstacles
