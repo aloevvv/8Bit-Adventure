@@ -12,8 +12,9 @@ Levels
 ```
 ```
 This is a fangame for Brawl Stars!
+
 Do you prefer graphics over gameplay? Well, this game is not for you! 8-Bit's Adventure is
- a JRPG-styled game, featuring the journey of 8-Bit, as it grapples with loss, suddenly
+a JRPG-styled game, featuring the journey of 8-Bit, as it grapples with loss, suddenly
 thrust into a world full of chaos and despair. With allies that 8-Bit's unsure if it can
 really even trust. Choices will have to be made: will 8-Bit succumb to darkness?
 Is there still good left in the world?
