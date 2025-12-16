@@ -853,7 +853,7 @@ const enemyTypes = {
   Dummy: { name: "Dummy", maxHp: 32, damage: 1, xpReward: 3, behavior: "normalAttack" },
   Botling: { name: "Botling", maxHp: 10, damage: 1, xpReward: 2, behavior: "normalAttack" },
   Sniperbot: { name: "Sniper", maxHp: 50, damage: 1, xpReward: 5, behavior: "sniperAttack" },
-  Partybot: { name: "Sniper", maxHp: 80, damage: 1, xpReward: 7, behavior: "sniperAttack" },
+  Partybot: { name: "Sniper", maxHp: 100, damage: 1, xpReward: 7, behavior: "sniperAttack" },
   Puncherbot: { name: "Puncher", maxHp: 90, damage: 1, xpReward: 5, behavior: "normalAttack" },
   Mousebot: { name: "Quickbot", maxHp: 75, damage: 2, xpReward: 5, behavior: "normalAttack" },
   BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior", defaultResistances: {stun: true, poison:true }},
@@ -2222,6 +2222,92 @@ iceZones: [],
   {
     bgSrc: "friendhouse26_44.png",
     walls: [
+      { x: 231, y: 253, width: 177, height: 108 },
+{ x: 0, y: 0, width: 640, height: 20 },
+{ x: 0, y: 0, width: 20, height: 480 },
+{ x: 0, y: 460, width: 640, height: 20 },
+{ x: 491, y: 132, width: 130, height: 79 },
+{ x: 292, y: 377, width: 64, height: 64 },
+{ x: 0, y: 281, width: 220, height: 20 },
+    ],
+    doors: [
+    { x: 620, y: 0, width: 20, height: 480, destLevel: 41, destX: 50, destY: 381 }
+    ],
+    darkZones: [],
+    battleZones: [],
+    dialogZones: [],
+    interactables: []
+  },
+  {
+    bgSrc: "friendhouse27_45.png",
+    walls: [
+      { x: 0, y: 0, width: 230, height: 159 },
+      { x: 404, y: 0, width: 240, height: 159 },
+      { x: 0, y: 396, width: 640, height: 100 },
+    ],
+    doors: [
+    { x: 344, y: 440, width: 260, height: 40, destLevel: '23', destX: 483, destY: 50 }
+    ],
+    darkZones: [],
+    battleZones: [],
+    dialogZones: [],
+    interactables: []
+  },
+  {
+    bgSrc: "friendhouse28_46.png",
+    walls: [
+      { x: 0, y: 0, width: 40, height: 480 },
+    ],
+    doors: [
+    { x: 344, y: 440, width: 260, height: 40, destLevel: '23', destX: 483, destY: 50 }
+    ],
+    darkZones: [],
+    battleZones: [],
+    dialogZones: [],
+    interactables: []
+  },
+  {
+    bgSrc: "friendhouse29_47.png",
+    walls: [
+      { x: 0, y: 0, width: 40, height: 480 },
+    ],
+    doors: [
+    { x: 344, y: 440, width: 260, height: 40, destLevel: '23', destX: 483, destY: 50 }
+    ],
+    darkZones: [],
+    battleZones: [],
+    dialogZones: [],
+    interactables: []
+  },
+  {
+    bgSrc: "friendhouse30_48.png",
+    walls: [
+      { x: 0, y: 0, width: 40, height: 480 },
+    ],
+    doors: [
+    { x: 344, y: 440, width: 260, height: 40, destLevel: '23', destX: 483, destY: 50 }
+    ],
+    darkZones: [],
+    battleZones: [],
+    dialogZones: [],
+    interactables: []
+  },
+  {
+    bgSrc: "friendhouse31_49.png",
+    walls: [
+      { x: 0, y: 0, width: 40, height: 480 },
+    ],
+    doors: [
+    { x: 344, y: 440, width: 260, height: 40, destLevel: '23', destX: 483, destY: 50 }
+    ],
+    darkZones: [],
+    battleZones: [],
+    dialogZones: [],
+    interactables: []
+  },
+      {
+    bgSrc: "friendhouse32_50.png",
+    walls: [
       { x: 0, y: 0, width: 40, height: 480 },
     ],
     doors: [
@@ -2236,7 +2322,7 @@ iceZones: [],
 
 let currentLevelIndex = 0;
 let currentLevel = levels[currentLevelIndex];
-  // Assign unique IDs to walls for tracking
+ 
 levels.forEach(level => {
   level.walls.forEach((wall, idx) => {
     if (!wall.id) wall.id = `wall_${idx}`;
@@ -2247,7 +2333,7 @@ levels.forEach(level => {
   {
     id: 'played',
     name: 'Demo Player',
-    description: 'Played the demo? idk of the game!',
+    description: 'Played the demo of the game!',
     target: 1,      // set your number here
     progress: 0,
     unlocked: false,
@@ -2429,7 +2515,7 @@ function preloadImagesForLevel(levelIndex, onComplete) {
   // preload bg
   bgImg = new Image();
   bgImg.onload = () => {
-    // preload player sprite after bg (optional parallel)
+    // preload player sprite after bg
     if (img && img.complete) return onComplete();
     img = img || new Image();
     img.onload = () => onComplete();
@@ -2449,7 +2535,7 @@ function setObjective(text) {
   objectiveCompleted = false;
   objectiveTextEl.textContent = text;
   objectiveStatusEl.style.display = 'none';
-  objectiveBox.style.backgroundColor = '#0047ab'; // blue
+  objectiveBox.style.backgroundColor = '#0047ab'; 
 }
 
 function completeObjective() {
@@ -2469,7 +2555,7 @@ function Reach18() {
     }, 3000);
   }
 }
-// find first unseen dialog zone at a given world position
+
 function findDialogZone(checkX, checkY) {
   const hitboxX = checkX + (typeof hitboxOffsetX !== 'undefined' ? hitboxOffsetX : 0);
   const hitboxY = checkY + (typeof hitboxOffsetY !== 'undefined' ? hitboxOffsetY : 0);
