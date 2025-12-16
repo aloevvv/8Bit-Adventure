@@ -2502,26 +2502,25 @@ achievements.forEach(a => achievementsMap[a.id] = a);
   const titleScreen = document.getElementById('title-screen');
 const playBtn = document.getElementById('play-button');
   
-// Preload
+// Preload and spawn background + player at game start
+let bgImg = new Image();
+bgImg.src = 'arcade.png';
 const playerImg = new Image();
-playerImg.src = '8bit.png';
-
-const bgImages = {};
-levels.forEach((level, i) => {
-  const img = new Image();
-  img.src = level.bgSrc;
-  bgImages[i] = img;
-});
-
+playerImg.src = '8bit.png'; // keep your existing player path
 
 
 function preloadImagesForLevel(levelIndex, onComplete) {
-  const bg = bgImages[levelIndex];
-
-  if (bg.complete && playerImg.complete) {
-    onComplete();
-    return;
-  }
+  const level = levels[levelIndex];
+  // preload bg
+  bgImg = new Image();
+  bgImg.onload = () => {
+    // preload player sprite after bg
+    if (img && img.complete) return onComplete();
+    img = img || new Image();
+    img.onload = () => onComplete();
+    img.src = img.src || '8bit.png';
+  };
+  bgImg.src = level.bgSrc;
 }
 const objectiveBox = document.getElementById('objective-box');
 const objectiveTextEl = document.getElementById('objective-text');
@@ -9112,13 +9111,13 @@ canvas.addEventListener('keydown', function(e) {
     y = nextY;
 
     if (startedSlide) {
-      // slide started: skip normal post-move interactions (dialogs etc) and redraw
+    
       if (typeof updateHp === 'function') updateHp(playerStats.currentHp);
       draw();
       return;
     }
 
-    // dialog auto-trigger (autoShow only) - only when not sliding
+
     const dialogZone = findDialogZone(nextX, nextY);
     if (dialogZone && dialogZone.autoShow) {
       showDialog(dialogZone.text, dialogZone.id, { style: dialogZone.style || 'dialog', speaker: dialogZone.speaker || null });
