@@ -1681,18 +1681,7 @@ iceZones: [],
     darkZones: [],
     battleZones: [],
     dialogZones: [],
-    interactables: [
-      { 
-  id: "blockade",
-  name: "blockade",
-  x: 20, 
-  y: 100, 
-  width: 64, 
-  height: 64, 
-  action: "blockade"
-}
-
-    ]
+    interactables: []
   },
   {
     bgSrc: "friendhouse4_22.png",
@@ -2236,7 +2225,17 @@ iceZones: [],
     darkZones: [],
     battleZones: [],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      { 
+  id: "blockade",
+  name: "blockade",
+  x: 292, 
+  y: 377, 
+  width: 64, 
+  height: 64, 
+  action: "blockade"
+}
+    ]
   },
   {
     bgSrc: "friendhouse27_45.png",
@@ -7857,7 +7856,7 @@ function handleInteraction(object) {
   if (object.action === 'lever' && object.id === 'leverblockade') {
   object.currentState = !object.currentState;
 
-  const targetLevel = levels[21];
+  const targetLevel = levels[44];
   if (targetLevel) {
     targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'blockade');
   }
