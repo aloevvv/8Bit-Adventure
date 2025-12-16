@@ -2502,25 +2502,26 @@ achievements.forEach(a => achievementsMap[a.id] = a);
   const titleScreen = document.getElementById('title-screen');
 const playBtn = document.getElementById('play-button');
   
-// Preload and spawn background + player at game start
-let bgImg = new Image();
-bgImg.src = 'arcade.png';
+// Preload
 const playerImg = new Image();
-playerImg.src = '8bit.png'; // keep your existing player path
+playerImg.src = '8bit.png';
+
+const bgImages = {};
+levels.forEach((level, i) => {
+  const img = new Image();
+  img.src = level.bgSrc;
+  bgImages[i] = img;
+});
+
 
 
 function preloadImagesForLevel(levelIndex, onComplete) {
-  const level = levels[levelIndex];
-  // preload bg
-  bgImg = new Image();
-  bgImg.onload = () => {
-    // preload player sprite after bg
-    if (img && img.complete) return onComplete();
-    img = img || new Image();
-    img.onload = () => onComplete();
-    img.src = img.src || '8bit.png';
-  };
-  bgImg.src = level.bgSrc;
+  const bg = bgImages[levelIndex];
+
+  if (bg.complete && playerImg.complete) {
+    onComplete();
+    return;
+  }
 }
 const objectiveBox = document.getElementById('objective-box');
 const objectiveTextEl = document.getElementById('objective-text');
