@@ -365,6 +365,21 @@
   </p>
 </div>
 
+  <div id="prologue-overlay" style="
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: black;
+  z-index: 4000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+">
+  <img id="prologue-image" src="" alt="Prologue" style="max-width: 90vw; max-height: 80vh; border: 4px solid white; border-radius: 8px;" />
+  <button id="prologue-next" style="margin-top: 20px; font-family: 'Press Start 2P', sans-serif; padding: 10px 20px; cursor: pointer;">Next</button>
+</div>
+
 
   <canvas id="game" width="640" height="480" tabindex="0"></canvas>
 
@@ -2510,19 +2525,17 @@ achievements.forEach(a => achievementsMap[a.id] = a);
   const titleScreen = document.getElementById('title-screen');
 const playBtn = document.getElementById('play-button');
   
-// Preload and spawn background + player at game start
 let bgImg = new Image();
 bgImg.src = 'arcade.png';
 const playerImg = new Image();
-playerImg.src = '8bit.png'; // keep your existing player path
-
+playerImg.src = '8bit.png'; 
 
 function preloadImagesForLevel(levelIndex, onComplete) {
   const level = levels[levelIndex];
-  // preload bg
+  
   bgImg = new Image();
   bgImg.onload = () => {
-    // preload player sprite after bg
+    
     if (img && img.complete) return onComplete();
     img = img || new Image();
     img.onload = () => onComplete();
@@ -2622,7 +2635,7 @@ function applyDialogStyle(box, style) {
   }
 }
 function findNearbyDialogZone(px, py) {
-  // reuse existing findDialogZone but allow manual triggers (ignore autoShow if present)
+
   const level = currentLevel;
   if (!level || !level.dialogZones) return null;
   const hitboxX = px + (typeof hitboxOffsetX !== 'undefined' ? hitboxOffsetX : 0);
@@ -2650,11 +2663,11 @@ function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
   overlay.style.display = 'flex';
   overlay._markId = idToMark || null;
 
-  // Clear previous content
+  
   textDiv.innerHTML = '';
   applyDialogStyle(box, opts.style || 'dialog');
 
-  // Show main dialog text
+  
   const p = document.createElement('p');
   p.textContent = dialogText;
   textDiv.appendChild(p);
@@ -2742,31 +2755,54 @@ function showDialog(textOrLines, idToMark, opts = {}) {
 }
 
 
-// Play button handler
+const prologueOverlay = document.getElementById('prologue-overlay');
+const prologueImage = document.getElementById('prologue-image');
+const prologueNext = document.getElementById('prologue-next');
+
+const prologueImages = [
+  'prologue1.png',
+  'prologue2.png',
+  'prologue3.png',
+  'prologue4.png'
+];
+
+let prologueIndex = 0;
+
 playBtn.addEventListener('click', () => {
-  // Hide title screen
   titleScreen.style.display = 'none';
-  objectiveBox.style.display = 'block';
-  achievementsMap['played'].progress++;
-  checkAchievements();
-  updateAbilityButtonsUI();
-
-  // Set starting level and spawn coordinates (adjust if different)
-  currentLevelIndex = 0;
-  currentLevel = levels[currentLevelIndex];
-  x = typeof x === 'number' ? x : 150;
-  y = typeof y === 'number' ? y : 50;
-
-  // Preload necessary images then draw/start
-  preloadImagesForLevel(currentLevelIndex, () => {
-    // show background and player immediately after preload
-    draw();
-
-  });
 
 
-  draw();
+  prologueIndex = 0;
+  prologueImage.src = prologueImages[prologueIndex];
+  prologueOverlay.style.display = 'flex';
 });
+
+prologueNext.addEventListener('click', () => {
+  prologueIndex++;
+  if (prologueIndex < prologueImages.length) {
+    prologueImage.src = prologueImages[prologueIndex];
+  } else {
+    // End of prologue
+    prologueOverlay.style.display = 'none';
+
+
+    if (objectiveBox) objectiveBox.style.display = 'block';
+
+   
+    currentLevelIndex = 0;
+    currentLevel = levels[currentLevelIndex];
+    x = typeof x === 'number' ? x : 150;
+    y = typeof y === 'number' ? y : 50;
+
+    preloadImagesForLevel(currentLevelIndex, () => {
+      draw();
+      achievementsMap['played'].progress++;
+      checkAchievements();
+      updateAbilityButtonsUI();
+    });
+  }
+});
+
 
 const closedChestImg = new Image(); closedChestImg.src = "chest_closed.png";
 const openChestImg   = new Image(); openChestImg.src = "chest_open.png";
