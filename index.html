@@ -6149,6 +6149,13 @@ initiateBattle = function(zoneType, zoneObject) {
       { speaker: '8-Bit', text: "There's an attack button I think I gotta press." }
     ]);
   }
+  if (activeEnemies.length > 0 && activeEnemies[0].type === 'Partyguard') {
+    showBattleDialog([
+      { speaker: 'Bodyguard', text: "You shall not pass, brawler!" },
+      { speaker: '8-Bit', text: "Excuse me? You're the intruder here, not me, man." },
+      { speaker: 'Bodyguard', text: "Enough chat. The party must not be stopped." }
+    ]);
+  }
 }
 
 function spawnRound(roundIdx) {
