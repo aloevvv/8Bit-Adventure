@@ -2873,6 +2873,9 @@ drillImg.src = 'drill.png';
 const blockadeImg = new Image();
 blockadeImg.src = 'blockade.png';
 
+const partybotImg = new Image();
+partybotImg.src = 'partybot.png';
+
 const leverOnImg = new Image();
 leverOnImg.src = 'leveron.png';
 const leverOffImg = new Image();
@@ -8786,6 +8789,17 @@ if (gameSettings.showZones) {
     }
   }
 });
+      currentLevel.interactables.forEach(obj => {
+  if (obj.action === "partybot") {
+    if (partybotImg && partybotImg.complete) {
+      ctx.drawImage(partybotImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#ff00ff";
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
+
 
   // Draw levers and controllers
 (currentLevel.interactables || []).forEach(obj => {
