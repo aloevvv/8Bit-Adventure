@@ -7953,6 +7953,61 @@ function handleInteraction(object) {
   draw();
   return;
 }
+  if (object.name === "partybot" || object.id === "partybot") {
+
+    if (!gameFlags.birthdaybottalk) {
+      showDialog([
+        { speaker: 'Birthday Bot', text: "Please don't hurt me. It's my birthday, I just wanted to celebrate.", style: 'dialog' },
+        { speaker: '8-Bit', text: "You and your little gang destroyed my friend's house. I don't care what you're here for.", style: 'dialog' },
+        { speaker: 'Birthday Bot', text: "I'm just a kid, you aren't going to kill a kid, are you?", style: 'dialog' }
+      ]);
+      gameFlags.birthdaybottalk = true;
+      return;
+    }
+
+    if (gameFlags.birthdaybottalk && !gameFlags.birthdaybotkilled && !gameFlags.birthdaybotspared) {
+      showDialogWithOptions(
+        "I should make a choice.",
+        [
+          {
+            label: "Kill",
+            onSelect: () => {
+              gameFlags.birthdaybotkilled = true;
+              currentLevel.interactables = currentLevel.interactables.filter(o => o.id !== object.id);
+              showTemporaryText("You killed the birthday bot.");
+              draw();
+            }
+          },
+          {
+            label: "Spare",
+            onSelect: () => {
+              gameFlags.birthdaybotspared = true;
+              showDialog([
+                { speaker: 'Birthday Bot', text: "Thank you for sparing me.", style: 'dialog' },
+                { speaker: '8-Bit', text: "Eh, whatever man.", style: 'dialog' }
+              ]);
+            }
+          }
+        ],
+        object.id,
+        { style: 'dialog', speaker: '8-Bit' }
+      );
+      return;
+    }
+
+    if (gameFlags.birthdaybotspared) {
+      showDialog([
+        { speaker: 'Birthday Bot', text: "Thank you for sparing me.", style: 'dialog' },
+        { speaker: '8-Bit', text: "Eh, whatever man.", style: 'dialog' }
+      ]);
+      return;
+    }
+
+    if (gameFlags.birthdaybotkilled) {
+      showTemporaryText("You have killed the birthday bot.");
+      return;
+    }
+  }
   
 if (object.action === 'target_practice' && object.name === 'target_board') {
   openTargetPractice();
