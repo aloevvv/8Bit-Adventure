@@ -8107,6 +8107,14 @@ function handleInteraction(object) {
     ]);
     return;
   }
+
+  if (object.action === "birthdayinvited") {
+    showDialog([
+      { speaker: '8-Bit', text: "Invited.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Alright, who the hell is throwing a party in my buddy's house?!", style: 'dialog' }
+    ]);
+    return;
+  }
   if (object.action === 'lever' && object.id === 'leverblockade') {
   object.currentState = !object.currentState;
 
