@@ -8103,9 +8103,9 @@ function handleInteraction(object) {
 
     if (!gameFlags.birthdaybottalk) {
       showDialog([
-        { speaker: 'Birthday Bot', text: "Please don't hurt me. It's my birthday, I just wanted to celebrate.", style: 'dialog' },
+        { speaker: 'Birthday Bot', text: "Please don't hurt me. It's my birthday, I just wanted to celebrate.", style: 'npc' },
         { speaker: '8-Bit', text: "You and your little gang destroyed my friend's house. I don't care what you're here for.", style: 'dialog' },
-        { speaker: 'Birthday Bot', text: "I'm just a kid, you aren't going to kill a kid, are you?", style: 'dialog' }
+        { speaker: 'Birthday Bot', text: "I'm just a kid, you aren't going to kill a kid, are you?", style: 'npc' }
       ]);
       gameFlags.birthdaybottalk = true;
       return;
@@ -8129,7 +8129,7 @@ function handleInteraction(object) {
             onSelect: () => {
               gameFlags.birthdaybotspared = true;
               showDialog([
-                { speaker: 'Birthday Bot', text: "Thank you for sparing me.", style: 'dialog' },
+                { speaker: 'Birthday Bot', text: "Thank you for sparing me.", style: 'npc' },
                 { speaker: '8-Bit', text: "Eh, whatever man.", style: 'dialog' }
               ]);
             }
@@ -8143,7 +8143,7 @@ function handleInteraction(object) {
 
     if (gameFlags.birthdaybotspared) {
       showDialog([
-        { speaker: 'Birthday Bot', text: "Thank you for sparing me.", style: 'dialog' },
+        { speaker: 'Birthday Bot', text: "Thank you for sparing me.", style: 'npc' },
         { speaker: '8-Bit', text: "Eh, whatever man.", style: 'dialog' }
       ]);
       return;
