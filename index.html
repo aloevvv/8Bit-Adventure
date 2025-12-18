@@ -8113,6 +8113,20 @@ function handleInteraction(object) {
     ]);
     return;
   }
+  if (object.action === "controller") {
+    showDialog([
+      { speaker: '8-Bit', text: "I wish I could play.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Doesn't look like my friends are around anymore.", style: 'dialog' }
+    ]);
+    return;
+  }
+  if (object.action === "houseturrent") {
+    showDialog([
+      { speaker: '8-Bit', text: "Ha, it's fake.", style: 'dialog' },
+      { speaker: '8-Bit', text: "These guys couldn't even get themselves a real turrent.", style: 'dialog' }
+    ]);
+    return;
+  }
 
   if (object.action === "birthdayinvited") {
     showDialog([
