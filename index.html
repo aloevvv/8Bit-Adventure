@@ -2522,7 +2522,7 @@ iceZones: [],
     walls: [
       { x: 0, y: 0, width: 20, height: 285 },
   { x: 0, y: 0, width: 315, height: 20 },
-      { x: 485, width: 180, height: 20 },
+      { x: 485, y: 0, width: 180, height: 20 },
       { x: 0, y: 460, width: 640, height: 20 },
   { x: 620, y: 0, width: 20, height: 480 },
   { x: 38, y: 49, width: 122, height: 95 },
@@ -2540,14 +2540,29 @@ iceZones: [],
   {
     bgSrc: "friendhouse2_6_56.png",
     walls: [
-      { x: 0, y: 0, width: 40, height: 480 },
+      { x: 0, y: 0, width: 640, height: 20 },
+      { x: 0 y: 460, width: 640, height: 20 },
     ],
     doors: [
-    { x: 344, y: 440, width: 260, height: 40, destLevel: '23', destX: 483, destY: 50 }
+    { x: 620, y: 288, width: 260, height: 40, destLevel: '55', destX: 50, destY: 350 }
     ],
     darkZones: [],
     battleZones: [],
-    dialogZones: [],
+    dialogZones: [
+      {
+    id: 'crashingtheparty',
+    x: 0, y: 0, width: 640, height: 480,
+    text: [
+      { speaker: 'Robot', text: "There's a brawler!", style: 'npc' },
+      { speaker: 'Crowd',  text: "...", style: 'npc' },
+      { speaker: 'Robot', text: "Oh my god!", style: 'npc' },
+      { speaker: 'Robot',  text: "Protect the kid!", style: 'npc' },
+      { speaker: 'Robot', text: "Get them!", style: 'npc' }
+    ],
+    autoShow: true,
+    style: 'dialog'
+  }
+    ],
     interactables: []
   },
   {
