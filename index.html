@@ -7856,21 +7856,29 @@ const wiresPopupHtml = `
   z-index:5000; color:white; font-family:'Press Start 2P',sans-serif; 
   padding:20px; box-sizing:border-box; user-select:none;">
   <h3>Wires</h3>
-  <div style="display:flex; justify-content:space-between; max-width:600px; margin:auto;">
+  <div style="display:flex; justify-content:space-between; width:640px; margin:auto;">
+    
     <div id="wires-left" style="display:flex; flex-direction:column; gap:20px;">
-      <div draggable="true" class="wire red" data-wire="red" style="width:50px; height:20px; background:red; cursor:pointer;">Red</div>
-      <div draggable="true" class="wire green" data-wire="green" style="width:50px; height:20px; background:green; cursor:pointer;">Green</div>
-      <div draggable="true" class="wire yellow" data-wire="yellow" style="width:50px; height:20px; background:yellow; cursor:pointer;">Yellow</div>
-      <div draggable="true" class="wire blue" data-wire="blue" style="width:50px; height:20px; background:blue; cursor:pointer;">Blue</div>
+      <div draggable="true" class="wire red" data-wire="red" 
+           style="width:50px; height:20px; background:red; cursor:pointer;">Red</div>
+      <div draggable="true" class="wire green" data-wire="green" 
+           style="width:50px; height:20px; background:green; cursor:pointer;">Green</div>
+      <div draggable="true" class="wire yellow" data-wire="yellow" 
+           style="width:50px; height:20px; background:yellow; cursor:pointer;">Yellow</div>
+      <div draggable="true" class="wire blue" data-wire="blue" 
+           style="width:50px; height:20px; background:blue; cursor:pointer;">Blue</div>
     </div>
+    
     <div id="wires-right" style="display:flex; flex-direction:column; gap:20px;">
-      <div class="wire-slot" data-wire="red" style="width:70px; height:20px; border:2px solid red;">Connect Red</div>
-      <div class="wire-slot" data-wire="green" style="width:70px; height:20px; border:2px solid green;">Connect Green</div>
-      <div class="wire-slot" data-wire="yellow" style="width:70px; height:20px; border:2px solid yellow;">Connect Yellow</div>
-      <div class="wire-slot" data-wire="blue" style="width:70px; height:20px; border:2px solid blue;">Connect Blue</div>
+      <div class="wire-slot" data-wire="red"    style="width:70px; height:20px; border:2px solid red;">Connect</div>
+      <div class="wire-slot" data-wire="blue"   style="width:70px; height:20px; border:2px solid blue;">Connect</div>
+      <div class="wire-slot" data-wire="green"  style="width:70px; height:20px; border:2px solid green;">Connect</div>
+      <div class="wire-slot" data-wire="yellow" style="width:70px; height:20px; border:2px solid yellow;">Connect</div>
     </div>
   </div>
-  <button id="wires-close-btn" disabled style="margin-top:20px; font-family:'Press Start 2P'; padding: 8px 16px;">Close</button>
+  
+  <button id="wires-close-btn" disabled 
+          style="margin-top:20px; font-family:'Press Start 2P'; padding:8px 16px;">Close</button>
 </div>
 `;
 document.body.insertAdjacentHTML('beforeend', wiresPopupHtml);
