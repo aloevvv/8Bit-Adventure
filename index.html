@@ -9106,28 +9106,16 @@ function saveToSlot(slotNumber) {
   const allInteractables = levels.map(level => (level.interactables || []).map(obj => ({ ...obj })));
   const saveData = {
     playerStats,
-  inventory: Array.from(inventory.entries()),
-  currentLevelIndex,
-  playerPosition: { x, y },
-  allInteractables,
-  shownDialogs: Array.from(shownDialogs),
-  alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
-    id: a.id,
-    level: a.level,
-    xp: a.xp,
-    xpToNextLevel: a.xpToNextLevel,
-    baseMaxHp: a.baseMaxHp,
-    baseDamage: a.baseDamage
-  })),
-  unlockedAllies: Array.from(unlockedAllies),
-  equippedAllyId,
-  removedWallIds: Array.from(removedWallIds),
-};
-  saveData.achievements = achievements.map(a => ({
-  id: a.id,
-  progress: a.progress,
-  unlocked: a.unlocked
-}));
+    inventory: Array.from(inventory.entries()),
+    currentLevelIndex,
+    playerPosition: { x, y },
+    allInteractables,
+    shownDialogs: Array.from(shownDialogs),
+    unlockedAllies: Array.from(unlockedAllies),
+    equippedAllyId,
+    removedWallIds: Array.from(removedWallIds),
+    settings: gameSettings
+  };
   localStorage.setItem(key, JSON.stringify(saveData));
   showTemporaryText(`Saved to slot ${slotNumber}`);
 }
