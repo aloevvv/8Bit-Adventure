@@ -8238,6 +8238,7 @@ function handleInteraction(object) {
             onSelect: () => {
               gameFlags.birthdaybotkilled = true;
               currentLevel.interactables = currentLevel.interactables.filter(o => o.id !== object.id);
+              currentLevel.walls = currentLevel.walls.filter(w => w.id !== 'partywall');
               showTemporaryText("You killed the birthday bot.");
               draw();
             }
@@ -8246,6 +8247,7 @@ function handleInteraction(object) {
             label: "Spare",
             onSelect: () => {
               gameFlags.birthdaybotspared = true;
+              currentLevel.walls = currentLevel.walls.filter(w => w.id !== 'partywall');
               showDialog([
                 { speaker: 'Birthday Bot', text: "Thank you for sparing me.", style: 'npc' },
                 { speaker: '8-Bit', text: "Eh, whatever man.", style: 'dialog' }
