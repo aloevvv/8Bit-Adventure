@@ -2474,7 +2474,20 @@ iceZones: [],
     battleZones: [
       { x: 513, y: 274, width: 80, height: 80, encounter: [{ type: "Partyguard" }, {type: "Partyguard"}, {type: "Partybot"}], sprite: 'bodyguard'}
     ],
-    dialogZones: [],
+    dialogZones: [
+      {
+    id: 'partyguard',
+    x: 0, y: 0, width: 640, height: 480,
+    text: [
+      { speaker: 'Bodyguard', text: "Halt there right now!", style: 'npc' },
+      { speaker: 'Bodyguard',  text: "Don't take a step closer.", style: 'npc' },
+      { speaker: '8-Bit', text: "Or what? What are you protecting, big guy?", style: 'dialog' },
+      { speaker: 'Bodyguard',  text: "Come and find out.", style: 'npc' }
+    ],
+    autoShow: true,
+    style: 'dialog'
+  }
+    ],
     interactables: [
       { name: 'houseturrent', x: 105, y: 248, width: 80, height: 80, action: 'houseturrent' },
       { name: 'houseturrent', x: 161, y: 90, width: 80, height: 80, action: 'houseturrent' }
