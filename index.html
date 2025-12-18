@@ -7991,7 +7991,6 @@ function onWireDrop(e) {
     const closeBtn = popup.querySelector('#wires-close-btn');
     if (wiresState.connected.size === 4) {
       closeBtn.disabled = false;
-      showTemporaryText('All wires connected! You can close now.');
     }
   }
   e.currentTarget.style.backgroundColor = 'transparent';
