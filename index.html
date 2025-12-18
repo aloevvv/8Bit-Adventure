@@ -1519,7 +1519,17 @@ iceZones: [],
     darkZones: [],
     battleZones: [],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      {
+  id: 'wires',
+  name: 'wires',
+  x: 200,
+  y: 150,
+  width: 32,
+  height: 32,
+  action: 'wires'
+}
+    ]
   },
   {
     bgSrc: "arcade_17.png",
@@ -7836,6 +7846,154 @@ function doCleanse() {
   // initial render
   renderShopItems();
 })();
+
+      // ----amogus wires
+
+  
+const wiresPopupHtml = `
+<div id="wires-popup" style="
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+  z-index:5000; color:white; font-family:'Press Start 2P',sans-serif; 
+  padding:20px; box-sizing:border-box; user-select:none;">
+  <h3>Wires</h3>
+  <div style="display:flex; justify-content:space-between; max-width:600px; margin:auto;">
+    <div id="wires-left" style="display:flex; flex-direction:column; gap:20px;">
+      <div draggable="true" class="wire red" data-wire="red" style="width:50px; height:20px; background:red; cursor:pointer;">Red</div>
+      <div draggable="true" class="wire green" data-wire="green" style="width:50px; height:20px; background:green; cursor:pointer;">Green</div>
+      <div draggable="true" class="wire yellow" data-wire="yellow" style="width:50px; height:20px; background:yellow; cursor:pointer;">Yellow</div>
+      <div draggable="true" class="wire blue" data-wire="blue" style="width:50px; height:20px; background:blue; cursor:pointer;">Blue</div>
+    </div>
+    <div id="wires-right" style="display:flex; flex-direction:column; gap:20px;">
+      <div class="wire-slot" data-wire="red" style="width:70px; height:20px; border:2px solid red;">Connect Red</div>
+      <div class="wire-slot" data-wire="green" style="width:70px; height:20px; border:2px solid green;">Connect Green</div>
+      <div class="wire-slot" data-wire="yellow" style="width:70px; height:20px; border:2px solid yellow;">Connect Yellow</div>
+      <div class="wire-slot" data-wire="blue" style="width:70px; height:20px; border:2px solid blue;">Connect Blue</div>
+    </div>
+  </div>
+  <button id="wires-close-btn" disabled style="margin-top:20px; font-family:'Press Start 2P'; padding: 8px 16px;">Close</button>
+</div>
+`;
+document.body.insertAdjacentHTML('beforeend', wiresPopupHtml);
+
+
+let wiresState = {
+  connected: new Set(),
+  draggingWire: null
+};
+
+
+function openWires() {
+  wiresState.connected.clear();
+  wiresState.draggingWire = null;
+
+  const popup = document.getElementById('wires-popup');
+  const closeBtn = document.getElementById('wires-close-btn');
+
+  
+  const wires = popup.querySelectorAll('#wires-left .wire');
+  wires.forEach(w => {
+    w.draggable = true;
+    w.style.opacity = '1';
+  });
+
+  
+  const slots = popup.querySelectorAll('.wire-slot');
+  slots.forEach(slot => {
+    slot.textContent = `Connect ${capitalize(slot.dataset.wire)}`;
+    slot.style.backgroundColor = 'transparent';
+  });
+
+  closeBtn.disabled = true;
+  closeBtn.onclick = () => {
+    
+    if (currentLevel && currentLevel.walls) {
+      currentLevel.walls = currentLevel.walls.filter(wall => wall.id !== 'blocker');
+    }
+    popup.style.display = 'none';
+    draw();
+  };
+
+  popup.style.display = 'flex';
+  draw();
+}
+
+
+function setupWiresListeners() {
+  const popup = document.getElementById('wires-popup');
+  if (!popup) return;
+
+  const wires = popup.querySelectorAll('#wires-left .wire');
+  wires.forEach(wire => {
+    wire.addEventListener('dragstart', onWireDragStart);
+  });
+
+  const slots = popup.querySelectorAll('.wire-slot');
+  slots.forEach(slot => {
+    slot.addEventListener('dragover', onWireDragOver);
+    slot.addEventListener('dragleave', onWireDragLeave);
+    slot.addEventListener('drop', onWireDrop);
+  });
+}
+
+
+setupWiresListeners();
+function onWireDragStart(e) {
+  wiresState.draggingWire = e.target.dataset.wire;
+  e.dataTransfer.setData('text/plain', wiresState.draggingWire);
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onWireDragOver(e) {
+  e.preventDefault();
+  const slotWire = e.currentTarget.dataset.wire;
+  if (wiresState.draggingWire === slotWire) {
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.style.backgroundColor = slotWire;
+  } else {
+    e.dataTransfer.dropEffect = 'none';
+    e.currentTarget.style.backgroundColor = 'transparent';
+  }
+}
+
+function onWireDragLeave(e) {
+  e.currentTarget.style.backgroundColor = 'transparent';
+}
+
+function onWireDrop(e) {
+  e.preventDefault();
+  const slotWire = e.currentTarget.dataset.wire;
+  const draggedWire = e.dataTransfer.getData('text/plain');
+
+  if (draggedWire === slotWire && !wiresState.connected.has(slotWire)) {
+    wiresState.connected.add(slotWire);
+
+    
+    const popup = document.getElementById('wires-popup');
+    const wireEl = popup.querySelector(`#wires-left .wire[data-wire="${slotWire}"]`);
+    if (wireEl) {
+      wireEl.draggable = false;
+      wireEl.style.opacity = '0.4';
+    }
+
+    
+    e.currentTarget.textContent = `${capitalize(slotWire)} Connected`;
+    e.currentTarget.style.backgroundColor = slotWire;
+
+    
+    const closeBtn = popup.querySelector('#wires-close-btn');
+    if (wiresState.connected.size === 4) {
+      closeBtn.disabled = false;
+      showTemporaryText('All wires connected! You can close now.');
+    }
+  }
+  e.currentTarget.style.backgroundColor = 'transparent';
+  wiresState.draggingWire = null;
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
   
   // ---------- Target Practice Mini-game ----------
 (function installTargetPractice() {
@@ -8171,6 +8329,11 @@ function handleInteraction(object) {
       { speaker: '8-Bit', text: "Oh, yeah, it's a key.", style: 'dialog' },
       { speaker: '8-Bit', text: "I'm going to leave it there.", style: 'dialog' }
     ]);
+    return;
+  }
+
+  if (object.action === 'wires') {
+    openWires();
     return;
   }
 
