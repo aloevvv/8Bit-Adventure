@@ -8487,6 +8487,34 @@ function handleInteraction(object) {
     return;
   }
 
+  if (object.action === "arcadegatekeeper") {
+    showDialog([
+      { speaker: 'Guard', text: "Hey man, the way's blocked.", style: 'npc' },
+      { speaker: '8-Bit', text: "Can't you let me go then?", style: 'dialog' },
+      { speaker: 'Guard', text: "Nah, you don't look very infected to me, sorry.", style: 'npc' },
+      { speaker: 'Guard', text: "I just don't let regular brawlers in, you see.", style: 'npc' },
+      { speaker: 'Guard', text: "I'd fight you, but I'm all by myself.", style: 'npc' },
+      { speaker: 'Guard', text: "You can find some other way in, I don't mind.", style: 'npc' }
+    ]);
+    gameFlags.arcadegatetalk = true;
+    reach18();
+    return;
+  }
+
+if (object.action === "open_door" && object.id === "friendhousedoor") {
+  if (!gameFlags.arcadegatetalk) {
+    showDialog([
+      { speaker: '8-Bit', text: "It seems like I can't open the door.", style: 'dialog' }
+    ]);
+    return;
+  }
+
+  loadLevel(object.destLevel, object.destX, object.destY);
+  draw();
+  return;
+}
+
+
   if (object.action === 'wires') {
     openWires();
     return;
@@ -8665,11 +8693,11 @@ if (object.action === 'lever_controller') {
   if (object.requiresKeycard) {
     if ((inventory.get('keycard') || 0) > 0) {
       showTemporaryText("You used a keycard to activate this.");
-      // Implement whatever action keycard triggers here, e.g., open door, disable alarm
+     
       if (object.action === 'open_door') {
         loadLevel(object.destLevel, object.destX, object.destY);
       }
-      // Remove or disable object after use if needed
+    
       currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
       draw();
     } else {
