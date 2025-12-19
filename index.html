@@ -8584,6 +8584,18 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
   draw();
   return;
 }
+      if (object.action === "open_door" && object.id === "cardoor") {
+  if (!gameFlags.carpass) {
+    showDialog([
+      { speaker: 'Bot', text: "Hey asshole! Fight us first!", style: 'npc' }
+    ]);
+    return;
+  }
+
+  loadLevel(object.destLevel, object.destX, object.destY);
+  draw();
+  return;
+}
 
 
   if (object.action === 'wires') {
