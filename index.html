@@ -8996,27 +8996,26 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
   updateStamina(playerStats.currentStamina - staminaCost);
 
   if (equippedWeapon === "virus") {
-    // Virus weapon special attack: example - hits all enemies with  damage + poison effect
+    
     activeEnemies.forEach(enemy => {
       enemy.currentHp -= playerStats.damage * 30;
       if (enemy.currentHp < 0) enemy.currentHp = 0;
 
-      // Apply poison if not boss
+     
       if (!enemy.isBoss && !enemy.poisoned) {
         enemy.poisoned = false;
-        // Start poison interval here similar to poison vial effect
-        // (You can reuse your poison vial code here)
+       
       }
     });
   } else {
-    // Default special attack: damage all enemies with 20x damage (as your current code)
+    
     activeEnemies.forEach(enemy => {
       enemy.currentHp -= playerStats.damage * 20;
       if (enemy.currentHp < 0) enemy.currentHp = 0;
     });
   }
 
-  // Remove dead enemies
+  
   activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
 
   if (activeEnemies.length === 0) {
@@ -9029,7 +9028,7 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
   drawPlayerBattleStatus();
 });
 
-// Handle enemy selection click
+
 document.getElementById('enemy-display').addEventListener('click', (event) => {
   const button = event.target.closest('.enemy-target');
   if (button) {
@@ -9038,7 +9037,7 @@ document.getElementById('enemy-display').addEventListener('click', (event) => {
   }
 });
 
-// Stats popup toggle
+
 document.getElementById('stats-button').addEventListener('click', () => {
   if (statsPopup.style.display === 'none') {
     updateStatsPopup();
@@ -9050,7 +9049,7 @@ document.getElementById('stats-button').addEventListener('click', () => {
 
 updateHp(playerStats.currentHp);
 
-// Inventory button in battle toggle
+
 document.getElementById('inventory-battle-button').addEventListener('click', () => {
   const inventoryPopupBattle = document.getElementById('inventory-battle-popup');
   if (inventoryPopupBattle.style.display === 'none') {
@@ -9068,7 +9067,7 @@ if (dialogNextBtn) {
     const textDiv = document.getElementById('dialog-text');
     const box = document.getElementById('dialog-box');
 
-    // 1) Battle dialog queue takes priority
+    
     if (Array.isArray(_battleDialogQueue) && _battleDialogQueue.length > 0) {
       const line = _battleDialogQueue.shift();
       applyDialogStyle(box, line.style || 'dialog');
@@ -9077,8 +9076,6 @@ if (dialogNextBtn) {
       return;
     }
 
-    // 2) Normal dialog queue (try common variable names safely)
-    // Your project used several names in different places; check them in order.
     const normalQueue = (typeof dialogQueue !== 'undefined' && Array.isArray(dialogQueue)) ? dialogQueue
                       : (typeof _dialogQueue !== 'undefined' && Array.isArray(_dialogQueue)) ? _dialogQueue
                       : (typeof _dialogQueue_ !== 'undefined' && Array.isArray(_dialogQueue_)) ? _dialogQueue_
@@ -9092,14 +9089,14 @@ if (dialogNextBtn) {
       return;
     }
 
-    // 3) Nothing left to show -> close overlay and mark shown dialog id if present
+    
     const id = overlay._markId;
     overlay._markId = null;
     overlay.style.display = 'none';
     draw();
     if (id) shownDialogs.add(id);
 
-    // 4) If we were in battle-dialog mode, resume battle timers and refresh UI
+    
     if (inBattle) {
       resumeBattleTimersAfterDialog();
       drawBattleUI();
