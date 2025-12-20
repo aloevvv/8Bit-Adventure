@@ -1912,8 +1912,21 @@ iceZones: [],
       { x: 374, y: 460, width: 200, height: 20, destLevel: '30', destX: 444, destY: 50 }
     ],
     darkZones: [],
-    battleZones: [],
-    dialogZones: [],
+    battleZones: [
+      { x: 128, y: 68, width: 64, height: 64, encounter: [{ type: "Partybot" }], sprite: 'fail'}
+    ],
+    dialogZones: [
+      {
+    id: 'housebathroomi',
+    x: 0, y: 0, width: 640, height: 480,
+    text: [
+      { speaker: 'Bot', text: "Oi lad! I'm trying to take a shit 'ere!", style: 'npc' },
+      { speaker: '8-Bit',  text: "Hey, not my fault this place has no doors.", style: 'dialog' }
+    ],
+    autoShow: true,
+    style: 'dialog'
+  }
+    ],
     interactables: []
   },
   {
@@ -8771,6 +8784,27 @@ function handleInteraction(object) {
     showDialog([
       { speaker: '8-Bit', text: "Oh, yeah, it's a key.", style: 'dialog' },
       { speaker: '8-Bit', text: "I'm going to leave it there.", style: 'dialog' }
+    ]);
+    return;
+  }
+  if (object.action === "friendhousenewspaper") {
+    showDialog([
+      { speaker: '8-Bit', text: "It, uh, says:", style: 'dialog' },
+      { speaker: '8-Bit', text: "Reports show more battles won by the victorious legion of robots!", style: 'dialog' },
+      { speaker: '8-Bit', text: "5 more infected in the span of a day!", style: 'dialog' }
+    ]);
+    return;
+  }
+  if (object.action === "friendhousecake") {
+    showDialog([
+      { speaker: '8-Bit', text: "It's so big...", style: 'dialog' },
+      { speaker: '8-Bit', text: "I wanna eat it.", style: 'dialog' }
+    ]);
+    return;
+  }
+  if (object.action === "television") {
+    showDialog([
+      { speaker: '8-Bit', text: "The television isn't on.", style: 'dialog' }
     ]);
     return;
   }
