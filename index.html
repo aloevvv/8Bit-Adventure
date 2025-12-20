@@ -2803,7 +2803,18 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [],
-    dialogZones: [],
+    dialogZones: [
+      {
+    id: 'carlever',
+    x: 0, y: 0, width: 640, height: 480,
+    text: [
+      { speaker: '8-Bit', text: "You know, the top part of that little fence looks weak enough that I could break somehow.", style: 'dialog' },
+      { speaker: '8-Bit',  text: "Is this the lever that I need to pass the gate?", style: 'dialog' },
+    ],
+    autoShow: true,
+    style: 'dialog'
+  }
+    ],
     interactables: [
       { name: "wires", x: 275, y: 325, width: 235, height: 160, action: "wires" },
       {
