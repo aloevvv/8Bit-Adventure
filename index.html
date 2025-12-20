@@ -8318,6 +8318,7 @@ function openWires() {
   closeBtn.onclick = () => {
     
     if (currentLevel && currentLevel.walls) {
+      removedWallIds.add('blocker'); 
       currentLevel.walls = currentLevel.walls.filter(wall => wall.id !== 'blocker');
     }
     popup.style.display = 'none';
@@ -8838,6 +8839,8 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
   if (object.action === 'lever' && object.id === 'leverblockade') {
   object.currentState = !object.currentState;
 
+     toggleWallById('wallblockade', false, 44); 
+    
   const targetLevel = levels[44];
   if (targetLevel) {
     targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'blockade');
@@ -8869,6 +8872,7 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
             onSelect: () => {
               gameFlags.birthdaybotkilled = true;
               currentLevel.interactables = currentLevel.interactables.filter(o => o.id !== object.id);
+              removedWallIds.add('partywall'); 
               currentLevel.walls = currentLevel.walls.filter(w => w.id !== 'partywall');
               showTemporaryText("You killed the birthday bot.");
               draw();
@@ -8878,6 +8882,7 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
             label: "Spare",
             onSelect: () => {
               gameFlags.birthdaybotspared = true;
+              removedWallIds.add('partywall'); 
               currentLevel.walls = currentLevel.walls.filter(w => w.id !== 'partywall');
               showDialog([
                 { speaker: 'Birthday Bot', text: "Thank you for sparing me.", style: 'npc' },
