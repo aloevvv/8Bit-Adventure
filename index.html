@@ -9961,6 +9961,9 @@ function saveGame() {
   playerPosition: { x, y },
   allInteractables,
   shownDialogs: Array.from(shownDialogs),
+    gameFlags: gameFlags, 
+    currentObjective: currentObjective,
+    objectiveCompleted: objectiveCompleted,
   alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
     id: a.id,
     level: a.level,
@@ -9998,6 +10001,13 @@ function loadGame() {
     inventory.clear();
     saveData.inventory.forEach(([key, value]) => inventory.set(key, value));
 
+    if (saveData.gameFlags) {
+      Object.assign(gameFlags, saveData.gameFlags);
+    }
+    if (saveData.currentObjective) {
+      setObjective(saveData.currentObjective);
+      if (saveData.objectiveCompleted) completeObjective();
+    }
     // Restore interactables for all levels
     if (Array.isArray(saveData.allInteractables)) {
   saveData.allInteractables.forEach((interactablesArr, index) => {
