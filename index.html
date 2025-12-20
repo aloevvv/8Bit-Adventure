@@ -1896,9 +1896,13 @@ iceZones: [],
     { x: 167, y: 460, width: 300, height: 20, destLevel: '31', destX: 277, destY: 50 }
     ],
     darkZones: [],
-    battleZones: [],
+    battleZones: [
+      { x: 38, y: 145, width: 80, height: 80, encounter: [{ type: "Partybot" }, {type: "Partybot"}], sprite: 'fail'}
+    ],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      { name: 'friendhousenewspaper', x: 368, y: 120, width: 120, height: 114, action: 'friendhousenewspaper' }
+    ]
   },
   {
     bgSrc: "friendhouse11_29.png",
@@ -1963,7 +1967,9 @@ iceZones: [],
     { x: 150, y: 460, width: 350, height: 20, destLevel: '32', destX: 282, destY: 50 }
     ],
     darkZones: [],
-    battleZones: [],
+    battleZones: [
+      { x: 210, y: 203, width: 80, height: 80, encounter: [{ type: "Partybot" }, {type: "Partybot"}, {type: "Partybot"}], sprite: 'fail'}
+    ],
     dialogZones: [],
     interactables: []
   },
