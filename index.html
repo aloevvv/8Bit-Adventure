@@ -8824,6 +8824,20 @@ function handleInteraction(object) {
     ]);
     return;
   }
+  if (object.action === "clothes") {
+    showDialog([
+      { speaker: '8-Bit', text: "These are just some regular clothes.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Nothing special about them.", style: 'dialog' }
+    ]);
+    return;
+  }
+  if (object.action === "friendhousecrack") {
+    showDialog([
+      { speaker: '8-Bit', text: "I don't like this crack on the floor.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Can't enter it, though.", style: 'dialog' }
+    ]);
+    return;
+  }
   if (object.action === "television") {
     showDialog([
       { speaker: '8-Bit', text: "The television isn't on.", style: 'dialog' }
