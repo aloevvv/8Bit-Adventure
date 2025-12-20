@@ -808,7 +808,7 @@ inventory.set("driftwood", 0);
 
 inventory.set("bolts", 5);
   
-inventory.set("hammer", 0);
+inventory.set("hammer", 1);
 inventory.set("laser_cutter", 0);
 inventory.set("raft", 0);
 inventory.set("keycard", 0);
@@ -9969,7 +9969,7 @@ function loadGame() {
     }
   });
 }
-//rebuildWalls();
+rebuildWalls();
 
     loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
     
@@ -9977,9 +9977,9 @@ function loadGame() {
   removedWallIds = new Set(saveData.removedWallIds);
 }
 
-// Reset walls to original full set from baseWalls or initial levels
+
 levels.forEach(level => {
-  level.walls = level.walls.map(w => ({ ...w })); // shallow copy to reset if needed
+  level.walls = level.walls.map(w => ({ ...w }));
   level.walls = level.walls.filter(wall => !removedWallIds.has(wall.id));
 });
     if (Array.isArray(saveData.shownDialogs)) {
