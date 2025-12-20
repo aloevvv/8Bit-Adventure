@@ -3962,13 +3962,22 @@ function drawGeneralInventory() {
 function findBattleZone(checkX, checkY) {
   const hitboxX = checkX + hitboxOffsetX;
   const hitboxY = checkY + hitboxOffsetY;
+  
   if (!currentLevel.battleZones) return null;
+  
   for (const zone of currentLevel.battleZones) {
+    const r = zone.interactRect || { 
+      x: zone.x, 
+      y: zone.y, 
+      width: zone.width, 
+      height: zone.height 
+    };
+
     if (
-      hitboxX < zone.x + zone.width &&
-      hitboxX + hitboxWidth > zone.x &&
-      hitboxY < zone.y + zone.height &&
-      hitboxY + hitboxHeight > zone.y
+      hitboxX < r.x + r.width &&
+      hitboxX + hitboxWidth > r.x &&
+      hitboxY < r.y + r.height &&
+      hitboxY + hitboxHeight > r.y
     ) {
       return zone;
     }
@@ -9648,7 +9657,7 @@ function draw() {
   if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
     ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
   } else {
-    // optional: fill a temporary background so canvas isn't visually stale
+    
     ctx.fillStyle = "#737373";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
@@ -9661,7 +9670,7 @@ function draw() {
     if (!zone.sprite) return;
     const sprite = zoneSprites[zone.sprite];
     if (!sprite) return;
-    // determine dest rect: scale down or up as you like
+    
     const spriteW = Math.min(zone.width, 100); // cap to avoid oversized sprites
     const spriteH = Math.min(zone.height, 100);
     const destX = zone.x + (zone.width - spriteW) / 2;
@@ -9669,7 +9678,7 @@ function draw() {
     if (sprite.complete && sprite.naturalWidth > 0) {
       ctx.drawImage(sprite, destX, destY, spriteW, spriteH);
     } else {
-      // fallback visual while sprite loads
+      
       ctx.fillStyle = 'rgba(255,0,0,0.0)';
       ctx.fillRect(destX, destY, spriteW, spriteH);
     }
@@ -9683,7 +9692,7 @@ function draw() {
   }
   ctx.fillStyle = "rgba(0,0,0,0.0)";
   ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
-  // debug: draw player hitbox & label when zones are visible
+  
 if (window.gameSettings && window.gameSettings.showZones) {
   ctx.save();
   ctx.strokeStyle = 'yellow';
@@ -9700,7 +9709,7 @@ if (window.gameSettings && window.gameSettings.showZones) {
     const startY = canvas.height - 100;
     wrapText(ctx, tempText, canvas.width / 2, startY, maxWidth, lineHeight);
   }
-// in draw(), after drawing normal walls and interactables add:
+
 if (gameSettings.showZones) {
   // walls outline
   ctx.save();
@@ -9717,7 +9726,8 @@ if (gameSettings.showZones) {
   // battle zones
   ctx.strokeStyle = 'rgba(255,0,0,0.9)';
   (currentLevel.battleZones || []).forEach(z => {
-    ctx.strokeRect(z.x + 0.5, z.y + 0.5, z.width, z.height);
+    const r = z.interactRect || { x: z.x, y: z.y, width: z.width, height: z.height };
+    ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.width, r.height);
   });
   ctx.restore();
 }
