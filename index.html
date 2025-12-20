@@ -3015,6 +3015,8 @@ iceZones: [],
 
 let currentLevelIndex = 0;
 let currentLevel = levels[currentLevelIndex];
+
+  const baseWallsPerLevel = levels.map(level => level.walls.map(w => ({ ...w })));
  
 levels.forEach(level => {
   level.walls.forEach((wall, idx) => {
@@ -9977,8 +9979,8 @@ function loadGame() {
 }
 
 
-levels.forEach(level => {
-  level.walls = level.walls.map(w => ({ ...w }));
+levels.forEach((level, idx) => {
+  level.walls = baseWallsPerLevel[idx].map(w => ({ ...w }));
   level.walls = level.walls.filter(wall => !removedWallIds.has(wall.id));
 });
     if (Array.isArray(saveData.shownDialogs)) {
