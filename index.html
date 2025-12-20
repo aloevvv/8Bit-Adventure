@@ -1975,7 +1975,9 @@ iceZones: [],
     darkZones: [],
     battleZones: [],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      { name: 'garagegun', x: 305, y: 350, width: 95, height: 100, action: 'garagegun' }
+    ]
   },
   {
     bgSrc: "friendhouse15_33.png",
@@ -2009,9 +2011,13 @@ iceZones: [],
   { x: 600, y: 460, width: 40, height: 20, destLevel: '35', destX: 620, destY: 50 }
     ],
     darkZones: [],
-    battleZones: [],
+    battleZones: [
+      { x: 293, y: 290, width: 64, height: 64, encounter: [{ type: "Partybot" }, { type: "Partybot" }, {type: "Partybot"}], sprite: 'fail'}
+    ],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      { name: 'garagelist', x: 89, y: 225, width: 90, height: 90, action: 'garagelist' }
+    ]
   },
   {
     bgSrc: "friendhouse16_34.png",
@@ -8727,6 +8733,24 @@ function handleInteraction(object) {
     showDialog([
       { speaker: '8-Bit', text: "Oh, yeah, it's a key.", style: 'dialog' },
       { speaker: '8-Bit', text: "I'm going to leave it there.", style: 'dialog' }
+    ]);
+    return;
+  }
+  if (object.action === "garagegun") {
+    showDialog([
+      { speaker: '8-Bit', text: "Someone must have fought here.", style: 'dialog' },
+      { speaker: '8-Bit', text: "I didn't remember this place being peppered with bullets when I was last here.", style: 'dialog' }
+    ]);
+    return;
+  }
+
+  if (object.action === "garagelist") {
+    showDialog([
+      { speaker: '8-Bit', text: "List:", style: 'dialog' },
+      { speaker: '8-Bit', text: "Sugar", style: 'dialog' },
+      { speaker: '8-Bit', text: "Flour", style: 'dialog' },
+      { speaker: '8-Bit', text: "Eggs", style: 'dialog' },
+      { speaker: '8-Bit', text: "And uh... bolts? Huh. Weird recipe.", style: 'dialog' }
     ]);
     return;
   }
