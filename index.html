@@ -735,7 +735,10 @@ const progressiveDarkEl = document.getElementById('battle-blackout') || (() => {
   return el;
 })();
   
-
+let _typingInterval = null;
+let _isTyping = false;
+let _fullTextToDisplay = "";
+let _currentSpeaker = null;
   
 let tempText = "";
 let tempTextTimeout = null;
@@ -3291,7 +3294,35 @@ function Reach18() {
     }, 3000);
   }
 }
+function startTypewriter(text, element, speaker = null) {
+  // Clear any existing typing
+  clearInterval(_typingInterval);
+  _isTyping = true;
+  _fullTextToDisplay = text;
+  _currentSpeaker = speaker;
+  
+  let i = 0;
+  element.innerHTML = speaker ? `<strong>${speaker}</strong>\n\n` : "";
+  
+  // Speed: 30ms per character is a good "medium" pace
+  _typingInterval = setInterval(() => {
+    if (i < text.length) {
+      element.innerHTML += text.charAt(i);
+      i++;
+    } else {
+      finishTyping(element);
+    }
+  }, 30); 
+}
 
+function finishTyping(element) {
+  clearInterval(_typingInterval);
+  _isTyping = false;
+  element.innerHTML = _currentSpeaker ? 
+    `<strong>${_currentSpeaker}</strong>\n\n${_fullTextToDisplay}` : 
+    _fullTextToDisplay;
+}
+  
 function findDialogZone(checkX, checkY) {
   const hitboxX = checkX + (typeof hitboxOffsetX !== 'undefined' ? hitboxOffsetX : 0);
   const hitboxY = checkY + (typeof hitboxOffsetY !== 'undefined' ? hitboxOffsetY : 0);
@@ -3409,70 +3440,46 @@ function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
 }
   
   function showBattleDialog(textOrLines, idToMark, opts = {}) {
-  if (!inBattle) {
-    showDialog(textOrLines, idToMark, opts);
-    return;
-  }
-
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
-
-  function normalize(line, fallbackStyle) {
-    if (typeof line === 'string') return { speaker: null, text: line, style: fallbackStyle };
-    return { speaker: line.speaker || null, text: line.text != null ? String(line.text) : '', style: line.style || fallbackStyle };
-  }
-
   const fallbackStyle = opts.style || 'dialog';
-  const lines = Array.isArray(textOrLines) ? textOrLines.slice() : [textOrLines];
-  _battleDialogQueue = lines.map(l => normalize(l, fallbackStyle));
 
   pauseBattleTimersForDialog();
 
+  const lines = Array.isArray(textOrLines) ? textOrLines.slice() : [textOrLines];
+  _battleDialogQueue = lines.map(l => {
+     if (typeof l === 'string') return { speaker: null, text: l, style: fallbackStyle };
+     return { speaker: l.speaker || null, text: l.text, style: l.style || fallbackStyle };
+  });
+
   if (_battleDialogQueue.length > 0) {
     const line = _battleDialogQueue.shift();
-    applyDialogStyle(box, line.style || fallbackStyle);
-    if (line.speaker) {
-      textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
-    } else {
-      textDiv.textContent = line.text;
-    }
-  } else {
-    textDiv.textContent = '';
+    overlay.style.display = 'flex';
+    applyDialogStyle(box, line.style);
+    startTypewriter(line.text, textDiv, line.speaker);
   }
-
-  overlay.style.display = 'flex';
-  overlay._markId = idToMark || null;
-
-  drawBattleUI();
-  drawPlayerBattleStatus();
 }
 
 function showDialog(textOrLines, idToMark, opts = {}) {
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
-
   const defaultStyle = opts.style || 'dialog';
+
+  overlay.style.display = 'flex';
   _dialogQueue = normalizeDialogLines(textOrLines, defaultStyle);
 
   if (_dialogQueue.length > 0) {
     const line = _dialogQueue.shift();
     applyDialogStyle(box, line.style);
-    if (line.speaker) {
-      textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
-    } else {
-      textDiv.textContent = line.text;
-    }
-  } else {
-    textDiv.textContent = '';
+    
+    startTypewriter(line.text, textDiv, line.speaker);
   }
-
-  overlay.style.display = 'flex';
+  
   overlay._markId = idToMark || null;
   draw();
 }
-
 
 const prologueOverlay = document.getElementById('prologue-overlay');
 const prologueImage = document.getElementById('prologue-image');
@@ -9444,51 +9451,39 @@ document.getElementById('inventory-battle-button').addEventListener('click', () 
   }
 });
 
-  const dialogNextBtn = document.getElementById('dialog-next');
-if (dialogNextBtn) {
-  dialogNextBtn.addEventListener('click', () => {
-    const overlay = document.getElementById('dialog-overlay');
-    const textDiv = document.getElementById('dialog-text');
-    const box = document.getElementById('dialog-box');
+  document.getElementById('dialog-next').addEventListener('click', () => {
+  const overlay = document.getElementById('dialog-overlay');
+  const textDiv = document.getElementById('dialog-text');
+  const box = document.getElementById('dialog-box');
 
-    
-    if (Array.isArray(_battleDialogQueue) && _battleDialogQueue.length > 0) {
-      const line = _battleDialogQueue.shift();
-      applyDialogStyle(box, line.style || 'dialog');
-      if (line.speaker) textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
-      else textDiv.textContent = line.text;
-      return;
-    }
+  if (_isTyping) {
+    finishTyping(textDiv);
+    return; 
+  }
+  let nextLine = null;
 
-    const normalQueue = (typeof dialogQueue !== 'undefined' && Array.isArray(dialogQueue)) ? dialogQueue
-                      : (typeof _dialogQueue !== 'undefined' && Array.isArray(_dialogQueue)) ? _dialogQueue
-                      : (typeof _dialogQueue_ !== 'undefined' && Array.isArray(_dialogQueue_)) ? _dialogQueue_
-                      : null;
+  if (Array.isArray(_battleDialogQueue) && _battleDialogQueue.length > 0) {
+    nextLine = _battleDialogQueue.shift();
+  } else if (_dialogQueue && _dialogQueue.length > 0) {
+    nextLine = _dialogQueue.shift();
+  }
 
-    if (normalQueue && normalQueue.length > 0) {
-      const line = normalQueue.shift();
-      applyDialogStyle(box, line.style || 'dialog');
-      if (line.speaker) textDiv.innerHTML = `<strong>${line.speaker}</strong>\n\n${line.text}`;
-      else textDiv.textContent = line.text;
-      return;
-    }
+  if (nextLine) {
+    applyDialogStyle(box, nextLine.style || 'dialog');
+    startTypewriter(nextLine.text, textDiv, nextLine.speaker);
+    return;
+  }
 
-    
-    const id = overlay._markId;
-    overlay._markId = null;
-    overlay.style.display = 'none';
-    draw();
-    if (id) shownDialogs.add(id);
-
-    
-    if (inBattle) {
-      resumeBattleTimersAfterDialog();
-      drawBattleUI();
-      drawPlayerBattleStatus();
-      if (typeof drawPartyStatus === 'function') drawPartyStatus();
-    }
-  });
-}
+  const id = overlay._markId;
+  overlay._markId = null;
+  overlay.style.display = 'none';
+  
+  if (id) shownDialogs.add(id);
+  if (inBattle) {
+    resumeBattleTimersAfterDialog();
+  }
+  draw();
+});
 
 
 document.addEventListener('keydown', function(e) {
