@@ -2703,7 +2703,10 @@ iceZones: [],
   { x: 620, y: 450, width: 20, height: 30, destLevel: '61', destX: 50, destY: 465 }
     ],
     darkZones: [],
-    battleZones: [],
+    battleZones: [
+      { x: 373, y: 225, width: 100, height: 100, encounter: [{ type: "Partybot" }, { type: "Partybot" }, {type: "Partybot"}], sprite: 'partygoers'},
+      { x: 377, y: 336, width: 100, height: 100, encounter: [{ type: "Partybot" }, {type: "Partybot"}], sprite: 'fail'}
+    ],
     dialogZones: [],
     interactables: [
       { id: "door60", name: "door", x: 0, y: 0, width: 60, height: 480, action: "open_door", destLevel: 34, destX: 125, destY: 314 }
@@ -2802,7 +2805,19 @@ iceZones: [],
   { x: 0, y: 450, width: 20, height: 30, destLevel: '62', destX: 580, destY: 465 }
     ],
     darkZones: [],
-    battleZones: [],
+    battleZones: [
+      {
+    x: 303, 
+    y: 70, 
+    width: 64, 
+    height: 64,
+    encounter: [
+      [ { type: "Partybot" }, { type: "Partybot" } ],
+      [ { type: "Partygoers" }, { type: "Partygoers" } ]
+    ],
+    sprite: 'partygoers'
+}
+    ],
     dialogZones: [
       {
     id: 'carlever',
