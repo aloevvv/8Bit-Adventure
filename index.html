@@ -3317,8 +3317,10 @@ function Reach18() {
     }, 3000);
   }
 }
+  const blipSound = new Audio('blip.wav');
+blipSound.volume = 0.6;
+  
 function startTypewriter(text, element, speaker = null) {
-  // Clear any existing typing
   clearInterval(_typingInterval);
   _isTyping = true;
   _fullTextToDisplay = text;
@@ -3327,10 +3329,16 @@ function startTypewriter(text, element, speaker = null) {
   let i = 0;
   element.innerHTML = speaker ? `<strong>${speaker}</strong>\n\n` : "";
   
-  // Speed: 30ms per character is a good "medium" pace
   _typingInterval = setInterval(() => {
     if (i < text.length) {
       element.innerHTML += text.charAt(i);
+      
+      if (i % 2 === 0) {
+        blipSound.currentTime = 0;
+        blipSound.play().catch(e => console.log("Audio play blocked until user clicks page"));
+      }
+    
+
       i++;
     } else {
       finishTyping(element);
