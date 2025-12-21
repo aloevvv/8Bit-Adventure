@@ -486,6 +486,8 @@
   </div>
 </div>
 
+  <div id="fade-overlay" style="position:fixed; inset:0; background:black; opacity:0; pointer-events:none; z-index:9999; transition: opacity 0.25s;"></div>
+
 
   <div id="battle-overlay">
     <div id="enemy-display"></div>
@@ -9563,17 +9565,25 @@ document.addEventListener('keydown', function(e) {
 });
 
 function loadLevel(index, newX = x, newY = y) {
-  currentLevelIndex = index;
-  currentLevel = levels[currentLevelIndex];
+  const fadeEl = document.getElementById('fade-overlay');
+  fadeEl.style.opacity = '1';
 
-  bgImg = new Image();
-  bgImg.onload = () => draw();
-  bgImg.src = currentLevel.bgSrc;
+  setTimeout(() => {
+    currentLevelIndex = index;
+    currentLevel = levels[currentLevelIndex];
 
-  x = newX;
-  y = newY;
+    bgImg = new Image();
+    bgImg.onload = () => {
+        draw();
+        fadeEl.style.opacity = '0';
+    };
+    bgImg.src = currentLevel.bgSrc;
 
-  draw();
+    x = newX;
+    y = newY;
+
+    draw(); 
+  }, 250);
 }
 
 function isInZone(zones, px, py) {
@@ -9929,11 +9939,11 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
 
   // === Settings storage and defaults ===
 const SETTINGS_KEY = '8bitsAdventureSettings';
-const SAVE_SLOT_PREFIX = '8bitsAdventureSave_slot_'; // followed by 1,2,3
+const SAVE_SLOT_PREFIX = '8bitsAdventureSave_slot_'; 
 
 const defaultSettings = {
-  difficulty: 'normal', // normal | hard | ultimate
-  showZones: false // false by default
+  difficulty: 'normal',
+  showZones: false
 };
 
 let gameSettings = Object.assign({}, defaultSettings);
@@ -10211,7 +10221,7 @@ drawAchievementsUI();
   });
 }
 
-// Create Save and Load buttons after DOM is ready (script at bottom so safe)
+
 const gameHud = document.getElementById('game-hud');
 if (gameHud) {
   const saveButton = document.createElement('button');
@@ -10231,15 +10241,15 @@ if (gameHud) {
   
 // Keyboard movement and interaction
 canvas.addEventListener('keydown', function(e) {
-  if (inBattle || isGameOver) return;
+  if (inBattle || isGameOver || document.getElementById('fade-overlay').style.opacity > 0) return;
 
-  // ignore input while sliding
+ 
   if (sliding) return;
 
   let nextX = x, nextY = y;
   const key = e.key.toLowerCase();
 
-  // movement keys: prevent default for arrows/wasd
+
   if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d'].includes(key)) {
     e.preventDefault();
   }
@@ -10257,17 +10267,17 @@ canvas.addEventListener('keydown', function(e) {
     return;
   }
 
-  // compute directional intent (dirX/dirY)
+ 
   let dirX = 0, dirY = 0;
   if (key === 'arrowleft' || key === 'a') dirX = -1;
   if (key === 'arrowright' || key === 'd') dirX = 1;
   if (key === 'arrowup' || key === 'w') dirY = -1;
   if (key === 'arrowdown' || key === 's') dirY = 1;
 
-  // if no movement key, ignore
+  
   if (dirX === 0 && dirY === 0) return;
 
-  // compute the intended next position
+ 
   nextX = x + dirX * speed;
   nextY = y + dirY * speed;
 
@@ -10297,10 +10307,10 @@ canvas.addEventListener('keydown', function(e) {
       return;
     }
 
-    // Attempt to start sliding if stepping onto ice
+   
     const startedSlide = tryEnterSlideIfNeeded(x, y, nextX, nextY, dirX, dirY);
 
-    // move player immediately for snappy feedback; startSlide will continue movement if it started
+    
     x = nextX;
     y = nextY;
 
