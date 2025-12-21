@@ -10271,7 +10271,9 @@ if (gameHud) {
 // Keyboard movement and interaction
 canvas.addEventListener('keydown', function(e) {
   const isDialogActive = document.getElementById('dialog-overlay').style.display === 'flex';
-  if (inBattle || isGameOver || isDialogActive || document.getElementById('fade-overlay').style.opacity > 0) {
+if (inBattle || isGameOver || isDialogActive || document.getElementById('fade-overlay').style.opacity > 0) {
+      return;
+  }
 
  
   if (sliding) return;
