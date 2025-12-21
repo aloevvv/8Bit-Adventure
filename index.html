@@ -9456,6 +9456,8 @@ document.getElementById('special-attack-button-1').addEventListener('click', () 
     showTemporaryText("Not enough stamina!");
     return;
   }
+  const specialAttack = new Audio('explosion.wav');
+specialAttack.play();
   updateStamina(playerStats.currentStamina - staminaCost);
   const targetEnemy = activeEnemies[selectedEnemyIndex];
   if (!targetEnemy) return;
@@ -9500,7 +9502,8 @@ document.getElementById('special-attack-button-2').addEventListener('click', () 
       }
     });
   } else {
-    
+    const specialAttack = new Audio('explosion.wav');
+specialAttack.play();
     activeEnemies.forEach(enemy => {
       enemy.currentHp -= playerStats.damage * 20;
       if (enemy.currentHp < 0) enemy.currentHp = 0;
