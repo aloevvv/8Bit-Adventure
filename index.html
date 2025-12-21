@@ -6225,10 +6225,10 @@ function enemyAttack(enemy, target) {
   }
 }
   function handleEnemyDeath(enemy) {
+    const deathSound = new Audio('enemydie.wav');
+deathSound.play();
   // Stage1 -> Stage2 special handling
   if (!enemy) return;
-
-
 
 (function installFinalBossDeathWrapper() {
   if (typeof handleEnemyDeath !== 'function') {
