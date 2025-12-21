@@ -9416,6 +9416,7 @@ const pewBuffer = new Audio('pew.mp3');
 
 document.getElementById('attack-button').addEventListener('click', () => {
   const pewSound = pewBuffer.cloneNode();
+  pewSound.volume = 0.4;
   pewSound.play();
   if (!inBattle || !activeEnemies.length) return;
   const targetEnemy = activeEnemies[selectedEnemyIndex];
