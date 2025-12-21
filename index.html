@@ -929,6 +929,16 @@ const enemyTypes = {
 
 };
 
+  const speakerConfigs = {
+  '8-Bit': { speed: 30, pitch: 1.0, frequency: 2 },
+  'Birthday Bot': { speed: 20, pitch: 1.5, frequency: 1 },
+  'BossRobot': { speed: 30, pitch: 0.6, frequency: 3 }, 
+  'Bodyguard': { speed: 30, pitch: 0.7, frequency: 2 },
+  'Guard': { speed: 60, pitch: 0.9, frequency: 2 },
+  'default': { speed: 30, pitch: 1.0, frequency: 2 }
+};
+
+  // adjust these things as needed ill have to test em to see if they fit what i want
 
   // want multiple rounds? just do comma may or may not be needed at the end {
     //x: 507, y: 70, width: 64, height: 64,
@@ -3325,25 +3335,29 @@ function startTypewriter(text, element, speaker = null) {
   _isTyping = true;
   _fullTextToDisplay = text;
   _currentSpeaker = speaker;
-  
+
+  const config = speakerConfigs[speaker] || speakerConfigs['default'];
+
   let i = 0;
   element.innerHTML = speaker ? `<strong>${speaker}</strong>\n\n` : "";
+
   
   _typingInterval = setInterval(() => {
     if (i < text.length) {
       element.innerHTML += text.charAt(i);
-      
-      if (i % 2 === 0) {
+
+  
+      if (i % config.frequency === 0) {
+        blipSound.playbackRate = config.pitch;
         blipSound.currentTime = 0;
-        blipSound.play().catch(e => console.log("Audio play blocked until user clicks page"));
+        blipSound.play().catch(e => {});
       }
-    
 
       i++;
     } else {
       finishTyping(element);
     }
-  }, 30); 
+  }, config.speed); 
 }
 
 function finishTyping(element) {
@@ -9398,7 +9412,7 @@ achievementsButton.addEventListener('click', () => {
 }
   
 const pewBuffer = new Audio('pew.mp3');
-      pewBuffer.volume = 0.4;
+      pewBuffer.volume = 0.2;
 
 document.getElementById('attack-button').addEventListener('click', () => {
   const pewSound = pewBuffer.cloneNode();
