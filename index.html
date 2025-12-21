@@ -9398,6 +9398,7 @@ achievementsButton.addEventListener('click', () => {
 }
   
 const pewBuffer = new Audio('pew.mp3');
+      pewBuffer.volume = 0.4;
 
 document.getElementById('attack-button').addEventListener('click', () => {
   const pewSound = pewBuffer.cloneNode();
