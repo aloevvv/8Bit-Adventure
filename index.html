@@ -136,6 +136,21 @@
       height: 100%;
       background-color: #00FF00;
     }
+    .damage-number {
+  position: fixed;
+  color: #ffffff;
+  font-family: "Press Start 2P", sans-serif;
+  font-size: 1.2em;
+  pointer-events: none;
+  z-index: 10000;
+  text-shadow: 2px 2px 0px #000;
+  animation: damageFloat 1s forwards ease-out;
+}
+
+@keyframes damageFloat {
+  0% { transform: translate(-50%, 0); opacity: 1; }
+  100% { transform: translate(-50%, -60px); opacity: 0; }
+}
     #stats {
       position: relative;
       user-select: none;
@@ -9343,8 +9358,33 @@ achievementsButton.addEventListener('click', () => {
     achievementsPopup.style.display = 'none';
   }
 });
+  function spawnDamageNumber(enemyIndex, amount) {
   
-// Attack buttons event listeners
+  const enemyButtons = document.querySelectorAll('.enemy-target');
+ 
+  const targetBtn = Array.from(enemyButtons).find(b => parseInt(b.dataset.enemyIndex) === enemyIndex);
+  
+  if (!targetBtn) return;
+
+  
+  const rect = targetBtn.getBoundingClientRect();
+  
+  const dmgEl = document.createElement('div');
+  dmgEl.className = 'damage-number';
+  dmgEl.textContent = `-${amount}`;
+  
+
+  dmgEl.style.left = (rect.left + rect.width / 2) + 'px';
+  dmgEl.style.top = (rect.top) + 'px';
+
+  document.body.appendChild(dmgEl);
+
+ 
+  setTimeout(() => {
+    dmgEl.remove();
+  }, 1000);
+}
+
 document.getElementById('attack-button').addEventListener('click', () => {
   if (!inBattle || !activeEnemies.length) return;
   const targetEnemy = activeEnemies[selectedEnemyIndex];
@@ -9353,21 +9393,22 @@ document.getElementById('attack-button').addEventListener('click', () => {
   if (targetEnemy.shieldActive) {
     showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
   } else {
-    // Always deal damage regardless of poison status
+   
     targetEnemy.currentHp -= playerStats.damage;
+    spawnDamageNumber(selectedEnemyIndex, playerStats.damage);
     if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
   }
   if (targetEnemy.currentHp === 0) {
     handleEnemyDeath(targetEnemy);
-    // adjust selected index if needed
+    
     if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = Math.max(0, activeEnemies.length - 1);
     return;
   }
 
-  // Remove dead enemies
+  
   activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
 
-  // If no enemies left, end battle
+  
   if (activeEnemies.length === 0) {
     endBattle('win');
     return;
@@ -9391,7 +9432,7 @@ document.getElementById('special-attack-button-1').addEventListener('click', () 
   if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
   if (targetEnemy.currentHp === 0) {
     handleEnemyDeath(targetEnemy);
-    // adjust selected index if needed
+    
     if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = Math.max(0, activeEnemies.length - 1);
     return;
   }
