@@ -931,10 +931,10 @@ const enemyTypes = {
 
   const speakerConfigs = {
   '8-Bit': { speed: 30, pitch: 1.0, frequency: 2 },
-  'Birthday Bot': { speed: 20, pitch: 1.5, frequency: 1 },
+  'Birthday Bot': { speed: 30, pitch: 1.5, frequency: 2 },
   'BossRobot': { speed: 30, pitch: 0.6, frequency: 3 }, 
   'Bodyguard': { speed: 30, pitch: 0.7, frequency: 2 },
-  'Guard': { speed: 60, pitch: 0.9, frequency: 2 },
+  'Guard': { speed: 60, pitch: 0.7, frequency: 2 },
   'default': { speed: 30, pitch: 1.0, frequency: 2 }
 };
 
@@ -10270,7 +10270,7 @@ if (gameHud) {
   
 // Keyboard movement and interaction
 canvas.addEventListener('keydown', function(e) {
-  if (inBattle || isGameOver || document.getElementById('fade-overlay').style.opacity > 0) return;
+  if (inBattle || isGameOver || isDialogActive || document.getElementById('fade-overlay').style.opacity > 0) {
 
  
   if (sliding) return;
