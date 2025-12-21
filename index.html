@@ -184,6 +184,17 @@
       font-size: 0.75em;
       line-height: 1.2em;
     }
+
+.shaking {
+  animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+  transform: translate3d(0, 0, 0);
+}
+@keyframes shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(3px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
+  40%, 60% { transform: translate3d(5px, 0, 0); }
+}
     .enemy-target.stunned {
   filter: grayscale(100%);
   opacity: 0.6;
@@ -7134,6 +7145,19 @@ const ach = achievementsMap[`ally_unlock_${allyId}`];
   
   drawPartyList();
   drawPartyStatus();
+}
+  function triggerScreenShake() {
+  const body = document.body;
+  
+  body.classList.remove('shaking');
+  
+  void body.offsetWidth; 
+  
+  body.classList.add('shaking');
+  
+  setTimeout(() => {
+    body.classList.remove('shaking');
+  }, 300);
 }
 
 function checkAchievements() {
