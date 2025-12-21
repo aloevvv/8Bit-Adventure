@@ -9386,8 +9386,12 @@ achievementsButton.addEventListener('click', () => {
     dmgEl.remove();
   }, 1000);
 }
+  
+const pewBuffer = new Audio('pew.mp3');
 
 document.getElementById('attack-button').addEventListener('click', () => {
+  const pewSound = pewBuffer.cloneNode();
+  pewSound.play();
   if (!inBattle || !activeEnemies.length) return;
   const targetEnemy = activeEnemies[selectedEnemyIndex];
   if (!targetEnemy) return;
