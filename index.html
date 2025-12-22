@@ -715,6 +715,11 @@ const useImage = true;
 const img = new Image();
 img.src = '8bit.png';
 
+const spritePreload = ['8bitup.png', '8bitleft.png', '8bitright.png'].forEach(src => {
+  const cacheImg = new Image();
+  cacheImg.src = src;
+});
+
 const hpBar = document.getElementById('hp-bar');
 const hpText = document.getElementById('hp-text');
 
@@ -10418,10 +10423,23 @@ if (inBattle || isGameOver || isDialogActive || document.getElementById('fade-ov
 
  
   let dirX = 0, dirY = 0;
-  if (key === 'arrowleft' || key === 'a') dirX = -1;
-  if (key === 'arrowright' || key === 'd') dirX = 1;
-  if (key === 'arrowup' || key === 'w') dirY = -1;
-  if (key === 'arrowdown' || key === 's') dirY = 1;
+
+if (key === 'arrowleft' || key === 'a') {
+  dirX = -1;
+  img.src = '8bitleft.png';
+}
+if (key === 'arrowright' || key === 'd') {
+  dirX = 1;
+  img.src = '8bitright.png';
+}
+if (key === 'arrowup' || key === 'w') {
+  dirY = -1;
+  img.src = '8bitup.png'; 
+}
+if (key === 'arrowdown' || key === 's') {
+  dirY = 1;
+  img.src = '8bit.png';
+}
 
   
   if (dirX === 0 && dirY === 0) return;
