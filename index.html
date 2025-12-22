@@ -3097,6 +3097,15 @@ iceZones: [],
   width: 500, 
   height: 330, 
   action: "arcadegatekeeper"
+},
+      { 
+  id: "visualarcadegate",
+  name: "visualarcadegate",
+  x: 620, 
+  y: 275, 
+  width: 20, 
+  height: 200, 
+  action: "visualarcadegate"
 }
     ]
   },
@@ -8948,6 +8957,12 @@ function handleInteraction(object) {
     return;
   }
 
+  if (object.action === "visualarcadegate") {
+    showDialog([
+      { speaker: '8-Bit', text: "I need to flip a lever.", style: 'dialog' }
+    ]);
+    return;
+  }
   if (object.action === "arcadekey") {
     showDialog([
       { speaker: '8-Bit', text: "Oh, yeah, it's a key.", style: 'dialog' },
@@ -10057,6 +10072,17 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   if (obj.name === "blockade") {
     if (blockadeImg && blockadeImg.complete) {
       ctx.drawImage(blockadeImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#444";
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
+
+  currentLevel.interactables.forEach(obj => {
+  if (obj.name === "visualarcadegate") {
+    if (blockadeImg && arcadegateImg.complete) {
+      ctx.drawImage(arcadegateImg, obj.x, obj.y, obj.width, obj.height);
     } else {
       ctx.fillStyle = "#444";
       ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
