@@ -735,6 +735,8 @@ let gameFlags = {
 let shownDialogs = new Set();
 let _dialogQueue = [];
 let removedWallIds = new Set();
+let removedInteractableIds = new Set();
+let openedChestIds = new Set(); 
 let _battleDialogQueue = [];
 let _battleDialogPausedState = null;
 
@@ -766,7 +768,7 @@ let slidingIntervalId = null;
 const SLIDE_STEP_MS = 120; 
 
 
-// reuse or create blackout overlay
+
 const progressiveDarkEl = document.getElementById('battle-blackout') || (() => {
   const el = document.createElement('div');
   el.id = 'battle-blackout';
@@ -801,7 +803,7 @@ let currentRoundIndex = 0;           // index of current round
   retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
   v8:    { name: "V8 Armor", hpBonus: 0.20, passiveHealPercent: 0 },
   saloon:{ name: "Saloon Armor", hpBonus: 0.40, passiveHealPercent: 0.02 },
-  haunted:{name: "Haunted Armor", hpBonus: 0.30, passiveHealPercent: 0, blockChance: 0.15 }, // 15% chance to block
+  haunted:{name: "Haunted Armor", hpBonus: 0.30, passiveHealPercent: 0, blockChance: 0.15 },
   virus: { name: "Virus Armor", hpBonus: 0.50, passiveHealPercent: 0 }
 };
 
@@ -813,31 +815,31 @@ const weaponTypes = {
   virus: { name: "Virus Weapon", dmgBonus: 0.50 }
 };
 
-  let equippedArmor = null;  // e.g. "retro", "v8", etc.
-let equippedWeapon = null; // e.g. "retro", "virus", etc.
+  let equippedArmor = null; 
+let equippedWeapon = null;
 
 function applyEquipmentBonuses() {
-  // read base stats (never mutated by this function)
+  
   const baseMaxHp = playerStats.baseMaxHp;
   const baseDamage = playerStats.baseDamage;
 
-  // Armor bonus to max HP (percentage)
+ 
   let armorBonusHp = 0;
   if (equippedArmor && armorTypes[equippedArmor]) {
     armorBonusHp = Math.floor(baseMaxHp * armorTypes[equippedArmor].hpBonus);
   }
 
-  // Weapon bonus to damage (percentage)
+  
   let weaponBonusDmg = 0;
   if (equippedWeapon && weaponTypes[equippedWeapon]) {
     weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
   }
 
-  // compute final stats (idempotent)
+ 
   playerStats.maxHp = baseMaxHp + armorBonusHp;
   playerStats.damage = baseDamage + weaponBonusDmg;
 
-  // clamp current HP to max (preserve relative HP percentage)
+
   if (playerStats.currentHp > playerStats.maxHp) {
     playerStats.currentHp = playerStats.maxHp;
   }
@@ -847,7 +849,7 @@ function applyEquipmentBonuses() {
 }
 
   
-// Initialize inventory with items
+
 inventory.set("bandaid", 0);
 inventory.set("emp_grenade", 0);
 inventory.set("poison_vial", 0);
@@ -9087,6 +9089,7 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
   const targetLevel = levels[44];
   if (targetLevel) {
     targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'blockade');
+    removedInteractableIds.add('blockade');
 
     targetLevel.walls = targetLevel.walls.filter(w => w.id !== 'wallblockade');
   }
@@ -9115,6 +9118,7 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
             onSelect: () => {
               gameFlags.birthdaybotkilled = true;
               currentLevel.interactables = currentLevel.interactables.filter(o => o.id !== object.id);
+              removedInteractableIds.add(object.id);
               removedWallIds.add('partywall'); 
               currentLevel.walls = currentLevel.walls.filter(w => w.id !== 'partywall');
               showTemporaryText("You killed the birthday bot.");
@@ -9266,10 +9270,10 @@ if (object.action === 'lever_controller') {
   if (object.action === "break") {
   const tool = object.requiredItem;
   if ((inventory.get(tool) || 0) > 0) {
-    // Remove interactable first
+    
     currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
+    removedInteractableIds.add(object.id);
 
-    // Remove matching walls and track removed wall IDs
     currentLevel.walls = currentLevel.walls.filter(wall => {
       if (
         wall.x === object.x &&
@@ -9288,16 +9292,15 @@ if (object.action === 'lever_controller') {
 
   
 if (object.action === "chest") {
-  // if already opened, show a short message and return
+  
   if (object.opened) {
     showDialog("The chest is empty.", null, { speaker: null });
     return;
   }
 
-  // mark opened so it won't grant again
   object.opened = true;
+  openedChestIds.add(object.id);
 
-  // grant rewards (rewards is array of [key, qty])
   const rewardLines = [];
   if (Array.isArray(object.rewards)) {
     for (const [key, qty] of object.rewards) {
@@ -9309,11 +9312,9 @@ if (object.action === "chest") {
 
   achievementsMap['open_chests'].progress++;
   checkAchievements();
-  // Build a dialog that lists all rewards (guaranteed)
   const dialogText = ["You opened the chest!", "You received:"].concat(rewardLines);
   showDialog(dialogText, object.id, { speaker: null });
 
-  // optionally update UI immediately
   draw();
   return;
 }
@@ -9323,6 +9324,7 @@ if (object.action === "chest") {
     const current = inventory.get(key) || 0;
     inventory.set(key, current + 1);
     currentLevel.interactables = currentLevel.interactables.filter(o => o !== object);
+    removedInteractableIds.add(object.id);
     currentLevel.walls = currentLevel.walls.filter(w =>
       !(w.x === object.x && w.y === object.y && w.width === object.width && w.height === object.height)
     );
@@ -9394,7 +9396,7 @@ const mobileControls = document.getElementById('mobile-controls');
 mobileToggle.addEventListener('change', (e) => {
   if (e.target.checked) {
     mobileControls.style.display = 'block';
-    canvas.blur(); // optionally remove keyboard focus when mobile controls active
+    canvas.blur();
   } else {
     mobileControls.style.display = 'none';
   }
@@ -9405,8 +9407,6 @@ mobileToggle.addEventListener('change', (e) => {
   let nextX = x + dx * speed;
   let nextY = y + dy * speed;
 
-  // Insert your existing collision, door, battle zone, water, poison checks here
-  // Example:
   if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
     showTemporaryText("You need a raft to cross water!");
     return;
@@ -9445,7 +9445,7 @@ document.getElementById('btn-right').addEventListener('click', () => movePlayer(
 
 document.getElementById('btn-interact').addEventListener('click', () => {
   if (inBattle || isGameOver) return;
-  // Simulate pressing 'x' key interaction:
+ 
   const interactableObject =
     checkInteraction(x - 16, y) ||
     checkInteraction(x + 16, y) ||
@@ -9454,7 +9454,7 @@ document.getElementById('btn-interact').addEventListener('click', () => {
     checkInteraction(x, y);
   if (interactableObject) handleInteraction(interactableObject);
 });
-  // Save/load slot buttons (guarded)
+  
   function bindSlot(id, fn) {
     const el = document.getElementById(id);
     if (!el) { console.warn(`Settings wiring: missing ${id}`); return; }
@@ -10183,26 +10183,18 @@ document.getElementById('difficulty-select').addEventListener('change', (e) => {
 document.getElementById('toggle-zones').addEventListener('change', (e) => {
   gameSettings.showZones = !!e.target.checked;
   saveSettings();
-  draw(); // redraw overlays
+  draw();
 });
 
-// initialize settings on load
+
 loadSettings();
 
-// Save game state to localStorage
 function saveGame() {
-  // Save interactables for all levels
-  const allInteractables = levels.map(level => {
-    // Save a deep copy of interactables array for each level
-    return level.interactables.map(obj => ({ ...obj }));
-  });
-
   const saveData = {
   playerStats,
   inventory: Array.from(inventory.entries()),
   currentLevelIndex,
   playerPosition: { x, y },
-  allInteractables,
   shownDialogs: Array.from(shownDialogs),
     gameFlags: gameFlags, 
     currentObjective: currentObjective,
@@ -10218,6 +10210,8 @@ function saveGame() {
   unlockedAllies: Array.from(unlockedAllies),
   equippedAllyId,
   removedWallIds: Array.from(removedWallIds),
+  removedInteractableIds: Array.from(removedInteractableIds),
+  openedChestIds: Array.from(openedChestIds || []) 
 };
   saveData.achievements = achievements.map(a => ({
   id: a.id,
@@ -10240,87 +10234,76 @@ function loadGame() {
 
   try {
     const saveData = JSON.parse(saved);
+
+ 
     Object.assign(playerStats, saveData.playerStats);
     inventory.clear();
     saveData.inventory.forEach(([key, value]) => inventory.set(key, value));
 
-    if (saveData.gameFlags) {
-      Object.assign(gameFlags, saveData.gameFlags);
-    }
+
+    Object.assign(gameFlags, saveData.gameFlags || {});
     if (saveData.currentObjective) {
       setObjective(saveData.currentObjective);
       if (saveData.objectiveCompleted) completeObjective();
     }
-    // Restore interactables for all levels
-    if (Array.isArray(saveData.allInteractables)) {
-  saveData.allInteractables.forEach((interactablesArr, index) => {
-    if (levels[index]) {
-      levels[index].interactables = interactablesArr.map(o => ({ ...o }));
-    }
-  });
-}
 
-    loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
-    
-    if (saveData.removedWallIds) {
-  removedWallIds = new Set(saveData.removedWallIds);
-}
+ 
+    removedInteractableIds = new Set(saveData.removedInteractableIds || []);
+    removedWallIds = new Set(saveData.removedWallIds || []);
+    shownDialogs = new Set(saveData.shownDialogs || []);
+    const openedChests = new Set(saveData.openedChestIds || []);
 
+  
+    levels.forEach(level => {
 
-levels.forEach(level => {
-  level.walls = level.walls.map(w => ({ ...w }));
-  level.walls = level.walls.filter(wall => !removedWallIds.has(wall.id));
-});
-    if (Array.isArray(saveData.shownDialogs)) {
-      shownDialogs = new Set(saveData.shownDialogs);
-    }
+      level.interactables = level.interactables.filter(i => !removedInteractableIds.has(i.id));
+
+  
+      level.interactables.forEach(i => {
+        if (openedChests.has(i.id)) i.opened = true;
+      });
+
+      
+      level.walls = level.walls.filter(w => !removedWallIds.has(w.id));
+    });
+
+  
     if (Array.isArray(saveData.alliesData)) {
-  saveData.alliesData.forEach(savedAlly => {
-    const baseAlly = alliesData.find(a => a.id === savedAlly.id);
-    if (baseAlly) {
-      baseAlly.level = savedAlly.level;
-      baseAlly.xp = savedAlly.xp;
-      baseAlly.xpToNextLevel = savedAlly.xpToNextLevel;
-      baseAlly.baseMaxHp = savedAlly.baseMaxHp;
-      baseAlly.baseDamage = savedAlly.baseDamage;
+      saveData.alliesData.forEach(savedAlly => {
+        const baseAlly = alliesData.find(a => a.id === savedAlly.id);
+        if (baseAlly) {
+          Object.assign(baseAlly, savedAlly);
+        }
+      });
     }
-  });
-}
-unlockedAllies = new Set(saveData.unlockedAllies || []);
-equippedAllyId = saveData.equippedAllyId || null;
+    unlockedAllies = new Set(saveData.unlockedAllies || []);
+    equippedAllyId = saveData.equippedAllyId || null;
+    if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
+      const allyBase = alliesData.find(a => a.id === equippedAllyId);
+      activeAlly = { ...allyBase, currentHp: allyBase.baseMaxHp, attackTimerId: null };
+    } else {
+      activeAlly = null;
+    }
 
-// If equipped, restore activeAlly stats with updated data
-if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
-  const allyBase = alliesData.find(a => a.id === equippedAllyId);
-  activeAlly = {
-    id: allyBase.id,
-    name: allyBase.name,
-    maxHp: allyBase.baseMaxHp,
-    currentHp: allyBase.baseMaxHp,
-    damage: allyBase.baseDamage,
-    attackIntervalMs: allyBase.attackIntervalMs,
-    level: allyBase.level,
-    xp: allyBase.xp,
-    xpToNextLevel: allyBase.xpToNextLevel,
-    attackTimerId: null
-  };
-} else {
-  activeAlly = null;
-}
+   
     if (Array.isArray(saveData.achievements)) {
-  saveData.achievements.forEach(savedAch => {
-    const ach = achievementsMap[savedAch.id];
-    if (ach) {
-      ach.progress = savedAch.progress || 0;
-      ach.unlocked = !!savedAch.unlocked;
+      saveData.achievements.forEach(savedAch => {
+        const ach = achievementsMap[savedAch.id];
+        if (ach) {
+          ach.progress = savedAch.progress || 0;
+          ach.unlocked = !!savedAch.unlocked;
+        }
+      });
     }
-  });
-}
-drawAchievementsUI();
 
+  
+    loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
 
+ 
     updateHp(playerStats.currentHp);
     updateStatsPopup();
+    drawAchievementsUI();
+
     showTemporaryText('Game loaded!');
     console.log('Game loaded:', saveData);
 
@@ -10329,6 +10312,7 @@ drawAchievementsUI();
     showTemporaryText('Failed to load save.');
   }
 }
+
 
   function rebuildWalls() {
   levels.forEach(level => {
