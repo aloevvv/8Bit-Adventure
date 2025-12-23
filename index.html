@@ -3356,14 +3356,16 @@ function preloadImagesForLevel(levelIndex, onComplete) {
   
   bgImg = new Image();
   bgImg.onload = () => {
-    
-    if (img && img.complete) return onComplete();
-    img = img || new Image();
-    img.onload = () => onComplete();
-    img.src = img.src || '8bit.png';
+
+    if (playerSprites.down.complete) {
+      onComplete();
+    } else {
+      playerSprites.down.onload = () => onComplete();
+    }
   };
   bgImg.src = level.bgSrc;
 }
+  
 const objectiveBox = document.getElementById('objective-box');
 const objectiveTextEl = document.getElementById('objective-text');
 const objectiveStatusEl = document.getElementById('objective-status');
