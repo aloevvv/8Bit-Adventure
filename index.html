@@ -210,6 +210,35 @@
   30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
   40%, 60% { transform: translate3d(5px, 0, 0); }
 }
+    #victory-banner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  font-family: "Press Start 2P", sans-serif;
+  font-size: 3em;
+  color: white;
+  pointer-events: none;
+  display: flex;
+  gap: 10px;
+}
+
+.victory-letter {
+  display: inline-block;
+  animation: letterPulse 0.4s ease-out forwards;
+}
+
+@keyframes letterPulse {
+  0% { transform: scale(1); color: white; }
+  50% { transform: scale(1.5); color: #00ffff; text-shadow: 0 0 15px #00ffff; }
+  100% { transform: scale(1.2); color: white; }
+}
+
+.fade-out {
+  opacity: 0 !important;
+  transition: opacity 0.7s ease-out !important;
+}
     .enemy-target.stunned {
   filter: grayscale(100%);
   opacity: 0.6;
@@ -6992,25 +7021,29 @@ function endBattle(outcome) {
   }
 
   if (outcome === 'win') {
-    // XP from any remaining enemies (defensive)
-    let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
-    gainXP(totalXp);
-    playerStats.currentHp = playerStats.maxHp;
-    updateHp(playerStats.currentHp);
-    if (defeatedZone) removeZone(defeatedZone);
-    healAllyAfterBattle();
-  } else if (outcome === 'lose') {
-    showGameOver();
-  }
-
-  activeEnemies = [];
-  defeatedZone = null;
-  activeAlly = null;
-  draw();
-  drawPartyStatus();
-  const pbs = document.getElementById('player-battle-status');
-  if (pbs) pbs.innerHTML = "";
+    showVictorySequence(() => {
+  
+      gainXP(totalXp);
+      playerStats.currentHp = playerStats.maxHp;
+      updateHp(playerStats.currentHp);
+      
+      if (defeatedZone) removeZone(defeatedZone);
+      
+      inBattle = false;
+      document.getElementById('battle-overlay').style.display = 'none';
+      
+      if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
+      if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
+      
+      activeEnemies = [];
+      defeatedZone = null;
+      draw();
+      document.getElementById('player-battle-status').innerHTML = '';
+    });
+    
+    return;
 }
+  }
 
 function initiateBattle(zoneType, zoneObject) {
   inBattle = true;
