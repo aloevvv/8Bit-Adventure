@@ -7021,29 +7021,25 @@ function endBattle(outcome) {
   }
 
   if (outcome === 'win') {
-    showVictorySequence(() => {
-  
-      gainXP(totalXp);
-      playerStats.currentHp = playerStats.maxHp;
-      updateHp(playerStats.currentHp);
-      
-      if (defeatedZone) removeZone(defeatedZone);
-      
-      inBattle = false;
-      document.getElementById('battle-overlay').style.display = 'none';
-      
-      if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
-      if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
-      
-      activeEnemies = [];
-      defeatedZone = null;
-      draw();
-      document.getElementById('player-battle-status').innerHTML = '';
-    });
-    
-    return;
-}
+    // XP from any remaining enemies (defensive)
+    let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
+    gainXP(totalXp);
+    playerStats.currentHp = playerStats.maxHp;
+    updateHp(playerStats.currentHp);
+    if (defeatedZone) removeZone(defeatedZone);
+    healAllyAfterBattle();
+  } else if (outcome === 'lose') {
+    showGameOver();
   }
+
+  activeEnemies = [];
+  defeatedZone = null;
+  activeAlly = null;
+  draw();
+  drawPartyStatus();
+  const pbs = document.getElementById('player-battle-status');
+  if (pbs) pbs.innerHTML = "";
+}
 
 function initiateBattle(zoneType, zoneObject) {
   inBattle = true;
