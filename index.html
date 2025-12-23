@@ -5945,7 +5945,6 @@ function endBattle(outcome) {
         activeEnemies.push(stage2Enemy);
         showTemporaryText(`${stage2Enemy.name} emerges!`);
         inBattle = true;
-        enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
         drawBattleUI();
         drawPlayerBattleStatus();
         return; // Important to return early so battle continues
