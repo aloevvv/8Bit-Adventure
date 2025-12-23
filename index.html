@@ -5913,7 +5913,6 @@ function hideBattleBlackout() {
 // Override endBattle to check for second stage boss this is the defunct endbattle idk why i have 2 of em why doesnt the game crash idk
 function endBattle(outcome) {
   inBattle = false;
-  document.getElementById('battle-overlay').style.display = 'none';
 
   if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
   if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
