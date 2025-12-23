@@ -6962,31 +6962,34 @@ function showVictorySequence(onComplete) {
     }, 700);
   }, 1000);
 }
-
+// End battle and clean up
 function endBattle(outcome) {
+
   try { stopDarkTimer(); } catch (e) {}
 
+  // If win and there are rounds remaining, move to next round instead of ending.
   if (outcome === 'win') {
+    
     battleRounds--;
     if (battleRounds > 0) {
       currentRoundIndex++;
+      // small pause/message then spawn next round
+      showTemporaryText(`Round ${currentRoundIndex + 1} begins!`);
       spawnRound(currentRoundIndex);
       draw();
-      return;
+      return; // continue battle
     }
   }
-
-  activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
-
-    if (activeEnemies.length === 0) {
-  
+  if (activeEnemies.length === 0) {
+  // If a hidden ghost was prepared (from spawnRound) and still hidden, reveal it instead of ending battle.
   const ghost = window._lastGhostRef;
   if (ghost && ghost._isHidden) {
-   
+    // Reveal ghost now (don't end battle). Ensure ghost stats were scaled earlier (see spawnRound fix below).
     if (!activeEnemies.includes(ghost)) activeEnemies.push(ghost);
     ghost._isHidden = false;
     ghost._hostTrainSpawned = false;
 
+    // Start ghost's spectral minion spawner if not running
     if (ghost._spectralIntervalId) clearInterval(ghost._spectralIntervalId);
     ghost._spectralIntervalId = setInterval(() => {
       if (!inBattle || !activeEnemies.includes(ghost) || ghost.currentHp <= 0) {
@@ -7008,6 +7011,7 @@ function endBattle(outcome) {
       drawBattleUI();
     }, 3000);
 
+    // ensure selection index safe and continue battle
     selectedEnemyIndex = Math.max(0, Math.min(selectedEnemyIndex, activeEnemies.length - 1));
     inBattle = true;
 
@@ -7018,17 +7022,19 @@ function endBattle(outcome) {
     enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
     drawBattleUI();
     drawPlayerBattleStatus();
-    return;
+    return; // bail out of normal end flow
   }
   }
-
+  // --- Normal battle end cleanup (no rounds left or lost) ---
   inBattle = false;
+  document.getElementById('battle-overlay').style.display = 'none';
   if (window._raft) {
   window._raft = null;
 }
   if (typeof endBattle === 'function') {
   const _orig_endBattle = endBattle;
   endBattle = function(outcome) {
+    // cleanup active ability windows
     blockActive = false;
     counterWindowActive = false;
     stopAbilityRegen();
@@ -7036,41 +7042,6 @@ function endBattle(outcome) {
     return _orig_endBattle(outcome);
   };
 }
-
-
-  inBattle = false;
-
-  if (outcome === 'win') {
-
-    if (activeEnemies.length === 0) {
-      showVictorySequence(() => {
-        finalizeBattleCleanup(outcome);
-        drawBattleUI();
-      });
-    } else {
-      finalizeBattleCleanup(outcome);
-  drawBattleUI();
-    }
-  } else {
-    finalizeBattleCleanup(outcome);
-  drawBattleUI();
-  }
-}
-
-function finalizeBattleCleanup(outcome) {
-  document.getElementById('battle-overlay').style.display = 'none';
-  if (window._raft) window._raft = null;
-
-  if (typeof endBattle === 'function') {
-    const _orig_endBattle = endBattle;
-    endBattle = function(outcome) {
-      blockActive = false;
-      counterWindowActive = false;
-      stopAbilityRegen();
-      updateAbilityButtonsUI();
-      return _orig_endBattle(outcome);
-    };
-  }
 
   if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
   if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
@@ -7080,6 +7051,7 @@ function finalizeBattleCleanup(outcome) {
   }
 
   if (outcome === 'win') {
+    // XP from any remaining enemies (defensive)
     let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
     gainXP(totalXp);
     playerStats.currentHp = playerStats.maxHp;
