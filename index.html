@@ -6339,8 +6339,9 @@ function enemyAttack(enemy, target) {
     const deathSound = new Audio('enemydie.wav');
 deathSound.play();
 
-    if (enemy.attackTimerId) {
+    if (enemy && enemy.attackTimerId) {
     clearInterval(enemy.attackTimerId);
+    enemy.attackTimerId = null;
   }
     
     const enemyButtons = document.querySelectorAll('.enemy-target');
@@ -7122,117 +7123,70 @@ function spawnRound(roundIdx) {
   const encounter = currentRoundEncounters[roundIdx] || [];
   const mult = getDifficultyMultipliers();
 
-  
   const built = encounter.map(enemyData => {
     if (!enemyData) return null;
 
-    // Special-case GhostBoss
-   if (enemyData.type === 'GhostBoss') {
-    const baseStats = enemyTypes['GhostBoss'] || {};
-    const mult = getDifficultyMultipliers();
-    const baseHp = (baseStats.maxHp != null) ? baseStats.maxHp : 450;
-    const baseDmg = (baseStats.damage != null) ? baseStats.damage : 3;
+    if (enemyData.type === 'GhostBoss') {
+      const baseStats = enemyTypes['GhostBoss'] || {};
       const ghost = {
         ...enemyData,
         type: 'GhostBoss',
         name: baseStats.name || 'The Maestro',
-        maxHp: Math.max(1, Math.floor(baseHp * mult.enemyHp)),
-        currentHp: Math.max(1, Math.floor(baseHp * mult.enemyHp)),
-        damage: Math.max(0, Math.floor(baseDmg * mult.enemyDmg)),
-        xpReward: baseStats.xpReward || enemyData.xpReward || 180,
-        shieldActive: false,
-        stunned: false,
-        poisoned: false,
-        _isHidden: true,
-        _hiddenInIndex: Math.floor(Math.random() * 3),
-        _hostTrainSpawned: false
+        maxHp: Math.max(1, Math.floor((baseStats.maxHp || 450) * mult.enemyHp)),
+        currentHp: Math.max(1, Math.floor((baseStats.maxHp || 450) * mult.enemyHp)),
+        damage: Math.max(0, Math.floor((baseStats.damage || 3) * mult.enemyDmg)),
+        xpReward: baseStats.xpReward || 180,
+        shieldActive: false, stunned: false, poisoned: false,
+        _isHidden: true, _hiddenInIndex: Math.floor(Math.random() * 3), _hostTrainSpawned: false
       };
-
-    
       window._lastGhostRef = ghost;
-
-     
-      return null;
+      return null; 
     }
 
-    
     const baseStats = enemyTypes[enemyData.type] || {};
-    const baseHp = (baseStats.maxHp != null) ? baseStats.maxHp : (baseStats.maxHP != null ? baseStats.maxHP : (enemyData.maxHp || 1));
-    const baseDmg = (baseStats.damage != null) ? baseStats.damage : (enemyData.damage || 1);
+    const finalMaxHp = Math.max(1, Math.floor((baseStats.maxHp || 10) * mult.enemyHp));
+    const finalDamage = Math.max(0, Math.floor((baseStats.damage || 1) * mult.enemyDmg));
 
-    const finalMaxHp = Math.max(1, Math.floor(baseHp * mult.enemyHp));
-    const finalDamage = Math.max(0, Math.floor(baseDmg * mult.enemyDmg));
-
-    return {
+    const newEnemy = {
       ...enemyData,
       type: enemyData.type,
       name: baseStats.name || enemyData.type,
       maxHp: finalMaxHp,
       currentHp: finalMaxHp,
       damage: finalDamage,
-      xpReward: baseStats.xpReward || enemyData.xpReward || 0,
+      xpReward: baseStats.xpReward || 0,
       shieldActive: false,
-      shieldCooldownEnd: 0,
-      rocketActive: false,
-      rocketTicksLeft: 0,
       stunned: false,
       poisoned: false,
-      resistances: (enemyData.resistances || baseStats.defaultResistances) || { stun: false, poison: false },
-      isBoss: !!baseStats.isBoss,
+      resistances: baseStats.defaultResistances || { stun: false, poison: false },
       attackSpeed: baseStats.attackSpeed || 2000,
       attackTimerId: null
     };
+
+    newEnemy.attackTimerId = setInterval(() => {
+      if (typeof performEnemyAction === 'function') {
+        performEnemyAction(newEnemy);
+      }
+    }, newEnemy.attackSpeed);
+
+    return newEnemy;
   });
 
-  const enemy = {
-    ...enemyData,
-      type: enemyData.type,
-      name: baseStats.name || enemyData.type,
-      maxHp: finalMaxHp,
-      currentHp: finalMaxHp,
-      damage: finalDamage,
-      xpReward: baseStats.xpReward || enemyData.xpReward || 0,
-      shieldActive: false,
-      shieldCooldownEnd: 0,
-      rocketActive: false,
-      rocketTicksLeft: 0,
-      stunned: false,
-      poisoned: false,
-      resistances: (enemyData.resistances || baseStats.defaultResistances) || { stun: false, poison: false },
-      isBoss: !!baseStats.isBoss,
-      attackSpeed: baseStats.attackSpeed || 2000,
-      attackTimerId: null
-};
-
-enemy.attackTimerId = setInterval(() => {
-    performEnemyAction(enemy);
-}, enemy.attackSpeed);
-
-return enemy;
-
-  // Assign built enemies (filter out nulls)
   activeEnemies = built.filter(Boolean);
 
-  // If a GhostBoss ref was prepared earlier, spawn its trains now (so they are not overwritten)
   if (window._lastGhostRef && window._lastGhostRef._isHidden && !window._lastGhostRef._hostTrainSpawned) {
     spawnGhostTrains(window._lastGhostRef);
-    // mark spawned
     window._lastGhostRef._hostTrainSpawned = true;
-    // ensure ghost object itself is preserved (it stays in window._lastGhostRef for later reveal)
   }
-  
-if (IslandBossPresent()) {
-  // global per-battle raft state
+  if (IslandBossPresent()) {
+
   window._raft = { maxHp: 12, hp: 12 };
 } else {
-  // clear any leftover raft state
+
   window._raft = null;
 }
 
   selectedEnemyIndex = 0;
-  if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
-  enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
-
   drawBattleUI();
   drawPlayerBattleStatus();
 }
