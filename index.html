@@ -234,7 +234,6 @@
   50% { transform: scale(1.5); color: #00ffff; text-shadow: 0 0 15px #00ffff; }
   100% { transform: scale(1.2); color: white; }
 }
-
 .fade-out {
   opacity: 0 !important;
   transition: opacity 0.7s ease-out !important;
@@ -5913,6 +5912,7 @@ function hideBattleBlackout() {
 // Override endBattle to check for second stage boss this is the defunct endbattle idk why i have 2 of em why doesnt the game crash idk
 function endBattle(outcome) {
   inBattle = false;
+  document.getElementById('battle-overlay').style.display = 'none';
 
   if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
   if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
@@ -5953,28 +5953,16 @@ function endBattle(outcome) {
     }
 
     if (activeEnemies.length === 0) {
-      showVictorySequence(() => {
       gainXP(totalXp);
       playerStats.currentHp = playerStats.maxHp;
       updateHp(playerStats.currentHp);
-      
       if (defeatedZone) removeZone(defeatedZone);
-      
-      inBattle = false;
-      document.getElementById('battle-overlay').style.display = 'none';
-      
-   
-      if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
-      if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
-      
       activeEnemies = [];
       defeatedZone = null;
       draw();
       document.getElementById('player-battle-status').innerHTML = '';
-    });
-    
-    return;
-}
+      return;
+    }
   } else if (outcome === 'lose') {
     showGameOver();
   }
@@ -6944,37 +6932,33 @@ function healAllyAfterBattle() {
   }
 }
 
-  function showVictorySequence(onComplete) {
+function showVictorySequence(onComplete) {
   const overlay = document.getElementById('battle-overlay');
   const banner = document.createElement('div');
   banner.id = 'victory-banner';
   
-  // Split the word into spans for the staggered animation
+ 
   const word = "VICTORY!";
   word.split('').forEach((char, i) => {
     const span = document.createElement('span');
     span.textContent = char;
     span.className = 'victory-letter';
-    span.style.animationDelay = (i * 0.1) + 's'; // Staggers each letter
+    span.style.animationDelay = (i * 0.1) + 's'; 
     banner.appendChild(span);
   });
 
   document.body.appendChild(banner);
 
-  // Play the sound
   const victoryJingle = new Audio('victory.wav');
   victoryJingle.play().catch(e => console.log("Audio play blocked"));
 
-  // 1 Second of banner display
   setTimeout(() => {
     banner.remove();
-    // Start the fade out of the UI
     overlay.classList.add('fade-out');
     
-    // 0.7 Seconds for the fade to finish
     setTimeout(() => {
       overlay.classList.remove('fade-out');
-      onComplete(); // Clean up the battle variables and return to world
+      onComplete();
     }, 700);
   }, 1000);
 }
@@ -7043,6 +7027,7 @@ function endBattle(outcome) {
   }
   // --- Normal battle end cleanup (no rounds left or lost) ---
   inBattle = false;
+  document.getElementById('battle-overlay').style.display = 'none';
   if (window._raft) {
   window._raft = null;
 }
@@ -7085,7 +7070,7 @@ function endBattle(outcome) {
   const pbs = document.getElementById('player-battle-status');
   if (pbs) pbs.innerHTML = "";
 }
-  
+
 function initiateBattle(zoneType, zoneObject) {
   inBattle = true;
   defeatedZone = { type: zoneType, object: zoneObject };
