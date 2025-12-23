@@ -6159,7 +6159,10 @@ function stopAbilityRegen() {
     abilityRegenIntervalId,
     allyAttackTimerId: activeAlly && activeAlly.attackTimerId ? activeAlly.attackTimerId : null
   };
-
+  
+activeEnemies.forEach(e => {
+    if (e.attackTimerId) clearInterval(e.attackTimerId);
+  });
   if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
   if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
   if (abilityRegenIntervalId) { clearInterval(abilityRegenIntervalId); abilityRegenIntervalId = null; }
@@ -6180,6 +6183,10 @@ function stopAbilityRegen() {
 function resumeBattleTimersAfterDialog() {
   if (!inBattle) return;
   if (!_battleDialogPausedState) return;
+
+  activeEnemies.forEach(e => {
+    e.attackTimerId = setInterval(() => performEnemyAction(e), e.attackSpeed);
+  });
 
   if (!enemyAttackIntervalId) enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
   if (!staminaRegenIntervalId) {
@@ -6331,6 +6338,10 @@ function enemyAttack(enemy, target) {
   function handleEnemyDeath(enemy) {
     const deathSound = new Audio('enemydie.wav');
 deathSound.play();
+
+    if (enemy.attackTimerId) {
+    clearInterval(enemy.attackTimerId);
+  }
     
     const enemyButtons = document.querySelectorAll('.enemy-target');
   const enemyIdx = activeEnemies.indexOf(enemy);
@@ -6909,6 +6920,10 @@ function endBattle(outcome) {
     // ensure selection index safe and continue battle
     selectedEnemyIndex = Math.max(0, Math.min(selectedEnemyIndex, activeEnemies.length - 1));
     inBattle = true;
+
+  activeEnemies.forEach(enemy => {
+    if (enemy.attackTimerId) clearInterval(enemy.attackTimerId);
+  });
     if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
     enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
     drawBattleUI();
@@ -7044,6 +7059,65 @@ initiateBattle = function(zoneType, zoneObject) {
   }
 }
 
+  function performEnemyAction(enemy) {
+  if (!inBattle || isGameOver || enemy.currentHp <= 0) return;
+  
+
+  if (!enemy.stunned) {
+    let target = playerStats;
+    if (activeAlly && activeAlly.currentHp > 0) {
+      target = (Math.random() < 0.5) ? playerStats : activeAlly;
+    }
+
+    const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
+  
+   if (behavior === 'normalAttack') {
+  normalAttack(enemy, target);
+} else if (behavior === 'sniperAttack') {
+  sniperAttack(enemy, target);
+} else if (behavior === 'caveBossBehavior') {
+  caveBossBehavior(enemy, target);
+} else if (behavior === 'bossBehavior') {
+  bossBehavior(enemy, target);
+} else if (behavior === 'summonerBehavior') {
+  summonerBehavior(enemy, target);
+} else if (behavior === 'secondStageBossBehavior') {
+  secondStageBossBehavior(enemy, target);
+} else if (behavior === 'factoryBehavior') {
+  factoryBehavior(enemy, target);
+} else if (behavior === 'lifeCoreBehavior') {
+  lifeCoreBehavior(enemy, target);
+} else if (behavior === 'iceBossBehavior') {
+  iceBossBehavior(enemy, target);
+} else if (behavior === 'lifeStealBossBehavior') {
+  lifeStealBossBehavior(enemy, target);
+} else if (behavior === 'critBossBehavior') {
+  critBossBehavior(enemy, target);
+} else if (behavior === 'islandBossBehavior') {
+  islandBossBehavior(enemy, target);
+} else if (behavior === 'mountainBossBehavior') {
+  mountainBossBehavior(enemy, target);
+} else if (behavior === 'ghostBossBehavior') {
+  ghostBossBehavior(enemy, target);
+} else if (behavior === 'finalBossStage1Behavior') {
+  finalBossStage1Behavior(enemy, target);
+} else if (behavior === 'finalBossStage2Behavior') {
+  finalBossStage2Behavior(enemy, target);
+} else if (behavior === 'finalBossStage3Behavior') {
+  finalBossStage3Behavior(enemy, target);
+} else if (behavior === 'shadowOrbBehavior') {
+  shadowOrbBehavior(enemy, target);
+} else if (behavior === 'lightOrbBehavior') {
+  lightOrbBehavior(enemy, target);
+} else if (behavior === 'healerBehavior') {
+  healerBehavior(enemy, target);
+}
+
+  drawBattleUI();
+  drawPlayerBattleStatus();
+}
+}
+
 function spawnRound(roundIdx) {
   const encounter = currentRoundEncounters[roundIdx] || [];
   const mult = getDifficultyMultipliers();
@@ -7104,9 +7178,17 @@ function spawnRound(roundIdx) {
       stunned: false,
       poisoned: false,
       resistances: (enemyData.resistances || baseStats.defaultResistances) || { stun: false, poison: false },
-      isBoss: !!baseStats.isBoss
+      isBoss: !!baseStats.isBoss,
+      attackSpeed: baseStats.attackSpeed || 2000,
+      attackTimerId: null
     };
   });
+
+enemy.attackTimerId = setInterval(() => {
+    performEnemyAction(enemy);
+}, enemy.attackSpeed);
+
+return enemy;
 
   // Assign built enemies (filter out nulls)
   activeEnemies = built.filter(Boolean);
