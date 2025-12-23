@@ -7036,9 +7036,6 @@ initiateBattle = function(zoneType, zoneObject) {
   selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
-
-  if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
-  enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
   
   if (activeEnemies.length > 0 && activeEnemies[0].type === 'Dummy') {
     showBattleDialog([
