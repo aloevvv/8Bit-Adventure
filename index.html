@@ -715,10 +715,17 @@ const useImage = true;
 const img = new Image();
 img.src = '8bit.png';
 
-const spritePreload = ['8bitup.png', '8bitleft.png', '8bitright.png'].forEach(src => {
+const spriteCache = {};
+
+['8bitup.png', '8bitleft.png', '8bitright.png'].forEach(src => {
   const cacheImg = new Image();
   cacheImg.src = src;
+  cacheImg.onload = () => {
+    console.log(`${src} loaded`);
+  };
+  spriteCache[src] = cacheImg;
 });
+
 
 const hpBar = document.getElementById('hp-bar');
 const hpText = document.getElementById('hp-text');
