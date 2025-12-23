@@ -7041,17 +7041,21 @@ function endBattle(outcome) {
   inBattle = false;
 
   if (outcome === 'win') {
-  activeEnemies.forEach(enemy => {
-    enemy.currentHp = 0;
-  });
 
-  showVictorySequence(() => {
+    if (activeEnemies.length === 0) {
+      showVictorySequence(() => {
+        finalizeBattleCleanup(outcome);
+        drawBattleUI();
+      });
+    } else {
+      finalizeBattleCleanup(outcome);
+  drawBattleUI();
+    }
+  } else {
     finalizeBattleCleanup(outcome);
-  });
-} else {
-  finalizeBattleCleanup(outcome);
+  drawBattleUI();
+  }
 }
-
 
 function finalizeBattleCleanup(outcome) {
   document.getElementById('battle-overlay').style.display = 'none';
