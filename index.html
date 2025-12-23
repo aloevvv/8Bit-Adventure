@@ -711,21 +711,22 @@ const hitboxWidth = 30;
 const hitboxHeight = 30;
 const hitboxOffsetX = (imageSize - hitboxWidth) / 2;
 const hitboxOffsetY = (imageSize - hitboxHeight) / 2;
-const useImage = true;
-const img = new Image();
-img.src = '8bit.png';
 
-const spriteCache = {};
+  const useImage = true;
 
-['8bitup.png', '8bitleft.png', '8bitright.png'].forEach(src => {
-  const cacheImg = new Image();
-  cacheImg.src = src;
-  cacheImg.onload = () => {
-    console.log(`${src} loaded`);
-  };
-  spriteCache[src] = cacheImg;
-});
+const playerSprites = {
+  down: new Image(),
+  up: new Image(),
+  left: new Image(),
+  right: new Image()
+};
 
+playerSprites.down.src = '8bit.png';
+playerSprites.up.src = '8bitup.png';
+playerSprites.left.src = '8bitleft.png';
+playerSprites.right.src = '8bitright.png';
+
+let currentFacing = 'down';
 
 const hpBar = document.getElementById('hp-bar');
 const hpText = document.getElementById('hp-text');
@@ -9912,14 +9913,15 @@ function draw() {
     }
   });
 }
-  if (useImage && img.complete && img.naturalWidth > 0) {
-    ctx.drawImage(img, x, y, imageSize, imageSize);
-  } else {
-    ctx.fillStyle = "#0090ff";
-    ctx.fillRect(x, y, imageSize, imageSize);
-  }
-  ctx.fillStyle = "rgba(0,0,0,0.0)";
-  ctx.fillRect(x + hitboxOffsetX, y + hitboxOffsetY, hitboxWidth, hitboxHeight);
+ 
+const activeSprite = playerSprites[currentFacing];
+
+if (useImage && activeSprite.complete && activeSprite.naturalWidth > 0) {
+  ctx.drawImage(activeSprite, x, y, imageSize, imageSize);
+} else {
+  ctx.fillStyle = "#0090ff"; // Fallback blue square
+  ctx.fillRect(x, y, imageSize, imageSize);
+}
   
 if (window.gameSettings && window.gameSettings.showZones) {
   ctx.save();
@@ -10433,19 +10435,19 @@ if (inBattle || isGameOver || isDialogActive || document.getElementById('fade-ov
 
 if (key === 'arrowleft' || key === 'a') {
   dirX = -1;
-  img.src = '8bitleft.png';
+  currentFacing = 'left';
 }
 if (key === 'arrowright' || key === 'd') {
   dirX = 1;
-  img.src = '8bitright.png';
+  currentFacing = 'right';
 }
 if (key === 'arrowup' || key === 'w') {
   dirY = -1;
-  img.src = '8bitup.png'; 
+  currentFacing = 'up';
 }
 if (key === 'arrowdown' || key === 's') {
   dirY = 1;
-  img.src = '8bit.png';
+  currentFacing = 'down';
 }
 
   
