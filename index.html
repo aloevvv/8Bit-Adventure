@@ -6249,7 +6249,6 @@ function resumeBattleTimersAfterDialog() {
     e.attackTimerId = setInterval(() => performEnemyAction(e), e.attackSpeed);
   });
 
-  if (!enemyAttackIntervalId) enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
   if (!staminaRegenIntervalId) {
     staminaRegenIntervalId = setInterval(() => { updateStamina(playerStats.currentStamina + 1); drawPlayerBattleStatus(); }, 100);
   }
