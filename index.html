@@ -6548,9 +6548,7 @@ deathSound.play();
           if (typeof startDarkTimer === 'function') startDarkTimer();
 
           inBattle = true;
-          if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
-          enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
-
+          
           drawBattleUI();
           drawPlayerBattleStatus();
           drawPartyStatus();
@@ -6831,9 +6829,7 @@ deathSound.play();
 
     // Ensure battle continues
     inBattle = true;
-    if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
-    enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
-
+   
     return;
   }
 
@@ -7017,8 +7013,6 @@ function endBattle(outcome) {
   activeEnemies.forEach(enemy => {
     if (enemy.attackTimerId) clearInterval(enemy.attackTimerId);
   });
-    if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
-    enemyAttackIntervalId = setInterval(takeTurn, ENEMY_ATTACK_DELAY);
     drawBattleUI();
     drawPlayerBattleStatus();
     return; // bail out of normal end flow
