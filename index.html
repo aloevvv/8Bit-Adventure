@@ -7184,6 +7184,26 @@ function spawnRound(roundIdx) {
     };
   });
 
+  const enemy = {
+    ...enemyData,
+      type: enemyData.type,
+      name: baseStats.name || enemyData.type,
+      maxHp: finalMaxHp,
+      currentHp: finalMaxHp,
+      damage: finalDamage,
+      xpReward: baseStats.xpReward || enemyData.xpReward || 0,
+      shieldActive: false,
+      shieldCooldownEnd: 0,
+      rocketActive: false,
+      rocketTicksLeft: 0,
+      stunned: false,
+      poisoned: false,
+      resistances: (enemyData.resistances || baseStats.defaultResistances) || { stun: false, poison: false },
+      isBoss: !!baseStats.isBoss,
+      attackSpeed: baseStats.attackSpeed || 2000,
+      attackTimerId: null
+};
+
 enemy.attackTimerId = setInterval(() => {
     performEnemyAction(enemy);
 }, enemy.attackSpeed);
