@@ -9690,11 +9690,21 @@ mobileToggle.addEventListener('change', (e) => {
     return;
   }
   if (!isCollidingWithWall(nextX, nextY)) {
-    const door = checkDoorCollision(nextX, nextY);
-    if (door) {
-      loadLevel(door.destLevel, door.destX, door.destY);
-      return;
-    }
+   const door = checkDoorCollision(nextX, nextY);
+if (door) {
+
+  loadLevel(door.destLevel, door.destX, door.destY);
+  
+  if (door.dialog) {
+    setTimeout(() => {
+      showDialog(door.dialog, null, { 
+        speaker: door.speaker || null, 
+        style: door.style || 'dialog' 
+      });
+    }, 750);
+  }
+  return;
+}
     const battleZone = findBattleZone(nextX, nextY);
     if (battleZone) {
       initiateBattle('battleZone', battleZone);
@@ -10712,13 +10722,22 @@ if (key === 'arrowdown' || key === 's') {
     return;
   }
 
-  // Existing collision checks
   if (!isCollidingWithWall(nextX, nextY)) {
     const door = checkDoorCollision(nextX, nextY);
-    if (door) {
-      loadLevel(door.destLevel, door.destX, door.destY);
-      return;
-    }
+if (door) {
+
+  loadLevel(door.destLevel, door.destX, door.destY);
+  
+  if (door.dialog) {
+    setTimeout(() => {
+      showDialog(door.dialog, null, { 
+        speaker: door.speaker || null, 
+        style: door.style || 'dialog' 
+      });
+    }, 750);
+  }
+  return;
+}
 
     const battleZone = findBattleZone(nextX, nextY);
     if (battleZone) {
