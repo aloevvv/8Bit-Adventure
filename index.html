@@ -9574,6 +9574,13 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
   draw();
   return;
 }
+  if (object.action === "atticphoto") {
+    showDialog([
+      { speaker: '8-Bit', text: "I wonder why they have a quite new photo of themselves in here.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Looks pretty old.", style: 'dialog' }
+    ]);
+    return;
+  }
   if (object.name === "partybot" || object.id === "partybot") {
 
     if (!gameFlags.birthdaybottalk) {
