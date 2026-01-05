@@ -3378,6 +3378,7 @@ iceZones: [],
       { x: 190, y: 144, width: 244, height: 122 },
     ],
     doors: [
+       { x: 0, y: 0, width: 50, height: 20, destLevel: '72', destX: 50, destY: 400 },
     { x: 0, y: 300, width: 20, height: 180, destLevel: '70', destX: 580, destY: 100 }
     ],
     darkZones: [],
@@ -3399,7 +3400,9 @@ iceZones: [],
     darkZones: [],
     battleZones: [],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      { id: 'atticblockade', x: 620, y: 0, width: 20, height: 180, action: 'atticblockade' }
+    ]
   },
   {
     bgSrc: "friendhouse3_8_73.png",
@@ -9417,6 +9420,12 @@ function handleInteraction(object) {
     ]);
     return;
   }
+  if (object.action === "atticblockade") {
+    showDialog([
+      { speaker: '8-Bit', text: "There is a gate here.", style: 'dialog' }
+    ]);
+    return;
+  }
 
   if (object.action === "visualarcadegate") {
     showDialog([
@@ -9560,26 +9569,11 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
     ]);
     return;
   }
-  if (object.action === 'lever' && object.id === 'leverblockade') {
-  object.currentState = !object.currentState;
-
-     toggleWallById('wallblockade', false, 44); 
-    
-  const targetLevel = levels[44];
-  if (targetLevel) {
-    targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'blockade');
-    removedInteractableIds.add('blockade');
-
-    targetLevel.walls = targetLevel.walls.filter(w => w.id !== 'wallblockade');
-  }
-
-  draw();
-  return;
-}
+ 
   if (object.action === "atticphoto") {
     showDialog([
       { speaker: '8-Bit', text: "I wonder why they have a quite new photo of themselves in here.", style: 'dialog' },
-      { speaker: '8-Bit', text: "Looks pretty old.", style: 'dialog' }
+      { speaker: '8-Bit', text: "It's full of dust so it's been here for a while.", style: 'dialog' }
     ]);
     return;
   }
@@ -9666,23 +9660,59 @@ if (object.action === 'slap_jack') {
 // Lever interactions
 if (object.action === 'lever') {
   // ensure runtime state exists
-  if (typeof object.currentState === 'undefined') object.currentState = !!object.initialState;
+  if (typeof object.currentState === 'undefined') {
+    object.currentState = !!object.initialState;
+  }
   object.currentState = !object.currentState;
+
   showTemporaryText(object.currentState ? 'Lever turned on.' : 'Lever turned off.');
-  // Single lever toggles its linked wall: design choice -> when lever ON remove wall
+
+  // single
   if (object.leverType === 'single') {
     if (object.linkedWallId) {
-      const targetLevelIndex = (typeof object.linkedLevelIndex === 'number') ? object.linkedLevelIndex : currentLevelIndex;
+      const targetLevelIndex = (typeof object.linkedLevelIndex === 'number')
+        ? object.linkedLevelIndex
+        : currentLevelIndex;
       toggleWallById(object.linkedWallId, !object.currentState, targetLevelIndex);
     }
   }
-  // Multi lever flips and triggers group evaluation
+
+  // multi
   if (object.leverType === 'multi' && object.groupId) {
     evaluateMultiLeverGroup(object.groupId);
   }
+
+  switch (object.id) {
+    case 'leverblockade': {
+      const targetLevel = levels[44];
+      toggleWallById('wallblockade', !object.currentState, 44);
+      if (targetLevel) {
+        targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'blockade');
+        removedInteractableIds.add('blockade');
+        targetLevel.walls = targetLevel.walls.filter(w => w.id !== 'wallblockade');
+        removedWallIds.add('wallblockade');
+      }
+      break;
+    }
+
+    case 'atticlever': {
+      const targetLevel = levels[72];
+      toggleWallById('atticwall', !object.currentState, 72);
+      gameFlags.atticLeverPressed = object.currentState;
+      if (targetLevel) {
+        targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'atticblockade');
+        removedInteractableIds.add('atticblockade');
+        targetLevel.walls = targetLevel.walls.filter(w => w.id !== 'atticwall');
+        removedWallIds.add('atticwall');
+      }
+      break;
+    }
+  }
+
   draw();
   return;
 }
+
 
 
 if (object.action === 'lever_controller') {
@@ -10465,6 +10495,16 @@ if (gameSettings.showZones) {
   }
 });
 
+  currentLevel.interactables.forEach(obj => {
+  if (obj.action === "atticblockade") {
+    if (arcadegateImg && arcadegateImg.complete) {
+      ctx.drawImage(arcadegateImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#ff00ff";
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
 
   // Draw levers and controllers
 (currentLevel.interactables || []).forEach(obj => {
