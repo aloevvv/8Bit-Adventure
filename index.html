@@ -291,16 +291,15 @@
   box-shadow: 0 6px 12px rgba(0,0,0,0.6);
 }
 
-/* Keep same button visuals as HUD */
+
 #settings-popup .item-use-button { font-family:"Press Start 2P",sans-serif; font-size:0.7em; padding:6px 8px; margin:2px 0; cursor:pointer; background:#2b2b2b; border:2px solid white; color:white; }
 #settings-popup .item-use-button:hover { background:#0060ff; }
 
-/* compact select tooltip target spacing */
+
 .settings-row { margin:8px 0; display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .settings-row label { font-size:10px; display:block; flex:1 1 auto; text-align:left; }
 .settings-row .control { flex:0 0 auto; }
 
-/* small tooltip style (used by JS fallback if needed) */
 .settings-tooltip {
   font-size:10px;
   color:#ddd;
@@ -310,7 +309,7 @@
   border-radius:4px;
 }
 
-    /* Inventory styling */
+
     #inventory-list {
       display: flex;
       flex-direction: row;
@@ -362,7 +361,7 @@
     .item-use-button:hover {
       background-color: #555;
     }
-    /* Target Practice - target styles */
+
 .tp-target {
   position: absolute;
   width: 64px;
@@ -388,9 +387,9 @@
   display: none;
   position: fixed;
   inset: 0;
-  z-index: 2500; /* above canvas but can be below battle UI if you want */
+  z-index: 2500; 
   background: black;
-  pointer-events: none; /* doesn't block clicks unless you want it to */
+  pointer-events: none;
 }
     #game-over-overlay {
   position: fixed;
@@ -411,7 +410,6 @@
   font-family: "Press Start 2P", sans-serif;
 }
 
-    /* Save and Load buttons styling */
     #game-hud button {
       font-family: "Press Start 2P", sans-serif;
       padding: 8px 15px;
@@ -612,7 +610,7 @@
       </div>
     </div>
     <div id="tp-playfield" style="flex:1; position:relative; background:linear-gradient(#223355,#112233); border:1px solid #000; overflow:hidden;">
-      <!-- targets appended here -->
+    
     </div>
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <div style="font-size:11px;">Attempts left: <span id="tp-attempts">5</span></div>
@@ -706,7 +704,7 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
 </div>
 
 
-  <!-- Battle blackout overlay (hidden by default) -->
+  
 <div id="battle-blackout" style="display:none; position:fixed; inset:0; z-index:2500; background:black; pointer-events:none;"></div>
   
 <div id="mobile-controls" style="display:none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); width: 220px; user-select:none; z-index: 3000;">
@@ -724,7 +722,7 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
   </div>
 
 </div>
-<!-- Must start hidden! -->
+
 <div id="game-over-overlay" style="display: none">
   <div class="game-over-content">
     <h1>Game Over</h1>
@@ -740,7 +738,7 @@ console.log('script loaded');
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-// Focus canvas for keyboard input
+
 canvas.tabIndex = 0;
 canvas.focus();
 canvas.addEventListener('click', () => canvas.focus());
@@ -854,9 +852,9 @@ const ENEMY_ATTACK_DELAY = 2000;
 let staminaRegenIntervalId = null;
 let inventory = new Map();
 let extraLifeTimerId = null;
-let battleRounds = 0;                // number of rounds remaining
-let currentRoundEncounters = [];     // array of rounds (each round = array of enemy defs)
-let currentRoundIndex = 0;           // index of current round
+let battleRounds = 0;            
+let currentRoundEncounters = [];     
+let currentRoundIndex = 0;    
 
   const armorTypes = {
   retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
@@ -917,12 +915,12 @@ inventory.set("driftwood", 0);
 
 inventory.set("bolts", 5);
   
-inventory.set("hammer", 1);
+inventory.set("hammer", 0);
 inventory.set("laser_cutter", 0);
 inventory.set("raft", 0);
 inventory.set("keycard", 0);
 inventory.set("gas_mask", 0);
-inventory.set("drill", 1);
+inventory.set("drill", 0);
 inventory.set("torch", 0);
 inventory.set("ice_boots", 0);
   
@@ -975,10 +973,10 @@ const alliesData = [
   { id: 'ally6', name: 'Max', baseMaxHp: 36, baseDamage: 4, attackIntervalMs: 1000, level: 1, xp: 0, xpToNextLevel: 10 },
 ];
 
-let unlockedAllies = new Set();  // Track unlocked ally IDs
-let equippedAllyId = null;       // Currently equipped ally ID or null
-let activeAlly = null;           // Ally battle state (HP etc)
-let allyAttackTimerId = null;    // Timer for ally attacks
+let unlockedAllies = new Set();
+let equippedAllyId = null;      
+let activeAlly = null;           
+let allyAttackTimerId = null; 
 
 let inBattle = false;
 
@@ -4033,7 +4031,6 @@ leverOffImg.src = 'leveroff.png';
 
 let activeEnemies = [];
 
-// Utility: text wrapping for canvas
 function wrapText(context, text, x, y, maxWidth, lineHeight) {
   const words = String(text).split(' ');
   let line = "";
@@ -4052,7 +4049,6 @@ function wrapText(context, text, x, y, maxWidth, lineHeight) {
   context.fillText(line.trim(), x, y);
 }
 
-// Show temporary text on screen for 3 seconds
 function showTemporaryText(message) {
   tempText = message;
   if (tempTextTimeout) clearTimeout(tempTextTimeout);
@@ -4063,19 +4059,16 @@ function showTemporaryText(message) {
 }
 
   
-// Check if player can go below 1 HP (used with extra life item)
 function canGoBelow1Hp() {
   return extraLifeTimerId === null;
 }
 
-// Update stamina and clamp between 0 and max
 function updateStamina(newStamina) {
   if (newStamina < 0) newStamina = 0;
   if (newStamina > playerStats.maxStamina) newStamina = playerStats.maxStamina;
   playerStats.currentStamina = newStamina;
 }
 
-// Update HP and UI bar
 function updateHp(newHealth) {
   if (newHealth < 0) newHealth = 0;
   if (newHealth > playerStats.maxHp) newHealth = playerStats.maxHp;
@@ -4085,7 +4078,6 @@ function updateHp(newHealth) {
   hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
 }
 
-// Update stats popup UI
 function updateStatsPopup() {
   document.getElementById('popup-level').textContent = playerStats.level;
   document.getElementById('popup-xp').textContent = `${playerStats.xp} / ${playerStats.xpToNextLevel}`;
@@ -4149,14 +4141,12 @@ function ensureFiniteNumber(v, fallback) {
 function levelUpAlly(ally) {
   console.log('levelUp start', { id: ally.id, name: ally.name, before: { ...ally } });
 
-  // Ensure numeric values are valid
   ally.level = ensureFiniteNumber(ally.level, 1);
   ally.xp = ensureFiniteNumber(ally.xp, 0);
   ally.xpToNextLevel = ensureFiniteNumber(ally.xpToNextLevel, 10);
   ally.baseMaxHp = ensureFiniteNumber(ally.baseMaxHp, null);
   ally.baseDamage = ensureFiniteNumber(ally.baseDamage, null);
 
-  // Fill in defaults from alliesData if missing
   const baseAllyTemplate = alliesData.find(a => a.id === ally.id);
   if (baseAllyTemplate) {
     if (ally.baseMaxHp === null) ally.baseMaxHp = ensureFiniteNumber(baseAllyTemplate.baseMaxHp, 1);
@@ -4166,7 +4156,6 @@ function levelUpAlly(ally) {
     if (ally.baseDamage === null) ally.baseDamage = 0;
   }
 
-  // Handle repeated level-ups if XP is enough
   let leveled = false;
   while (ally.xp >= ally.xpToNextLevel && ally.xpToNextLevel > 0) {
     leveled = true;
@@ -4174,7 +4163,6 @@ function levelUpAlly(ally) {
     ally.xp -= ally.xpToNextLevel;
     ally.xpToNextLevel = Math.floor(ally.xpToNextLevel * 1.2);
 
-    // Stat growth
     ally.baseMaxHp += Math.floor(3 + (ally.level / 2));
     ally.baseDamage += Math.floor(1 + (ally.level / 6));
 
@@ -4184,7 +4172,6 @@ function levelUpAlly(ally) {
     });
   }
 
-  // If leveled, update HP and show message
   if (leveled) {
     ally.maxHp = ally.baseMaxHp;
     ally.currentHp = ally.maxHp;
@@ -4194,7 +4181,7 @@ function levelUpAlly(ally) {
     console.log('no level up: xp below threshold', { xp: ally.xp, xpToNextLevel: ally.xpToNextLevel });
   }
 
-  // Sync back to alliesData
+
   const baseAlly = alliesData.find(a => a.id === ally.id);
   if (baseAlly) {
     baseAlly.level = ally.level;
@@ -4212,7 +4199,6 @@ function levelUpAlly(ally) {
 
 
 
-// Level up player
 function levelUp() {
   playerStats.level++;
   playerStats.xp -= playerStats.xpToNextLevel;
@@ -4230,11 +4216,11 @@ function levelUp() {
   showTemporaryText(`Leveled up to ${playerStats.level}!`);
 }
 
-// Gain XP and check level up
+
 function gainXP(amount) {
   playerStats.xp += amount;
 
-  // Also give XP to equipped ally
+
   if (activeAlly) {
     activeAlly.xp += amount;
     while (activeAlly.xp >= activeAlly.xpToNextLevel) {
@@ -4249,7 +4235,6 @@ function gainXP(amount) {
   drawPartyStatus();
 }
 
-// Remove battle or interactable zone after clearing
 function removeZone(zone) {
   if (!zone) return;
   if (zone.type === 'battleZone') {
@@ -4273,7 +4258,7 @@ function findLeversInGroup(groupId) {
   const arr = [];
   (currentLevel.interactables || []).forEach(obj => {
     if (obj && obj.action === 'lever' && obj.leverType === 'multi' && obj.groupId === groupId) {
-      // initialize runtime state if missing
+      
       if (typeof obj.currentState === 'undefined') obj.currentState = !!obj.initialState;
       arr[obj.indexInGroup] = obj;
     }
@@ -4322,7 +4307,7 @@ function evaluateMultiLeverGroup(groupId, controllerObj = null) {
   draw();
 }
 
-// Scale enemy stats with level
+
 // === Difficulty multipliers ===
 function getDifficultyMultipliers() {
   // Normal: 1x; Hard: enemy damage x2; Ultimate: enemy damage x2 and enemy HP x2
@@ -4348,20 +4333,20 @@ function scaleEnemyStats(baseStats) {
 
 
   
-// Inventory popup toggle and drawing
+
 const inventoryButton = document.getElementById('inventory-button');
 const inventoryPopup = document.getElementById('inventory-popup');
 const statsPopup = document.getElementById('stats-popup');
 const inventoryList = document.getElementById('general-inventory-list');
 
 inventoryButton.addEventListener('click', () => {
-  // don't open during battle or after game over
+  
   if (inBattle || isGameOver) return;
 
-  // Hide stats popup whenever opening inventory
+  
   if (statsPopup) statsPopup.style.display = 'none';
 
-  // Detect if it's currently hidden (using computed style)
+ 
   const isHidden = window.getComputedStyle(inventoryPopup).display === 'none';
   if (isHidden) {
     drawGeneralInventory();
@@ -4383,7 +4368,7 @@ function drawGeneralInventory() {
       const p = document.createElement('p');
       p.textContent = `${itemName.replace(/_/g, ' ')}: ${quantity}`;
 
-      // Add equip buttons for armor and weapons
+   
       if (itemName.startsWith("armor_")) {
         const type = itemName.replace("armor_", "");
         const equipBtn = document.createElement('button');
@@ -4406,7 +4391,6 @@ function drawGeneralInventory() {
 }
 
 
-// Find battle zone for given player position
 function findBattleZone(checkX, checkY) {
   const hitboxX = checkX + hitboxOffsetX;
   const hitboxY = checkY + hitboxOffsetY;
@@ -4441,7 +4425,7 @@ function showGameOver() {
   document.getElementById('game-over-overlay').style.display = 'flex';
 }
 
-// Battle inventory popup draw
+
 function drawInventoryBattlePopup() {
  
 console.log('drawInventoryBattlePopup called, entries:', Array.from(inventory.entries()));
@@ -4449,11 +4433,11 @@ console.log('drawInventoryBattlePopup called, entries:', Array.from(inventory.en
   const battleInventoryList = document.getElementById('inventory-list');
   battleInventoryList.innerHTML = "";
 
-  // whitelist: items that are allowed in battle (exact names or prefixes)
+ 
   const allowedExact = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'driftwood']);
-  const allowedPrefix = ['battle_']; // add prefixes for any future battle-only items
+  const allowedPrefix = ['battle_']; 
 
-  // build list of entries that are allowed and have qty > 0
+  
   const entries = [];
   inventory.forEach((quantity, itemName) => {
     if (!quantity || quantity <= 0) return;
@@ -4580,13 +4564,13 @@ function equipWeapon(type) {
   showTemporaryText(`Equipped ${weaponTypes[type].name}`);
 }
   
-// Use inventory item logic
+
 function useItem(itemName) {
   if ((inventory.get(itemName) || 0) <= 0) return;
 
-  // at the top of useItem(itemName) function, add:
+  
 if (inBattle) {
-  // only allow explicit battle items while in battle
+
   const battleAllowed = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'driftwood']);
   if (!battleAllowed.has(itemName) && !itemName.startsWith('battle_')) {
     showTemporaryText("You can't use that item during battle.");
@@ -4651,7 +4635,7 @@ if (inBattle) {
     }
 
     enemy._poisonIntervalId = setInterval(() => {
-      // defensive guards
+      
       if (!enemy || enemy.removed || enemy.currentHp == null) {
         if (enemy && enemy._poisonIntervalId != null) {
           clearInterval(enemy._poisonIntervalId);
@@ -4661,14 +4645,14 @@ if (inBattle) {
         return;
       }
 
-      // tick damage
+
       enemy.currentHp = Math.max(0, enemy.currentHp - poisonDamagePerTick);
       enemy._poisonElapsed += POISON_TICK_MS;
       enemy._poisonDuration -= POISON_TICK_MS;
 
       drawBattleUI();
 
-      // death handling: clear interval first, then remove via handler with known index if possible
+      
       if (enemy.currentHp === 0) {
         const idx = activeEnemies.indexOf(enemy);
         if (enemy._poisonIntervalId != null) {
