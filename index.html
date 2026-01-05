@@ -3352,7 +3352,19 @@ iceZones: [],
     darkZones: [],
     battleZones: [],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      {
+  id: 'atticlever',
+  action: 'lever',
+  leverType: 'single',
+  linkedWallId: 'atticwall',
+  linkedLevelIndex: 72,
+  x: 39,
+  y: 59,
+  width: 64,
+  height: 64
+}
+    ]
   },
   {
     bgSrc: "friendhouse3_6_71.png",
@@ -3371,6 +3383,7 @@ iceZones: [],
     bgSrc: "friendhouse3_7_72.png",
     walls: [
       { x: 0, y: 0, width: 40, height: 480 },
+  { id: 'atticwall', x: 620, y: 0, width: 20, height: 180 },
     ],
     doors: [
     { x: 344, y: 440, width: 260, height: 40, destLevel: '23', destX: 483, destY: 50 }
