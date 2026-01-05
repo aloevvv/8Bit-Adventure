@@ -779,6 +779,7 @@ let gameFlags = {
   isPowered: false,
   arcadegatetalk: false,
   carpass: false,
+  atticlever: false,
   birthdaybottalk: false,
   birthdaybotkilled: false,
   birthdaybotspared: false,
@@ -3328,7 +3329,7 @@ iceZones: [],
     walls: [
       { x: 0, y: 0, width: 20, height: 480 },
       { x: 620, y: 265, width: 20, height: 240 },
-  { x: 414, y: 265, width: 220, height: 75 },
+  // { x: 414, y: 265, width: 220, height: 75 },
   { x: 0, y: 172, width: 214, height: 50 },
        { x: 214, y: 70, width: 169, height: 95 },
       { x: 383, y: 0, width: 260, height: 67 },
@@ -9698,7 +9699,6 @@ if (object.action === 'lever') {
     case 'atticlever': {
       const targetLevel = levels[72];
       toggleWallById('atticwall', !object.currentState, 72);
-      gameFlags.atticLeverPressed = object.currentState;
       if (targetLevel) {
         targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'atticblockade');
         removedInteractableIds.add('atticblockade');
