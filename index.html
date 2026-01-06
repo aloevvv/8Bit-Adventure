@@ -3879,6 +3879,14 @@ function Reach18() {
     }, 3000);
   }
 }
+function objPlaceholder() {
+  if (currentObjective === "Search the house for a lever to open the gate!") {
+    completeObjective();
+    setTimeout(() => {
+      setObjective("new objective");
+    }, 3000);
+  }
+}
   const blipSound = new Audio('blip.wav');
 blipSound.volume = 0.6;
   
