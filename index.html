@@ -4186,6 +4186,9 @@ arcadegateImg.src = 'arcadegate.png';
 const partybotImg = new Image();
 partybotImg.src = 'partybot.png';
 
+const rockbImg = new Image();
+rockbImg.src = 'rockB.png';
+
 const leverOnImg = new Image();
 leverOnImg.src = 'leveron.png';
 const leverOffImg = new Image();
@@ -10786,6 +10789,17 @@ if (gameSettings.showZones) {
   if (obj.action === "atticblockade") {
     if (arcadegateImg && arcadegateImg.complete) {
       ctx.drawImage(arcadegateImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#ff00ff";
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
+
+  currentLevel.interactables.forEach(obj => {
+  if (obj.name === "rockB") {
+    if (rockbImg && rockbImg.complete) {
+      ctx.drawImage(rockbImg, obj.x, obj.y, obj.width, obj.height);
     } else {
       ctx.fillStyle = "#ff00ff";
       ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
