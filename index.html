@@ -849,6 +849,7 @@ let tempText = "";
 let tempTextTimeout = null;
 let defeatedZone = null;
 let enemyAttackIntervalId = null;
+let armorHealIntervalId = null;
 const ENEMY_ATTACK_DELAY = 2000;
 let staminaRegenIntervalId = null;
 let inventory = new Map();
@@ -6404,7 +6405,7 @@ function hideBattleBlackout() {
   if (!battleBlackoutEl) return;
   battleBlackoutEl.style.display = 'none';
 }
-// Override endBattle to check for second stage boss this is the defunct endbattle idk why i have 2 of em why doesnt the game crash idk
+// this is the defunct endbattle idk why i have 2 of em why doesnt the game crash idk
 function endBattle(outcome) {
   inBattle = false;
   document.getElementById('battle-overlay').style.display = 'none';
@@ -6497,7 +6498,6 @@ function healerBehavior(enemy) {
 function takeTurn() {
   if (!inBattle) return;
 
-  passiveArmorHeal();
 
   activeEnemies.forEach(enemy => {
     if (!enemy.stunned) {
@@ -6782,10 +6782,13 @@ function enemyAttack(enemy, target) {
 }
   function passiveArmorHeal() {
   if (equippedArmor && armorTypes[equippedArmor] && armorTypes[equippedArmor].passiveHealPercent) {
-    const healAmount = Math.ceil(playerStats.maxHp * armorTypes[equippedArmor].passiveHealPercent);
-    playerStats.currentHp = Math.min(playerStats.currentHp + healAmount, playerStats.maxHp);
-    updateHp(playerStats.currentHp);
-    showTemporaryText(`Passive heal: +${healAmount} HP`);
+    if (playerStats.currentHp < playerStats.maxHp) {
+      const healAmount = Math.ceil(playerStats.maxHp * armorTypes[equippedArmor].passiveHealPercent);
+      playerStats.currentHp = Math.min(playerStats.currentHp + healAmount, playerStats.maxHp);
+      
+      updateHp(playerStats.currentHp);
+      showTemporaryText(`Armor Heal: +${healAmount} HP`);
+    }
   }
 }
   function playerTakeDamage(amount) {
@@ -6845,9 +6848,10 @@ function enemyAttack(enemy, target) {
     const hurtSound = new Audio('hitHurt.wav');
       hurtSound.play();
 
-  // If Extra Life active, prevent death and clamp HP at 1
-  if (!canGoBelow1Hp() && playerStats.currentHp <= 0) {
-    playerStats.currentHp = 1;
+  if (!canGoBelow1Hp()) { 
+    if (playerStats.currentHp <= 1) {
+      playerStats.currentHp = playerStats.maxHp;
+    }
   }
 
   if (playerStats.currentHp < 0) {
@@ -7001,7 +7005,7 @@ deathSound.play();
         realStage2._finalBossSpawn = true;
         realStage2._canSpawnOrbs = true;
 
-        // Capture and temporarily override endBattle so original cleanup can't call victory
+        
         const origEndBattle = (typeof endBattle === 'function') ? endBattle : null;
         let endBattleWasCalled = false;
         let endBattleArgs = null;
@@ -7537,6 +7541,11 @@ function endBattle(outcome) {
     activeAlly.attackTimerId = null;
   }
 
+  if (armorHealIntervalId) {
+    clearInterval(armorHealIntervalId);
+    armorHealIntervalId = null;
+  }
+
   if (outcome === 'win') {
     // XP from any remaining enemies (defensive)
     let totalXp = activeEnemies.reduce((sum, enemy) => sum + (enemy.xpReward || 0), 0);
@@ -7562,6 +7571,9 @@ function initiateBattle(zoneType, zoneObject) {
   inBattle = true;
   defeatedZone = { type: zoneType, object: zoneObject };
   resetAbilitiesForBattle();
+
+  if (armorHealIntervalId) clearInterval(armorHealIntervalId);
+  armorHealIntervalId = setInterval(passiveArmorHeal, 1000);
 
   // stamina regen
   staminaRegenIntervalId = setInterval(() => {
