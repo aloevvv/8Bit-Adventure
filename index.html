@@ -9911,7 +9911,7 @@ if (object.action === 'lever') {
       toggleWallById('arcadegate', !object.currentState, 44);
       gameFlags.atticlever = true;
       if (targetLevel) {
-        targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'visual arcadegate');
+        targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'visualarcadegate');
         removedInteractableIds.add('visualarcadegate');
         targetLevel.walls = targetLevel.walls.filter(w => w.id !== 'arcadegate');
         removedWallIds.add('arcadegate');
