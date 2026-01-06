@@ -210,6 +210,21 @@
   30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
   40%, 60% { transform: translate3d(5px, 0, 0); }
 }
+    #demo-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 150px;
+  background: black;
+  color: white; 
+  padding: 20px;
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
     #victory-banner {
   position: fixed;
   top: 50%;
@@ -681,6 +696,14 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
     </div>
   </div>
 </div>
+
+  <div id="demo-popup" style="display:none;">
+  <p>Thanks for playing!</p>
+  <p>The demo of this fangame took 3 months to develop, so your participation is much appreciated!</p>
+  <p>placeholder</p>
+  <button id="demo-close-btn">Close</button>
+</div>
+
 
   <div id="objective-box" style="
   position: fixed;
@@ -8812,7 +8835,7 @@ function doCleanse() {
     if (sjWager <= 0 || bolts < sjWager) { showTemporaryText('Lock a valid wager first'); return; }
     inventory.set('bolts', bolts - sjWager);
     showTemporaryText(`Wager placed: ${sjWager} bolts`);
-    // reset state for new game
+
     sjNpcCards = { NPC1: 10, NPC2: 10, NPC3: 10 };
     sjNpcActive = { NPC1: true, NPC2: true, NPC3: true };
     sjMyCards = 10;
@@ -9037,13 +9060,12 @@ function doCleanse() {
 
   
   const shopPrices = {
-    bandaid: 4,
-    emp_grenade: 12,
-    extra_life: 24,
+    bandaid: 6,
+    emp_grenade: 10,
+    extra_life: 15,
     poison_vial: 7
   };
 
-  // Create DOM
   const shopOverlay = document.createElement('div');
   shopOverlay.id = 'simple-shop-popup';
   Object.assign(shopOverlay.style, {
@@ -9085,7 +9107,6 @@ function doCleanse() {
   const msgEl = shopBox.querySelector('#simple-shop-message');
   const closeBtn = shopBox.querySelector('#simple-shop-close');
 
-  // Build item rows
   function renderShopItems() {
     itemsContainer.innerHTML = '';
     Object.keys(shopPrices).forEach(key => {
@@ -9115,18 +9136,17 @@ function doCleanse() {
       showShopMessage('Not enough bolts!');
       return;
     }
-    // Deduct bolts and add item to inventory (or increase quantity)
     inventory.set('bolts', bolts - price);
     const current = inventory.get(itemKey) || 0;
     inventory.set(itemKey, current + 1);
 
-    // UI updates
+   
     showTemporaryText(`Bought ${itemKey.replace(/_/g,' ')} +1`);
     showShopMessage(`Purchased ${itemKey.replace(/_/g,' ')} for ${price} bolts.`);
     console.log(`Shop: bought ${itemKey}, new qty: ${inventory.get(itemKey)}, bolts left: ${inventory.get('bolts')}`);
-    // refresh any inventory UIs that may be visible
+  
     try { drawInventoryBattlePopup(); drawGeneralInventory(); } catch (e) {}
-    updateHp(playerStats.currentHp); // in case you show bolts somewhere inside hud
+    updateHp(playerStats.currentHp); 
   }
 
   function showShopMessage(s) {
@@ -9137,29 +9157,31 @@ function doCleanse() {
 
   closeBtn.addEventListener('click', () => {
     shopOverlay.style.display = 'none';
-    draw(); // refresh canvas/hud
+    draw();
   });
 
-  // Expose open function
+
   window.openShop = function() {
     renderShopItems();
     shopOverlay.style.display = 'flex';
   };
 
-  // Example: add a quick keyboard toggle (press 'p' to open shop) - optional, remove if undesired
-  document.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'p') {
-      if (shopOverlay.style.display === 'none') window.openShop();
-      else shopOverlay.style.display = 'none';
-    }
-  });
-
-  // initial render
   renderShopItems();
 })();
 
-      // ----amogus wires
 
+function openDemo() {
+  const popup = document.getElementById('demo-popup');
+  const closeBtn = document.getElementById('demo-close-btn');
+
+  popup.style.display = 'block';
+
+  closeBtn.onclick = () => {
+    popup.style.display = 'none';
+  };
+}
+  
+// ---amog us wires
   
 const wiresPopupHtml = `
 <div id="wires-popup" style="
