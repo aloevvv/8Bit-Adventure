@@ -3586,7 +3586,19 @@ iceZones: [],
     style: 'dialog'
   }
     ],
-    interactables: []
+    interactables: [
+      {
+  id: 'atticlever2',
+  action: 'lever',
+  leverType: 'single',
+  linkedWallId: 'arcadegate',
+  linkedLevelIndex: 65,
+  x: 196,
+  y: 215, 
+  width: 64,
+  height: 64
+}
+    ]
   },
   {
     bgSrc: "friendhouse3_14_79.png",
@@ -9889,6 +9901,20 @@ if (object.action === 'lever') {
         removedInteractableIds.add('blockade');
         targetLevel.walls = targetLevel.walls.filter(w => w.id !== 'wallblockade');
         removedWallIds.add('wallblockade');
+      }
+      break;
+    }
+
+      switch (object.id) {
+    case 'atticlever2': {
+      const targetLevel = levels[65];
+      toggleWallById('arcadegate', !object.currentState, 44);
+      gameFlags.atticlever = true;
+      if (targetLevel) {
+        targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'visual arcadegate');
+        removedInteractableIds.add('visualarcadegate');
+        targetLevel.walls = targetLevel.walls.filter(w => w.id !== 'arcadegate');
+        removedWallIds.add('arcadegate');
       }
       break;
     }
