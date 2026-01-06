@@ -773,6 +773,7 @@ const hpBar = document.getElementById('hp-bar');
 const hpText = document.getElementById('hp-text');
 
 let selectedEnemyIndex = 0;
+let allyTargetMode = 'Current';
 let gameFlags = {
   isPowered: false,
   arcadegatetalk: false,
@@ -4941,7 +4942,6 @@ function drawPlayerBattleStatus() {
   hpContainer.appendChild(hpTxt);
   leftBlock.appendChild(hpContainer);
 
-  // Ally block (to the right of player)
   const rightBlock = document.createElement('div');
   rightBlock.style.display = 'inline-block';
   rightBlock.style.verticalAlign = 'top';
@@ -4963,7 +4963,7 @@ function drawPlayerBattleStatus() {
     const allyPercent = (activeAlly.currentHp / activeAlly.maxHp) * 100 || 0;
     allyInner.style.width = `${allyPercent}%`;
     allyInner.style.height = '100%';
-    allyInner.style.backgroundColor = '#00FF00'; // force ally HP green
+    allyInner.style.backgroundColor = '#00FF00';
 
     const allyHpText = document.createElement('div');
     allyHpText.className = 'hp-text';
@@ -4976,11 +4976,11 @@ function drawPlayerBattleStatus() {
     rightBlock.innerHTML = '<p style="opacity:0.7">No ally equipped</p>';
   }
 
-  // Append player + ally blocks
+
   playerBattleStatusDiv.appendChild(leftBlock);
   playerBattleStatusDiv.appendChild(rightBlock);
 
-  // Stamina bar (separate and explicitly cyan)
+ 
   const staminaContainer = document.createElement('div');
   staminaContainer.className = 'hp-bar-container';
   staminaContainer.style.marginTop = '8px';
@@ -4992,7 +4992,7 @@ function drawPlayerBattleStatus() {
   staminaBar.className = 'hp-bar';
   staminaBar.style.width = `${(playerStats.currentStamina / playerStats.maxStamina) * 100}%`;
   staminaBar.style.height = '100%';
-  staminaBar.style.backgroundColor = '#00FFFF'; // force stamina cyan
+  staminaBar.style.backgroundColor = '#00FFFF'; 
 
   const staminaText = document.createElement('div');
   staminaText.className = 'hp-text';
@@ -5002,6 +5002,34 @@ function drawPlayerBattleStatus() {
   staminaContainer.appendChild(staminaText);
   playerBattleStatusDiv.appendChild(staminaContainer);
 
+  if (activeAlly) {
+    const targetDiv = document.createElement('div');
+    targetDiv.style.marginTop = "10px";
+    targetDiv.style.display = "flex";
+    targetDiv.style.gap = "5px";
+    targetDiv.style.justifyContent = "center";
+
+    const modes = ['Current', 'First', 'Weakest', 'Strongest'];
+    modes.forEach(mode => {
+      const btn = document.createElement('button');
+      btn.textContent = mode;
+      btn.className = 'item-use-button';
+      btn.style.fontSize = "9px";
+      btn.style.padding = "4px";
+      
+      if (allyTargetMode === mode) {
+        btn.style.border = "2px solid yellow";
+        btn.style.backgroundColor = "#555";
+      }
+
+      btn.onclick = () => {
+        allyTargetMode = mode;
+        drawPlayerBattleStatus();
+      };
+      targetDiv.appendChild(btn);
+    });
+    playerBattleStatusDiv.appendChild(targetDiv);
+  }
   
   if (window._raft) {
     const raftContainer = document.createElement('div');
@@ -5016,7 +5044,7 @@ function drawPlayerBattleStatus() {
     const raftPercent = (window._raft.hp / window._raft.maxHp) * 100;
     raftBar.style.width = `${Math.max(0, raftPercent)}%`;
     raftBar.style.height = '100%';
-    raftBar.style.backgroundColor = '#8B5A2B'; // brown color
+    raftBar.style.backgroundColor = '#8B5A2B';
 
     const raftText = document.createElement('div');
     raftText.className = 'hp-text';
@@ -5095,24 +5123,50 @@ function drawPlayerBattleStatus() {
       return;
     }
     if (!activeEnemies.length) return;
+    let targetEnemy = null;
 
-    const targetEnemy = activeEnemies[selectedEnemyIndex] || activeEnemies[0];
+    if (allyTargetMode === 'Current') {
+      targetEnemy = activeEnemies[selectedEnemyIndex] || activeEnemies[0];
+    } 
+    else if (allyTargetMode === 'First') {
+      targetEnemy = activeEnemies[0];
+    } 
+    else if (allyTargetMode === 'Weakest') {
+      targetEnemy = activeEnemies.reduce((prev, curr) => 
+        (curr.currentHp < prev.currentHp) ? curr : prev
+      );
+    } 
+    else if (allyTargetMode === 'Strongest') {
+      targetEnemy = activeEnemies.reduce((prev, curr) => 
+        (curr.currentHp > prev.currentHp) ? curr : prev
+      );
+    }
+
     if (!targetEnemy) return;
 
     if (targetEnemy.shieldActive) {
       showTemporaryText(`${activeAlly.name}'s attack was blocked by shield!`);
     } else {
       targetEnemy.currentHp -= activeAlly.damage;
+
+      const enemyIdx = activeEnemies.indexOf(targetEnemy);
+      spawnDamageNumber(enemyIdx, activeAlly.damage);
+
       if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
       showTemporaryText(`${activeAlly.name} attacks ${targetEnemy.name} for ${activeAlly.damage} damage!`);
     }
 
     if (targetEnemy.currentHp === 0) {
       handleEnemyDeath(targetEnemy);
-      if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = Math.max(0, activeEnemies.length - 1);
+
+      if (selectedEnemyIndex >= activeEnemies.length) {
+        selectedEnemyIndex = Math.max(0, activeEnemies.length - 1);
+      }
+
       drawBattleUI();
       drawPlayerBattleStatus();
       drawPartyStatus();
+
       if (activeEnemies.length === 0) {
         endBattle('win');
       }
@@ -5121,6 +5175,7 @@ function drawPlayerBattleStatus() {
     }
   }, activeAlly.attackIntervalMs);
 }
+
 // Enemy behaviors
 // normal enemy attack
 function normalAttack(enemy, target) {
