@@ -9191,13 +9191,17 @@ function capitalize(str) {
   function openTargetPractice() {
     if (tpWon) { showTemporaryText && showTemporaryText('You already beat this challenge!'); return; }
     if (tpAttemptsLeft <= 0) {
-      showDialog && showDialog(
-        ["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"],
-        null,
-        { style: 'unit', speaker: typeof Unit318920 !== 'undefined' ? Unit318920 : null }
-      );
-      return;
-    }
+  showDialog && showDialog(
+    [
+      {
+        speaker: 'Unit318920',
+        text: "Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin",
+        style: 'unit'
+      }
+    ]
+  );
+  return;
+}
     overlay && (overlay.style.display = 'flex');
     startRound();
   }
@@ -9348,10 +9352,14 @@ function capitalize(str) {
       attemptsEl && (attemptsEl.textContent = tpAttemptsLeft);
       if (tpAttemptsLeft <= 0) {
         showDialog && showDialog(
-          ["Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin"],
-          null,
-          { style: 'unit', speaker: typeof Unit318920 !== 'undefined' ? Unit318920 : null }
-        );
+    [
+      {
+        speaker: 'Unit318920',
+        text: "Looks like you couldn't beat my score. It's okay, they don't call me the sharpest shooter in the west for nothin",
+        style: 'unit'
+      }
+    ]
+  );
         overlay && (overlay.style.display = 'none');
       } else {
         showTemporaryText && showTemporaryText('Attempt failed. Restart or close.');
