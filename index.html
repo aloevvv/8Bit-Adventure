@@ -4854,7 +4854,8 @@ if (inBattle) {
       drawPlayerBattleStatus();
       drawBattleUI();
     }
-    if (itemName === 'extra_life') {
+    
+  } else if (itemName === 'extra_life') {
     if (extraLifeTimerId) {
       clearTimeout(extraLifeTimerId);
       extraLifeTimerId = null;
