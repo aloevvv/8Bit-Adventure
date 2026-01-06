@@ -9735,6 +9735,34 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
       return;
     }
   }
+      if (object.action === "attictrophy") {
+    showDialog([
+      { speaker: '8-Bit', text: "I forgot what this trophy's for.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Something cool, for sure.", style: 'dialog' }
+    ]);
+    return;
+  }
+  if (object.action === "brocketlauncher") {
+    showDialog([
+      { speaker: '8-Bit', text: "It's one of my friend's old weapons.", style: 'dialog' },
+      { speaker: '8-Bit', text: "He has a better one now.", style: 'dialog' },
+      { speaker: '8-Bit', text: "He used to put a bottle in the fourth slot because apparently he needed to hydrate.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Actually, his rocket launcher would overheat if he had to load a fourth one.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Jeez, why was I worried about my friends?", style: 'dialog' },
+      { speaker: '8-Bit', text: "No way they can take down someone with a rocket launcher!", style: 'dialog' }
+    ]);
+    return;
+  }
+if (object.action === "atticletter") {
+    showDialog([
+      { speaker: '8-Bit', text: "Okay, it starts with 'To my beloved'.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Dearest machine, I did have a splendid time with you.", style: 'dialog' },
+      { speaker: '8-Bit', text: "My circuits were a bundle of passion with each second by your side.", style: 'dialog' },
+      { speaker: '8-Bit', text: "Will you marry me?", style: 'dialog' },
+      { speaker: '8-Bit', text: "Ew. What a horrible love letter.", style: 'dialog' }
+    ]);
+    return;
+  }
   
 if (object.action === 'target_practice' && object.name === 'target_board') {
   openTargetPractice();
