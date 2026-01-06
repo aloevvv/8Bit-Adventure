@@ -3434,7 +3434,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 40, y: 187, width: 80, height: 80, encounter: [{ type: "Atticsniper" }], sprite: 'fail'}
+      { x: 40, y: 187, width: 80, height: 80, interactRect: { x: 40, y: 187, width: 150, height: 80 }, encounter: [{ type: "Atticsniper" }], sprite: 'fail'}
     ],
     dialogZones: [
       {
@@ -3467,7 +3467,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 292, y: 285, width: 80, height: 80, encounter: [{ type: "Mousebot" }, {type: "Mousebot"}], sprite: 'mouse'}
+      { x: 292, y: 285, width: 80, height: 80, interactRect: { x: 292, y: 255, width: 80, height: 150 }, encounter: [{ type: "Mousebot" }, {type: "Mousebot"}], sprite: 'mouse'}
     ],
     dialogZones: [],
     interactables: []
@@ -3531,7 +3531,10 @@ iceZones: [],
       { x: 403, y: 43, width: 80, height: 80, encounter: [{ type: "Atticsniper" }, {type: "Atticsniper"}], sprite: 'fail'}
     ],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      { id: "chest_006", name: "wooden_chest", x: 33, y: 35, width: 64, height: 64, action: "chest",
+    rewards: [["poison_vial",2]], opened: false },
+    ]
   },
   {
     bgSrc: "friendhouse3_12_77.png",
