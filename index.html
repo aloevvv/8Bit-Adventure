@@ -9689,7 +9689,22 @@ function handleInteraction(object) {
     return;
   }
 
-  if (object.action === "arcadegatekeeper") {
+if (object.action === "arcadegatekeeper") {
+  if (gameFlags.atticlever && gameFlags.birthdaybotspared) {
+    showDialog([
+      { speaker: 'Guard', text: "Oh. You actually did it. Congrats.", style: 'npc' },
+      { speaker: 'Guard', text: "Thought you'd be torn to shreds or something.", style: 'npc' }
+    ]);
+  }
+  else if (gameFlags.atticlever && gameFlags.birthdaybotkilled) {
+    showDialog([
+      { speaker: 'Guard', text: "Oh, shit!", style: 'npc' },
+      { speaker: 'Guard', text: "You're back.", style: 'npc' },
+      { speaker: 'Guard', text: "I think I was right to not fight you...", style: 'npc' },
+      { speaker: 'Guard', text: "Go on ahead, I'll pray some other bot gets you next.", style: 'npc' }
+    ]);
+  }
+  else {
     showDialog([
       { speaker: 'Guard', text: "Hey man, the way's blocked.", style: 'npc' },
       { speaker: '8-Bit', text: "Can't you let me go then?", style: 'dialog' },
@@ -9698,10 +9713,13 @@ function handleInteraction(object) {
       { speaker: 'Guard', text: "I'd fight you, but I'm all by myself.", style: 'npc' },
       { speaker: 'Guard', text: "You can find some other way in, I don't mind.", style: 'npc' }
     ]);
-    gameFlags.arcadegatetalk = true;
-    Reach18();
-    return;
   }
+
+  gameFlags.arcadegatetalk = true;
+  Reach18();
+  return;
+}
+
 
 if (object.action === "open_door" && object.id === "friendhousedoor") {
   if (!gameFlags.arcadegatetalk) {
