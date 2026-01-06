@@ -216,7 +216,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   width: 300px;
-  height: 150px;
+  height: 200px;
   background: black;
   color: white; 
   padding: 20px;
@@ -281,16 +281,15 @@
       text-shadow: 1px 1px 2px black;
       user-select: none;
     }
-    /* Settings HUD section (align with other hud sections) */
-/* Settings popup: behave like other HUD popups (absolute inside HUD) */
-#game-hud { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; } /* keep existing */
+
+#game-hud { position: fixed; bottom: 0; left: 0; right: 0; z-index: 2000; }
 #game-hud .hud-section#settings { text-align: center; padding: 0 1em; }
 
-/* Match other popups: position absolute and anchored under the HUD item */
+
 #settings-popup {
   display: none;
-  position: absolute;       /* same stacking as stats/party popups */
-  bottom: 46px;             /* sits above the HUD bar (adjust if your HUD height differs) */
+  position: absolute;    
+  bottom: 46px;            
   left: 50%;
   transform: translateX(-50%);
   width: 280px;
@@ -700,8 +699,8 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
   <div id="demo-popup" style="display:none;">
   <p>Thanks for playing!</p>
   <p>The demo of this fangame took 3 months to develop, so your participation is much appreciated!</p>
-  <p>placeholder</p>
-  <button id="demo-close-btn">Close</button>
+  <p>Later!</p>
+  <button id="demo-close-btn">X</button>
 </div>
 
 
