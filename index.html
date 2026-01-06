@@ -4851,19 +4851,24 @@ if (inBattle) {
     } else {
       window._raft.hp = Math.min(window._raft.maxHp, window._raft.hp + 1);
       showTemporaryText(`You repair the raft with driftwood. Raft HP +1 (${window._raft.hp}/${window._raft.maxHp})`);
-      // reflect UI updates
       drawPlayerBattleStatus();
       drawBattleUI();
     }
-  } else if (itemName === 'extra_life') {
+    if (itemName === 'extra_life') {
     if (extraLifeTimerId) {
       clearTimeout(extraLifeTimerId);
       extraLifeTimerId = null;
     }
-    showTemporaryText('Used an Extra Life! You have 3 seconds of invincibility!');
+    
+    if (playerStats.currentHp <= 1) {
+      playerStats.currentHp = playerStats.maxHp;
+      updateHp(playerStats.currentHp);
+    }
+
     extraLifeTimerId = setTimeout(() => {
       extraLifeTimerId = null;
-    }, 3000);
+      showTemporaryText('Extra Life expired!');
+    }, 5000);
   }
 
   inventory.set(itemName, Math.max(0, (inventory.get(itemName) || 0) - 1));
