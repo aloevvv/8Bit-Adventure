@@ -9949,6 +9949,7 @@ if (object.action === 'lever') {
       const targetLevel = levels[65];
       toggleWallById('arcadegate', !object.currentState, 65);
       gameFlags.atticlever = true;
+      completeObjective();
       if (targetLevel) {
         targetLevel.interactables = targetLevel.interactables.filter(i => i.id !== 'visualarcadegate');
         removedInteractableIds.add('visualarcadegate');
