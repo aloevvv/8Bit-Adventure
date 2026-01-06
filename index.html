@@ -3683,7 +3683,18 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [],
-    dialogZones: [],
+    dialogZones: [
+      {
+    id: 'democ',
+    x: 0, y: 0, width: 640, height: 480,
+    text: [
+      { speaker: '8-Bit', text: "Looks like there's no where else to go.", style: 'dialog' },
+      { speaker: '8-Bit',  text: "I should probably interact with this cube thing.", style: 'dialog' }
+    ],
+    autoShow: true,
+    style: 'dialog'
+  }
+    ],
     interactables: [
       { name: 'democube', x: 246, y: 221, width: 200, height: 200, action: 'democube' },
     ]
