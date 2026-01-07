@@ -7968,11 +7968,9 @@ function doBlock() {
   }
   triggerAbilityCooldown('block');
   blockActive = true;
-  showTemporaryText('Block active! No damage for 1s.');
   updateAbilityButtonsUI();
   setTimeout(() => {
     blockActive = false;
-    showTemporaryText('Block ended.');
     updateAbilityButtonsUI();
   }, ABILITIES.block.effectMs);
 }
@@ -7985,12 +7983,10 @@ function doCounter() {
   }
   triggerAbilityCooldown('counter');
   counterWindowActive = true;
-  showTemporaryText('Counter window open! Time it well (~0.7s).');
   updateAbilityButtonsUI();
 
   setTimeout(() => {
     counterWindowActive = false;
-    showTemporaryText('Counter window closed.');
     updateAbilityButtonsUI();
   }, ABILITIES.counter.windowMs);
 }
@@ -8003,11 +7999,9 @@ function doCleanse() {
   }
   triggerAbilityCooldown('cleanse');
 
-  // remove player status flags (poisoned, burned, burning etc)
   const removed = [];
   if (playerStats && playerStats._burned) { playerStats._burned = false; removed.push('burn'); }
   if (playerStats && playerStats._poisoned) { playerStats._poisoned = false; removed.push('poison'); }
-  // other code in your project may use flags like playerStats.burning; clear common names.
   ['burned','burning','poisoned'].forEach(k => {
     if (playerStats && playerStats[k]) { playerStats[k] = false; if (!removed.includes(k)) removed.push(k); }
   });
@@ -8020,7 +8014,6 @@ function doCleanse() {
     });
   }
 
-  // Also remove DOT intervals attached to player if you used any (example: player._burnIntervalId)
   if (playerStats && playerStats._burnIntervalId) {
     clearInterval(playerStats._burnIntervalId);
     playerStats._burnIntervalId = null;
@@ -8044,6 +8037,20 @@ function doCleanse() {
   if (c) c.addEventListener('click', doCounter);
   if (cl) cl.addEventListener('click', doCleanse);
 })();
+
+  const keyBindings = {
+  z: doBlock,
+  x: doCounter,
+  c: doCleanse
+};
+
+document.addEventListener("keydown", function(event) {
+  if (!inBattle) return; 
+
+  const fn = keyBindings[event.key.toLowerCase()];
+  if (fn) fn();
+});
+
 
   // FINAL BOSS BULLETHELL MODULE
 (function() {
