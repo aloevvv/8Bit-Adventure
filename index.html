@@ -11097,7 +11097,7 @@ function loadFromSlot(slotNumber) {
     removedInteractableIds = new Set(saveData.removedInteractableIds || []);
     removedWallIds = new Set(saveData.removedWallIds || []);
     shownDialogs = new Set(saveData.shownDialogs || []);
-    const openedChests = new Set(saveData.openedChestIds || []);
+    openedChestIds = new Set(saveData.openedChestIds || []);
 
     levels.forEach(level => {
       level.interactables = level.interactables.filter(i => !removedInteractableIds.has(i.id));
@@ -11242,7 +11242,8 @@ function loadGame() {
     removedInteractableIds = new Set(saveData.removedInteractableIds || []);
     removedWallIds = new Set(saveData.removedWallIds || []);
     shownDialogs = new Set(saveData.shownDialogs || []);
-    const openedChests = new Set(saveData.openedChestIds || []);
+    openedChestIds = new Set(saveData.openedChestIds || []);
+
 
   
     levels.forEach(level => {
