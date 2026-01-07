@@ -549,6 +549,11 @@
       </div>
 
       <div style="margin:8px 0;">
+  <label style="display:block; font-size:10px;">Autosave</label>
+  <input id="toggle-autosave" type="checkbox" /> Enable Autosave
+</div>
+
+      <div style="margin:8px 0;">
         <label style="display:block; font-size:10px;">Save Slots</label>
         <div style="display:flex; gap:6px;">
           <button id="save-slot-1" class="item-use-button">Save 1</button>
@@ -10254,6 +10259,22 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     console.warn('Settings wiring: no #toggle-zones found');
   }
+
+  const toggleAutosave = document.getElementById('toggle-autosave');
+
+if (toggleAutosave) {
+  toggleAutosave.checked = !!gameSettings.autosave;
+  
+  toggleAutosave.addEventListener('change', (e) => {
+    gameSettings.autosave = !!e.target.checked;
+    saveSettings();
+    if (gameSettings.autosave) {
+        showTemporaryText("Autosave Enabled");
+    } else {
+        showTemporaryText("Autosave Disabled");
+    }
+  });
+}
   
 const mobileToggle = document.getElementById('toggle-mobile-mode');
 const mobileControls = document.getElementById('mobile-controls');
@@ -10575,6 +10596,11 @@ document.addEventListener('keydown', function(e) {
 function loadLevel(index, newX = x, newY = y) {
   const fadeEl = document.getElementById('fade-overlay');
   fadeEl.style.opacity = '1';
+
+  if (gameSettings.autosave) {
+    saveGame();
+    showTemporaryText("Autosaving...");
+  }
 
   setTimeout(() => {
     currentLevelIndex = index;
@@ -10978,18 +11004,17 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   });
 }
 
-  // === Settings storage and defaults ===
 const SETTINGS_KEY = '8bitsAdventureSettings';
 const SAVE_SLOT_PREFIX = '8bitsAdventureSave_slot_'; 
 
 const defaultSettings = {
   difficulty: 'normal',
-  showZones: false
+  showZones: false,
+  autosave: true 
 };
 
 let gameSettings = Object.assign({}, defaultSettings);
 
-// load settings on start
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
