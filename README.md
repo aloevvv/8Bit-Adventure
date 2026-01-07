@@ -1,6 +1,7 @@
 ```
 Projected Release Date:
-Demo - Late December to Early January
+Demo - Late December to Early January ✓
+Chapter 1 - ???
 ```
 
 Bugs present:
@@ -8,6 +9,9 @@ Allies don't retain XP if it's not equal to the XP they need to level up
 ```
 Things I'm working on now:
 Levels
+Auto-save
+Potions
+Filtering out enemies via save & load
 ```
 ```
 This is a fangame for Brawl Stars!
