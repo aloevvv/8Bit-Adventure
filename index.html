@@ -11042,17 +11042,33 @@ function saveSettings() {
 // === Save slot helpers ===
 function saveToSlot(slotNumber) {
   const key = SAVE_SLOT_PREFIX + slotNumber;
-  const allInteractables = levels.map(level => (level.interactables || []).map(obj => ({ ...obj })));
   const saveData = {
     playerStats,
     inventory: Array.from(inventory.entries()),
     currentLevelIndex,
     playerPosition: { x, y },
-    allInteractables,
     shownDialogs: Array.from(shownDialogs),
+    gameFlags,
+    currentObjective,
+    objectiveCompleted,
+    alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
+      id: a.id,
+      level: a.level,
+      xp: a.xp,
+      xpToNextLevel: a.xpToNextLevel,
+      baseMaxHp: a.baseMaxHp,
+      baseDamage: a.baseDamage
+    })),
     unlockedAllies: Array.from(unlockedAllies),
     equippedAllyId,
     removedWallIds: Array.from(removedWallIds),
+    removedInteractableIds: Array.from(removedInteractableIds),
+    openedChestIds: Array.from(openedChestIds || []),
+    achievements: achievements.map(a => ({
+      id: a.id,
+      progress: a.progress,
+      unlocked: a.unlocked
+    })),
     settings: gameSettings
   };
   localStorage.setItem(key, JSON.stringify(saveData));
@@ -11067,17 +11083,55 @@ function loadFromSlot(slotNumber) {
   }
   try {
     const saveData = JSON.parse(raw);
+
     Object.assign(playerStats, saveData.playerStats);
     inventory.clear();
     saveData.inventory.forEach(([k, v]) => inventory.set(k, v));
-    if (Array.isArray(saveData.allInteractables)) {
-      saveData.allInteractables.forEach((arr, idx) => {
-        if (levels[idx]) levels[idx].interactables = arr.map(o => ({ ...o }));
+
+    Object.assign(gameFlags, saveData.gameFlags || {});
+    if (saveData.currentObjective) {
+      setObjective(saveData.currentObjective);
+      if (saveData.objectiveCompleted) completeObjective();
+    }
+
+    removedInteractableIds = new Set(saveData.removedInteractableIds || []);
+    removedWallIds = new Set(saveData.removedWallIds || []);
+    shownDialogs = new Set(saveData.shownDialogs || []);
+    const openedChests = new Set(saveData.openedChestIds || []);
+
+    levels.forEach(level => {
+      level.interactables = level.interactables.filter(i => !removedInteractableIds.has(i.id));
+      level.interactables.forEach(i => {
+        if (openedChests.has(i.id)) i.opened = true;
+      });
+      level.walls = level.walls.filter(w => !removedWallIds.has(w.id));
+    });
+
+    if (Array.isArray(saveData.alliesData)) {
+      saveData.alliesData.forEach(savedAlly => {
+        const baseAlly = alliesData.find(a => a.id === savedAlly.id);
+        if (baseAlly) Object.assign(baseAlly, savedAlly);
       });
     }
-    shownDialogs = new Set(saveData.shownDialogs || []);
     unlockedAllies = new Set(saveData.unlockedAllies || []);
-    // restore settings from save if present
+    equippedAllyId = saveData.equippedAllyId || null;
+    if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
+      const allyBase = alliesData.find(a => a.id === equippedAllyId);
+      activeAlly = { ...allyBase, currentHp: allyBase.baseMaxHp, attackTimerId: null };
+    } else {
+      activeAlly = null;
+    }
+
+    if (Array.isArray(saveData.achievements)) {
+      saveData.achievements.forEach(savedAch => {
+        const ach = achievementsMap[savedAch.id];
+        if (ach) {
+          ach.progress = savedAch.progress || 0;
+          ach.unlocked = !!savedAch.unlocked;
+        }
+      });
+    }
+
     if (saveData.settings) {
       Object.assign(gameSettings, saveData.settings);
       const sel = document.getElementById('difficulty-select');
@@ -11085,11 +11139,15 @@ function loadFromSlot(slotNumber) {
       if (sel) sel.value = gameSettings.difficulty;
       if (chk) chk.checked = !!gameSettings.showZones;
     }
+
     loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
-    drawPartyList();
-    drawPartyStatus();
+
     updateHp(playerStats.currentHp);
     updateStatsPopup();
+    drawAchievementsUI();
+    drawPartyList();
+    drawPartyStatus();
+
     showTemporaryText(`Loaded slot ${slotNumber}`);
   } catch (e) {
     console.error('Failed to load slot', e);
