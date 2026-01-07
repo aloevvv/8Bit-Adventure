@@ -2247,7 +2247,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 129, y: 121, width: 100, height: 100, encounter: [{ type: "Partyblocker" }, {type: "Partyblocker"}], sprite: 'partygoers'}
+      { id: "filter_partyblocker", x: 129, y: 121, width: 100, height: 100, encounter: [{ type: "Partyblocker" }, {type: "Partyblocker"}], sprite: 'partygoers'}
     ],
     dialogZones: [
       {
@@ -2343,7 +2343,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 353, y: 186, width: 64, height: 64, interactRect: { x: 322, y: 120, width: 200, height: 200 }, encounter: [{ type: "Drunkard" }], sprite: 'fail' }
+      { id: "filter_drunk", x: 353, y: 186, width: 64, height: 64, interactRect: { x: 322, y: 120, width: 200, height: 200 }, encounter: [{ type: "Drunkard" }], sprite: 'fail' }
     ],
     dialogZones: [],
     interactables: []
@@ -2735,7 +2735,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 513, y: 269, width: 80, height: 80, encounter: [{ type: "Partyguard" }, {type: "Partyguard"}, {type: "Partybot"}], sprite: 'bodyguard'}
+      { id: "filter_bodyguard", x: 513, y: 269, width: 80, height: 80, encounter: [{ type: "Partyguard" }, {type: "Partyguard"}, {type: "Partybot"}], sprite: 'bodyguard'}
     ],
     dialogZones: [
       {
@@ -2823,9 +2823,9 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 456, y: 300, width: 100, height: 100, encounter: [{ type: "Partygoers" }, {type: "Partygoers"}], sprite: 'partygoers'},
-      { x: 300, y: 350, width: 100, height: 100, encounter: [{ type: "Partygoers" }, {type: "Partygoers"}], sprite: 'partygoers'},
-      { x: 321, y: 190, width: 100, height: 100, encounter: [{ type: "Partygoers" }, {type: "Partygoers"}], sprite: 'partygoers'}
+      { id: "filter_party1", x: 456, y: 300, width: 100, height: 100, encounter: [{ type: "Partygoers" }, {type: "Partygoers"}], sprite: 'partygoers'},
+      { id: "filter_party2", x: 300, y: 350, width: 100, height: 100, encounter: [{ type: "Partygoers" }, {type: "Partygoers"}], sprite: 'partygoers'},
+      { id: "filter_party3", x: 321, y: 190, width: 100, height: 100, encounter: [{ type: "Partygoers" }, {type: "Partygoers"}], sprite: 'partygoers'}
     ],
     dialogZones: [
       {
@@ -2868,7 +2868,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-       { x: 337, y: 283, width: 64, height: 64, interactRect: { x: 337, y: 0, width: 64, height: 480 }, encounter: [{ type: "Partygoers" }, { type: "Partygoers" }, { type: "Partygoers" }], sprite: 'partygoers' }
+       { id: "filter_party4", x: 337, y: 283, width: 64, height: 64, interactRect: { x: 337, y: 0, width: 64, height: 480 }, encounter: [{ type: "Partygoers" }, { type: "Partygoers" }, { type: "Partygoers" }], sprite: 'partygoers' }
     ],
     dialogZones: [],
     interactables: [
@@ -3006,7 +3006,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 327, y: 43, width: 100, height: 100, encounter: [{ type: "Partygoers" }, {type: "Partybot"}], sprite: 'partygoers'}
+      { id: "filter_party5", x: 327, y: 43, width: 100, height: 100, encounter: [{ type: "Partygoers" }, {type: "Partybot"}], sprite: 'partygoers'}
     ],
     dialogZones: [],
     interactables: []
@@ -3607,8 +3607,8 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 362, y: 248, width: 80, height: 80, encounter: [{ type: "Atticsniper" }, {type: "Atticsniper"}], sprite: 'fail'},
-      { x: 382, y: 47, width: 80, height: 80, encounter: [{ type: "Atticsniper" }, {type: "Mousebot"}, {type: "Mousebot"}], sprite: 'mouse'}
+      { id: "filter_attic1", x: 362, y: 248, width: 80, height: 80, encounter: [{ type: "Atticsniper" }, {type: "Atticsniper"}], sprite: 'fail'},
+      { id: "filter_attic2", x: 382, y: 47, width: 80, height: 80, encounter: [{ type: "Atticsniper" }, {type: "Mousebot"}, {type: "Mousebot"}], sprite: 'mouse'}
     ],
     dialogZones: [],
     interactables: []
