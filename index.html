@@ -550,8 +550,10 @@
 
       <div style="margin:8px 0;">
   <label style="display:block; font-size:10px;">Autosave</label>
-  <input id="toggle-autosave" type="checkbox" /> Enable Autosave
+  <input id="toggle-autosave" type="checkbox" /> Enable Autosave<br>
+  <input id="toggle-autosave-message" type="checkbox" /> Show Autosave Message
 </div>
+
 
       <div style="margin:8px 0;">
         <label style="display:block; font-size:10px;">Save Slots</label>
@@ -10261,18 +10263,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const toggleAutosave = document.getElementById('toggle-autosave');
+const toggleAutosaveMessage = document.getElementById('toggle-autosave-message');
 
 if (toggleAutosave) {
   toggleAutosave.checked = !!gameSettings.autosave;
-  
   toggleAutosave.addEventListener('change', (e) => {
     gameSettings.autosave = !!e.target.checked;
     saveSettings();
-    if (gameSettings.autosave) {
-        showTemporaryText("Autosave Enabled");
-    } else {
-        showTemporaryText("Autosave Disabled");
-    }
+    showTemporaryText(gameSettings.autosave ? "Autosave Enabled" : "Autosave Disabled");
+  });
+}
+
+if (toggleAutosaveMessage) {
+  toggleAutosaveMessage.checked = !!gameSettings.autosaveMessage;
+  toggleAutosaveMessage.addEventListener('change', (e) => {
+    gameSettings.autosaveMessage = !!e.target.checked;
+    saveSettings();
+    showTemporaryText(gameSettings.autosaveMessage ? "Autosave Message Enabled" : "Autosave Message Disabled");
   });
 }
   
@@ -10599,7 +10606,9 @@ function loadLevel(index, newX = x, newY = y) {
 
   if (gameSettings.autosave) {
     saveGame();
-    showTemporaryText("Autosaving...");
+    if (gameSettings.autosaveMessage) {
+      showTemporaryText("Autosaving..."); 
+    }
   }
 
   setTimeout(() => {
