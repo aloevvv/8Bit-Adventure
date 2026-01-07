@@ -821,6 +821,7 @@ let shownDialogs = new Set();
 let _dialogQueue = [];
 let removedWallIds = new Set();
 let removedInteractableIds = new Set();
+let removedBattleZoneIds = new Set();
 let openedChestIds = new Set(); 
 let _battleDialogQueue = [];
 let _battleDialogPausedState = null;
@@ -4467,10 +4468,18 @@ function removeZone(zone) {
   if (!zone) return;
   if (zone.type === 'battleZone') {
     const index = currentLevel.battleZones.indexOf(zone.object);
-    if (index > -1) currentLevel.battleZones.splice(index, 1);
+    if (index > -1) {
+      if (zone.object.id) {
+        removedBattleZoneIds.add(zone.object.id);
+      }
+      currentLevel.battleZones.splice(index, 1);
+    }
   } else if (zone.type === 'interactable') {
     const index = currentLevel.interactables.indexOf(zone.object);
-    if (index > -1) currentLevel.interactables.splice(index, 1);
+    if (index > -1) {
+      if (zone.object.id) removedInteractableIds.add(zone.object.id);
+      currentLevel.interactables.splice(index, 1);
+    }
   }
 }
 
@@ -11073,6 +11082,7 @@ function saveToSlot(slotNumber) {
     equippedAllyId,
     removedWallIds: Array.from(removedWallIds),
     removedInteractableIds: Array.from(removedInteractableIds),
+    removedBattleZoneIds: Array.from(removedBattleZoneIds),
     openedChestIds: Array.from(openedChestIds || []),
     achievements: achievements.map(a => ({
       id: a.id,
@@ -11108,6 +11118,13 @@ function loadFromSlot(slotNumber) {
     removedWallIds = new Set(saveData.removedWallIds || []);
     shownDialogs = new Set(saveData.shownDialogs || []);
     openedChestIds = new Set(saveData.openedChestIds || []);
+    removedBattleZoneIds = new Set(saveData.removedBattleZoneIds || []);
+
+levels.forEach(level => {
+  if (level.battleZones) {
+    level.battleZones = level.battleZones.filter(bz => !removedBattleZoneIds.has(bz.id));
+  }
+});
 
     levels.forEach(level => {
       level.interactables = level.interactables.filter(i => !removedInteractableIds.has(i.id));
@@ -11214,6 +11231,7 @@ function saveGame() {
   equippedAllyId,
   removedWallIds: Array.from(removedWallIds),
   removedInteractableIds: Array.from(removedInteractableIds),
+  removedBattleZoneIds: Array.from(removedBattleZoneIds),
   openedChestIds: Array.from(openedChestIds || []) 
 };
   saveData.achievements = achievements.map(a => ({
@@ -11255,8 +11273,13 @@ function loadGame() {
     removedWallIds = new Set(saveData.removedWallIds || []);
     shownDialogs = new Set(saveData.shownDialogs || []);
     openedChestIds = new Set(saveData.openedChestIds || []);
+    removedBattleZoneIds = new Set(saveData.removedBattleZoneIds || []);
 
-
+levels.forEach(level => {
+  if (level.battleZones) {
+    level.battleZones = level.battleZones.filter(bz => !removedBattleZoneIds.has(bz.id));
+  }
+});
   
     levels.forEach(level => {
 
@@ -11323,16 +11346,12 @@ function loadGame() {
   function rebuildWalls() {
   levels.forEach(level => {
     if (!level.walls || !level.interactables) return;
-
-    // Collect bounding boxes of current interactables that block movement
     const interactableRects = level.interactables.map(obj => ({
       x: obj.x,
       y: obj.y,
       width: obj.width,
       height: obj.height
     }));
-
-    // Remove walls that overlap any interactable rect (obstacles)
     level.walls = level.walls.filter(wall => {
       return !interactableRects.some(rect => (
         wall.x === rect.x &&
