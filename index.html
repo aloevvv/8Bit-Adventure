@@ -10163,7 +10163,7 @@ if (object.action === 'lever_controller') {
   
 if (object.action === "chest") {
   
-  if (object.opened) {
+  if (openedChestIds.has(object.id)) { 
     showDialog("The chest is empty.", null, { speaker: null });
     return;
   }
