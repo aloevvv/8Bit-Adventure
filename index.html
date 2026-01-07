@@ -11102,7 +11102,9 @@ function loadFromSlot(slotNumber) {
     levels.forEach(level => {
       level.interactables = level.interactables.filter(i => !removedInteractableIds.has(i.id));
       level.interactables.forEach(i => {
-        if (openedChests.has(i.id)) i.opened = true;
+        if (openedChestIds.has(i.id)) {
+  i.opened = true;
+}
       });
       level.walls = level.walls.filter(w => !removedWallIds.has(w.id));
     });
@@ -11252,7 +11254,9 @@ function loadGame() {
 
   
       level.interactables.forEach(i => {
-        if (openedChests.has(i.id)) i.opened = true;
+        if (openedChestIds.has(i.id)) {
+  i.opened = true;
+}
       });
 
       
