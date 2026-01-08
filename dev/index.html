@@ -939,31 +939,6 @@ function applyEquipmentBonuses() {
     weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
   }
 
-  if (activeAmulets.sacrifice) {
-    playerStats.damage = Math.floor(playerStats.damage * 1.5);
-    playerStats.maxHp = Math.floor(playerStats.maxHp * 1.5);
-    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
-
-    if (activeAlly) {
-        activeAlly.damage = Math.floor(activeAlly.damage * 0.5);
-        activeAlly.maxHp = Math.floor(activeAlly.maxHp * 0.5);
-        activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
-    }
-}
-
-if (activeAmulets.xp) {
-    playerStats.damage = Math.floor(playerStats.damage * 0.5);
-    playerStats.maxHp = Math.floor(playerStats.maxHp * 0.5);
-    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
-
-    if (activeAlly) {
-        activeAlly.damage = Math.floor(activeAlly.damage * 0.5);
-        activeAlly.maxHp = Math.floor(activeAlly.maxHp * 0.5);
-        activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
-    }
-}
-
-
  
   playerStats.maxHp = baseMaxHp + armorBonusHp;
   playerStats.damage = baseDamage + weaponBonusDmg;
