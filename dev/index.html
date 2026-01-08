@@ -5906,6 +5906,7 @@ handleEnemyDeath = function(enemy, idx) {
     if (enemy._fireTicks && enemy._fireTicks.length) {
       enemy._fireTicks.forEach(id => clearInterval(id));
       enemy._fireTicks = [];
+      target._burnType = null;
     }
     if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
     if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
