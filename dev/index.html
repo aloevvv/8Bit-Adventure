@@ -10453,8 +10453,61 @@ if (key === 't' && has("stealing")) {
     else activeAmulets.stealing = !activeAmulets.stealing;
   }
 
-  if (key === 'y' && has("sacrifice")) { activeAmulets.sacrifice = !activeAmulets.sacrifice; applyEquipmentBonuses(); }
-  if (key === 'u' && has("xp")) { activeAmulets.xp = !activeAmulets.xp; applyEquipmentBonuses(); }
+if (key === 'y' && has("sacrifice")) {
+  activeAmulets.sacrifice = !activeAmulets.sacrifice;
+  if (activeAmulets.sacrifice) {
+    playerStats.maxHp = Math.floor(playerStats.baseMaxHp * 1.5);
+    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+    if (activeAlly) {
+      activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
+      activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
+      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+    }
+
+    updateHp(playerStats.currentHp);
+  } else {
+    playerStats.maxHp = playerStats.baseMaxHp;
+    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+    if (activeAlly) {
+      activeAlly.damage = activeAlly.baseDamage;
+      activeAlly.maxHp = activeAlly.baseMaxHp;
+      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+    }
+
+    updateHp(playerStats.currentHp);
+  }
+}
+    
+if (key === 'u' && has("xp")) {
+  activeAmulets.xp = !activeAmulets.xp;
+  if (activeAmulets.xp) {
+    playerStats.maxHp = Math.floor(playerStats.baseMaxHp * 0.5);
+    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+    if (activeAlly) {
+      activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
+      activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
+      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+    }
+
+    updateHp(playerStats.currentHp);
+  } else {
+    playerStats.maxHp = playerStats.baseMaxHp;
+    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+    if (activeAlly) {
+      activeAlly.damage = activeAlly.baseDamage;
+      activeAlly.maxHp = activeAlly.baseMaxHp;
+      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+    }
+
+    updateHp(playerStats.currentHp);
+  }
+}
+
+
 
   if (key === 'i' && has("defense")) {
   if (activeAmulets.stamina) {
