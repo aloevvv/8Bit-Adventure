@@ -7506,27 +7506,33 @@ if (willHideBattleBlackout) {
   const idx = activeEnemies.indexOf(enemy);
   if (idx > -1) activeEnemies.splice(idx, 1);
 
-  try {
-  const DROP_CHANCE = 0.10;
-  if (enemy.type === 'Sniperbot' && Math.random() < DROP_CHANCE) {
-    const currentBolts = inventory.get('bolts') || 0;
-    inventory.set('bolts', currentBolts + 1);
-  }
-    if (enemy.type === 'Puncherbot' && Math.random() < DROP_CHANCE) {
-    const currentBolts = inventory.get('bolts') || 0;
-    inventory.set('bolts', currentBolts + 1);
-  }
-    if (enemy.type === 'Partybot' && Math.random() < DROP_CHANCE) {
+ try {
+  const DROP_CHANCE = 0.30;
+
+  const boltDroppers = new Set([
+    'Sniperbot',
+    'Puncherbot',
+    'Partybot',
+    'Mousebot',
+    'Drunkard',
+    'Partyguard',
+    'Partyblocker',
+    'Partygoers',
+    'Attictank',
+    'Atticsniper'
+  ]);
+
+  if (boltDroppers.has(enemy.type) && Math.random() < DROP_CHANCE) {
     const currentBolts = inventory.get('bolts') || 0;
     inventory.set('bolts', currentBolts + 1);
   }
 } catch (e) {
   console.warn('Bolt drop failed:', e);
 }
-    if (enemy.type === 'Partyblocker') {
-   gameFlags.carpass = true;
-  }
-    
+
+if (enemy.type === 'Partyblocker') {
+  gameFlags.carpass = true;
+}    
   achievementsMap['kill_enemies'].progress++;
   achievementsMap['kill_enemies2'].progress++;
   achievementsMap['kill_enemies3'].progress++;
