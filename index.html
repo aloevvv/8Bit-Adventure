@@ -889,6 +889,18 @@ let battleRounds = 0;
 let currentRoundEncounters = [];     
 let currentRoundIndex = 0;    
 
+
+  let activeAmulets = {
+  clicking: false,
+  bullets: false,
+  stamina: false,
+  health: false,
+  stealing: false,
+  sacrifice: false,
+  xp: false,
+  defense: false
+};
+
   const armorTypes = {
   retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
   v8:    { name: "V8 Armor", hpBonus: 0.20, passiveHealPercent: 0 },
@@ -958,6 +970,15 @@ inventory.set("gas_mask", 0);
 inventory.set("drill", 0);
 inventory.set("torch", 0);
 inventory.set("ice_boots", 0);
+
+inventory.set("amulet_clicking", 1);
+inventory.set("amulet_bullets", 1);
+inventory.set("amulet_stamina", 1);
+inventory.set("amulet_health", 1);
+inventory.set("amulet_stealing", 1);
+inventory.set("amulet_sacrifice", 1);
+inventory.set("amulet_xp", 1);
+inventory.set("amulet_defense", 1);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
