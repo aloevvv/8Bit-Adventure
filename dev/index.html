@@ -5843,7 +5843,7 @@ function mountainBossBehavior(enemy, target) {
     const id = setInterval(() => {
   if (!activeEnemies.includes(enemy) || ticks >= DOT_TICKS) {
     clearInterval(id);
-    dotTarget._burnType = null; 
+    target._burnType = null; 
     return;
   }
 
