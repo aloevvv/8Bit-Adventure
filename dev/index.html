@@ -7714,6 +7714,7 @@ function initiateBattle(zoneType, zoneObject) {
   armorHealIntervalId = setInterval(passiveArmorHeal, 1000);
 
  staminaRegenIntervalId = setInterval(() => {
+if (activeAmulets.stealing) return;
   let regenAmount = 1;
   if (activeAmulets.stamina) regenAmount += 1;
   
@@ -10402,6 +10403,12 @@ if (toggleAutosaveMessage) {
     activeAmulets.health = !activeAmulets.health;
     showTemporaryText("Health Amulet: " + (activeAmulets.health ? "ON" : "OFF"));
   }
+
+if (key === 't' && has("stealing")) {
+    if (activeAmulets.stamina) showTemporaryText("Conflict: Stamina Amulet active!");
+    else activeAmulets.stealing = !activeAmulets.stealing;
+  }
+    
 });
   
 const mobileToggle = document.getElementById('toggle-mobile-mode');
@@ -10552,6 +10559,9 @@ function performPlayerAttack() {
     showTemporaryText("Not enough stamina to fire!");
     return;
   }
+  if (activeAmulets.stealing) {
+        targetEnemy.lastAttackAt += 50; 
+    }
 
   if (targetEnemy.shieldActive) {
     showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
