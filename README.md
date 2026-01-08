@@ -5,13 +5,10 @@ Chapter 1 - ???
 ```
 
 Bugs present:
-Allies don't retain XP if it's not equal to the XP they need to level up
+Allies don't retain XP if it's not equal to the XP they need to level up (fixed, but still present in the current build)
 ```
 Things I'm working on now:
-Levels
-Auto-save
-Potions
-Filtering out enemies via save & load
+Chapter 1 in general
 ```
 ```
 This is a fangame for Brawl Stars!
