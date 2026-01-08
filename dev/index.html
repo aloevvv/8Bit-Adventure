@@ -4425,25 +4425,9 @@ function ensureFiniteNumber(v, fallback) {
 }
 
 function levelUpAlly(ally) {
-  console.log('levelUp start', { id: ally.id, name: ally.name, before: { ...ally } });
-
-  ally.level = ensureFiniteNumber(ally.level, 1);
-  ally.xp = ensureFiniteNumber(ally.xp, 0);
-  ally.xpToNextLevel = ensureFiniteNumber(ally.xpToNextLevel, 10);
-  ally.baseMaxHp = ensureFiniteNumber(ally.baseMaxHp, null);
-  ally.baseDamage = ensureFiniteNumber(ally.baseDamage, null);
-
-  const baseAllyTemplate = alliesData.find(a => a.id === ally.id);
-  if (baseAllyTemplate) {
-    if (ally.baseMaxHp === null) ally.baseMaxHp = ensureFiniteNumber(baseAllyTemplate.baseMaxHp, 1);
-    if (ally.baseDamage === null) ally.baseDamage = ensureFiniteNumber(baseAllyTemplate.baseDamage, 0);
-  } else {
-    if (ally.baseMaxHp === null) ally.baseMaxHp = 1;
-    if (ally.baseDamage === null) ally.baseDamage = 0;
-  }
-
   let leveled = false;
-  while (ally.xp >= ally.xpToNextLevel && ally.xpToNextLevel > 0) {
+  
+  while (ally.xp >= ally.xpToNextLevel) {
     leveled = true;
     ally.level++;
     ally.xp -= ally.xpToNextLevel;
@@ -4451,38 +4435,25 @@ function levelUpAlly(ally) {
 
     ally.baseMaxHp += Math.floor(3 + (ally.level / 2));
     ally.baseDamage += Math.floor(1 + (ally.level / 6));
-
-    console.log('leveled one step', {
-      id: ally.id, level: ally.level, xp: ally.xp,
-      xpToNextLevel: ally.xpToNextLevel, baseMaxHp: ally.baseMaxHp, baseDamage: ally.baseDamage
-    });
   }
 
   if (leveled) {
     ally.maxHp = ally.baseMaxHp;
     ally.currentHp = ally.maxHp;
-    showTemporaryText(`${ally.name} leveled up to ${ally.level}!`);
+    showTemporaryText(`${ally.name} reached Level ${ally.level}!`);
+    
+    const masterAlly = alliesData.find(a => a.id === ally.id);
+    if (masterAlly) {
+      masterAlly.level = ally.level;
+      masterAlly.xp = ally.xp;
+      masterAlly.xpToNextLevel = ally.xpToNextLevel;
+      masterAlly.baseMaxHp = ally.baseMaxHp;
+      masterAlly.baseDamage = ally.baseDamage;
+    }
+    
     drawPartyStatus();
-  } else {
-    console.log('no level up: xp below threshold', { xp: ally.xp, xpToNextLevel: ally.xpToNextLevel });
   }
-
-
-  const baseAlly = alliesData.find(a => a.id === ally.id);
-  if (baseAlly) {
-    baseAlly.level = ally.level;
-    baseAlly.xp = ally.xp;
-    baseAlly.xpToNextLevel = ally.xpToNextLevel;
-    baseAlly.baseMaxHp = ally.baseMaxHp;
-    baseAlly.baseDamage = ally.baseDamage;
-    console.log('synced to template', { before: baseAlly });
-  } else {
-    console.warn('No base template found for ally id', ally.id);
-  }
-
-  console.log('levelUp end', { id: ally.id, after: { ...ally } });
 }
-
 
 
 function levelUp() {
@@ -4513,6 +4484,11 @@ function gainXP(amount) {
 
   if (activeAlly) {
     activeAlly.xp += Math.floor(xp);
+
+    const masterAlly = alliesData.find(a => a.id === activeAlly.id);
+    if (masterAlly) {
+      masterAlly.xp = activeAlly.xp; 
+    }
     while (activeAlly.xp >= activeAlly.xpToNextLevel) {
       levelUpAlly(activeAlly);
     }
