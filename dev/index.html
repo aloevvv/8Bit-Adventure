@@ -6812,17 +6812,22 @@ function startAbilityRegen() {
   if (abilityRegenIntervalId) clearInterval(abilityRegenIntervalId);
   abilityRegenIntervalId = setInterval(() => {
     let changed = false;
+    let tickReduction = 200;
+    if (activeAmulets.defense) tickReduction += 200;
+
     ['block','counter','cleanse'].forEach(name => {
       if (abilityCooldowns[name] > 0) {
-        abilityCooldowns[name] = Math.max(0, abilityCooldowns[name] - 200);
+        abilityCooldowns[name] = Math.max(0, abilityCooldowns[name] - tickReduction);
         changed = true;
       } else {
         abilityCooldowns[name] = 0;
       }
     });
+
     if (changed) updateAbilityButtonsUI();
   }, 200);
 }
+
 
 function stopAbilityRegen() {
   if (abilityRegenIntervalId) {
@@ -10407,6 +10412,18 @@ if (toggleAutosaveMessage) {
 if (key === 't' && has("stealing")) {
     if (activeAmulets.stamina) showTemporaryText("Conflict: Stamina Amulet active!");
     else activeAmulets.stealing = !activeAmulets.stealing;
+  }
+
+  if (key === 'i' && has("defense")) {
+    if (activeAmulets.stamina) showTemporaryText("Conflict: Stamina Amulet active!");
+    else {
+      activeAmulets.defense = !activeAmulets.defense;
+      if (activeAmulets.defense) {
+          const cost = Math.floor(playerStats.maxHp * 0.20);
+          playerStats.currentHp = Math.max(1, playerStats.currentHp - cost);
+          updateHp(playerStats.currentHp);
+      }
+    }
   }
     
 });
