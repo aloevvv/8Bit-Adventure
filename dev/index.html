@@ -923,38 +923,46 @@ let equippedWeapon = null;
 
 
 function applyEquipmentBonuses() {
-  const baseMaxHp = playerStats.baseMaxHp;
-  const baseDamage = playerStats.baseDamage;
+  let baseMaxHp = playerStats.baseMaxHp;
+  let baseDamage = playerStats.baseDamage;
 
-  let armorBonusHp = 0;
-  if (equippedArmor && armorTypes[equippedArmor]) {
-    armorBonusHp = Math.floor(baseMaxHp * armorTypes[equippedArmor].hpBonus);
-  }
-
-  let weaponBonusDmg = 0;
-  if (equippedWeapon && weaponTypes[equippedWeapon]) {
-    weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
-  }
-
-  playerStats.maxHp = baseMaxHp + armorBonusHp;
-  playerStats.damage = baseDamage + weaponBonusDmg;
+  playerStats.maxHp = baseMaxHp;
+  playerStats.damage = baseDamage;
 
   if (activeAlly) {
-    activeAlly.damage = activeAlly.baseDamage;
     activeAlly.maxHp = activeAlly.baseMaxHp;
+    activeAlly.damage = activeAlly.baseDamage;
     activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
   }
 
-  if (activeAmulets.sacrifice && activeAlly) {
-    activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
-    activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
-    activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+  if (equippedArmor && armorTypes[equippedArmor]) {
+    let armorBonusHp = Math.floor(baseMaxHp * armorTypes[equippedArmor].hpBonus);
+    playerStats.maxHp += armorBonusHp;
   }
-  
-  if (activeAmulets.xp && activeAlly) {
-    activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
-    activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
-    activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+
+  if (equippedWeapon && weaponTypes[equippedWeapon]) {
+    let weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
+    playerStats.damage += weaponBonusDmg;
+  }
+
+  if (activeAmulets.sacrifice) {
+    playerStats.maxHp = Math.floor(baseMaxHp * 1.5);
+    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+    if (activeAlly) {
+      activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
+      activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
+      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+    }
+  }
+  if (activeAmulets.xp) {
+    playerStats.maxHp = Math.floor(baseMaxHp * 0.5);
+    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+    if (activeAlly) {
+      activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
+      activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
+      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+    }
   }
 
   if (playerStats.currentHp > playerStats.maxHp) {
@@ -964,6 +972,7 @@ function applyEquipmentBonuses() {
   updateHp(playerStats.currentHp);
   updateStatsPopup();
 }
+
 
 
   
