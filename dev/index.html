@@ -10415,16 +10415,24 @@ if (key === 't' && has("stealing")) {
   }
 
   if (key === 'i' && has("defense")) {
-    if (activeAmulets.stamina) showTemporaryText("Conflict: Stamina Amulet active!");
-    else {
-      activeAmulets.defense = !activeAmulets.defense;
-      if (activeAmulets.defense) {
-          const cost = Math.floor(playerStats.maxHp * 0.20);
-          playerStats.currentHp = Math.max(1, playerStats.currentHp - cost);
-          updateHp(playerStats.currentHp);
-      }
+  if (activeAmulets.stamina) {
+    showTemporaryText("Conflict: Stamina Amulet active!");
+  } else {
+    activeAmulets.defense = !activeAmulets.defense;
+    if (activeAmulets.defense) {
+      playerStats.maxHp = Math.floor(playerStats.baseMaxHp * 0.8);
+      playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+      updateHp(playerStats.currentHp);
+    } else {
+      playerStats.maxHp = playerStats.baseMaxHp;
+      playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+      updateHp(playerStats.currentHp);
     }
   }
+}
+
     
 });
   
