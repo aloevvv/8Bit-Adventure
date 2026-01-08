@@ -921,6 +921,7 @@ const weaponTypes = {
   let equippedArmor = null; 
 let equippedWeapon = null;
 
+
 function applyEquipmentBonuses() {
   
   const baseMaxHp = playerStats.baseMaxHp;
@@ -937,6 +938,23 @@ function applyEquipmentBonuses() {
   if (equippedWeapon && weaponTypes[equippedWeapon]) {
     weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
   }
+
+  if (activeAmulets.sacrifice) {
+    playerStats.damage = Math.floor(playerStats.damage * 1.5);
+    playerStats.maxHp = Math.floor(playerStats.maxHp * 1.5);
+    if (activeAlly) {
+        activeAlly.damage = Math.floor(activeAlly.damage * 0.5);
+        activeAlly.maxHp = Math.floor(activeAlly.maxHp * 0.5);
+    }
+}
+if (activeAmulets.xp) {
+    playerStats.damage = Math.floor(playerStats.damage * 0.5);
+    playerStats.maxHp = Math.floor(playerStats.maxHp * 0.5);
+    if (activeAlly) {
+        activeAlly.damage = Math.floor(activeAlly.damage * 0.5);
+        activeAlly.maxHp = Math.floor(activeAlly.maxHp * 0.5);
+    }
+}
 
  
   playerStats.maxHp = baseMaxHp + armorBonusHp;
@@ -4473,12 +4491,14 @@ function levelUp() {
 
 function gainXP(amount) {
   const mult = getDifficultyMultipliers();
-  const boostedAmount = Math.floor(amount * mult.xpMult);
-
-  playerStats.xp += boostedAmount;
+  let xp = Math.floor(amount * mult.xpMult);
+  
+  if (activeAmulets.xp) xp *= 1.5;
+  
+  playerStats.xp += Math.floor(xp);
 
   if (activeAlly) {
-    activeAlly.xp += boostedAmount;
+    activeAlly.xp += Math.floor(xp);
     while (activeAlly.xp >= activeAlly.xpToNextLevel) {
       levelUpAlly(activeAlly);
     }
@@ -10420,6 +10440,9 @@ if (key === 't' && has("stealing")) {
     else activeAmulets.stealing = !activeAmulets.stealing;
   }
 
+  if (key === 'y' && has("sacrifice")) { activeAmulets.sacrifice = !activeAmulets.sacrifice; applyEquipmentBonuses(); }
+  if (key === 'u' && has("xp")) { activeAmulets.xp = !activeAmulets.xp; applyEquipmentBonuses(); }
+
   if (key === 'i' && has("defense")) {
   if (activeAmulets.stamina) {
     showTemporaryText("Conflict: Stamina Amulet active!");
@@ -10600,6 +10623,8 @@ function performPlayerAttack() {
     let finalDmg = playerStats.damage;
     if (activeAmulets.bullets) finalDmg *= 1.5;
     if (activeAmulets.health) finalDmg *= 0.5;
+    if (activeAmulets.sacrifice) finalDmg *= 1.5;
+    if (activeAmulets.xp) finalDmg *= 0.5;
     
     finalDmg = Math.floor(finalDmg);
     targetEnemy.currentHp -= finalDmg;
