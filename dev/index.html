@@ -7568,7 +7568,6 @@ function healAllyAfterBattle() {
   if (activeAlly && activeAlly.currentHp > 0) {
     const healAmount = Math.ceil(activeAlly.maxHp * 0.33);
     activeAlly.currentHp = Math.min(activeAlly.currentHp + healAmount, activeAlly.maxHp);
-    showTemporaryText(`${activeAlly.name} healed for ${healAmount} HP after battle.`);
   }
 }
 
@@ -10844,26 +10843,37 @@ function loadLevel(index, newX = x, newY = y) {
 
   if (gameSettings.autosave) {
     saveGame();
-    if (gameSettings.autosaveMessage) {
-      showTemporaryText("Autosaving..."); 
-    }
+    if (gameSettings.autosaveMessage) showTemporaryText("Autosaving...");
   }
 
-  setTimeout(() => {
+
+  const nextBg = new Image();
+  const nextLevelData = levels[index];
+
+  const finalizeLoad = () => {
     currentLevelIndex = index;
-    currentLevel = levels[currentLevelIndex];
-
-    bgImg = new Image();
-    bgImg.onload = () => {
-        draw();
-        fadeEl.style.opacity = '0';
-    };
-    bgImg.src = currentLevel.bgSrc;
-
+    currentLevel = nextLevelData;
+    bgImg = nextBg;
     x = newX;
     y = newY;
+    
+    draw();
+    
+    setTimeout(() => {
+      fadeEl.style.opacity = '0';
+    }, 100); 
+  };
 
-    draw(); 
+  nextBg.onload = finalizeLoad; 
+
+  nextBg.onerror = () => {
+    console.warn("Resource Load Error: Background image not found or offline. Falling back to default color.");
+
+    finalizeLoad();
+  };
+
+  setTimeout(() => {
+    nextBg.src = nextLevelData.bgSrc;
   }, 500);
 }
 
