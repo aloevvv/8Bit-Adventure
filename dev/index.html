@@ -269,6 +269,17 @@
   box-shadow: 0 0 10px 10px rgba(255, 0, 0, 0.8);
   border-color: #FF0000;
 }
+    .burn-rocket-hud {
+  box-shadow: 0 0 15px 5px orange !important;
+  border: 2px solid orange !important;
+  transition: box-shadow 0.3s ease;
+}
+
+.burn-mountain-hud {
+  box-shadow: 0 0 15px 5px red !important;
+  border: 2px solid red !important;
+  transition: box-shadow 0.3s ease;
+}
     #player-battle-status .hp-bar-container:last-of-type .hp-bar {
       background-color: #00FFFF;
     }
@@ -5101,6 +5112,8 @@ function drawPlayerBattleStatus() {
 
   const hpContainer = document.createElement('div');
   hpContainer.className = 'hp-bar-container';
+  if (playerStats._burnType === 'rocket') hpContainer.classList.add('burn-rocket-hud');
+  if (playerStats._burnType === 'mountain') hpContainer.classList.add('burn-mountain-hud');
   hpContainer.style.width = '150px';
   hpContainer.style.height = '15px';
   hpContainer.style.position = 'relative';
@@ -5109,7 +5122,7 @@ function drawPlayerBattleStatus() {
   innerHpBar.className = 'hp-bar';
   innerHpBar.style.width = `${(playerStats.currentHp / playerStats.maxHp) * 100}%`;
   innerHpBar.style.height = '100%';
-  innerHpBar.style.backgroundColor = '#00FF00'; // force HP green
+  innerHpBar.style.backgroundColor = '#00FF00';
 
   const hpTxt = document.createElement('div');
   hpTxt.className = 'hp-text';
@@ -5131,6 +5144,8 @@ function drawPlayerBattleStatus() {
 
     const allyHpContainer = document.createElement('div');
     allyHpContainer.className = 'hp-bar-container';
+    if (activeAlly._burnType === 'rocket') allyHpContainer.classList.add('burn-rocket-hud');
+    if (activeAlly._burnType === 'mountain') allyHpContainer.classList.add('burn-mountain-hud');
     allyHpContainer.style.width = '120px';
     allyHpContainer.style.height = '15px';
     allyHpContainer.style.position = 'relative';
@@ -5440,6 +5455,7 @@ function bossBehavior(enemy, target) {
     const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
     if (target === playerStats) {
       playerTakeDamage(rocketTickDamage);
+      playerStats._burnType = 'rocket';
     } else if (target === activeAlly) {
       activeAlly.currentHp -= rocketTickDamage;
       if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
@@ -5453,6 +5469,7 @@ function bossBehavior(enemy, target) {
     showTemporaryText(`${enemy.name}'s rocket hits ${target === playerStats ? 'you' : activeAlly.name} for ${rocketTickDamage} damage!`);
     if (enemy.rocketTicksLeft === 0) {
       enemy.rocketActive = false;
+      playerStats._burnType = null;
       showTemporaryText("The rocket damage ends.");
     }
   }
@@ -5802,13 +5819,11 @@ function startMountainPenCycle(boss) {
   spawnMountainPen(boss);
 }
 function mountainBossBehavior(enemy, target) {
-  // set up on first tick
   if (!enemy._initialized) {
     enemy._initialized = true;
     enemy._spawnAt = Date.now();
-    enemy._fireTicks = []; // track active fire tick intervals (so we can clear)
+    enemy._fireTicks = [];
     enemy.enraged = false;
-    // after 30s become enraged if still alive
     enemy._enrageTimeout = setTimeout(() => {
       if (activeEnemies.includes(enemy) && enemy.currentHp > 0) {
         enemy.enraged = true;
@@ -5817,30 +5832,29 @@ function mountainBossBehavior(enemy, target) {
     }, 30000);
   }
 
-  // If shield active, skip other actions
   if (enemy.shieldActive) return;
 
-  // 33% chance to spit fire each action -> apply a DOT tick every 1s for 4 ticks (massive)
   if (Math.random() < 0.33) {
     const DOT_TICKS = 4;
     const DOT_INTERVAL = 1000;
-    const baseDot = Math.max(5, Math.round(enemy.damage * 0.8)); // base per tick
+    const baseDot = Math.max(5, Math.round(enemy.damage * 0.8));
     let ticks = 0;
     showTemporaryText(`${enemy.name} spits a cone of fire!`);
     const id = setInterval(() => {
       if (!activeEnemies.includes(enemy) || ticks >= DOT_TICKS) {
         clearInterval(id);
+        target._burnType = null;
         return;
       }
-      // apply to chosen target(s)
       const dotDamage = baseDot;
-      // prefer player, if ally present sometimes hit them
       const dotTarget = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
       if (dotTarget === playerStats) {
         playerTakeDamage(dotDamage);
+        target._burnType = 'mountain';
         showTemporaryText(`${enemy.name}'s fire scorches you for ${dotDamage} damage!`);
       } else {
         activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dotDamage);
+        target._burnType = 'mountain';
         showTemporaryText(`${enemy.name}'s fire scorches ${activeAlly.name} for ${dotDamage} damage!`);
       }
       ticks++;
