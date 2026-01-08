@@ -883,6 +883,7 @@ let armorHealIntervalId = null;
 let damageBoostTimer = null;
 const ENEMY_ATTACK_DELAY = 2000;
 let staminaRegenIntervalId = null;
+let clickingInterval = null;
 let inventory = new Map();
 let extraLifeTimerId = null;
 let battleRounds = 0;            
@@ -6724,6 +6725,22 @@ function reduceDarkTimer(ms) {
   showTemporaryText(`Dark Timer reduced by ${Math.round(ms/1000)}s!`);
 }
 
+  function toggleAutofire(on) {
+  const btn = document.getElementById('attack-button');
+  if (on) {
+    btn.disabled = true;
+    clickingInterval = setInterval(() => {
+        if (inBattle && !isGameOver) performPlayerAttack();
+        else toggleAutofire(false);
+    }, 200);
+  } else {
+    btn.disabled = false;
+    clearInterval(clickingInterval);
+    clickingInterval = null;
+    activeAmulets.clicking = false;
+  }
+}
+
   
 (function ensureAbilityButtons() {
   const controls = document.getElementById('battle-controls');
@@ -6763,7 +6780,6 @@ function reduceDarkTimer(ms) {
   makeBtn('ability-cleanse', 'Cleanse');
 })();
 
-// Update ability buttons UI (disabled, overlay)
 function updateAbilityButtonsUI() {
   const now = Date.now();
   ['block','counter','cleanse'].forEach(name => {
@@ -6779,7 +6795,6 @@ function updateAbilityButtonsUI() {
       btn.disabled = true;
       if (overlay) {
         overlay.style.display = 'block';
-        // width corresponds to fraction remaining
         const frac = Math.max(0, Math.min(1, cd / ABILITIES[name].cooldownMs));
         overlay.style.width = `${frac * 100}%`;
       }
@@ -6787,17 +6802,14 @@ function updateAbilityButtonsUI() {
     }
   });
 
-  // show active indicators for block/counter windows
   const blockBtn = document.getElementById('ability-block');
   if (blockBtn) blockBtn.style.boxShadow = blockActive ? '0 0 10px 3px rgba(0,200,255,0.7)' : '';
   const counterBtn = document.getElementById('ability-counter');
   if (counterBtn) counterBtn.style.boxShadow = counterWindowActive ? '0 0 10px 3px rgba(255,200,0,0.7)' : '';
 }
 
-// Start per-battle ability regeneration loop
 function startAbilityRegen() {
   if (abilityRegenIntervalId) clearInterval(abilityRegenIntervalId);
-  // tick every 200ms for smoother overlay updates
   abilityRegenIntervalId = setInterval(() => {
     let changed = false;
     ['block','counter','cleanse'].forEach(name => {
@@ -6805,7 +6817,6 @@ function startAbilityRegen() {
         abilityCooldowns[name] = Math.max(0, abilityCooldowns[name] - 200);
         changed = true;
       } else {
-        // ensure it's clamped to zero
         abilityCooldowns[name] = 0;
       }
     });
@@ -6813,7 +6824,6 @@ function startAbilityRegen() {
   }, 200);
 }
 
-// Stop regen when battle ends
 function stopAbilityRegen() {
   if (abilityRegenIntervalId) {
     clearInterval(abilityRegenIntervalId);
@@ -6918,7 +6928,7 @@ function enemyAttack(enemy, target) {
     const blockChance = armorTypes["haunted"].blockChance || 0;
     if (Math.random() < blockChance) {
       showTemporaryText("Haunted Armor blocked the attack!");
-      return; // no damage taken
+      return;
     }
   }
 
@@ -7663,6 +7673,12 @@ function endBattle(outcome) {
     activeAlly.attackTimerId = null;
   }
 
+  toggleAutofire(false); 
+  
+  for (let key in activeAmulets) {
+    activeAmulets[key] = false; 
+  }
+
   if (armorHealIntervalId) {
     clearInterval(armorHealIntervalId);
     armorHealIntervalId = null;
@@ -7697,11 +7713,13 @@ function initiateBattle(zoneType, zoneObject) {
   if (armorHealIntervalId) clearInterval(armorHealIntervalId);
   armorHealIntervalId = setInterval(passiveArmorHeal, 1000);
 
-  // stamina regen
-  staminaRegenIntervalId = setInterval(() => {
-    updateStamina(playerStats.currentStamina + 1);
-    drawPlayerBattleStatus();
-  }, 100);
+ staminaRegenIntervalId = setInterval(() => {
+  let regenAmount = 1;
+  if (activeAmulets.stamina) regenAmount += 1;
+  
+  updateStamina(playerStats.currentStamina + regenAmount);
+  drawPlayerBattleStatus();
+}, 100);
   
 setInterval(() => {
   if (inBattle) updateAbilityButtonsUI();
@@ -7987,6 +8005,9 @@ function doBlock() {
     showTemporaryText('Block not ready.');
     return;
   }
+  if (activeAmulets.stamina) {
+  return;
+}
   triggerAbilityCooldown('block');
   blockActive = true;
   updateAbilityButtonsUI();
@@ -8002,6 +8023,9 @@ function doCounter() {
     showTemporaryText('Counter not ready.');
     return;
   }
+  if (activeAmulets.stamina) {
+  return;
+}
   triggerAbilityCooldown('counter');
   counterWindowActive = true;
   updateAbilityButtonsUI();
@@ -8018,6 +8042,9 @@ function doCleanse() {
     showTemporaryText('Cleanse not ready.');
     return;
   }
+  if (activeAmulets.stamina) {
+  return;
+}
   triggerAbilityCooldown('cleanse');
 
   const removed = [];
@@ -10344,6 +10371,38 @@ if (toggleAutosaveMessage) {
     showTemporaryText(gameSettings.autosaveMessage ? "Autosave Message Enabled" : "Autosave Message Disabled");
   });
 }
+
+  document.addEventListener("keydown", function(e) {
+  if (!inBattle) return;
+  const key = e.key.toLowerCase();
+
+  const has = (name) => (inventory.get("amulet_" + name) || 0) > 0;
+
+  if (key === 'q' && has("clicking")) {
+    activeAmulets.clicking = !activeAmulets.clicking;
+    toggleAutofire(activeAmulets.clicking);
+    showTemporaryText("Clicking Amulet: " + (activeAmulets.clicking ? "ON" : "OFF"));
+  }
+
+  if (key === 'w' && has("bullets")) {
+    activeAmulets.bullets = !activeAmulets.bullets;
+    showTemporaryText("Heightened Bullets: " + (activeAmulets.bullets ? "ON" : "OFF"));
+  }
+
+  if (key === 'e' && has("stamina")) {
+    if (activeAmulets.stealing) {
+       showTemporaryText("Conflict: Stealing Amulet is active!");
+    } else {
+       activeAmulets.stamina = !activeAmulets.stamina;
+       showTemporaryText("Stamina Amulet: " + (activeAmulets.stamina ? "ON" : "OFF"));
+    }
+  }
+
+  if (key === 'r' && has("health")) {
+    activeAmulets.health = !activeAmulets.health;
+    showTemporaryText("Health Amulet: " + (activeAmulets.health ? "ON" : "OFF"));
+  }
+});
   
 const mobileToggle = document.getElementById('toggle-mobile-mode');
 const mobileControls = document.getElementById('mobile-controls');
@@ -10476,36 +10535,51 @@ achievementsButton.addEventListener('click', () => {
   }, 1000);
 }
   
-const pewBuffer = new Audio('pew.mp3');
-      pewBuffer.volume = 0.2;
 
-document.getElementById('attack-button').addEventListener('click', () => {
+const pewBuffer = new Audio('pew.mp3');
+pewBuffer.volume = 0.2;
+
+function performPlayerAttack() {
   const pewSound = pewBuffer.cloneNode();
   pewSound.volume = 0.4;
   pewSound.play();
+
   if (!inBattle || !activeEnemies.length) return;
   const targetEnemy = activeEnemies[selectedEnemyIndex];
   if (!targetEnemy) return;
 
-  if (targetEnemy.shieldActive) {
-    showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
-  } else {
-   
-    targetEnemy.currentHp -= playerStats.damage;
-    spawnDamageNumber(selectedEnemyIndex, playerStats.damage);
-    if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-  }
-  if (targetEnemy.currentHp === 0) {
-    handleEnemyDeath(targetEnemy);
-    
-    if (selectedEnemyIndex >= activeEnemies.length) selectedEnemyIndex = Math.max(0, activeEnemies.length - 1);
+  if (activeAmulets.bullets && playerStats.currentStamina < 3) {
+    showTemporaryText("Not enough stamina to fire!");
     return;
   }
 
-  
-  activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
+  if (targetEnemy.shieldActive) {
+    showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
+  } else {
+    let finalDmg = playerStats.damage;
+    if (activeAmulets.bullets) finalDmg *= 1.5;
+    if (activeAmulets.health) finalDmg *= 0.5;
+    
+    finalDmg = Math.floor(finalDmg);
+    targetEnemy.currentHp -= finalDmg;
+    spawnDamageNumber(selectedEnemyIndex, finalDmg);
 
-  
+    if (activeAmulets.health) {
+       updateHp(playerStats.currentHp + finalDmg);
+    }
+
+    if (activeAmulets.bullets) {
+       updateStamina(playerStats.currentStamina - 3);
+    }
+  }
+  if (targetEnemy.currentHp <= 0) {
+    handleEnemyDeath(targetEnemy);
+    if (selectedEnemyIndex >= activeEnemies.length) {
+      selectedEnemyIndex = Math.max(0, activeEnemies.length - 1);
+    }
+  }
+
+  activeEnemies = activeEnemies.filter(enemy => enemy.currentHp > 0);
   if (activeEnemies.length === 0) {
     endBattle('win');
     return;
@@ -10514,7 +10588,13 @@ document.getElementById('attack-button').addEventListener('click', () => {
   drawBattleUI();
   drawPartyStatus();
   drawPlayerBattleStatus();
+}
+
+document.getElementById('attack-button').addEventListener('click', () => {
+  if (activeAmulets.clicking) return; 
+  performPlayerAttack();
 });
+
 
 document.getElementById('special-attack-button-1').addEventListener('click', () => {
   const staminaCost = 100;
