@@ -983,15 +983,15 @@ inventory.set("amulet_defense", 1);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
-inventory.set("armor_saloon", 0);
-inventory.set("armor_haunted",0);
+inventory.set("armor_saloon", 1);
+inventory.set("armor_haunted",1);
 inventory.set("armor_virus", 0);
 
-inventory.set("weapon_retro", 0);
+inventory.set("weapon_retro", 1);
 inventory.set("weapon_v8", 0);
 inventory.set("weapon_saloon", 0);
 inventory.set("weapon_haunted", 0);
-inventory.set("weapon_virus", 0);
+inventory.set("weapon_virus", 1);
 
   const ABILITIES = {
   block: { cooldownMs: 12000, effectMs: 2400 },  
@@ -7687,6 +7687,8 @@ function endBattle(outcome) {
   playerStats.maxHp = playerStats.baseMaxHp; 
 playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
   updateHp(playerStats.currentHp);
+
+  applyEquipmentBonuses();
 
   if (armorHealIntervalId) {
     clearInterval(armorHealIntervalId);
