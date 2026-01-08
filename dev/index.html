@@ -10461,8 +10461,8 @@ if (key === 'y' && has("sacrifice")) {
       activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
     }
 
-    updateHp(playerStats.currentHp);
     applyEquipmentBonuses();
+    updateHp(playerStats.currentHp);
   }
 }
     
@@ -10478,8 +10478,8 @@ if (key === 'u' && has("xp")) {
     playerStats.maxHp = playerStats.baseMaxHp;
     playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
 
-    updateHp(playerStats.currentHp);
     applyEquipmentBonuses();
+    updateHp(playerStats.currentHp);
   }
 }
 
