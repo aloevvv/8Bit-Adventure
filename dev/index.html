@@ -923,41 +923,39 @@ let equippedWeapon = null;
 
 
 function applyEquipmentBonuses() {
-  
   const baseMaxHp = playerStats.baseMaxHp;
   const baseDamage = playerStats.baseDamage;
 
- 
   let armorBonusHp = 0;
   if (equippedArmor && armorTypes[equippedArmor]) {
     armorBonusHp = Math.floor(baseMaxHp * armorTypes[equippedArmor].hpBonus);
   }
 
-  
   let weaponBonusDmg = 0;
   if (equippedWeapon && weaponTypes[equippedWeapon]) {
     weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
   }
 
-  if (activeAmulets.sacrifice) {
-    if (activeAlly) {
-        activeAlly.damage = Math.floor(activeAlly.damage * 0.5);
-        activeAlly.maxHp = Math.floor(activeAlly.maxHp * 0.5);
-        activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
-    }
-}
-
-if (activeAmulets.xp) {
-    if (activeAlly) {
-        activeAlly.damage = Math.floor(activeAlly.damage * 0.5);
-        activeAlly.maxHp = Math.floor(activeAlly.maxHp * 0.5);
-        activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
-    }
-}
- 
   playerStats.maxHp = baseMaxHp + armorBonusHp;
   playerStats.damage = baseDamage + weaponBonusDmg;
 
+  if (activeAlly) {
+    activeAlly.damage = activeAlly.baseDamage;
+    activeAlly.maxHp = activeAlly.baseMaxHp;
+    activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+  }
+
+  if (activeAmulets.sacrifice && activeAlly) {
+    activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
+    activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
+    activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+  }
+  
+  if (activeAmulets.xp && activeAlly) {
+    activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
+    activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
+    activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+  }
 
   if (playerStats.currentHp > playerStats.maxHp) {
     playerStats.currentHp = playerStats.maxHp;
@@ -966,6 +964,7 @@ if (activeAmulets.xp) {
   updateHp(playerStats.currentHp);
   updateStatsPopup();
 }
+
 
   
 
