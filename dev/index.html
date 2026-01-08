@@ -932,22 +932,6 @@ function applyEquipmentBonuses() {
     armorBonusHp = Math.floor(baseMaxHp * armorTypes[equippedArmor].hpBonus);
   }
 
-  if (activeAmulets.sacrifice) {
-    playerStats.damage = Math.floor(playerStats.damage * 1.5);
-    playerStats.maxHp = Math.floor(playerStats.maxHp * 1.5);
-    if (activeAlly) {
-        activeAlly.damage = Math.floor(activeAlly.damage * 0.5);
-        activeAlly.maxHp = Math.floor(activeAlly.maxHp * 0.5);
-    }
-}
-if (activeAmulets.xp) {
-    playerStats.damage = Math.floor(playerStats.damage * 0.5);
-    playerStats.maxHp = Math.floor(playerStats.maxHp * 0.5);
-    if (activeAlly) {
-        activeAlly.damage = Math.floor(activeAlly.damage * 0.5);
-        activeAlly.maxHp = Math.floor(activeAlly.maxHp * 0.5);
-    }
-}
   
   let weaponBonusDmg = 0;
   if (equippedWeapon && weaponTypes[equippedWeapon]) {
@@ -4489,14 +4473,12 @@ function levelUp() {
 
 function gainXP(amount) {
   const mult = getDifficultyMultipliers();
-  let xp = Math.floor(amount * mult.xpMult);
-  
-  if (activeAmulets.xp) xp *= 1.5;
-  
-  playerStats.xp += Math.floor(xp);
+  const boostedAmount = Math.floor(amount * mult.xpMult);
+
+  playerStats.xp += boostedAmount;
 
   if (activeAlly) {
-    activeAlly.xp += Math.floor(xp);
+    activeAlly.xp += boostedAmount;
     while (activeAlly.xp >= activeAlly.xpToNextLevel) {
       levelUpAlly(activeAlly);
     }
@@ -6830,22 +6812,17 @@ function startAbilityRegen() {
   if (abilityRegenIntervalId) clearInterval(abilityRegenIntervalId);
   abilityRegenIntervalId = setInterval(() => {
     let changed = false;
-    let tickReduction = 200;
-    if (activeAmulets.defense) tickReduction += 200;
-
     ['block','counter','cleanse'].forEach(name => {
       if (abilityCooldowns[name] > 0) {
-        abilityCooldowns[name] = Math.max(0, abilityCooldowns[name] - tickReduction);
+        abilityCooldowns[name] = Math.max(0, abilityCooldowns[name] - 200);
         changed = true;
       } else {
         abilityCooldowns[name] = 0;
       }
     });
-
     if (changed) updateAbilityButtonsUI();
   }, 200);
 }
-
 
 function stopAbilityRegen() {
   if (abilityRegenIntervalId) {
@@ -7737,11 +7714,11 @@ function initiateBattle(zoneType, zoneObject) {
   armorHealIntervalId = setInterval(passiveArmorHeal, 1000);
 
  staminaRegenIntervalId = setInterval(() => {
-  if (activeAmulets.stealing) return;
+  let regenAmount = 1;
+  if (activeAmulets.stamina) regenAmount += 1;
   
-  let regen = 1;
-  if (activeAmulets.stamina) regen += 1; 
-  updateStamina(playerStats.currentStamina + regen);
+  updateStamina(playerStats.currentStamina + regenAmount);
+  drawPlayerBattleStatus();
 }, 100);
   
 setInterval(() => {
@@ -10413,8 +10390,8 @@ if (toggleAutosaveMessage) {
   }
 
   if (key === 'e' && has("stamina")) {
-    if (activeAmulets.stealing || activeAmulets.defense) {
-       
+    if (activeAmulets.stealing) {
+       showTemporaryText("Conflict: Stealing Amulet is active!");
     } else {
        activeAmulets.stamina = !activeAmulets.stamina;
        showTemporaryText("Stamina Amulet: " + (activeAmulets.stamina ? "ON" : "OFF"));
@@ -10425,29 +10402,6 @@ if (toggleAutosaveMessage) {
     activeAmulets.health = !activeAmulets.health;
     showTemporaryText("Health Amulet: " + (activeAmulets.health ? "ON" : "OFF"));
   }
-
-if (key === 't' && has("stealing")) {
-    if (activeAmulets.stamina) showTemporaryText("Conflict: Stamina Amulet active!");
-    else activeAmulets.stealing = !activeAmulets.stealing;
-  }
-
-  if (key === 'i' && has("defense")) {
-    if (activeAmulets.stamina) showTemporaryText("Conflict: Stamina Amulet active!");
-    else {
-      activeAmulets.defense = !activeAmulets.defense;
-      if (activeAmulets.defense) {
-
-          const cost = Math.floor(playerStats.maxHp * 0.20);
-          playerStats.currentHp = Math.max(1, playerStats.currentHp - cost);
-          updateHp(playerStats.currentHp);
-          showTemporaryText(`Defense active! Lost ${cost} HP.`);
-      }
-    }
-  }
-
-  if (key === 'y' && has("sacrifice")) { activeAmulets.sacrifice = !activeAmulets.sacrifice; applyEquipmentBonuses(); }
-  if (key === 'u' && has("xp")) { activeAmulets.xp = !activeAmulets.xp; applyEquipmentBonuses(); }
-  
 });
   
 const mobileToggle = document.getElementById('toggle-mobile-mode');
@@ -10605,8 +10559,6 @@ function performPlayerAttack() {
     let finalDmg = playerStats.damage;
     if (activeAmulets.bullets) finalDmg *= 1.5;
     if (activeAmulets.health) finalDmg *= 0.5;
-    if (activeAmulets.sacrifice) finalDmg *= 1.5;
-    if (activeAmulets.xp) finalDmg *= 0.5;      
     
     finalDmg = Math.floor(finalDmg);
     targetEnemy.currentHp -= finalDmg;
@@ -10618,10 +10570,6 @@ function performPlayerAttack() {
 
     if (activeAmulets.bullets) {
        updateStamina(playerStats.currentStamina - 3);
-    }
-    if (activeAmulets.stealing) {
-        // We push the enemy's "Last Attack" time forward 50ms, essentially emptying 0.05s of their bar
-        targetEnemy.lastAttackAt += 50; 
     }
   }
   if (targetEnemy.currentHp <= 0) {
