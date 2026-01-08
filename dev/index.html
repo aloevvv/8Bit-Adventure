@@ -939,6 +939,21 @@ function applyEquipmentBonuses() {
     weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
   }
 
+  if (activeAmulets.sacrifice) {
+    if (activeAlly) {
+        activeAlly.damage = Math.floor(activeAlly.damage * 0.5);
+        activeAlly.maxHp = Math.floor(activeAlly.maxHp * 0.5);
+        activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+    }
+}
+
+if (activeAmulets.xp) {
+    if (activeAlly) {
+        activeAlly.damage = Math.floor(activeAlly.damage * 0.5);
+        activeAlly.maxHp = Math.floor(activeAlly.maxHp * 0.5);
+        activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+    }
+}
  
   playerStats.maxHp = baseMaxHp + armorBonusHp;
   playerStats.damage = baseDamage + weaponBonusDmg;
@@ -10434,13 +10449,8 @@ if (key === 'y' && has("sacrifice")) {
     playerStats.maxHp = Math.floor(playerStats.baseMaxHp * 1.5);
     playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
 
-    if (activeAlly) {
-      activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
-      activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
-      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
-    }
-
     updateHp(playerStats.currentHp);
+    applyEquipmentBonuses();
   } else {
     playerStats.maxHp = playerStats.baseMaxHp;
     playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
@@ -10452,6 +10462,7 @@ if (key === 'y' && has("sacrifice")) {
     }
 
     updateHp(playerStats.currentHp);
+    applyEquipmentBonuses();
   }
 }
     
@@ -10461,24 +10472,14 @@ if (key === 'u' && has("xp")) {
     playerStats.maxHp = Math.floor(playerStats.baseMaxHp * 0.5);
     playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
 
-    if (activeAlly) {
-      activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
-      activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
-      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
-    }
-
     updateHp(playerStats.currentHp);
+    applyEquipmentBonuses();
   } else {
     playerStats.maxHp = playerStats.baseMaxHp;
     playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
 
-    if (activeAlly) {
-      activeAlly.damage = activeAlly.baseDamage;
-      activeAlly.maxHp = activeAlly.baseMaxHp;
-      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
-    }
-
     updateHp(playerStats.currentHp);
+    applyEquipmentBonuses();
   }
 }
 
