@@ -5841,27 +5841,31 @@ function mountainBossBehavior(enemy, target) {
     let ticks = 0;
     showTemporaryText(`${enemy.name} spits a cone of fire!`);
     const id = setInterval(() => {
-      if (!activeEnemies.includes(enemy) || ticks >= DOT_TICKS) {
-        clearInterval(id);
-        target._burnType = null;
-        return;
-      }
-      const dotDamage = baseDot;
-      const dotTarget = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
-      if (dotTarget === playerStats) {
-        playerTakeDamage(dotDamage);
-        target._burnType = 'mountain';
-        showTemporaryText(`${enemy.name}'s fire scorches you for ${dotDamage} damage!`);
-      } else {
-        activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dotDamage);
-        target._burnType = 'mountain';
-        showTemporaryText(`${enemy.name}'s fire scorches ${activeAlly.name} for ${dotDamage} damage!`);
-      }
-      ticks++;
-      drawBattleUI();
-      drawPlayerBattleStatus();
-      drawPartyStatus();
-    }, DOT_INTERVAL);
+  if (!activeEnemies.includes(enemy) || ticks >= DOT_TICKS) {
+    clearInterval(id);
+    dotTarget._burnType = null; 
+    return;
+  }
+
+  const dotDamage = baseDot;
+  const dotTarget = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
+
+  dotTarget._burnType = 'mountain'; 
+
+  if (dotTarget === playerStats) {
+    playerTakeDamage(dotDamage);
+    showTemporaryText(`${enemy.name}'s fire scorches you for ${dotDamage} damage!`);
+  } else {
+    dotTarget.currentHp = Math.max(0, dotTarget.currentHp - dotDamage);
+    showTemporaryText(`${enemy.name}'s fire scorches ${dotTarget.name} for ${dotDamage} damage!`);
+  }
+
+  ticks++;
+  drawBattleUI();
+  drawPlayerBattleStatus();
+  drawPartyStatus();
+}, DOT_INTERVAL);
+
     enemy._fireTicks.push(id);
   }
   if (!enemy._penCycleStarted && (enemy.currentHp / enemy.maxHp) <= 0.30) { startMountainPenCycle(enemy); }
