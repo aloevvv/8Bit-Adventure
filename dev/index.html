@@ -7785,17 +7785,12 @@ setInterval(() => {
   const _orig_initiateBattle = typeof initiateBattle === 'function' ? initiateBattle : null;
 initiateBattle = function(zoneType, zoneObject) {
   if (_orig_initiateBattle) _orig_initiateBattle(zoneType, zoneObject);
-  // reset and start per-battle ability regen
   resetAbilitiesForBattle();
 };
   
-  // Setup activeAlly if equipped
   if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
     const allyBase = alliesData.find(a => a.id === equippedAllyId);
     activeAlly = {
-      id: allyBase.id,
-      name: allyBase.name,
-      activeAlly = {
       id: allyBase.id,
       name: allyBase.name,
       baseMaxHp: allyBase.baseMaxHp, 
