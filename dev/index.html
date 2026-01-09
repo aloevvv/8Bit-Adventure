@@ -987,8 +987,8 @@ let currentRoundIndex = 0;
 };
 
   const gearTypes = {
-  dmg_gear_1: { name: "Dmg Gear I", rarity: "common", dmg: 1, desc: "Flat +1 Damage bonus." },
-  hp_gear_1: { name: "HP Gear I", rarity: "rare", hp: 8, desc: "Flat +8 HP bonus." }
+  dmg_gear_1: { name: "Dmg Gear I", rarity: "common", dmg: 1, desc: "+1 Damage" },
+  hp_gear_1: { name: "HP Gear I", rarity: "rare", hp: 8, desc: "+8 HP" }
 };
 
 const rarityColors = {
@@ -999,25 +999,24 @@ const rarityColors = {
 let equippedGears = [null, null, null];
 
   const armorTypes = {
-  retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
-  v8:    { name: "V8 Armor", hpBonus: 0.20, passiveHealPercent: 0 },
-  saloon:{ name: "Saloon Armor", hpBonus: 0.40, passiveHealPercent: 0.02 },
-  haunted:{name: "Haunted Armor", hpBonus: 0.30, passiveHealPercent: 0, blockChance: 0.15 },
-  virus: { name: "Virus Armor", hpBonus: 0.50, passiveHealPercent: 0 }
+  retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0, desc: "+ 10% HP" },
+  v8:    { name: "V8 Armor", hpBonus: 0.20, passiveHealPercent: 0, desc: "+ 20% HP" },
+  saloon:{ name: "Saloon Armor", hpBonus: 0.40, passiveHealPercent: 0.02, desc: "+ 40% HP, heals 1% per sec" },
+  haunted:{name: "Haunted Armor", hpBonus: 0.30, passiveHealPercent: 0, blockChance: 0.15, desc: "+ 30% HP, 30% chance to block" },
+  virus: { name: "Virus Armor", hpBonus: 0.50, passiveHealPercent: 0, desc: "FORBIDDEN TO WEAR, TURN BACK 8-BIT, THERE IS STILL GOOD INSIDE YOU" }
 };
 
 const weaponTypes = {
-  retro: { name: "Retro Weapon", dmgBonus: 0.10 },
-  v8:    { name: "V8 Weapon", dmgBonus: 0.20 },
-  saloon:{ name: "Saloon Weapon", dmgBonus: 0.15 },
-  haunted:{name: "Haunted Weapon", dmgBonus: 0.25 },
-  virus: { name: "Virus Weapon", dmgBonus: 0.50 }
+  retro: { name: "Retro Weapon", dmgBonus: 0.10, desc: "+ 10% Damage" },
+  v8:    { name: "V8 Weapon", dmgBonus: 0.20, desc: "+ 20% Damage" },
+  saloon:{ name: "Saloon Weapon", dmgBonus: 0.15, desc: "+ 15% Damage" },
+  haunted:{name: "Haunted Weapon", dmgBonus: 0.25, desc: "+ 25% Damage" },
+  virus: { name: "Virus Weapon", dmgBonus: 0.50, desc: "DO NOT EQUIP THIS, THAT IS THE WEAPON OF THE ENEMY, 8-BIT" }
 };
 
   let equippedArmor = null; 
 let equippedWeapon = null;
 
-// give up? 74904d7
 function applyEquipmentBonuses() {
   const baseMaxHp = playerStats.baseMaxHp;
   const baseDamage = playerStats.baseDamage;
