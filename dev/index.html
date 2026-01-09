@@ -545,21 +545,27 @@
     </div>
   </div>
 
-    <div id="equips-popup" style="display:none; position:fixed; inset:20px; background:#001a33; border:4px solid white; z-index:5000; color:white; font-family:'Press Start 2P'; padding:20px;">
-  <h2 style="text-align:center;">Equipment & Gears</h2>
+    <div class="hud-section" id="equips">
+  <p id="equips-open-btn" style="cursor:pointer">Equips</p>
   
-  <div style="display:flex; justify-content:center; gap:10px; margin-bottom:30px;">
-    <div id="slot-armor" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center;">Armor</div>
-    <div id="slot-weapon" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center;">Weapon</div>
-    <div id="slot-gear-0" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center;">Gear</div>
-    <div id="slot-gear-1" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center;">Gear</div>
-    <div id="slot-gear-2" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center;">Gear</div>
-  </div>
+  <div id="equips-popup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:80vw; height:70vh; background:#001a33; border:4px solid white; z-index:9000; color:white; font-family:'Press Start 2P'; padding:20px; flex-direction:column; box-shadow: 0 0 50px black;">
+    
+    <h2 style="text-align:center; font-size:18px; margin-bottom:20px;">Equipment & Gears</h2>
+    
+    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:30px;">
+      <div id="slot-armor" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:9px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center;">Armor</div>
+      <div id="slot-weapon" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:9px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center;">Weapon</div>
+      <div id="slot-gear-0" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:9px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center;">Gear</div>
+      <div id="slot-gear-1" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:9px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center;">Gear</div>
+      <div id="slot-gear-2" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:9px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center;">Gear</div>
+    </div>
 
-  <div id="equips-inventory-list" style="flex-grow:1; overflow-y:auto; border-top:2px solid white; padding-top:20px;">
-  </div>
+    <div style="font-size:12px; margin-bottom:10px;">Select to Equip:</div>
+    <div id="equips-scroll-list" style="flex-grow:1; overflow-y:auto; border-top:2px solid white; padding-top:10px;">
+    </div>
 
-  <button class="item-use-button" style="display:block; margin: 10px auto;" onclick="document.getElementById('equips-popup').style.display='none'">Close</button>
+    <button id="equips-close-btn" class="item-use-button" style="width:200px; margin:20px auto 0;">Close</button>
+  </div>
 </div>
 
   <div class="hud-section" id="settings">
