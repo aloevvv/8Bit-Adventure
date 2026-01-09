@@ -550,25 +550,33 @@
   </div>
 
     <div class="hud-section" id="equips">
-  <p id="equips-button">Equips</p>
+  <!-- Hidden by default, but exists so it fits the HUD class structure -->
+  <p id="equips-button" style="display:none;">Equips</p>
 
-  <div id="equips-popup" class="stats-popup" style="display:none;">
+  <!-- The Popup -->
+  <div id="equips-popup" class="stats-popup" style="display:none; position:fixed; inset:20px; background:#001a33; border:4px solid white; z-index:5000; color:white; font-family:'Press Start 2P'; padding:20px; flex-direction:column;">
+    
     <h2 style="text-align:center; font-size:18px; margin-bottom:10px;">Equipment & Gears</h2>
     <p id="equipping-target-name" style="text-align:center; font-size:10px; color:#aaa; margin-bottom:20px;">Equipping: Player</p>
-
+    
+    <!-- Slots Container -->
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:30px; flex-wrap:wrap;">
-      <div id="slot-armor" class="equip-box">Armor</div>
-      <div id="slot-weapon" class="equip-box">Weapon</div>
-      <div id="slot-gear-0" class="equip-box">Gear</div>
-      <div id="slot-gear-1" class="equip-box">Gear</div>
-      <div id="slot-gear-2" class="equip-box">Gear</div>
+      <div id="slot-armor" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Armor</div>
+      <div id="slot-weapon" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Weapon</div>
+      <div id="slot-gear-0" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Gear</div>
+      <div id="slot-gear-1" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Gear</div>
+      <div id="slot-gear-2" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Gear</div>
     </div>
 
+    <!-- Inventory Header -->
     <div style="text-align:center; font-size:12px; border-bottom:2px solid white; padding-bottom:10px; margin-bottom:10px;">Available Items</div>
 
+    <!-- Scrollable List -->
     <div id="equips-inventory-list" style="flex-grow:1; overflow-y:auto; padding-right:10px;">
+      <!-- JavaScript will inject items here -->
     </div>
 
+    <!-- Footer Button -->
     <div style="text-align:center; margin-top:20px;">
       <button class="item-use-button" onclick="document.getElementById('equips-popup').style.display='none'">Back</button>
     </div>
