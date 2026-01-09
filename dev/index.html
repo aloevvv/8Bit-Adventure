@@ -10418,6 +10418,68 @@ document.addEventListener('DOMContentLoaded', () => {
   const partyPopup = document.getElementById('party-popup');
   const statsPopup = document.getElementById('stats-popup');
 
+  const equipsBtn = document.createElement('button');
+equipsBtn.textContent = "Equips";
+equipsBtn.onclick = () => {
+    const p = document.getElementById('equips-popup');
+    p.style.display = (p.style.display === 'none') ? 'flex' : 'none';
+    if(p.style.display === 'flex') drawEquipsUI();
+};
+document.getElementById('game-hud').appendChild(equipsBtn);
+
+function drawEquipsUI() {
+    updateBox('slot-armor', equippedArmor ? armorTypes[equippedArmor].name : "Armor", !!equippedArmor);
+    updateBox('slot-weapon', equippedWeapon ? weaponTypes[equippedWeapon].name : "Weapon", !!equippedWeapon);
+    equippedGears.forEach((g, i) => {
+        updateBox(`slot-gear-${i}`, g ? gearTypes[g].name : "Gear", !!g, g ? gearTypes[g].rarity : null);
+    });
+
+    document.getElementById('slot-armor').onclick = () => { equippedArmor = null; applyEquipmentBonuses(); drawEquipsUI(); };
+    document.getElementById('slot-weapon').onclick = () => { equippedWeapon = null; applyEquipmentBonuses(); drawEquipsUI(); };
+    equippedGears.forEach((g, i) => {
+        document.getElementById(`slot-gear-${i}`).onclick = () => { equippedGears[i] = null; applyEquipmentBonuses(); drawEquipsUI(); };
+    });
+
+    const list = document.getElementById('equips-inventory-list');
+    list.innerHTML = "";
+    inventory.forEach((qty, key) => {
+        if (qty <= 0) return;
+        let item = null; let type = "";
+        
+        if (key.startsWith("armor_")) { item = armorTypes[key.replace("armor_","")]; type="armor"; }
+        if (key.startsWith("weapon_")) { item = weaponTypes[key.replace("weapon_","")]; type="weapon"; }
+        if (key.startsWith("gear_")) { item = gearTypes[key.replace("gear_","")]; type="gear"; }
+
+        if (item) {
+            const div = document.createElement('div');
+            div.style.padding = "10px";
+            div.style.margin = "5px";
+            div.style.background = "#002591";
+            div.style.border = `2px solid ${type === 'gear' ? rarityColors[item.rarity] : 'white'}`;
+            div.title = item.desc;
+            div.innerHTML = `<strong>${item.name}</strong> <small>(${type})</small> <button class="item-use-button" style="float:right">Equip</button>`;
+            div.querySelector('button').onclick = () => {
+                if (type === 'gear') {
+                    const idx = equippedGears. indexOf(null);
+                    if (idx !== -1) equippedGears[idx] = key.replace("gear_","");
+                } else if (type === 'armor') equippedArmor = key.replace("armor_","");
+                else if (type === 'weapon') equippedWeapon = key.replace("weapon_","");
+                
+                applyEquipmentBonuses();
+                drawEquipsUI();
+            };
+            list.appendChild(div);
+        }
+    });
+}
+
+function updateBox(id, name, filled, rarity) {
+    const el = document.getElementById(id);
+    el.textContent = name;
+    el.style.border = filled ? `3px solid ${rarity ? rarityColors[rarity] : 'white'}` : "2px dashed #666";
+    el.style.background = filled ? "#003cbd" : "transparent";
+}
+
   if (!settingsButton) return console.error('Settings wiring: missing #settings-button in DOM');
   if (!settingsPopup) return console.error('Settings wiring: missing #settings-popup in DOM');
 
@@ -10486,68 +10548,6 @@ if (toggleAutosaveMessage) {
     saveSettings();
     showTemporaryText(gameSettings.autosaveMessage ? "Autosave Message Enabled" : "Autosave Message Disabled");
   });
-}
-
-  const equipsBtn = document.createElement('button');
-equipsBtn.textContent = "Equips";
-equipsBtn.onclick = () => {
-    const p = document.getElementById('equips-popup');
-    p.style.display = (p.style.display === 'none') ? 'flex' : 'none';
-    if(p.style.display === 'flex') drawEquipsUI();
-};
-document.getElementById('game-hud').appendChild(equipsBtn);
-
-function drawEquipsUI() {
-    updateBox('slot-armor', equippedArmor ? armorTypes[equippedArmor].name : "Armor", !!equippedArmor);
-    updateBox('slot-weapon', equippedWeapon ? weaponTypes[equippedWeapon].name : "Weapon", !!equippedWeapon);
-    equippedGears.forEach((g, i) => {
-        updateBox(`slot-gear-${i}`, g ? gearTypes[g].name : "Gear", !!g, g ? gearTypes[g].rarity : null);
-    });
-
-    document.getElementById('slot-armor').onclick = () => { equippedArmor = null; applyEquipmentBonuses(); drawEquipsUI(); };
-    document.getElementById('slot-weapon').onclick = () => { equippedWeapon = null; applyEquipmentBonuses(); drawEquipsUI(); };
-    equippedGears.forEach((g, i) => {
-        document.getElementById(`slot-gear-${i}`).onclick = () => { equippedGears[i] = null; applyEquipmentBonuses(); drawEquipsUI(); };
-    });
-
-    const list = document.getElementById('equips-inventory-list');
-    list.innerHTML = "";
-    inventory.forEach((qty, key) => {
-        if (qty <= 0) return;
-        let item = null; let type = "";
-        
-        if (key.startsWith("armor_")) { item = armorTypes[key.replace("armor_","")]; type="armor"; }
-        if (key.startsWith("weapon_")) { item = weaponTypes[key.replace("weapon_","")]; type="weapon"; }
-        if (key.startsWith("gear_")) { item = gearTypes[key.replace("gear_","")]; type="gear"; }
-
-        if (item) {
-            const div = document.createElement('div');
-            div.style.padding = "10px";
-            div.style.margin = "5px";
-            div.style.background = "#002591";
-            div.style.border = `2px solid ${type === 'gear' ? rarityColors[item.rarity] : 'white'}`;
-            div.title = item.desc;
-            div.innerHTML = `<strong>${item.name}</strong> <small>(${type})</small> <button class="item-use-button" style="float:right">Equip</button>`;
-            div.querySelector('button').onclick = () => {
-                if (type === 'gear') {
-                    const idx = equippedGears. indexOf(null);
-                    if (idx !== -1) equippedGears[idx] = key.replace("gear_","");
-                } else if (type === 'armor') equippedArmor = key.replace("armor_","");
-                else if (type === 'weapon') equippedWeapon = key.replace("weapon_","");
-                
-                applyEquipmentBonuses();
-                drawEquipsUI();
-            };
-            list.appendChild(div);
-        }
-    });
-}
-
-function updateBox(id, name, filled, rarity) {
-    const el = document.getElementById(id);
-    el.textContent = name;
-    el.style.border = filled ? `3px solid ${rarity ? rarityColors[rarity] : 'white'}` : "2px dashed #666";
-    el.style.background = filled ? "#003cbd" : "transparent";
 }
 
 
