@@ -386,6 +386,23 @@
     .item-use-button:hover {
       background-color: #555;
     }
+    #equips-popup {
+  position: fixed; top: 10%; left: 50%; transform: translateX(-50%);
+  width: 480px; height: 400px; background: #001a33; border: 4px solid white;
+  z-index: 5000; color: white; display: none; flex-direction: column; padding: 20px;
+}
+.slot-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+.equip-slot {
+  width: 80px; height: 60px; border: 2px dashed #555; display: flex; 
+  align-items: center; justify-content: center; font-size: 9px; cursor: pointer; text-align: center;
+}
+.equip-slot.filled { border: 2px solid white; background: #002591; }
+#equips-list-display { 
+  flex-grow: 1; border-top: 2px solid white; padding-top: 10px; overflow-y: auto; text-align: left;
+}
+.equip-item-row {
+  display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px solid #333;
+}
 
 .tp-target {
   position: absolute;
@@ -527,6 +544,31 @@
       <div id="general-inventory-list"></div>
     </div>
   </div>
+
+    <div class="hud-section" id="equips">
+  <p id="equips-button" style="display:none;">Equips</p>
+
+  <div id="equips-popup" class="stats-popup" style="display:none; position:fixed; inset:20px; background:#001a33; border:4px solid white; z-index:5000; color:white; font-family:'Press Start 2P'; padding:20px; flex-direction:column;">
+    
+    <h2 style="text-align:center; font-size:18px; margin-bottom:10px;">Equipment & Gears</h2>
+    <p id="equipping-target-name" style="text-align:center; font-size:10px; color:#aaa; margin-bottom:20px;">Equipping: Player</p>
+    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:30px; flex-wrap:wrap;">
+      <div id="slot-armor" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Armor</div>
+      <div id="slot-weapon" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Weapon</div>
+      <div id="slot-gear-0" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Gear</div>
+      <div id="slot-gear-1" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Gear</div>
+      <div id="slot-gear-2" class="equip-box" style="width:100px; height:80px; border:2px dashed #666; font-size:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Gear</div>
+    </div>
+    <div style="text-align:center; font-size:12px; border-bottom:2px solid white; padding-bottom:10px; margin-bottom:10px;">Available Items</div>
+
+    <div id="equips-inventory-list" style="flex-grow:1; overflow-y:auto; padding-right:10px;">
+    </div>
+    <div style="text-align:center; margin-top:20px;">
+      <button class="item-use-button" onclick="document.getElementById('equips-popup').style.display='none'">Back to Party</button>
+    </div>
+  </div>
+</div>
+
 
     <div class="hud-section" id="achievements">
   <p id="achievements-button">Achievements</p>
@@ -913,6 +955,18 @@ let currentRoundIndex = 0;
   defense: false
 };
 
+  const gearTypes = {
+  dmg_gear_1: { name: "Dmg Gear I", rarity: "common", dmg: 1, desc: "Flat +1 Damage bonus." },
+  hp_gear_1: { name: "HP Gear I", rarity: "rare", hp: 8, desc: "Flat +8 HP bonus." }
+};
+
+const rarityColors = {
+  common: "#ffffff", rare: "#2ecc71", super_rare: "#3498db", 
+  epic: "#9b59b6", mythic: "#e74c3c", legendary: "#f39c12"
+};
+
+let equippedGears = [null, null, null];
+
   const armorTypes = {
   retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
   v8:    { name: "V8 Armor", hpBonus: 0.20, passiveHealPercent: 0 },
@@ -958,34 +1012,36 @@ function applyEquipmentBonuses() {
 
   if (activeAmulets.sacrifice) {
     playerStats.maxHp = Math.floor(baseMaxHp * 1.5);
-    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
-
     if (activeAlly) {
       activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
       activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
-      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
     }
   }
 
   if (activeAmulets.xp) {
     playerStats.maxHp = Math.floor(baseMaxHp * 0.5);
-    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
-
     if (activeAlly) {
       activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
       activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
-      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
     }
   }
+
+  equippedGears.forEach(gearId => {
+    if (gearId && gearTypes[gearId]) {
+      if (gearTypes[gearId].hp) playerStats.maxHp += gearTypes[gearId].hp;
+      if (gearTypes[gearId].dmg) playerStats.damage += gearTypes[gearId].dmg;
+    }
+  });
 
   if (playerStats.currentHp > playerStats.maxHp) {
     playerStats.currentHp = playerStats.maxHp;
   }
+  
+  if (activeAlly) activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
 
   updateHp(playerStats.currentHp);
   updateStatsPopup();
 }
-
 
 
 
@@ -1018,6 +1074,9 @@ inventory.set("amulet_stealing", 1);
 inventory.set("amulet_sacrifice", 1);
 inventory.set("amulet_xp", 1);
 inventory.set("amulet_defense", 1);
+
+inventory.set("gear_dmg_gear_1", 1);
+inventory.set("gear_hp_gear_1", 1);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
@@ -10417,6 +10476,69 @@ if (toggleAutosaveMessage) {
     showTemporaryText(gameSettings.autosaveMessage ? "Autosave Message Enabled" : "Autosave Message Disabled");
   });
 }
+
+  const equipsBtn = document.createElement('button');
+equipsBtn.textContent = "Equips";
+equipsBtn.onclick = () => {
+    const p = document.getElementById('equips-popup');
+    p.style.display = (p.style.display === 'none') ? 'flex' : 'none';
+    if(p.style.display === 'flex') drawEquipsUI();
+};
+document.getElementById('game-hud').appendChild(equipsBtn);
+
+function drawEquipsUI() {
+    updateBox('slot-armor', equippedArmor ? armorTypes[equippedArmor].name : "Armor", !!equippedArmor);
+    updateBox('slot-weapon', equippedWeapon ? weaponTypes[equippedWeapon].name : "Weapon", !!equippedWeapon);
+    equippedGears.forEach((g, i) => {
+        updateBox(`slot-gear-${i}`, g ? gearTypes[g].name : "Gear", !!g, g ? gearTypes[g].rarity : null);
+    });
+
+    document.getElementById('slot-armor').onclick = () => { equippedArmor = null; applyEquipmentBonuses(); drawEquipsUI(); };
+    document.getElementById('slot-weapon').onclick = () => { equippedWeapon = null; applyEquipmentBonuses(); drawEquipsUI(); };
+    equippedGears.forEach((g, i) => {
+        document.getElementById(`slot-gear-${i}`).onclick = () => { equippedGears[i] = null; applyEquipmentBonuses(); drawEquipsUI(); };
+    });
+
+    const list = document.getElementById('equips-inventory-list');
+    list.innerHTML = "";
+    inventory.forEach((qty, key) => {
+        if (qty <= 0) return;
+        let item = null; let type = "";
+        
+        if (key.startsWith("armor_")) { item = armorTypes[key.replace("armor_","")]; type="armor"; }
+        if (key.startsWith("weapon_")) { item = weaponTypes[key.replace("weapon_","")]; type="weapon"; }
+        if (key.startsWith("gear_")) { item = gearTypes[key.replace("gear_","")]; type="gear"; }
+
+        if (item) {
+            const div = document.createElement('div');
+            div.style.padding = "10px";
+            div.style.margin = "5px";
+            div.style.background = "#002591";
+            div.style.border = `2px solid ${type === 'gear' ? rarityColors[item.rarity] : 'white'}`;
+            div.title = item.desc;
+            div.innerHTML = `<strong>${item.name}</strong> <small>(${type})</small> <button class="item-use-button" style="float:right">Equip</button>`;
+            div.querySelector('button').onclick = () => {
+                if (type === 'gear') {
+                    const idx = equippedGears. indexOf(null);
+                    if (idx !== -1) equippedGears[idx] = key.replace("gear_","");
+                } else if (type === 'armor') equippedArmor = key.replace("armor_","");
+                else if (type === 'weapon') equippedWeapon = key.replace("weapon_","");
+                
+                applyEquipmentBonuses();
+                drawEquipsUI();
+            };
+            list.appendChild(div);
+        }
+    });
+}
+
+function updateBox(id, name, filled, rarity) {
+    const el = document.getElementById(id);
+    el.textContent = name;
+    el.style.border = filled ? `3px solid ${rarity ? rarityColors[rarity] : 'white'}` : "2px dashed #666";
+    el.style.background = filled ? "#003cbd" : "transparent";
+}
+
 
   document.addEventListener("keydown", function(e) {
   if (!inBattle) return;
