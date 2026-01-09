@@ -10457,6 +10457,9 @@ function drawEquipsUI() {
   });
 
   document.getElementById('slot-armor').onclick = () => {
+  if (equippedArmor === "virus") { 
+    return;
+  }
     if (equippedArmor) {
       const key = "armor_" + equippedArmor;
       inventory.set(key, (inventory.get(key) || 0) + 1);
@@ -10467,6 +10470,9 @@ function drawEquipsUI() {
   };
 
   document.getElementById('slot-weapon').onclick = () => {
+  if (equippedWeapon === "virus") {
+  return;
+  }
     if (equippedWeapon) {
       const key = "weapon_" + equippedWeapon;
       inventory.set(key, (inventory.get(key) || 0) + 1);
@@ -10513,7 +10519,6 @@ function drawEquipsUI() {
   if (qty > 0) {
     const idx = equippedGears.indexOf(null);
     if (idx !== -1) {
-      // return old gear if slot already filled
       if (equippedGears[idx]) {
         const oldKey = "gear_" + equippedGears[idx];
         inventory.set(oldKey, (inventory.get(oldKey) || 0) + 1);
@@ -10523,6 +10528,9 @@ function drawEquipsUI() {
     }
   }
 } else if (type === 'armor') {
+    if (equippedArmor === "virus") {
+        return; 
+      }
   const armorKey = key.replace("armor_", "");
   const qty = inventory.get(key) || 0;
   if (qty > 0) {
@@ -10534,6 +10542,9 @@ function drawEquipsUI() {
     inventory.set(key, qty - 1);
   }
     } else if (type === 'weapon') {
+          if (equippedWeapon === "virus") {
+            return;
+          }
   const weaponKey = key.replace("weapon_", "");
   const qty = inventory.get(key) || 0;
   if (qty > 0) {
