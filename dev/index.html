@@ -991,8 +991,8 @@ let currentRoundIndex = 0;
   const gearTypes = {
   dmg_gear_1: { name: "Dmg Gear I", rarity: "common", dmg: 1, desc: "+1 Damage" },
   hp_gear_1: { name: "HP Gear II", rarity: "rare", hp: 8, desc: "+8 HP" },
-  gear_vampire_gear: { name: "Vampire Gear", rarity: "mythic", desc: "Heals 10% HP for each kill" },
-  gear_magnet_gear: { name: "Magnet Gear", rarity: "epic", desc: "Enemies drop +1 bolt" }
+  vampire_gear: { name: "Vampire Gear", rarity: "mythic", desc: "Heals 10% HP for each kill" },
+  magnet_gear: { name: "Magnet Gear", rarity: "epic", desc: "Enemies drop +1 bolt" }
 };
 
 const rarityColors = {
@@ -1155,7 +1155,7 @@ let playerStats = {
   baseDamage: 2
 };
 const alliesData = [
-  { id: 'ally1', name: 'Lou', baseMaxHp: 30, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10 },
+  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10 },
   { id: 'ally2', name: 'Buzz', baseMaxHp: 58, baseDamage: 4, attackIntervalMs: 2200, level: 1, xp: 0, xpToNextLevel: 10 },
   { id: 'ally3', name: 'Colt', baseMaxHp: 23, baseDamage: 6, attackIntervalMs: 3000, level: 1, xp: 0, xpToNextLevel: 10 },
   { id: 'ally4', name: 'Otis', baseMaxHp: 45, baseDamage: 4, attackIntervalMs: 2000, level: 1, xp: 0, xpToNextLevel: 10 },
@@ -7637,7 +7637,7 @@ if (willHideBattleBlackout) {
   ]);
 
   let bonusBolts = 0;
-  if (equippedGears.includes('gear_magnet_gear')) bonusBolts = 1;
+  if (equippedGears.includes('magnet_gear')) bonusBolts = 1;
 
   if (boltDroppers.has(enemy.type) && Math.random() < DROP_CHANCE) {
     const currentBolts = inventory.get('bolts') || 0;
@@ -7647,7 +7647,7 @@ if (willHideBattleBlackout) {
 if (enemy.type === 'Partyblocker') {
   gameFlags.carpass = true;
 }    
-   if (equippedGears.includes('gear_vampire_gear')) {
+   if (equippedGears.includes('vampire_gear')) {
     playerStats.currentHp = Math.min(playerStats.maxHp, playerStats.currentHp + 0.1 * playerStats.maxHp);
     updateHp(playerStats.currentHp);
   }
