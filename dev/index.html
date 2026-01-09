@@ -988,7 +988,9 @@ let currentRoundIndex = 0;
 
   const gearTypes = {
   dmg_gear_1: { name: "Dmg Gear I", rarity: "common", dmg: 1, desc: "+1 Damage" },
-  hp_gear_1: { name: "HP Gear I", rarity: "rare", hp: 8, desc: "+8 HP" }
+  hp_gear_1: { name: "HP Gear II", rarity: "rare", hp: 8, desc: "+8 HP" },
+  vampire_gear: { name: "Vampire Gear", rarity: "mythic", desc: "Heals 10% HP for each kill" },
+  magnet_gear: { name: "Magnet Gear", rarity: "epic", desc: "Enemies drop +1 bolt" }
 };
 
 const rarityColors = {
@@ -1011,7 +1013,7 @@ const weaponTypes = {
   v8:    { name: "V8 Weapon", dmgBonus: 0.20, desc: "+ 20% Damage" },
   saloon:{ name: "Saloon Weapon", dmgBonus: 0.15, desc: "+ 15% Damage" },
   haunted:{name: "Haunted Weapon", dmgBonus: 0.25, desc: "+ 25% Damage" },
-  virus: { name: "Virus Weapon", dmgBonus: 0.50, desc: "DO NOT EQUIP THIS, THAT IS THE WEAPON OF THE ENEMY, 8-BIT" }
+  virus: { name: "Virus Weapon", dmgBonus: 0.50, desc: "DO NOT EQUIP, 8-BIT, THE EVIL IS CORRUPTING YOU" }
 };
 
   let equippedArmor = null; 
@@ -1105,8 +1107,10 @@ inventory.set("amulet_sacrifice", 1);
 inventory.set("amulet_xp", 1);
 inventory.set("amulet_defense", 1);
 
-inventory.set("gear_dmg_gear_1", 1);
-inventory.set("gear_hp_gear_1", 1);
+inventory.set("gear_dmg_gear_1", 2);
+inventory.set("gear_hp_gear_1", 2);
+inventory.set("gear_vampire_gear", 2);
+inventory.set("gear_magnet_gear", 2);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
@@ -7630,17 +7634,22 @@ if (willHideBattleBlackout) {
     'Atticsniper'
   ]);
 
+  let bonusBolts = 0;
+  if (equippedGears.includes('gear_magnet_gear')) bonusBolts = 1;
+
   if (boltDroppers.has(enemy.type) && Math.random() < DROP_CHANCE) {
     const currentBolts = inventory.get('bolts') || 0;
-    inventory.set('bolts', currentBolts + 1);
+    inventory.set('bolts', currentBolts + 1 + bonusBolts);
   }
-} catch (e) {
-  console.warn('Bolt drop failed:', e);
-}
 
 if (enemy.type === 'Partyblocker') {
   gameFlags.carpass = true;
 }    
+   if (equippedGears.includes('gear_vampire_gear')) {
+    playerStats.currentHp = Math.min(playerStats.maxHp, playerStats.currentHp + 0.1 * playerStats.maxHp);
+    updateHp(playerStats.currentHp);
+  }
+  
   achievementsMap['kill_enemies'].progress++;
   achievementsMap['kill_enemies2'].progress++;
   achievementsMap['kill_enemies3'].progress++;
