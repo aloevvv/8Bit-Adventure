@@ -10509,30 +10509,43 @@ function drawEquipsUI() {
       div.innerHTML = `<strong>${item.name}</strong> <small>(${type})</small> <button class="item-use-button" style="float:right">Equip</button>`;
       div.querySelector('button').onclick = () => {
         if (type === 'gear') {
-          const gearKey = key.replace("gear_", "");
-          const qty = inventory.get(key) || 0;
-          if (qty > 0) {
-            const idx = equippedGears.indexOf(null);
-            if (idx !== -1) {
-              equippedGears[idx] = gearKey;
-              inventory.set(key, qty - 1);
-            }
-          }
-        } else if (type === 'armor') {
-          const armorKey = key.replace("armor_", "");
-          const qty = inventory.get(key) || 0;
-          if (qty > 0) {
-            equippedArmor = armorKey;
-            inventory.set(key, qty - 1);
-          }
-        } else if (type === 'weapon') {
-          const weaponKey = key.replace("weapon_", "");
-          const qty = inventory.get(key) || 0;
-          if (qty > 0) {
-            equippedWeapon = weaponKey;
-            inventory.set(key, qty - 1);
-          }
-        }
+  const gearKey = key.replace("gear_", "");
+  const qty = inventory.get(key) || 0;
+  if (qty > 0) {
+    const idx = equippedGears.indexOf(null);
+    if (idx !== -1) {
+      // return old gear if slot already filled
+      if (equippedGears[idx]) {
+        const oldKey = "gear_" + equippedGears[idx];
+        inventory.set(oldKey, (inventory.get(oldKey) || 0) + 1);
+      }
+      equippedGears[idx] = gearKey;
+      inventory.set(key, qty - 1);
+    }
+  }
+} else if (type === 'armor') {
+  const armorKey = key.replace("armor_", "");
+  const qty = inventory.get(key) || 0;
+  if (qty > 0) {
+    if (equippedArmor) {
+      const oldKey = "armor_" + equippedArmor;
+      inventory.set(oldKey, (inventory.get(oldKey) || 0) + 1);
+    }
+    equippedArmor = armorKey;
+    inventory.set(key, qty - 1);
+  }
+    } else if (type === 'weapon') {
+  const weaponKey = key.replace("weapon_", "");
+  const qty = inventory.get(key) || 0;
+  if (qty > 0) {
+    if (equippedWeapon) {
+      const oldKey = "weapon_" + equippedWeapon;
+      inventory.set(oldKey, (inventory.get(oldKey) || 0) + 1);
+     }
+    equippedWeapon = weaponKey;
+    inventory.set(key, qty - 1);
+   }
+}
         applyEquipmentBonuses();
         drawEquipsUI();
       };
