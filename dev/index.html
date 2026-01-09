@@ -10440,7 +10440,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const equipsBtn = document.getElementById('equips-button');
 if (equipsBtn) {
-  equipsBtn.style.display = 'inline-block'; // make it visible in the HUD
+  equipsBtn.style.display = 'inline-block';
   equipsBtn.onclick = () => {
     const popup = document.getElementById('equips-popup');
     const hidden = window.getComputedStyle(popup).display === 'none';
@@ -10505,10 +10505,9 @@ function updateBox(id, name, filled, rarity) {
   if (!settingsButton) return console.error('Settings wiring: missing #settings-button in DOM');
   if (!settingsPopup) return console.error('Settings wiring: missing #settings-popup in DOM');
 
-  // Safe defaults for gameSettings if not present
   window.gameSettings = window.gameSettings || { difficulty: 'normal', showZones: false };
 
-  // Toggle behavior (matches other HUD popup logic)
+
   settingsButton.addEventListener('click', () => {
     try {
       const hidden = window.getComputedStyle(settingsPopup).display === 'none';
