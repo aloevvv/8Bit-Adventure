@@ -7647,9 +7647,13 @@ if (enemy.type === 'Partyblocker') {
   gameFlags.carpass = true;
 }    
    if (equippedGears.includes('vampire_gear')) {
-    playerStats.currentHp = Math.min(playerStats.maxHp, playerStats.currentHp + 0.1 * playerStats.maxHp);
-    updateHp(playerStats.currentHp);
-  }
+  let healedHp = playerStats.currentHp + 0.1 * playerStats.maxHp;
+  healedHp = Math.min(playerStats.maxHp, Math.max(0, healedHp));
+  healedHp = Math.round(healedHp);
+  playerStats.currentHp = healedHp;
+  updateHp(playerStats.currentHp);
+}
+
   
   achievementsMap['kill_enemies'].progress++;
   achievementsMap['kill_enemies2'].progress++;
