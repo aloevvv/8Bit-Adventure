@@ -7616,11 +7616,9 @@ if (willHideBattleBlackout) {
     enemy.behaviorTimers = [];
   }
 
-  // remove the enemy from activeEnemies
   const idx = activeEnemies.indexOf(enemy);
   if (idx > -1) activeEnemies.splice(idx, 1);
 
- try {
   const DROP_CHANCE = 0.30;
 
   const boltDroppers = new Set([
