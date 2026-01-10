@@ -269,6 +269,11 @@
   box-shadow: 0 0 10px 10px rgba(255, 0, 0, 0.8);
   border-color: #FF0000;
 }
+    .enemy-target.stoned {
+  filter: grayscale(100%) brightness(0.7);
+  border-color: #888 !important;
+  box-shadow: none !important;
+}
     .burn-rocket-hud {
   box-shadow: 0 0 15px 5px orange !important;
   border: 2px solid orange !important;
@@ -988,6 +993,7 @@ let currentRoundIndex = 0;
   dmg_gear_1: { name: "Dmg Gear I", rarity: "common", dmg: 1, desc: "+1 Damage" },
   hp_gear_1: { name: "HP Gear II", rarity: "rare", hp: 8, desc: "+8 HP" },
   vampire_gear: { name: "Vampire Gear", rarity: "mythic", desc: "Heals 10% HP for each kill" },
+  statue_gear: { name: "Stone Statue Gear", rarity: "mythic", desc: "1% to turn an enemy to stone." },
   magnet_gear: { name: "Magnet Gear", rarity: "epic", desc: "Enemies drop +1 bolt" },
   steal_gear: { name: "Stealing Gear", rarity: "epic", desc: "Delay enemy attacks by 0.01s. Stackable." }
 };
@@ -1109,6 +1115,7 @@ inventory.set("amulet_defense", 1);
 inventory.set("gear_dmg_gear_1", 2);
 inventory.set("gear_hp_gear_1", 2);
 inventory.set("gear_vampire_gear", 2);
+inventory.set("gear_statue_gear", 2);
 inventory.set("gear_magnet_gear", 2);
 inventory.set("gear_steal_gear", 3);
   
@@ -5429,6 +5436,10 @@ function drawPlayerBattleStatus() {
 
     if (!targetEnemy) return;
 
+  if (targetEnemy.isStoned) {
+    return;
+  }
+
     if (targetEnemy.shieldActive) {
       showTemporaryText(`${activeAlly.name}'s attack was blocked by shield!`);
     } else {
@@ -7942,6 +7953,10 @@ initiateBattle = function(zoneType, zoneObject) {
 
   function performEnemyAction(enemy) {
   if (!inBattle || isGameOver || enemy.currentHp <= 0) return;
+
+  if (enemy.isStoned) {
+    return;
+  }
   
 
   if (!enemy.stunned) {
@@ -8141,6 +8156,18 @@ const ach = achievementsMap[`ally_unlock_${allyId}`];
   setTimeout(() => {
     body.classList.remove('shaking');
   }, 1000);
+}
+
+  function applyStonedEffect(enemy) {
+  if (enemy.isStoned || enemy.isBoss) return;
+
+  enemy.isStoned = true;
+  drawBattleUI();
+
+  setTimeout(() => {
+    enemy.isStoned = false;
+    drawBattleUI();
+  }, 4000);
 }
 
 function checkAchievements() {
@@ -10911,21 +10938,17 @@ function performPlayerAttack() {
   const targetEnemy = activeEnemies[selectedEnemyIndex];
   if (!targetEnemy) return;
 
-  if (activeAmulets.bullets && playerStats.currentStamina < 3) {
+  if (targetEnemy.isStoned) {
+    //const dinkSound = new Audio('sfx.wav');
+    //dinkSound.volume = 0.3;
+    //dinkSound.play().catch(e=>{});
+    return;
+  }
+
+if (activeAmulets.bullets && playerStats.currentStamina < 3) {
     showTemporaryText("Not enough stamina to fire!");
     return;
   }
-  if (activeAmulets.stealing) {
-        targetEnemy.lastAttackAt += 50; 
-        targetEnemy.lastAttackAt += 50; 
-    }
-
-  const stealCount = equippedGears.filter(g => g === 'steal_gear').length;
-    if (stealCount > 0) {
-        targetEnemy.attackTime += (10 * stealCount);
-        targetEnemy.lastAttackAt += (10 * stealCount);
-    }
-
   if (targetEnemy.shieldActive) {
     showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
   } else {
@@ -10947,6 +10970,22 @@ function performPlayerAttack() {
        updateStamina(playerStats.currentStamina - 3);
     }
   }
+
+  if (activeAmulets.stealing) {
+        targetEnemy.lastAttackAt += 50; 
+        targetEnemy.lastAttackAt += 50; 
+    }
+
+  const statueCount = equippedGears.filter(g => g === 'statue_gear').length;
+  if (statueCount > 0 && Math.random() < (0.05 * statueCount)) {
+    applyStonedEffect(targetEnemy);
+  }
+
+  const stealCount = equippedGears.filter(g => g === 'steal_gear').length;
+    if (stealCount > 0) {
+        targetEnemy.attackTime += (10 * stealCount);
+        targetEnemy.lastAttackAt += (10 * stealCount);
+    }
   if (targetEnemy.currentHp <= 0) {
     handleEnemyDeath(targetEnemy);
     if (selectedEnemyIndex >= activeEnemies.length) {
