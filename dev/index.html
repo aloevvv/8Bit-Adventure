@@ -334,11 +334,11 @@
   border-radius:4px;
 }
     #inventory-list {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(10, min-content); 
+  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  justify-content: flex-start;
+  max-height: 250px; 
+  overflow-y: auto;  
 }
 
     .inventory-item {
