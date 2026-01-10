@@ -333,15 +333,14 @@
   padding:6px;
   border-radius:4px;
 }
-
-
     #inventory-list {
-      display: grid;
-      grid-auto-flow: column;
-      grid-template-rows: repeat(10, auto);
-      gap: 10px;
-      justify-content: flex-start;
-    }
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(10, min-content); 
+  gap: 10px;
+  justify-content: flex-start;
+}
+
     .inventory-item {
       display: flex;
       flex-direction: column;
