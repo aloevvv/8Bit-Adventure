@@ -7465,41 +7465,6 @@ deathSound.play();
         let spawned = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length)
           ? activeEnemies[insertIndex]
           : activeEnemies.find(e => e && e.type === 'FinalBossStage3');
-
-        if (_battleDialogQueue.length === 0) {
-  overlay.style.display = 'none';
-
-  if (spawned && typeof startFinalBossBulletHell === 'function') {
-    startFinalBossBulletHell({
-      bossEnemy: spawned,
-      onEnd: (mode) => {
-        if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
-        if (mode === 'victory') {
-          try {
-            if (typeof spawned.currentHp === 'number') spawned.currentHp = 1;
-            if (typeof spawned.maxHp === 'number' && spawned.maxHp < 1) spawned.maxHp = 1;
-            spawned._defeated = true;
-            if (typeof enemyObj === 'object' && enemyObj) {
-              if (typeof enemyObj.currentHp === 'number') enemyObj.currentHp = 1;
-              enemyObj._defeated = true;
-            }
-            if (typeof grantXpToPlayer === 'function') {
-              try { grantXpToPlayer(spawned.xpReward || 0); } catch (e) {}
-            }
-          } catch (e) {
-            console.error('[FinalBossHook] onEnd victory handler error', e);
-          }
-        }
-        try { drawBattleUI(); drawPlayerBattleStatus(); } catch (e) {}
-      }
-    });
-  } else {
-    if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
-  }
-
-  return;
-}
-  }
         
     } catch (e) {
       console.error('[FinalBossHook] wrapper error', e);
@@ -11095,10 +11060,40 @@ document.getElementById('inventory-battle-button').addEventListener('click', () 
   const id = overlay._markId;
   overlay._markId = null;
   overlay.style.display = 'none';
+    const id = overlay._markId;
+  overlay._markId = null;
+  overlay.style.display = 'none';
   
   if (id) shownDialogs.add(id);
+
   if (inBattle) {
-    resumeBattleTimersAfterDialog();
+    if (spawned && typeof startFinalBossBulletHell === 'function') {
+      startFinalBossBulletHell({
+        bossEnemy: spawned,
+        onEnd: (mode) => {
+          if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
+          if (mode === 'victory') {
+            try {
+              if (typeof spawned.currentHp === 'number') spawned.currentHp = 1;
+              if (typeof spawned.maxHp === 'number' && spawned.maxHp < 1) spawned.maxHp = 1;
+              spawned._defeated = true;
+              if (typeof enemyObj === 'object' && enemyObj) {
+                if (typeof enemyObj.currentHp === 'number') enemyObj.currentHp = 1;
+                enemyObj._defeated = true;
+              }
+              if (typeof grantXpToPlayer === 'function') {
+                try { grantXpToPlayer(spawned.xpReward || 0); } catch (e) {}
+              }
+            } catch (e) {
+              console.error('[FinalBossHook] onEnd victory handler error', e);
+            }
+          }
+          try { drawBattleUI(); drawPlayerBattleStatus(); } catch (e) {}
+        }
+      });
+    } else {
+      resumeBattleTimersAfterDialog();
+    }
   }
   draw();
 });
