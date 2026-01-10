@@ -5176,6 +5176,7 @@ function drawBattleUI() {
     if (enemy.stunned) enemyButton.classList.add('stunned');
     if (enemy.poisoned) enemyButton.classList.add('poisoned');
     if (enemy.enraged) enemyButton.classList.add('enraged');
+    if (enemy.isStoned) enemyButton.classList.add('stoned');
     if (index === selectedEnemyIndex) enemyButton.classList.add('selected');
     
     enemyButton.dataset.enemyIndex = index;
