@@ -5587,6 +5587,7 @@ function bossBehavior(enemy, target) {
   if (!enemy.shieldActivatedAt) enemy.shieldActivatedAt = 0;
   if (!enemy.shieldCooldownEnd) enemy.shieldCooldownEnd = 0;
 
+  // --- Shield logic ---
   if (enemy.shieldActive) {
     if (now >= enemy.shieldActivatedAt + 2000) {
       enemy.shieldActive = false;
@@ -5601,26 +5602,36 @@ function bossBehavior(enemy, target) {
     }
   }
 
+  // --- Rocket burn logic ---
   if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
     const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
-    if (target === playerStats) {
-      playerTakeDamage(rocketTickDamage);
-      playerStats._burnType = 'rocket';
-    } else if (target === activeAlly) {
-      activeAlly.currentHp -= rocketTickDamage;
-      if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-      if (activeAlly.currentHp === 0) {
-        showTemporaryText(`${activeAlly.name} has been defeated!`);
-        clearInterval(activeAlly.attackTimerId);
-        activeAlly.attackTimerId = null;
+
+    // Choose which target is currently "burning"
+    const burnTarget = (target === playerStats) ? playerStats : activeAlly;
+
+    if (burnTarget) {
+      burnTarget._burnType = 'rocket'; // Set the flag
+      if (burnTarget === playerStats) {
+        playerTakeDamage(rocketTickDamage);
+      } else {
+        burnTarget.currentHp = Math.max(0, burnTarget.currentHp - rocketTickDamage);
+        if (burnTarget.currentHp === 0) {
+          showTemporaryText(`${burnTarget.name} has been defeated!`);
+          clearInterval(burnTarget.attackTimerId);
+          burnTarget.attackTimerId = null;
+        }
       }
+      showTemporaryText(`${enemy.name}'s rocket burns ${burnTarget.name || '8-Bit'}!`);
     }
+
     enemy.rocketTicksLeft--;
-    showTemporaryText(`${enemy.name}'s rocket hits ${target === playerStats ? 'you' : activeAlly.name} for ${rocketTickDamage} damage!`);
+    drawPlayerBattleStatus();
+
     if (enemy.rocketTicksLeft === 0) {
       enemy.rocketActive = false;
       playerStats._burnType = null;
-      showTemporaryText("The rocket damage ends.");
+      if (activeAlly) activeAlly._burnType = null;
+      drawPlayerBattleStatus();
     }
   }
 
@@ -5647,6 +5658,7 @@ function bossBehavior(enemy, target) {
     }
   }
 }
+
 
 function summonerBehavior(enemy, target) {
   if (!enemy.lastSummonTime) enemy.lastSummonTime = 0;
@@ -7864,6 +7876,19 @@ function endBattle(outcome) {
     return _orig_endBattle(outcome);
   };
 }
+
+  const entities = [playerStats, activeAlly];
+  entities.forEach(ent => {
+    if (!ent) return;
+    ent._burnType = null;
+    ent.isFrozen = false;
+    ent.isBlinded = false;
+    // Clear timeouts too if they exist
+    if (ent.isBlindedTimeout) clearTimeout(ent.isBlindedTimeout);
+    if (ent.isFrozenTimeout) clearTimeout(ent.isFrozenTimeout);
+  });
+  
+  drawPlayerBattleStatus();
 
   if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
   if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
