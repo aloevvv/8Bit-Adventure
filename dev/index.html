@@ -8003,6 +8003,7 @@ initiateBattle = function(zoneType, zoneObject) {
       const progress = Math.min(100, (elapsed / enemy.attackTime) * 100);
       bar.style.width = progress + "%";
       if (elapsed >= enemy.attackTime) {
+        performEnemyAction(enemy);
         enemy.lastAttackAt = Date.now();
         enemy.attackTime = enemy.attackSpeed;
       }
