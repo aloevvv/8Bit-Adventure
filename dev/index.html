@@ -6561,6 +6561,8 @@ function finalBossStage2Behavior(enemy, target) {
           currentHp: Math.max(1, Math.floor((base.maxHp || 40) * (mult.enemyHp || 1))),
           damage: Math.max(0, Math.floor((base.damage || 0) * (mult.enemyDmg || 1))),
           xpReward: base.xpReward || 0,
+          attackSpeed: 2000, 
+          lastAttackAt: Date.now()
           shieldActive: false,
           stunned: false,
           poisoned: false,
