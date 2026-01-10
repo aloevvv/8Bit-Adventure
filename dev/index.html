@@ -7247,7 +7247,7 @@ deathSound.play();
           { speaker: '8-Bit', text: "I'll never surrender to you! You know that! Bring it on! Let's fight!" }
         ];
 
-        // Build Stage2 synchronously
+      
         const base = (enemyTypes && enemyTypes.FinalBossStage2) || { name: 'FinalBossStage2', maxHp:1, damage:0 };
         const mult = (typeof getDifficultyMultipliers === 'function') ? getDifficultyMultipliers() : { enemyHp:1, enemyDmg:1 };
         const realStage2 = {
@@ -7257,6 +7257,8 @@ deathSound.play();
           currentHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
           damage: Math.max(0, Math.floor((base.damage||0) * mult.enemyDmg)),
           xpReward: base.xpReward || 0,
+          attackSpeed: 2000, 
+          lastAttackAt: Date.now(),
           shieldActive: false, stunned: false, poisoned: false,
           resistances: base.defaultResistances || {}
         };
@@ -7354,25 +7356,25 @@ deathSound.play();
           resistances: lightBase.defaultResistances || {}
         };
 
-        // Determine index of the corpse (prefer provided insertIndex)
+     
         let corpseIdx = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length)
           ? insertIndex
           : activeEnemies.indexOf(enemy);
         if (corpseIdx === -1) corpseIdx = activeEnemies.length;
 
-        // Remove corpse slot first to avoid later cleanup removing the wrong object
+      
         if (corpseIdx >= 0 && corpseIdx < activeEnemies.length && activeEnemies[corpseIdx] === enemy) {
           activeEnemies.splice(corpseIdx, 1);
         }
 
-        // Insert the LightOrb at the former corpse position
+   
         if (corpseIdx >= activeEnemies.length) {
           activeEnemies.push(light);
         } else {
           activeEnemies.splice(corpseIdx, 0, light);
         }
 
-        // Important: DO NOT reduce the dark timer here. LightOrb reduction happens when a LightOrb dies (see below).
+      
 
         showTemporaryText('A Shadow Orb collapses into a Light Orb!');
         drawBattleUI();
@@ -7442,6 +7444,8 @@ deathSound.play();
           currentHp: Math.max(1, Math.floor((base3.maxHp||1) * mult3.enemyHp)),
           damage: Math.max(0, Math.floor((base3.damage||0) * mult3.enemyDmg)),
           xpReward: base3.xpReward || 0,
+          attackSpeed: 2000, 
+          lastAttackAt: Date.now(),
           shieldActive: false, stunned: false, poisoned: false,
           resistances: base3.defaultResistances || {}
         };
@@ -7521,12 +7525,12 @@ deathSound.play();
     // Explosion damage: 5% of player's max HP (rounded up)
     const explosionDamage = Math.max(1, Math.ceil(playerStats.maxHp * 0.05));
 
-    // Apply damage to player (respect extra-life/invincibility flags)
+   
     if (inBattle) {
-      // Player
+     
       if (playerStats && typeof playerStats.currentHp === 'number') {
         playerStats.currentHp -= explosionDamage;
-        // If Extra Life active, ensure we don't kill below 1 (existing helper)
+  
         if (!canGoBelow1Hp() && playerStats.currentHp <= 0) {
           playerStats.currentHp = 1;
         }
@@ -7535,11 +7539,11 @@ deathSound.play();
       }
       showTemporaryText(`${enemy.name} explodes on defeat for ${explosionDamage} damage!`);
 
-      // Active ally also takes explosion damage (if present)
+  
       if (activeAlly && typeof activeAlly.currentHp === 'number') {
         activeAlly.currentHp = Math.max(0, activeAlly.currentHp - explosionDamage);
         showTemporaryText(`${activeAlly.name} takes ${explosionDamage} explosion damage!`);
-        // Ally death handling
+    
         if (activeAlly.currentHp === 0 && activeAlly.attackTimerId) {
           clearInterval(activeAlly.attackTimerId);
           activeAlly.attackTimerId = null;
