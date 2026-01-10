@@ -7990,6 +7990,7 @@ initiateBattle = function(zoneType, zoneObject) {
   if (!inBattle || isGameOver || _battleDialogPausedState) return;
 
   activeEnemies.forEach((enemy, index) => {
+    enemy.attackTime = enemy.attackSpeed;
     const bar = document.getElementById(`attack-bar-${index}`);
     if (bar) {
       if (enemy.stunned) {
@@ -7999,8 +8000,12 @@ initiateBattle = function(zoneType, zoneObject) {
       
       bar.style.backgroundColor = "#f00"; 
       const elapsed = Date.now() - enemy.lastAttackAt;
-      const progress = Math.min(100, (elapsed / enemy.attackSpeed) * 100);
+      const progress = Math.min(100, (elapsed / enemy.attackTime) * 100);
       bar.style.width = progress + "%";
+      if (elapsed >= enemy.attackTime) {
+        enemy.lastAttackAt = Date.now();
+        enemy.attackTime = enemy.attackSpeed;
+      }
     }
   });
 }, 33);
@@ -8051,10 +8056,11 @@ function spawnRound(roundIdx) {
     };
 
     newEnemy.attackTimerId = setInterval(() => {
+      enemy.attackTime = enemy.attackSpeed;
       if (typeof performEnemyAction === 'function') {
         performEnemyAction(newEnemy);
       }
-    }, newEnemy.attackSpeed);
+    }, newEnemy.attackTime);
 
     return newEnemy;
   });
