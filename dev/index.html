@@ -7257,6 +7257,8 @@ deathSound.play();
           currentHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
           damage: Math.max(0, Math.floor((base.damage||0) * mult.enemyDmg)),
           xpReward: base.xpReward || 0,
+          attackSpeed: 2000, 
+          lastAttackAt: Date.now(),
           shieldActive: false, stunned: false, poisoned: false,
           resistances: base.defaultResistances || {}
         };
@@ -7442,6 +7444,8 @@ deathSound.play();
           currentHp: Math.max(1, Math.floor((base3.maxHp||1) * mult3.enemyHp)),
           damage: Math.max(0, Math.floor((base3.damage||0) * mult3.enemyDmg)),
           xpReward: base3.xpReward || 0,
+          attackSpeed: 2000, 
+          lastAttackAt: Date.now(),
           shieldActive: false, stunned: false, poisoned: false,
           resistances: base3.defaultResistances || {}
         };
@@ -7455,50 +7459,57 @@ deathSound.play();
 
         stopDarkTimer();
 
-   
+        // find spawned battle enemy reference
         let spawned = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length)
           ? activeEnemies[insertIndex]
           : activeEnemies.find(e => e && e.type === 'FinalBossStage3');
 
-        if (_battleDialogQueue.length === 0) {
-  overlay.style.display = 'none';
+        if (spawned && typeof startFinalBossBulletHell === 'function') {
+          // delay the popup by 1 second without blocking the game loop
+          setTimeout(() => {
+            startFinalBossBulletHell({
+              bossEnemy: spawned,
+              onEnd: (mode) => {
+                if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
 
-  if (spawned && typeof startFinalBossBulletHell === 'function') {
-    startFinalBossBulletHell({
-      bossEnemy: spawned,
-      onEnd: (mode) => {
-        if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
-        if (mode === 'victory') {
-          try {
-            if (typeof spawned.currentHp === 'number') spawned.currentHp = 1;
-            if (typeof spawned.maxHp === 'number' && spawned.maxHp < 1) spawned.maxHp = 1;
-            spawned._defeated = true;
-            if (typeof enemyObj === 'object' && enemyObj) {
-              if (typeof enemyObj.currentHp === 'number') enemyObj.currentHp = 1;
-              enemyObj._defeated = true;
-            }
-            if (typeof grantXpToPlayer === 'function') {
-              try { grantXpToPlayer(spawned.xpReward || 0); } catch (e) {}
-            }
-          } catch (e) {
-            console.error('[FinalBossHook] onEnd victory handler error', e);
-          }
+                if (mode === 'victory') {
+                  // keep the battle enemy present but mark defeated and set visible HP to 1
+                  try {
+                    if (typeof spawned.currentHp === 'number') spawned.currentHp = 1;
+                    if (typeof spawned.maxHp === 'number' && spawned.maxHp < 1) spawned.maxHp = 1;
+                    spawned._defeated = true;
+                    // sync any global enemy object if present
+                    if (typeof enemyObj === 'object' && enemyObj) {
+                      if (typeof enemyObj.currentHp === 'number') enemyObj.currentHp = 1;
+                      enemyObj._defeated = true;
+                    }
+                    // grant XP safely if you want the player rewarded now
+                    if (typeof grantXpToPlayer === 'function') {
+                      try { grantXpToPlayer(spawned.xpReward || 0); } catch (e) {}
+                    }
+                  } catch (e) {
+                    console.error('[FinalBossHook] onEnd victory handler error', e);
+                  }
+                }
+
+                // UI refresh
+                try { drawBattleUI(); drawPlayerBattleStatus(); } catch (e) {}
+              }
+            });
+          }, 5000);
+        } else {
+          if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
         }
-        try { drawBattleUI(); drawPlayerBattleStatus(); } catch (e) {}
-      }
-    });
-  } else {
-    if (typeof resumeBattleTimersAfterDialog === 'function') resumeBattleTimersAfterDialog();
-  }
 
-  return;
-}
-  }
-        
+        // do not call original handler here because original should have been applied when enemy died
+        return;
+      }
+
     } catch (e) {
       console.error('[FinalBossHook] wrapper error', e);
     }
 
+    // Default: delegate to original handler for normal cleanup
     return __orig_handleEnemyDeath(arg0, arg1);
   };
 
