@@ -7465,7 +7465,7 @@ deathSound.play();
         let spawned = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length)
           ? activeEnemies[insertIndex]
           : activeEnemies.find(e => e && e.type === 'FinalBossStage3');
-        
+        }
     } catch (e) {
       console.error('[FinalBossHook] wrapper error', e);
     }
