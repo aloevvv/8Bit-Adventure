@@ -988,7 +988,8 @@ let currentRoundIndex = 0;
   dmg_gear_1: { name: "Dmg Gear I", rarity: "common", dmg: 1, desc: "+1 Damage" },
   hp_gear_1: { name: "HP Gear II", rarity: "rare", hp: 8, desc: "+8 HP" },
   vampire_gear: { name: "Vampire Gear", rarity: "mythic", desc: "Heals 10% HP for each kill" },
-  magnet_gear: { name: "Magnet Gear", rarity: "epic", desc: "Enemies drop +1 bolt" }
+  magnet_gear: { name: "Magnet Gear", rarity: "epic", desc: "Enemies drop +1 bolt" },
+  steal_gear: { name: "Stealing Gear", rarity: "epic", desc: "Delay enemy attacks by 0.01s. Stackable." }
 };
 
 const rarityColors = {
@@ -10904,6 +10905,11 @@ function performPlayerAttack() {
         targetEnemy.lastAttackAt += 50; 
     }
 
+  const stealCount = equippedGears.filter(g => g === 'steal_gear').length;
+    if (stealCount > 0) {
+        targetEnemy.lastAttackAt += (10 * stealCount);
+    }
+
   if (targetEnemy.shieldActive) {
     showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
   } else {
@@ -11134,6 +11140,15 @@ function loadLevel(index, newX = x, newY = y) {
     nextBg.src = nextLevelData.bgSrc;
   }, 500);
 }
+
+  const items = document.querySelectorAll('#inventory-list .inventory-item');
+items.forEach((item, i) => {
+  const column = Math.floor(i / 10) + 1; //if no work == delete
+  const row = (i % 10) + 1;   
+  item.style.gridColumn = column;
+  item.style.gridRow = row;
+});
+
 
 function isInZone(zones, px, py) {
   if (!zones) return false;
