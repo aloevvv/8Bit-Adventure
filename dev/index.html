@@ -5201,15 +5201,43 @@ function drawPlayerBattleStatus() {
   const playerBattleStatusDiv = document.getElementById('player-battle-status');
   playerBattleStatusDiv.innerHTML = "";
 
-  // Player block
+ function createHeader(entity, defaultName) {
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.alignItems = 'center';
+    container.style.gap = '5px';
+    container.style.marginBottom = '4px';
+
+    const nameTxt = document.createElement('p');
+    nameTxt.textContent = entity.name || defaultName;
+    nameTxt.style.margin = "0";
+    container.appendChild(nameTxt);
+
+    // List of active statuses to check
+    const statuses = [
+      { active: !!entity._burnType, img: 'burn.png' },
+      { active: !!entity.isFrozen, img: 'frozen.png' },
+      { active: !!entity.isBlinded, img: 'blinded.png' }
+    ];
+
+    statuses.forEach(s => {
+      if (s.active) {
+        const icon = document.createElement('img');
+        icon.src = s.img;
+        icon.style.width = '16px';
+        icon.style.height = '16px';
+        container.appendChild(icon);
+      }
+    });
+    return container;
+  }
+
   const leftBlock = document.createElement('div');
   leftBlock.style.display = 'inline-block';
   leftBlock.style.verticalAlign = 'top';
   leftBlock.style.marginRight = '12px';
 
-  const playerName = document.createElement('p');
-  playerName.textContent = '8-Bit';
-  leftBlock.appendChild(playerName);
+  leftBlock.appendChild(createHeader(playerStats, '8-Bit'));
 
   const hpContainer = document.createElement('div');
   hpContainer.className = 'hp-bar-container';
@@ -5238,10 +5266,7 @@ function drawPlayerBattleStatus() {
   rightBlock.style.verticalAlign = 'top';
 
   if (activeAlly) {
-    const allyName = document.createElement('p');
-    allyName.textContent = `${activeAlly.name} (Lvl ${activeAlly.level})`;
-    allyName.style.fontWeight = 'bold';
-    rightBlock.appendChild(allyName);
+    rightBlock.appendChild(createHeader(activeAlly, 'Ally'));
 
     const allyHpContainer = document.createElement('div');
     allyHpContainer.className = 'hp-bar-container';
@@ -5418,6 +5443,10 @@ function drawPlayerBattleStatus() {
     if (!activeEnemies.length) return;
     let targetEnemy = null;
 
+  if (activeAlly.isBlinded && Math.random() < 0.5) {
+      return;
+    }
+
     if (allyTargetMode === 'Current') {
       targetEnemy = activeEnemies[selectedEnemyIndex] || activeEnemies[0];
     } 
@@ -5471,6 +5500,22 @@ function drawPlayerBattleStatus() {
       drawBattleUI();
     }
   }, activeAlly.attackIntervalMs);
+}
+
+  function applyStatusEffect(target, status, duration) {
+  const flag = status === 'blind' ? 'isBlinded' : status === 'frozen' ? 'isFrozen' : null;
+  if (!flag) return;
+
+  target[flag] = true;
+  drawPlayerBattleStatus();
+
+  if (target[flag + 'Timeout']) clearTimeout(target[flag + 'Timeout']);
+
+  target[flag + 'Timeout'] = setTimeout(() => {
+    target[flag] = false;
+    showTemporaryText(`${target.name || '8-Bit'} recovered from ${status}!`);
+    drawPlayerBattleStatus();
+  }, duration);
 }
 
 // Enemy behaviors
@@ -5652,15 +5697,13 @@ function iceBossBehavior(enemy, target) {
   if (enemy.shieldActive) {
     return;
   }
-
-  // Freeze cooldown: every 8 seconds
   if (now - enemy.lastFreezeTime >= 8000) {
     enemy.lastFreezeTime = now;
 
-    // Freeze effect: disable attack button and freeze players for 3 seconds
-    showTemporaryText(`${enemy.name} unleashes an icy blast! Everyone is frozen!`);
+    playerStats.isFrozen = true;
+    if (activeAlly) activeAlly.isFrozen = true;
+    drawPlayerBattleStatus();
 
-    // Disable player's attack button
     const attackButton = document.getElementById('attack-button');
     const specialButton1 = document.getElementById('special-attack-button-1');
     const specialButton2 = document.getElementById('special-attack-button-2');
@@ -5671,7 +5714,6 @@ function iceBossBehavior(enemy, target) {
     if (specialButton2) specialButton2.disabled = true;
     if (inventoryBattleButton) inventoryBattleButton.disabled = true;
 
-    // Also stun active ally if present
     if (activeAlly) {
       activeAlly.stunned = true;
     }
@@ -5682,21 +5724,22 @@ function iceBossBehavior(enemy, target) {
       if (specialButton2) specialButton2.disabled = false;
       if (inventoryBattleButton) inventoryBattleButton.disabled = false;
 
+      playerStats.isFrozen = false;
       if (activeAlly) {
         activeAlly.stunned = false;
+        activeAlly.isFrozen = false;
       }
-      showTemporaryText(`The ice melts away, and you can move again!`);
       drawPlayerBattleStatus();
     }, 3000);
 
     return;
   }
-
-  // Normal attack if not frozen/stunned
   if (!enemy.stunned) {
     normalAttack(enemy, target);
   }
 }
+
+
 
 //mortuary boss
 function lifeStealBossBehavior(enemy, target) {
