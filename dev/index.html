@@ -7389,7 +7389,8 @@ deathSound.play();
         if (!enemy._darkReduced) {
           enemy._darkReduced = true;
 
-    
+          // Reduce the dark timer by 5 seconds if helper exists, else attempt other fallbacks
+          try {
             if (typeof reduceDarkTimer === 'function') {
               reduceDarkTimer(5000);
               console.log('[FinalBossHook] reduced dark timer by 5000ms via reduceDarkTimer() (LightOrb)');
@@ -7407,6 +7408,9 @@ deathSound.play();
             } else {
               console.log('[FinalBossHook] no dark timer API found to reduce for LightOrb');
             }
+          } catch (e) {
+            console.error('[FinalBossHook] error reducing dark timer on LightOrb death', e);
+          }
 
           showTemporaryText('A Light Orb pulses and the darkness recedes!');
         } // end _darkReduced guard
@@ -7461,6 +7465,10 @@ deathSound.play();
         let spawned = (typeof insertIndex === 'number' && insertIndex >= 0 && insertIndex < activeEnemies.length)
           ? activeEnemies[insertIndex]
           : activeEnemies.find(e => e && e.type === 'FinalBossStage3');
+        
+    } catch (e) {
+      console.error('[FinalBossHook] wrapper error', e);
+    }
 
     return __orig_handleEnemyDeath(arg0, arg1);
   };
