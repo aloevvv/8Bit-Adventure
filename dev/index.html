@@ -336,13 +336,11 @@
 
 
     #inventory-list {
-      display: flex;
-      flex-direction: row;
+      display: grid;
+      grid-auto-flow: column;
+      grid-template-rows: repeat(10, auto);
       gap: 10px;
-      flex-wrap: wrap;
       justify-content: flex-start;
-      max-height: 250px;
-      overflow-y: auto;
     }
     .inventory-item {
       display: flex;
