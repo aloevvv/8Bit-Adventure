@@ -10903,10 +10903,12 @@ function performPlayerAttack() {
   }
   if (activeAmulets.stealing) {
         targetEnemy.lastAttackAt += 50; 
+        targetEnemy.lastAttackAt += 50; 
     }
 
   const stealCount = equippedGears.filter(g => g === 'steal_gear').length;
     if (stealCount > 0) {
+        targetEnemy.attackTime += (10 * stealCount);
         targetEnemy.lastAttackAt += (10 * stealCount);
     }
 
