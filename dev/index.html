@@ -11061,6 +11061,10 @@ function performPlayerAttack() {
     //dinkSound.play().catch(e=>{});
     return;
   }
+  
+  if (playerStats.isBlinded && Math.random() < 0.5) {
+      return;
+    }
 
 if (activeAmulets.bullets && playerStats.currentStamina < 3) {
     showTemporaryText("Not enough stamina to fire!");
