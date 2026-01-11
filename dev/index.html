@@ -693,6 +693,17 @@
   </div>
 </div>
 
+
+<div id="export-menu" style="display:none;position:fixed;top:20%;left:50%;transform:translateX(-50%);
+     background:#222;color:#fff;padding:20px;border:2px solid #fff;z-index:5000;">
+  <h3>Exported Save</h3>
+  <textarea id="export-box" rows="6" cols="60" readonly></textarea>
+  <br>
+  <button id="close-export">Close</button>
+</div>
+
+
+
 <div id="password-popup" style="display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,0.8);">
   <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%;">
     <div style="background:#002591; padding:20px; border:2px solid black; font-family:'Press Start 2P',sans-serif; color:white; width:300px; text-align:center;">
@@ -11982,6 +11993,32 @@ function saveGame() {
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
   console.log('Game saved:', saveData);
 }
+
+  function exportSave() {
+  const rawSave = localStorage.getItem("saveData");
+  if (!rawSave) return;
+  document.getElementById("export-box").value = rawSave;
+}
+
+function openExportMenu() {
+  exportSave();
+  document.getElementById("export-menu").style.display = "block";
+}
+
+function closeExportMenu() {
+  document.getElementById("export-menu").style.display = "none";
+}
+
+// Keyboard shortcut: Q key
+document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "q") {
+    openExportMenu();
+  }
+});
+
+// Close button
+document.getElementById("close-export").addEventListener("click", closeExportMenu);
+
 
 function loadGame() {
   const saved = localStorage.getItem('8bitsAdventureSave');
