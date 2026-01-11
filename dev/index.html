@@ -5176,6 +5176,8 @@ function drawBattleUI() {
   const enemyDisplay = document.getElementById('enemy-display');
   enemyDisplay.innerHTML = "";
 
+  const isFogged = playerStats.isFogged;
+
   activeEnemies.forEach((enemy, index) => {
     const container = document.createElement('div');
     container.style.display = "flex";
@@ -5183,27 +5185,35 @@ function drawBattleUI() {
     container.style.alignItems = "center";
 
     const enemyButton = document.createElement('button');
-    enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
     enemyButton.className = 'enemy-target';
-    
+
+    if (isFogged) {
+      enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ???/???</p>`;
+    } else {
+      enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
+    }
+
     if (enemy.shieldActive) enemyButton.classList.add('shielded');
     if (enemy.stunned) enemyButton.classList.add('stunned');
     if (enemy.poisoned) enemyButton.classList.add('poisoned');
     if (enemy.enraged) enemyButton.classList.add('enraged');
     if (enemy.isStoned) enemyButton.classList.add('stoned');
     if (index === selectedEnemyIndex) enemyButton.classList.add('selected');
-    
+
     enemyButton.dataset.enemyIndex = index;
 
     const barContainer = document.createElement('div');
     barContainer.className = 'attack-bar-container';
-    
+
+    if (isFogged) {
+      barContainer.style.visibility = 'hidden';
+    }
+
     const barFill = document.createElement('div');
     barFill.className = 'attack-bar-fill';
     barFill.id = `attack-bar-${index}`;
-    
+
     barContainer.appendChild(barFill);
-    
     container.appendChild(enemyButton);
     container.appendChild(barContainer);
     enemyDisplay.appendChild(container);
@@ -5231,7 +5241,8 @@ function drawPlayerBattleStatus() {
     const statuses = [
       { active: !!entity._burnType, img: 'burn.png' },
       { active: !!entity.isFrozen, img: 'frozen.png' },
-      { active: !!entity.isBlinded, img: 'blinded.png' }
+      { active: !!entity.isBlinded, img: 'blinded.png' },
+      { active: !!entity.isFogged, img: 'fog.png' }
     ];
 
     statuses.forEach(s => {
@@ -5517,9 +5528,14 @@ function drawPlayerBattleStatus() {
 }
 
   function applyStatusEffect(target, status, duration) {
-  const flag = status === 'blind' ? 'isBlinded' : status === 'frozen' ? 'isFrozen' : null;
+  const statusMap = {
+    'blind': 'isBlinded',
+    'frozen': 'isFrozen',
+    'fog': 'isFogged'
+  };
+  
+  const flag = statusMap[status];
   if (!flag) return;
-
   target[flag] = true;
   drawPlayerBattleStatus();
 
@@ -5529,6 +5545,7 @@ function drawPlayerBattleStatus() {
     target[flag] = false;
     showTemporaryText(`${target.name || '8-Bit'} recovered from ${status}!`);
     drawPlayerBattleStatus();
+    if (status === 'fog') drawBattleUI(); 
   }, duration);
 }
 
@@ -7025,12 +7042,21 @@ function reduceDarkTimer(ms) {
 })();
 
 function updateAbilityButtonsUI() {
-  const now = Date.now();
+  const isFrozen = playerStats.isFrozen;
+
   ['block','counter','cleanse'].forEach(name => {
     const btn = document.getElementById(`ability-${name}`);
     if (!btn) return;
     const overlay = btn.querySelector(`.${btn.id}-overlay`);
     const cd = abilityCooldowns[name] || 0;
+
+    if (isFrozen) {
+      btn.disabled = true;
+      btn.style.opacity = '0.3'; 
+      if (overlay) overlay.style.display = 'none';
+      return;
+    }
+
     if (cd <= 0) {
       btn.disabled = false;
       if (overlay) overlay.style.display = 'none';
@@ -7936,6 +7962,7 @@ function endBattle(outcome) {
     ent._burnType = null;
     ent.isFrozen = false;
     ent.isBlinded = false;
+    ent.isFogged = false;
     // Clear timeouts too if they exist
     if (ent.isBlindedTimeout) clearTimeout(ent.isBlindedTimeout);
     if (ent.isFrozenTimeout) clearTimeout(ent.isFrozenTimeout);
@@ -8346,45 +8373,36 @@ function doCounter() {
   }, ABILITIES.counter.windowMs);
 }
 
-// Cleanse: remove fire/burn/poison status from player and ally
 function doCleanse() {
-  if (abilityCooldowns.cleanse > 0) {
-    showTemporaryText('Cleanse not ready.');
-    return;
-  }
-  if (activeAmulets.stamina) {
-  return;
-}
+  if (abilityCooldowns.cleanse > 0 || playerStats.isFrozen) return;
+  
   triggerAbilityCooldown('cleanse');
 
-  const removed = [];
-  if (playerStats && playerStats._burned) { playerStats._burned = false; removed.push('burn'); }
-  if (playerStats && playerStats._poisoned) { playerStats._poisoned = false; removed.push('poison'); }
-  ['burned','burning','poisoned'].forEach(k => {
-    if (playerStats && playerStats[k]) { playerStats[k] = false; if (!removed.includes(k)) removed.push(k); }
+  const targets = [playerStats, activeAlly].filter(t => t !== null);
+  const statusProperties = ['isBlinded', 'isFogged', '_burnType'];
+  let somethingWasRemoved = false;
+
+  targets.forEach(target => {
+    statusProperties.forEach(prop => {
+      if (target[prop]) {
+        target[prop] = null;
+        target[prop] = false; 
+        somethingWasRemoved = true;
+      }
+    });
+
+    if (target._burnIntervalId) {
+      clearInterval(target._burnIntervalId);
+      target._burnIntervalId = null;
+    }
   });
 
-  if (activeAlly) {
-    if (activeAlly._burned) { activeAlly._burned = false; removed.push(`${activeAlly.name}: burn`); }
-    if (activeAlly._poisoned) { activeAlly._poisoned = false; removed.push(`${activeAlly.name}: poison`); }
-    ['burned','burning','poisoned'].forEach(k => {
-      if (activeAlly && activeAlly[k]) { activeAlly[k] = false; if (!removed.includes(k)) removed.push(k); }
-    });
+  if (somethingWasRemoved) {
+    drawPlayerBattleStatus();
+    drawBattleUI();
+  } else {
+    showTemporaryText(" ");
   }
-
-  if (playerStats && playerStats._burnIntervalId) {
-    clearInterval(playerStats._burnIntervalId);
-    playerStats._burnIntervalId = null;
-  }
-  if (activeAlly && activeAlly._burnIntervalId) {
-    clearInterval(activeAlly._burnIntervalId);
-    activeAlly._burnIntervalId = null;
-  }
-
-  showTemporaryText(removed.length ? `Cleanse removed: ${removed.join(', ')}` : 'Nothing to cleanse.');
-  updateAbilityButtonsUI();
-  drawPlayerBattleStatus();
-  drawPartyStatus();
 }
 
   (function wireAbilityButtons() {
