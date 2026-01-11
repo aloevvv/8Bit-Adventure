@@ -11995,10 +11995,10 @@ function saveGame() {
 }
 
   function exportSave() {
-  const rawSave = localStorage.getItem("saveData");
-  if (!rawSave) return;
-  document.getElementById("export-box").value = rawSave;
+  const rawSave = localStorage.getItem("8bitsAdventureSave");
+  document.getElementById("export-box").value = rawSave || "No save found";
 }
+
 
 function openExportMenu() {
   exportSave();
