@@ -5713,7 +5713,6 @@ function secondStageBossBehavior(enemy, target) {
 
   if (now - enemy._lastBlindAt >= 10000) {
     enemy._lastBlindAt = now;
-    showTemporaryText(`${enemy.name} uses Flashbang!`);
  
     applyStatusEffect(playerStats, 'blind', 5000); 
 
