@@ -790,6 +790,11 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
   </div>
 </div>
 
+  <div id="dev-console" style="display:none; position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:10000; width:400px; background:rgba(0,0,0,0.9); border:2px solid #00ff00; padding:10px; font-family:'monospace';">
+  <div style="color:#00ff00; font-size:10px; margin-bottom:5px;">DEV CONSOLE: Type command and press Enter</div>
+  <input id="dev-input" type="text" style="width:100%; background:#111; color:#00ff00; border:1px solid #00ff00; outline:none; font-family:'monospace';" placeholder="/help" />
+</div>
+
   <div id="demo-popup" style="display:none;">
   <p>Thanks for playing!</p>
   <p>The demo of this fangame took 3 months to develop, so your participation is much appreciated!</p>
@@ -859,6 +864,7 @@ canvas.tabIndex = 0;
 canvas.focus();
 canvas.addEventListener('click', () => canvas.focus());
 
+const devMode = false;
 // Player and game variables
 let isGameOver = false;
 let x = 150, y = 50;
@@ -12040,6 +12046,101 @@ levels.forEach(level => {
       ));
     });
   });
+}
+
+const devConsole = document.getElementById('dev-console');
+const devInput = document.getElementById('dev-input');
+
+
+window.addEventListener('keydown', (e) => {
+  if (!devMode) return;
+  
+  if (e.key === '-') {
+    e.preventDefault();
+    const isHidden = devConsole.style.display === 'none';
+    devConsole.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) devInput.focus();
+  }
+});
+
+
+devInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const raw = devInput.value.trim();
+    if (raw) executeDevCommand(raw);
+    devInput.value = "";
+    devConsole.style.display = 'none';
+  }
+});
+
+function executeDevCommand(input) {
+  const parts = input.replace(/[(),]/g, ' ').split(/\s+/);
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1);
+
+  switch (cmd) {
+    case '/help':
+      console.log("Commands: /warp [lvl] [x] [y], /give [item] [qty], /lvlup, /unlockall, /battle [enemyName], /god, /heal");
+      break;
+
+    case '/warp':
+      loadLevel(parseInt(args[0]), parseInt(args[1]), parseInt(args[2]));
+      break;
+
+    case '/give':
+      const itemName = args[0];
+      const qty = parseInt(args[1]) || 1;
+      inventory.set(itemName, (inventory.get(itemName) || 0) + qty);
+      showTemporaryText(`Gave ${qty} ${itemName}`);
+      break;
+
+    case '/lvlup':
+      levelUp();
+      break;
+
+    case '/unlockall':
+      alliesData.forEach(a => unlockedAllies.add(a.id));
+      showTemporaryText("All allies unlocked!");
+      drawPartyList();
+      break;
+
+    case '/battle':
+      const enemyType = args[0];
+      if (enemyTypes[enemyType]) {
+        initiateBattle('interactable', { encounter: [{ type: enemyType }] });
+      } else {
+        showTemporaryText("Enemy type not found.");
+      }
+      break;
+
+    case '/god':
+      playerStats.baseMaxHp = 9999;
+      playerStats.maxHp = 9999;
+      playerStats.currentHp = 9999;
+      playerStats.damage = 999;
+      updateHp(9999);
+      updateStatsPopup();
+      showTemporaryText("GOD MODE ACTIVE");
+      break;
+
+    case '/heal':
+      playerStats.currentHp = playerStats.maxHp;
+      updateHp(playerStats.currentHp);
+      if (activeAlly) {
+        activeAlly.currentHp = activeAlly.maxHp;
+        drawPartyStatus();
+      }
+      showTemporaryText("Team Healed!");
+      break;
+
+    case '/stamina':
+      updateStamina(playerStats.maxStamina);
+      showTemporaryText("Stamina Refilled!");
+      break;
+
+    default:
+      showTemporaryText("Unknown command. Type /help");
+  }
 }
 
 
