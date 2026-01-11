@@ -1203,6 +1203,7 @@ const enemyTypes = {
   Attictank: { name: "Dusty Bot", maxHp: 1500, damage: 1, xpReward: 14, behavior: "normalAttack" },
   Atticsniper: { name: "Dusty Sniper", maxHp: 1000, attackSpeed: 3000, damage: 3, xpReward: 12, behavior: "sniperAttack" },
   Sandbot: { name: "Sandy Bot", maxHp: 100, attackSpeed: 2000, damage: 3, xpReward: 10, behavior: "sandBehavior" },
+  Smokebang: { name: "Smoke Bomb Bot", maxHp: 100, attackSpeed: 2000, damage: 3, xpReward: 10, behavior: "smokeBehavior" },
   Mousebot: { name: "Quickbot", maxHp: 500, attackSpeed: 1000, damage: 2, xpReward: 8, behavior: "normalAttack" },
   Partyguard: { name: "Bodyguard", maxHp: 2200, damage: 1, xpReward: 100, behavior: "normalAttack", isBoss: true, defaultResistances: {stun: true, poison:true }},
   BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior", defaultResistances: {stun: true, poison:true }},
@@ -6842,6 +6843,19 @@ function endBattle(outcome) {
   }
 }
 
+
+function smokeBehavior(enemy, target) {
+    const now = Date.now();
+    if (!enemy._lastFogAt) enemy._lastFogAt = 0;
+
+    if (now - enemy._lastFogAt >= 10000) {
+        enemy._lastFogAt = now;
+        applyStatusEffect(playerStats, 'fog', 5000);
+        if (activeAlly) applyStatusEffect(activeAlly, 'fog', 5000);
+    }
+    normalAttack(enemy, target);
+}
+
 // Healer: heals all allies every 3 seconds
 function healerBehavior(enemy) {
   if (!enemy.lastHealTime) enemy.lastHealTime = 0;
@@ -6892,6 +6906,8 @@ if (behavior === 'normalAttack') {
   sniperAttack(enemy, target);
 } else if (behavior === 'sandBehavior') {
   sandBehavior(enemy, target);
+} else if (behavior === 'smokeBehavior') {
+  smokeBehavior(enemy, target);
 } else if (behavior === 'caveBossBehavior') {
   caveBossBehavior(enemy, target);
 } else if (behavior === 'bossBehavior') {
@@ -8085,14 +8101,14 @@ initiateBattle = function(zoneType, zoneObject) {
   }
       if (activeEnemies.length > 0 && activeEnemies[0].type === 'Partyblocker') {
     showBattleDialog([
-      { speaker: 'Bot', text: "Yeah, we're strong and we're gonna kick your ass!" }
+      { speaker: 'Bot', text: "Yeah, we're strong and we're gonna kick your ass!", style: 'npc' }
     ]);
   }
   if (activeEnemies.length > 0 && activeEnemies[0].type === 'Partyguard') {
     showBattleDialog([
-      { speaker: 'Bodyguard', text: "You shall not pass, brawler!" },
-      { speaker: '8-Bit', text: "Excuse me? You're the intruder here, not me, man." },
-      { speaker: 'Bodyguard', text: "Enough chat. The party must not be stopped." }
+      { speaker: 'Bodyguard', text: "You shall not pass, brawler!", style: 'npc' },
+      { speaker: '8-Bit', text: "Excuse me? You're the intruder here, not me, man.", style: 'dialog' },
+      { speaker: 'Bodyguard', text: "Enough chat. The party must not be stopped.", style: 'npc' }
     ]);
   }
 }
@@ -8119,6 +8135,8 @@ initiateBattle = function(zoneType, zoneObject) {
   sniperAttack(enemy, target);
 } else if (behavior === 'sandBehavior') {
   sandBehavior(enemy, target);
+} else if (behavior === 'smokeBehavior') {
+  smokeBehavior(enemy, target);
 } else if (behavior === 'caveBossBehavior') {
   caveBossBehavior(enemy, target);
 } else if (behavior === 'bossBehavior') {
