@@ -5994,55 +5994,69 @@ function mountainBossBehavior(enemy, target) {
 
   if (enemy.shieldActive) return;
 
+  // Fire breath DOT
   if (Math.random() < 0.33) {
     const DOT_TICKS = 4;
     const DOT_INTERVAL = 1000;
     const baseDot = Math.max(5, Math.round(enemy.damage * 0.8));
     let ticks = 0;
-    showTemporaryText(`${enemy.name} spits a cone of fire!`);
+
+    // Pick victim once at start
+    const dotTarget = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
+    showTemporaryText(`${enemy.name} breathes fire on ${dotTarget.name || '8-Bit'}!`);
+
     const id = setInterval(() => {
-  if (!activeEnemies.includes(enemy) || ticks >= DOT_TICKS) {
-    clearInterval(id);
-    target._burnType = null; 
-    return;
-  }
+      if (!activeEnemies.includes(enemy) || ticks >= DOT_TICKS) {
+        clearInterval(id);
+        dotTarget._burnType = null;
+        drawPlayerBattleStatus();
+        drawPartyStatus();
+        return;
+      }
 
-  const dotDamage = baseDot;
-  const dotTarget = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
+      dotTarget._burnType = 'mountain';
 
-  dotTarget._burnType = 'mountain'; 
+      if (dotTarget === playerStats) {
+        playerTakeDamage(baseDot);
+        showTemporaryText(`${enemy.name}'s fire scorches you for ${baseDot} damage!`);
+      } else {
+        dotTarget.currentHp = Math.max(0, dotTarget.currentHp - baseDot);
+        showTemporaryText(`${enemy.name}'s fire scorches ${dotTarget.name} for ${baseDot} damage!`);
+        if (dotTarget.currentHp === 0) {
+          showTemporaryText(`${dotTarget.name} has been defeated!`);
+          clearInterval(dotTarget.attackTimerId);
+          dotTarget.attackTimerId = null;
+        }
+      }
 
-  if (dotTarget === playerStats) {
-    playerTakeDamage(dotDamage);
-    showTemporaryText(`${enemy.name}'s fire scorches you for ${dotDamage} damage!`);
-  } else {
-    dotTarget.currentHp = Math.max(0, dotTarget.currentHp - dotDamage);
-    showTemporaryText(`${enemy.name}'s fire scorches ${dotTarget.name} for ${dotDamage} damage!`);
-  }
-
-  ticks++;
-  drawBattleUI();
-  drawPlayerBattleStatus();
-  drawPartyStatus();
-}, DOT_INTERVAL);
+      ticks++;
+      drawBattleUI();
+      drawPlayerBattleStatus();
+      drawPartyStatus();
+    }, DOT_INTERVAL);
 
     enemy._fireTicks.push(id);
   }
-  if (!enemy._penCycleStarted && (enemy.currentHp / enemy.maxHp) <= 0.30) { startMountainPenCycle(enemy); }
 
-  function mountainBossPenTrigger(enemy) {
+  if (!enemy._penCycleStarted && (enemy.currentHp / enemy.maxHp) <= 0.30) {
+    startMountainPenCycle(enemy);
+  }
+
+function mountainBossPenTrigger(enemy) {
   if (!enemy || enemy._penCycleStarted) return;
   if ((enemy.currentHp / (enemy.maxHp || 1)) <= 0.30) {
     startMountainPenCycle(enemy);
     showTemporaryText(`${enemy.name} starts searching for pens to heal!`);
   }
 }
-  // normal attack (double damage if enraged)
+
+  
   const baseDamage = enemy.damage || 0;
   const finalDamage = enemy.enraged ? baseDamage * 2 : baseDamage;
-  // choose target
+
   let chosen = playerStats;
   if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.4) chosen = activeAlly;
+
   if (chosen === playerStats) {
     playerTakeDamage(finalDamage);
     showTemporaryText(`${enemy.name} bites and smashes you for ${finalDamage} damage!`);
@@ -6057,22 +6071,30 @@ function mountainBossBehavior(enemy, target) {
   }
 }
 
-// Ensure cleanup in handleEnemyDeath for MountainBoss (clear timers)
+
 const _orig_handleEnemyDeath = handleEnemyDeath;
 handleEnemyDeath = function(enemy, idx) {
-  // clear boss-specific timers/intervals safely
   try {
-    if (enemy._enrageTimeout) { clearTimeout(enemy._enrageTimeout); enemy._enrageTimeout = null; }
+    if (enemy._enrageTimeout) {
+      clearTimeout(enemy._enrageTimeout);
+      enemy._enrageTimeout = null;
+    }
     if (enemy._fireTicks && enemy._fireTicks.length) {
       enemy._fireTicks.forEach(id => clearInterval(id));
       enemy._fireTicks = [];
-      target._burnType = null;
+      playerStats._burnType = null;
+      if (activeAlly) activeAlly._burnType = null;
+      drawPlayerBattleStatus();
+      drawPartyStatus();
     }
     if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
     if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
-  } catch (e) { console.warn('cleanup error', e); }
+  } catch (e) {
+    console.warn('cleanup error', e);
+  }
   return _orig_handleEnemyDeath(enemy, idx);
 };
+
 
 // ghost
 // ---------- spawnGhostTrains ----------
