@@ -485,6 +485,13 @@
   <div style="text-align:center;color:white;">
     <h1 style="font-family:'Press Start 2P',sans-serif;margin-bottom:20px;">8-Bit's Adventure</h1>
     <button id="play-button" style="font-family:'Press Start 2P',sans-serif;padding:12px 20px;font-size:14px;cursor:pointer;">Play</button>
+    <div id="title-screen" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#001a33;z-index:3000;">
+  <div style="text-align:center;color:white;">
+    <h1 style="font-family:'Press Start 2P',sans-serif;margin-bottom:20px;">8-Bit's Adventure</h1>
+    
+    <button id="play-button" style="font-family:'Press Start 2P',sans-serif;padding:12px 20px;font-size:14px;cursor:pointer;">Play</button>
+    <br><br>
+    <button id="load-title-button" style="font-family:'Press Start 2P',sans-serif;padding:12px 20px;font-size:14px;cursor:pointer;">Load Game</button>
   </div>
 
   <p style="
@@ -11234,6 +11241,25 @@ document.getElementById('inventory-battle-button').addEventListener('click', () 
   } else {
     inventoryPopupBattle.style.display = 'none';
   }
+});
+
+  const loadTitleBtn = document.getElementById('load-title-button');
+
+loadTitleBtn.addEventListener('click', () => {
+  const saved = localStorage.getItem('8bitsAdventureSave');
+  
+  if (!saved) {
+    return;
+  }
+
+  titleScreen.style.display = 'none';
+  loadGame();
+
+  if (objectiveBox) objectiveBox.style.display = 'block';
+
+  draw();
+  updateStatsPopup();
+  drawPartyStatus();
 });
 
   document.getElementById('dialog-next').addEventListener('click', () => {
