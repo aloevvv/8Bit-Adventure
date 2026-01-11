@@ -11451,14 +11451,14 @@ function checkDoorCollision(newX, newY) {
   return null;
 }
 
-// Draw game world and player
+
 function draw() {
   if (inBattle || isGameOver) return;
 
-  // clear canvas first
+  
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // draw background only when the image is ready
+  
   if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
     ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
   } else {
@@ -11476,7 +11476,7 @@ function draw() {
     const sprite = zoneSprites[zone.sprite];
     if (!sprite) return;
     
-    const spriteW = Math.min(zone.width, 100); // cap to avoid oversized sprites
+    const spriteW = Math.min(zone.width, 100);
     const spriteH = Math.min(zone.height, 100);
     const destX = zone.x + (zone.width - spriteW) / 2;
     const destY = zone.y + (zone.height - spriteH) / 2;
@@ -11495,7 +11495,7 @@ const activeSprite = playerSprites[currentFacing];
 if (useImage && activeSprite.complete && activeSprite.naturalWidth > 0) {
   ctx.drawImage(activeSprite, x, y, imageSize, imageSize);
 } else {
-  ctx.fillStyle = "#0090ff"; // Fallback blue square
+  ctx.fillStyle = "#0090ff";
   ctx.fillRect(x, y, imageSize, imageSize);
 }
   
@@ -11517,19 +11517,19 @@ if (window.gameSettings && window.gameSettings.showZones) {
   }
 
 if (gameSettings.showZones) {
-  // walls outline
+ 
   ctx.save();
   ctx.strokeStyle = 'rgba(255,255,0,0.9)';
   ctx.lineWidth = 2;
   currentLevel.walls.forEach(w => {
     ctx.strokeRect(w.x + 0.5, w.y + 0.5, w.width, w.height);
   });
-  // interactable boxes
+
   ctx.strokeStyle = 'rgba(0,255,255,0.9)';
   currentLevel.interactables.forEach(obj => {
     ctx.strokeRect(obj.x + 0.5, obj.y + 0.5, obj.width, obj.height);
   });
-  // battle zones
+
   ctx.strokeStyle = 'rgba(255,0,0,0.9)';
   (currentLevel.battleZones || []).forEach(z => {
     const r = z.interactRect || { x: z.x, y: z.y, width: z.width, height: z.height };
@@ -11540,7 +11540,7 @@ if (gameSettings.showZones) {
 
   currentLevel.interactables.forEach(obj => {
   if (obj.action === "pickup") {
-    // Draw key items with their images
+ 
     let imgToDraw = null;
     if (obj.name === "hammer") imgToDraw = hammerImg;
     else if (obj.name === "keycard") imgToDraw = keycardImg;
@@ -11553,14 +11553,14 @@ if (gameSettings.showZones) {
     if (imgToDraw && imgToDraw.complete) {
       ctx.drawImage(imgToDraw, obj.x, obj.y, obj.width, obj.height);
     } else {
-      ctx.fillStyle = "#cc9900"; // fallback color
+      ctx.fillStyle = "#cc9900"; 
       ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
     }
   } else if (obj.action === "break" && obj.name === "steel_block") {
     if (steelBlockImg.complete) {
       ctx.drawImage(steelBlockImg, obj.x, obj.y, obj.width, obj.height);
     } else {
-      ctx.fillStyle = "#888"; // fallback gray
+      ctx.fillStyle = "#888";
       ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
     }
   }
@@ -11598,14 +11598,14 @@ if (gameSettings.showZones) {
   }
 });
 
-  // Draw levers and controllers
+
 (currentLevel.interactables || []).forEach(obj => {
   if (!obj) return;
   if (obj.action === 'lever') {
     if (typeof obj.currentState === 'undefined') obj.currentState = !!obj.initialState;
     const imgToDraw = obj.currentState ? leverOnImg : leverOffImg;
     if (imgToDraw && imgToDraw.complete && imgToDraw.naturalWidth > 0) {
-      // draw using object rect if provided, otherwise use image size
+    
       const w = obj.width || 16;
       const h = obj.height || 16;
       ctx.drawImage(imgToDraw, obj.x, obj.y, w, h);
@@ -11614,7 +11614,7 @@ if (gameSettings.showZones) {
       ctx.fillRect(obj.x, obj.y, obj.width || 12, obj.height || 12);
     }
   } else if (obj.action === 'lever_controller') {
-    // simple controller visual
+  
     ctx.fillStyle = '#8844ff';
     ctx.fillRect(obj.x, obj.y, obj.width || 12, obj.height || 12);
     ctx.fillStyle = 'white';
@@ -11627,11 +11627,11 @@ if (gameSettings.showZones) {
 currentLevel.interactables.forEach(obj => {
   if (obj.action === "chest") {
     if (obj.opened) {
-      // open chest sprite (or fallback)
+   
       if (openChestImg && openChestImg.complete) ctx.drawImage(openChestImg, obj.x, obj.y, obj.width, obj.height);
       else { ctx.fillStyle = "#775533"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
     } else {
-      // closed chest sprite (or fallback)
+      
       if (closedChestImg && closedChestImg.complete) ctx.drawImage(closedChestImg, obj.x, obj.y, obj.width, obj.height);
       else { ctx.fillStyle = "#aa7722"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
     }
@@ -11665,16 +11665,16 @@ function isInDarkZone(px, py) {
   }
   return false;
 }
-// Draw poison zones
+
 if (currentLevel.poisonZones) {
-  ctx.fillStyle = "rgba(0, 255, 0, 0.4)"; // semi-transparent green
+  ctx.fillStyle = "rgba(0, 255, 0, 0.4)";
   currentLevel.poisonZones.forEach(zone => {
     ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
   });
 }
-  // After all normal drawing is done
+
 if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
-  // Draw solid black overlay to simulate darkness
+
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
@@ -11701,7 +11701,7 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   }
 });
 
-  // stone
+
   currentLevel.interactables.forEach(obj => {
     if (obj.name === "big_stone" || obj.name === "bigStone") {
       if (stoneImg.complete) ctx.drawImage(stoneImg, obj.x, obj.y, obj.width, obj.height);
@@ -11732,7 +11732,7 @@ function loadSettings() {
   } catch (e) {
     console.error('Failed to load settings', e);
   }
-  // apply UI initial values
+ 
   const sel = document.getElementById('difficulty-select');
   const chk = document.getElementById('toggle-zones');
   if (sel) sel.value = gameSettings.difficulty || 'normal';
@@ -11746,7 +11746,6 @@ function saveSettings() {
   }
 }
 
-// === Save slot helpers ===
 function saveToSlot(slotNumber) {
   const key = SAVE_SLOT_PREFIX + slotNumber;
   const saveData = {
@@ -11872,7 +11871,6 @@ levels.forEach(level => {
   }
 }
 
-// === Hook up settings UI buttons ===
 document.getElementById('save-slot-1').addEventListener('click', () => saveToSlot(1));
 document.getElementById('save-slot-2').addEventListener('click', () => saveToSlot(2));
 document.getElementById('save-slot-3').addEventListener('click', () => saveToSlot(3));
@@ -11880,14 +11878,13 @@ document.getElementById('load-slot-1').addEventListener('click', () => loadFromS
 document.getElementById('load-slot-2').addEventListener('click', () => loadFromSlot(2));
 document.getElementById('load-slot-3').addEventListener('click', () => loadFromSlot(3));
 
-// difficulty selector
 document.getElementById('difficulty-select').addEventListener('change', (e) => {
   gameSettings.difficulty = e.target.value;
   saveSettings();
   showTemporaryText(`Difficulty set to ${gameSettings.difficulty}`);
 });
 
-// toggle zones
+
 document.getElementById('toggle-zones').addEventListener('change', (e) => {
   gameSettings.showZones = !!e.target.checked;
   saveSettings();
@@ -11928,11 +11925,9 @@ function saveGame() {
   unlocked: a.unlocked
 }));
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
-  showTemporaryText('Game saved!');
   console.log('Game saved:', saveData);
 }
 
-// Load game state from localStorage
 function loadGame() {
   const saved = localStorage.getItem('8bitsAdventureSave');
   if (!saved) {
@@ -12149,22 +12144,15 @@ function executeDevCommand(input) {
 
 const gameHud = document.getElementById('game-hud');
 if (gameHud) {
-  const saveButton = document.createElement('button');
-  saveButton.textContent = 'Save Game';
-  saveButton.style.fontFamily = "'Press Start 2P', sans-serif";
-  saveButton.style.margin = '0 10px';
-  saveButton.onclick = saveGame;
-  gameHud.appendChild(saveButton);
-
   const loadButton = document.createElement('button');
-  loadButton.textContent = 'Load Game';
+  loadButton.textContent = 'Load Autosave';
   loadButton.style.fontFamily = "'Press Start 2P', sans-serif";
   loadButton.style.margin = '0 10px';
   loadButton.onclick = loadGame;
   gameHud.appendChild(loadButton);
 }
   
-// Keyboard movement and interaction
+
 canvas.addEventListener('keydown', function(e) {
   const isDialogActive = document.getElementById('dialog-overlay').style.display === 'flex';
 if (inBattle || isGameOver || isDialogActive || document.getElementById('fade-overlay').style.opacity > 0) {
@@ -12182,7 +12170,7 @@ if (inBattle || isGameOver || isDialogActive || document.getElementById('fade-ov
     e.preventDefault();
   }
 
-  // interaction key
+
   if (key === 'x') {
     e.preventDefault();
     const interactableObject =
@@ -12222,13 +12210,13 @@ if (key === 'arrowdown' || key === 's') {
   nextX = x + dirX * speed;
   nextY = y + dirY * speed;
 
-  // Check water crossing
+
   if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
     showTemporaryText("You need a raft to cross water!");
     return;
   }
 
-  // Check poison crossing
+
   if (isInPoison(nextX, nextY) && (inventory.get('gas_mask') || 0) <= 0) {
     showTemporaryText("You need a gas mask to cross poison!");
     return;
