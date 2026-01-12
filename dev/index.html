@@ -1011,12 +1011,16 @@ let currentRoundIndex = 0;
 };
 
   const gearTypes = {
+  hp_gear_1: { name: "HP Gear I", rarity: "common", hp: 5, desc: "+5 HP" },
   dmg_gear_1: { name: "Dmg Gear I", rarity: "common", dmg: 1, desc: "+1 Damage" },
-  hp_gear_1: { name: "HP Gear II", rarity: "rare", hp: 8, desc: "+8 HP" },
-  vampire_gear: { name: "Vampire Gear", rarity: "mythic", desc: "Heals 10% HP for each kill" },
-  statue_gear: { name: "Stone Gear", rarity: "mythic", desc: "Main attack has 1% to turn enemies to stone for 4s" },
+  hp_gear_2: { name: "HP Gear II", rarity: "rare", hp: 8, desc: "+8 HP" },
+  dmg_gear_2: { name: "Dmg Gear II", rarity: "rare", dmg: 2, desc: "+2 Damage" },
+  hp_gear_3: { name: "HP Gear III", rarity: "super_rare", hp: 12, desc: "+12 HP" },
+  dmg_gear_3: { name: "Dmg Gear III", rarity: "super_rare", dmg: 3, desc: "+3 Damage" },
   magnet_gear: { name: "Magnet Gear", rarity: "epic", desc: "Enemies drop +1 bolt" },
-  steal_gear: { name: "Stealing Gear", rarity: "epic", desc: "Delay enemy attacks by 0.01s. Stackable" }
+  steal_gear: { name: "Stealing Gear", rarity: "epic", desc: "Delay enemy attacks by 0.01s. Stackable" },
+  vampire_gear: { name: "Vampire Gear", rarity: "mythic", desc: "Heals 10% HP for each kill" },
+  statue_gear: { name: "Stone Gear", rarity: "mythic", desc: "Main attack has 1% to turn enemies to stone for 4s" }
 };
 
 const rarityColors = {
@@ -1135,6 +1139,10 @@ inventory.set("amulet_defense", 1);
 
 inventory.set("gear_dmg_gear_1", 2);
 inventory.set("gear_hp_gear_1", 2);
+inventory.set("gear_dmg_gear_2", 2);
+inventory.set("gear_hp_gear_2", 2);
+inventory.set("gear_dmg_gear_3", 2);
+inventory.set("gear_hp_gear_3", 2);
 inventory.set("gear_vampire_gear", 2);
 inventory.set("gear_statue_gear", 2);
 inventory.set("gear_magnet_gear", 2);
@@ -4771,24 +4779,6 @@ function drawGeneralInventory() {
     if (quantity > 0) {
       const p = document.createElement('p');
       p.textContent = `${itemName.replace(/_/g, ' ')}: ${quantity}`;
-
-   
-      if (itemName.startsWith("armor_")) {
-        const type = itemName.replace("armor_", "");
-        const equipBtn = document.createElement('button');
-        equipBtn.textContent = "Equip";
-        equipBtn.className = 'item-use-button';
-        equipBtn.onclick = () => equipArmor(type);
-        p.appendChild(equipBtn);
-      } else if (itemName.startsWith("weapon_")) {
-        const type = itemName.replace("weapon_", "");
-        const equipBtn = document.createElement('button');
-        equipBtn.textContent = "Equip";
-        equipBtn.className = 'item-use-button';
-        equipBtn.onclick = () => equipWeapon(type);
-        p.appendChild(equipBtn);
-      }
-
       inventoryList.appendChild(p);
     }
   });
