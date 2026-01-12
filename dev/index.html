@@ -6042,6 +6042,7 @@ function mountainBossBehavior(enemy, target) {
     }, 1000);
     enemy._fireTicks.push(id);
   }
+}
 
   if (!enemy._penCycleStarted && (enemy.currentHp / enemy.maxHp) <= 0.30) {
     startMountainPenCycle(enemy);
