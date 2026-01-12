@@ -166,6 +166,39 @@
   0% { transform: translate(0, 0) scale(1); opacity: 1; }
   100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
 }
+.sword-trail {
+  position: fixed;
+  width: 150px;
+  height: 40px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  transform: rotate(-30deg) skewX(-45deg);
+  pointer-events: none;
+  z-index: 10002;
+  animation: swordSlash 0.4s ease-out forwards;
+}
+
+@keyframes swordSlash {
+  0% { transform: translate(-100px, 0) rotate(-30deg) scaleX(0); opacity: 0; }
+  50% { transform: translate(0, 0) rotate(-30deg) scaleX(1.5); opacity: 1; }
+  100% { transform: translate(100px, 0) rotate(-30deg) scaleX(0); opacity: 0; }
+}
+.telegraph-mark {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ff0000;
+  font-size: 30px;
+  font-weight: bold;
+  text-shadow: 2px 2px black;
+  animation: pulse 0.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.3); }
+  100% { transform: translateX(-50%) scale(1); }
+}
     .attack-bar-container {
   width: 100%;
   height: 9px;
@@ -1219,6 +1252,7 @@ const enemyTypes = {
   Atticsniper: { name: "Dusty Sniper", maxHp: 1000, attackSpeed: 3000, damage: 3, xpReward: 12, behavior: "sniperAttack" },
   Sandbot: { name: "Sandy Bot", maxHp: 100, attackSpeed: 2000, damage: 3, xpReward: 10, behavior: "sandBehavior" },
   Smokebang: { name: "Smoke Bomb Bot", maxHp: 100, attackSpeed: 2000, damage: 3, xpReward: 10, behavior: "smokeBehavior" },
+  Swordsman: { name: "Sword Bot", maxHp: 150, attackSpeed: 2500, damage: 3, xpReward: 10, behavior: "swordBehavior" },
   Mousebot: { name: "Quickbot", maxHp: 500, attackSpeed: 1000, damage: 2, xpReward: 8, behavior: "normalAttack" },
   Partyguard: { name: "Bodyguard", maxHp: 2200, damage: 1, xpReward: 100, behavior: "normalAttack", isBoss: true, defaultResistances: {stun: true, poison:true }},
   BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior", defaultResistances: {stun: true, poison:true }},
@@ -5237,7 +5271,8 @@ function drawPlayerBattleStatus() {
       { active: !!entity._burnType, img: 'burn.png' },
       { active: !!entity.isFrozen, img: 'frozen.png' },
       { active: !!entity.isBlinded, img: 'blinded.png' },
-      { active: !!entity.isFogged, img: 'fog.png' }
+      { active: !!entity.isFogged, img: 'fog.png' },
+      { active: !!entity.isBleeding, img: 'bleed.png' }
     ];
 
     statuses.forEach(s => {
@@ -5768,7 +5803,63 @@ function iceBossBehavior(enemy, target) {
   }
 }
 
+function swordBehavior(enemy, target) {
+  if (enemy.stunned) return;
 
+  const now = Date.now();
+
+  if (Math.random() < 0.4 && !enemy.isTelegraphing) {
+    enemy.isTelegraphing = true;
+    
+
+    const enemyButtons = document.querySelectorAll('.enemy-target');
+    const enemyIdx = activeEnemies.indexOf(enemy);
+    const targetBtn = Array.from(enemyButtons).find(b => parseInt(b.dataset.enemyIndex) === enemyIdx);
+    
+    let mark = null;
+    if (targetBtn) {
+      mark = document.createElement('div');
+      mark.className = 'telegraph-mark';
+      mark.textContent = '!';
+      targetBtn.style.position = 'relative';
+      targetBtn.appendChild(mark);
+    }
+
+    setTimeout(() => {
+      if (!inBattle || enemy.currentHp <= 0) {
+        if (mark) mark.remove();
+        return;
+      }
+      
+      if (mark) mark.remove();
+      enemy.isTelegraphing = false;
+
+      const hud = document.getElementById('player-battle-status');
+      const rect = hud.getBoundingClientRect();
+      const slash = document.createElement('div');
+      slash.className = 'sword-trail';
+      slash.style.left = rect.left + 'px';
+      slash.style.top = (rect.top + 20) + 'px';
+      document.body.appendChild(slash);
+      setTimeout(() => slash.remove(), 400);
+      const bleedTarget = (target === playerStats) ? playerStats : activeAlly;
+      if (bleedTarget) {
+        bleedTarget.isBleeding = true;
+        showTemporaryText(`${enemy.name} applied BLEED to ${bleedTarget.name || '8-Bit'}!`);
+        
+        setTimeout(() => {
+          bleedTarget.isBleeding = false;
+          drawPlayerBattleStatus();
+        }, 6000);
+      }
+      
+      drawPlayerBattleStatus();
+    }, 1000);
+
+  } else if (!enemy.isTelegraphing) {
+    normalAttack(enemy, target);
+  }
+}
 
 //mortuary boss
 function lifeStealBossBehavior(enemy, target) {
@@ -8095,6 +8186,8 @@ initiateBattle = function(zoneType, zoneObject) {
   normalAttack(enemy, target);
 } else if (behavior === 'sniperAttack') {
   sniperAttack(enemy, target);
+} else if (behavior === 'swordBehavior') {
+  swordBehavior(enemy, target);
 } else if (behavior === 'sandBehavior') {
   sandBehavior(enemy, target);
 } else if (behavior === 'smokeBehavior') {
@@ -11152,8 +11245,10 @@ if (activeAmulets.bullets && playerStats.currentStamina < 3) {
     spawnDamageNumber(selectedEnemyIndex, finalDmg);
 
     if (activeAmulets.health) {
+        if (!playerStats.isBleeding) {
        updateHp(playerStats.currentHp + finalDmg);
     }
+  }
 
     if (activeAmulets.bullets) {
        updateStamina(playerStats.currentStamina - 3);
@@ -11164,6 +11259,11 @@ if (activeAmulets.bullets && playerStats.currentStamina < 3) {
         targetEnemy.lastAttackAt += 50; 
         targetEnemy.lastAttackAt += 50; 
     }
+  
+  if (playerStats.isBleeding) {
+    playerStats.currentHp = Math.max(1, playerStats.currentHp - 1);
+    updateHp(playerStats.currentHp);
+  }
 
   const statueCount = equippedGears.filter(g => g === 'statue_gear').length;
   if (statueCount > 0 && Math.random() < (0.01 * statueCount)) {
