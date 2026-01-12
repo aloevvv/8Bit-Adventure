@@ -5818,16 +5818,19 @@ function swordBehavior(enemy, target) {
 
     const enemyButtons = document.querySelectorAll('.enemy-target');
     const enemyIdx = activeEnemies.indexOf(enemy);
-    const targetBtn = Array.from(enemyButtons).find(b => parseInt(b.dataset.enemyIndex) === enemyIdx);
-    
-    let mark = null;
-    if (targetBtn) {
-      mark = document.createElement('div');
-      mark.className = 'telegraph-mark';
-      mark.textContent = '!';
-      targetBtn.style.position = 'relative';
-      targetBtn.appendChild(mark);
-    }
+
+const targetBtn = Array.from(document.querySelectorAll('.enemy-target'))
+  .find(btn => parseInt(btn.dataset.enemyIndex) === enemyIdx);
+
+if (targetBtn) {
+  const existing = targetBtn.querySelector('.telegraph-mark');
+  if (existing) existing.remove();
+
+  const mark = document.createElement('div');
+  mark.className = 'telegraph-mark';
+  mark.textContent = '!';
+  targetBtn.appendChild(mark);
+}
 
     setTimeout(() => {
       if (!inBattle || enemy.currentHp <= 0) {
@@ -5849,7 +5852,6 @@ function swordBehavior(enemy, target) {
       const bleedTarget = (target === playerStats) ? playerStats : activeAlly;
       if (bleedTarget) {
         bleedTarget.isBleeding = true;
-        showTemporaryText(`${enemy.name} applied BLEED to ${bleedTarget.name || '8-Bit'}!`);
         
         setTimeout(() => {
           bleedTarget.isBleeding = false;
