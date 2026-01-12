@@ -5628,45 +5628,38 @@ function bossBehavior(enemy, target) {
     }
   }
 
-  // --- Rocket burn logic ---
-  if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
-    const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
+    if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
 
-    // Choose which target is currently "burning"
+    const impactDmg = Math.max(2, Math.ceil(playerStats.maxHp * 0.08)); 
     const burnTarget = (target === playerStats) ? playerStats : activeAlly;
 
-    if (burnTarget) {
-      burnTarget._burnType = 'rocket'; // Set the flag
-      if (burnTarget === playerStats) {
-        playerTakeDamage(rocketTickDamage);
-      } else {
-        burnTarget.currentHp = Math.max(0, burnTarget.currentHp - rocketTickDamage);
-        if (burnTarget.currentHp === 0) {
-          showTemporaryText(`${burnTarget.name} has been defeated!`);
-          clearInterval(burnTarget.attackTimerId);
-          burnTarget.attackTimerId = null;
+    if (burnTarget && !burnTarget._rocketTimerRunning) {
+      showTemporaryText(`${enemy.name}'s rocket hits ${burnTarget.name || '8-Bit'}!`);
+      
+      burnTarget._burnType = 'rocket';
+      burnTarget._rocketTimerRunning = true;
+      let burnTicks = 0;
+
+      const rId = setInterval(() => {
+        burnTicks++;
+        if (!inBattle || burnTicks > 4 || !burnTarget._burnType) {
+          clearInterval(rId);
+          burnTarget._burnType = null;
+          burnTarget._rocketTimerRunning = false;
+          drawPlayerBattleStatus();
+          return;
         }
-      }
-      showTemporaryText(`${enemy.name}'s rocket burns ${burnTarget.name || '8-Bit'}!`);
+
+        const tickDmg = Math.max(2, Math.floor(playerStats.maxHp * 0.05));
+        if (burnTarget === playerStats) playerTakeDamage(tickDmg);
+        else burnTarget.currentHp = Math.max(0, burnTarget.currentHp - tickDmg);
+        
+        drawPlayerBattleStatus();
+      }, 800);
     }
-
-    enemy.rocketTicksLeft--;
-    drawPlayerBattleStatus();
-
-    if (enemy.rocketTicksLeft === 0) {
-      enemy.rocketActive = false;
-      playerStats._burnType = null;
-      if (activeAlly) activeAlly._burnType = null;
-      drawPlayerBattleStatus();
-    }
-  }
-
-  if (enemy.shieldActive) return;
-
-  if (!enemy.rocketActive && Math.random() < 0.25) {
-    enemy.rocketActive = true;
-    enemy.rocketTicksLeft = 4;
-    showTemporaryText(`${enemy.name} launches a rocket!`);
+    
+    enemy.rocketActive = false;
+    enemy.rocketTicksLeft = 0;
   }
 
   const damage = enemy.damage || 0;
@@ -6047,34 +6040,23 @@ function mountainBossBehavior(enemy, target) {
     showTemporaryText(`${enemy.name} breathes fire on ${dotTarget.name || '8-Bit'}!`);
 
     const id = setInterval(() => {
-      if (!activeEnemies.includes(enemy) || ticks >= DOT_TICKS) {
+      ticks++;
+
+      if (!inBattle || ticks > DOT_TICKS || !dotTarget._burnType) {
         clearInterval(id);
-        dotTarget._burnType = null;
+        dotTarget._burnType = null; 
         drawPlayerBattleStatus();
-        drawPartyStatus();
         return;
       }
-
-      dotTarget._burnType = 'mountain';
-
+      dotTarget._burnType = 'mountain'; 
+      
       if (dotTarget === playerStats) {
         playerTakeDamage(baseDot);
-        showTemporaryText(`${enemy.name}'s fire scorches you for ${baseDot} damage!`);
       } else {
         dotTarget.currentHp = Math.max(0, dotTarget.currentHp - baseDot);
-        showTemporaryText(`${enemy.name}'s fire scorches ${dotTarget.name} for ${baseDot} damage!`);
-        if (dotTarget.currentHp === 0) {
-          showTemporaryText(`${dotTarget.name} has been defeated!`);
-          clearInterval(dotTarget.attackTimerId);
-          dotTarget.attackTimerId = null;
-        }
       }
-
-      ticks++;
-      drawBattleUI();
       drawPlayerBattleStatus();
-      drawPartyStatus();
-    }, DOT_INTERVAL);
+    }, 1000);
 
     enemy._fireTicks.push(id);
   }
@@ -8391,29 +8373,20 @@ function doCleanse() {
   triggerAbilityCooldown('cleanse');
 
   const targets = [playerStats, activeAlly].filter(t => t !== null);
-  const statusProperties = ['isBlinded', 'isFogged', '_burnType'];
   let somethingWasRemoved = false;
 
   targets.forEach(target => {
-    statusProperties.forEach(prop => {
-      if (target[prop]) {
-        target[prop] = null;
-        target[prop] = false; 
-        somethingWasRemoved = true;
-      }
-    });
-
-    if (target._burnIntervalId) {
-      clearInterval(target._burnIntervalId);
-      target._burnIntervalId = null;
+    if (target._burnType || target.isBlinded || target.isFogged) {
+      target._burnType = null;
+      target.isBlinded = false;
+      target.isFogged = false;
+      somethingWasRemoved = true;
     }
   });
 
   if (somethingWasRemoved) {
     drawPlayerBattleStatus();
     drawBattleUI();
-  } else {
-    showTemporaryText(" ");
   }
 }
 
