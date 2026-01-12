@@ -6011,36 +6011,35 @@ function mountainBossBehavior(enemy, target) {
 
   if (enemy.shieldActive) return;
 
-  // Fire breath DOT
   if (Math.random() < 0.33) {
     const DOT_TICKS = 4;
     const DOT_INTERVAL = 1000;
     const baseDot = Math.max(5, Math.round(enemy.damage * 0.8));
     let ticks = 0;
 
-    // Pick victim once at start
     const dotTarget = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
-    showTemporaryText(`${enemy.name} breathes fire on ${dotTarget.name || '8-Bit'}!`);
+  
+  if (Math.random() < 0.35 && !dotTarget._burnType) {
+    const DOT_TICKS = 4;
+    let ticks = 0;
+    showTemporaryText(`${enemy.name} uses Fire Breath on ${dotTarget.name || '8-Bit'}!`);
+    dotTarget._burnType = 'mountain'; 
 
     const id = setInterval(() => {
       ticks++;
-
       if (!inBattle || ticks > DOT_TICKS || !dotTarget._burnType) {
         clearInterval(id);
         dotTarget._burnType = null; 
         drawPlayerBattleStatus();
         return;
       }
-      dotTarget._burnType = 'mountain'; 
       
-      if (dotTarget === playerStats) {
-        playerTakeDamage(baseDot);
-      } else {
-        dotTarget.currentHp = Math.max(0, dotTarget.currentHp - baseDot);
-      }
+      const baseDot = Math.max(2, Math.round(enemy.damage * 0.8));
+      if (dotTarget === playerStats) playerTakeDamage(baseDot);
+      else dotTarget.currentHp = Math.max(0, dotTarget.currentHp - baseDot);
+      
       drawPlayerBattleStatus();
     }, 1000);
-
     enemy._fireTicks.push(id);
   }
 
