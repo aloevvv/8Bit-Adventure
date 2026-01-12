@@ -4472,6 +4472,12 @@ drillImg.src = 'drill.png';
 const blockadeImg = new Image();
 blockadeImg.src = 'blockade.png';
 
+const dmgPotionImg = new Image();
+dmgPotionImg.src = 'dmgPotion.png';
+
+const staminaPotionImg = new Image();
+staminaPotionImg.src = 'stmPotion.png';
+
 const arcadegateImg = new Image();
 arcadegateImg.src = 'arcadegate.png';
 
@@ -11735,6 +11741,8 @@ if (gameSettings.showZones) {
     else if (obj.name === "laser_cutter") imgToDraw = laserCutterImg;
     else if (obj.name === "raft") imgToDraw = raftImg;
     else if (obj.name === "torch") imgToDraw = torchImg;
+    else if (obj.name === "dmg") imgToDraw = dmgPotionImg;
+    else if (obj.name === "stamina") imgToDraw = stmPotionImg;
     else if (obj.name === "drill") imgToDraw = drillImg;
 
     if (imgToDraw && imgToDraw.complete) {
