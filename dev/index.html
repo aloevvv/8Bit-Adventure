@@ -5613,33 +5613,13 @@ function bossBehavior(enemy, target) {
   if (!enemy.shieldActivatedAt) enemy.shieldActivatedAt = 0;
   if (!enemy.shieldCooldownEnd) enemy.shieldCooldownEnd = 0;
 
-  // --- Shield logic ---
-  if (enemy.shieldActive) {
-    if (now >= enemy.shieldActivatedAt + 2000) {
-      enemy.shieldActive = false;
-      enemy.shieldCooldownEnd = now + 3000;
-      showTemporaryText(`${enemy.name}'s shield fades.`);
-    }
-  } else {
-    if (now >= enemy.shieldCooldownEnd) {
-      enemy.shieldActive = true;
-      enemy.shieldActivatedAt = now;
-      showTemporaryText(`${enemy.name} activates a shield!`);
-    }
-  }
-
-    if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
-
-    const impactDmg = Math.max(2, Math.ceil(playerStats.maxHp * 0.08)); 
+  if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
     const burnTarget = (target === playerStats) ? playerStats : activeAlly;
-
     if (burnTarget && !burnTarget._rocketTimerRunning) {
       showTemporaryText(`${enemy.name}'s rocket hits ${burnTarget.name || '8-Bit'}!`);
-      
       burnTarget._burnType = 'rocket';
       burnTarget._rocketTimerRunning = true;
       let burnTicks = 0;
-
       const rId = setInterval(() => {
         burnTicks++;
         if (!inBattle || burnTicks > 4 || !burnTarget._burnType) {
@@ -5649,33 +5629,36 @@ function bossBehavior(enemy, target) {
           drawPlayerBattleStatus();
           return;
         }
-
         const tickDmg = Math.max(2, Math.floor(playerStats.maxHp * 0.05));
         if (burnTarget === playerStats) playerTakeDamage(tickDmg);
         else burnTarget.currentHp = Math.max(0, burnTarget.currentHp - tickDmg);
-        
         drawPlayerBattleStatus();
       }, 800);
     }
-    
     enemy.rocketActive = false;
-    enemy.rocketTicksLeft = 0;
   }
 
-  const damage = enemy.damage || 0;
-  if (target === playerStats) {
-    playerTakeDamage(damage);
-    showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
-  } else if (target === activeAlly) {
-    activeAlly.currentHp -= damage;
-    if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-    showTemporaryText(`${enemy.name} attacks ${activeAlly.name} for ${damage} damage!`);
-    if (activeAlly.currentHp === 0) {
-      showTemporaryText(`${activeAlly.name} has been defeated!`);
-      clearInterval(activeAlly.attackTimerId);
-      activeAlly.attackTimerId = null;
+  if (!enemy.rocketActive && Math.random() < 0.25) {
+    enemy.rocketActive = true;
+    enemy.rocketTicksLeft = 1; 
+    showTemporaryText(`${enemy.name} locks on with a rocket!`);
+  }
+
+  if (enemy.shieldActive) {
+    if (now >= enemy.shieldActivatedAt + 2000) {
+      enemy.shieldActive = false;
+      enemy.shieldCooldownEnd = now + 4000;
+    }
+    return; 
+  } else {
+    if (now >= enemy.shieldCooldownEnd) {
+      enemy.shieldActive = true;
+      enemy.shieldActivatedAt = now;
+      return;
     }
   }
+
+  normalAttack(enemy, target);
 }
 
 
