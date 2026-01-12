@@ -9611,7 +9611,7 @@ const wiresPopupHtml = `
 <div id="wires-popup" style="
   display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
   z-index:5000; color:white; font-family:'Press Start 2P',sans-serif; 
-  padding:20px; box-sizing:border-box; user-select:none;">
+  padding:20px; box-sizing:border-box; user-select:none; touch-action: none;">
   <h3>Wires</h3>
   <div style="display:flex; justify-content:space-between; width:640px; margin:auto;">
     
@@ -9699,6 +9699,11 @@ function setupWiresListeners() {
     slot.addEventListener('dragleave', onWireDragLeave);
     slot.addEventListener('drop', onWireDrop);
   });
+  wires.forEach(wire => {
+    wire.addEventListener('touchstart', onTouchStart, { passive: false });
+    wire.addEventListener('touchmove', onTouchMove, { passive: false });
+    wire.addEventListener('touchend', onTouchEnd, { passive: false });
+  });
 }
 
 
@@ -9753,6 +9758,76 @@ function onWireDrop(e) {
   }
   e.currentTarget.style.backgroundColor = 'transparent';
   wiresState.draggingWire = null;
+}
+
+let touchGhost = null;
+let activeTouchWire = null;
+
+function onTouchStart(e) {
+  if (wiresState.connected.has(e.target.dataset.wire)) return;
+  e.preventDefault();
+
+  activeTouchWire = e.target;
+  const wireColor = activeTouchWire.dataset.wire;
+  
+  touchGhost = activeTouchWire.cloneNode(true);
+  touchGhost.style.position = 'fixed';
+  touchGhost.style.width = activeTouchWire.offsetWidth + 'px';
+  touchGhost.style.height = activeTouchWire.offsetHeight + 'px';
+  touchGhost.style.zIndex = '10001';
+  touchGhost.style.pointerEvents = 'none';
+  touchGhost.style.opacity = '0.8';
+  touchGhost.style.left = e.touches[0].clientX - (activeTouchWire.offsetWidth / 2) + 'px';
+  touchGhost.style.top = e.touches[0].clientY - (activeTouchWire.offsetHeight / 2) + 'px';
+  
+  document.body.appendChild(touchGhost);
+  wiresState.draggingWire = wireColor;
+}
+
+function onTouchMove(e) {
+  if (!touchGhost) return;
+  e.preventDefault();
+  
+  touchGhost.style.left = e.touches[0].clientX - (touchGhost.offsetWidth / 2) + 'px';
+  touchGhost.style.top = e.touches[0].clientY - (touchGhost.offsetHeight / 2) + 'px';
+
+  const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+  const slot = el ? el.closest('.wire-slot') : null;
+  
+  document.querySelectorAll('.wire-slot').forEach(s => s.style.backgroundColor = 'transparent');
+  
+  if (slot && slot.dataset.wire === wiresState.draggingWire) {
+    slot.style.backgroundColor = slot.dataset.wire;
+  }
+}
+
+function onTouchEnd(e) {
+  if (!touchGhost) return;
+  
+  const touch = e.changedTouches[0];
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const slot = el ? el.closest('.wire-slot') : null;
+
+  if (slot && slot.dataset.wire === wiresState.draggingWire && !wiresState.connected.has(wiresState.draggingWire)) {
+    const wireColor = wiresState.draggingWire;
+    wiresState.connected.add(wireColor);
+
+    activeTouchWire.draggable = false;
+    activeTouchWire.style.opacity = '0.4';
+
+    slot.textContent = `${capitalize(wireColor)} Connected`;
+    slot.style.backgroundColor = wireColor;
+
+    if (wiresState.connected.size === 4) {
+      document.getElementById('wires-close-btn').disabled = false;
+    }
+  }
+
+  if (touchGhost) touchGhost.remove();
+  touchGhost = null;
+  activeTouchWire = null;
+  wiresState.draggingWire = null;
+  document.querySelectorAll('.wire-slot').forEach(s => s.style.backgroundColor = 'transparent');
 }
 
 function capitalize(str) {
