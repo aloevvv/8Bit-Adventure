@@ -2083,7 +2083,7 @@ iceZones: [],
     battleZones: [],
     dialogZones: [],
     interactables: [
-      { name: "dmgPotion", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "dmgPotion"},
+      { name: "dmgPotion", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "damage_potion"},
       { name: "friendhousecrack", x: 378, y: 368, width: 300, height: 120, action: "friendhousecrack" }
     ]
   },
@@ -2648,7 +2648,7 @@ iceZones: [],
     battleZones: [],
     dialogZones: [],
     interactables: [
-      { id: 'dmgP_1', name: "dmgPotion", x: 210, y: 159, width: 32, height: 32, action: "pickup", itemName: "dmgPotion"},
+      { id: 'dmgP_1', name: "dmgPotion", x: 210, y: 159, width: 32, height: 32, action: "pickup", itemName: "damage_potion"},
       { name: "friendhousecake", x: 240, y: 236, width: 190, height: 200, action: "friendhousecake" }
     ]
   },
@@ -2728,7 +2728,7 @@ iceZones: [],
     ],
     dialogZones: [],
     interactables: [
-      { id: 'dmgP_2', name: "dmgPotion", x: 117, y: 219, width: 32, height: 32, action: "pickup", itemName: "dmgPotion"},
+      { id: 'dmgP_2', name: "dmgPotion", x: 117, y: 219, width: 32, height: 32, action: "pickup", itemName: "damage_potion"},
       { name: "television", x: 154, y: 50, width: 290, height: 150, action: "television" }
     ]
   },
@@ -2816,7 +2816,7 @@ iceZones: [],
     battleZones: [],
     dialogZones: [],
     interactables: [
-      { id: 'dmgP_3', name: "dmgPotion", x: 141, y: 333, width: 32, height: 32, action: "pickup", itemName: "dmgPotion"}
+      { id: 'dmgP_3', name: "dmgPotion", x: 141, y: 333, width: 32, height: 32, action: "pickup", itemName: "damage_potion"}
     ]
   },
   {
@@ -11746,8 +11746,8 @@ if (gameSettings.showZones) {
     else if (obj.name === "laser_cutter") imgToDraw = laserCutterImg;
     else if (obj.name === "raft") imgToDraw = raftImg;
     else if (obj.name === "torch") imgToDraw = torchImg;
-    else if (obj.name === "dmg") imgToDraw = dmgPotionImg;
-    else if (obj.name === "stamina") imgToDraw = stmPotionImg;
+    else if (obj.name === "dmgPotion") imgToDraw = dmgPotionImg;
+    else if (obj.name === "staminaPotion") imgToDraw = stmPotionImg;
     else if (obj.name === "drill") imgToDraw = drillImg;
 
     if (imgToDraw && imgToDraw.complete) {
