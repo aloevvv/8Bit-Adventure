@@ -1011,22 +1011,24 @@ zoneSprites.fail.src = 'fail.png';
 zoneSprites.bossrobot.src = 'bossrobot.png';
 zoneSprites.robot.src = 'robot.png';
 
-function drawBreathing(ctx) {
+function drawBreathing() {
   const t = Date.now() * 0.005;
 
   if (currentLevel && currentLevel.battleZones) {
     currentLevel.battleZones.forEach(zone => {
       if (!zone.sprite) return;
       const img = zoneSprites[zone.sprite];
-      if (!img || !img.complete) return;
+      if (!img || !img.complete || img.naturalWidth === 0) return;
 
       const spriteW = Math.min(zone.width, 100);
       const spriteH = Math.min(zone.height, 100);
       const destX = zone.x + (zone.width - spriteW) / 2;
       const destY = zone.y + (zone.height - spriteH) / 2;
 
-      const scaleY = 1.0 + Math.sin(t) * 0.1;
+ 
+      const scaleY = 1.0 + Math.sin(t) * 0.08; 
       const currentH = spriteH * scaleY;
+      
       const offsetHeight = currentH - spriteH;
       const drawY = destY - offsetHeight;
 
@@ -11748,25 +11750,7 @@ function draw() {
   for (const wall of currentLevel.walls) {
     ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
   }
-  if (currentLevel && currentLevel.battleZones) {
-  currentLevel.battleZones.forEach(zone => {
-    if (!zone.sprite) return;
-    const sprite = zoneSprites[zone.sprite];
-    if (!sprite) return;
-    
-    const spriteW = Math.min(zone.width, 100);
-    const spriteH = Math.min(zone.height, 100);
-    const destX = zone.x + (zone.width - spriteW) / 2;
-    const destY = zone.y + (zone.height - spriteH) / 2;
-    if (sprite.complete && sprite.naturalWidth > 0) {
-      ctx.drawImage(sprite, destX, destY, spriteW, spriteH);
-    } else {
-      
-      ctx.fillStyle = 'rgba(255,0,0,0.0)';
-      ctx.fillRect(destX, destY, spriteW, spriteH);
-    }
-  });
-}
+  
   drawBreathing();
  
 const activeSprite = playerSprites[currentFacing];
