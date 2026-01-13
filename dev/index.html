@@ -1007,8 +1007,6 @@ zoneSprites.bossrobot.src = 'bossrobot.png';
 zoneSprites.robot.src = 'robot.png';
 
 function drawBreathing(ctx) {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   const t = Date.now() * 0.005;
 
   let i = 0;
@@ -1026,6 +1024,7 @@ function drawBreathing(ctx) {
     i++;
   }
 }
+
 
 function breathingLoop() {
   setInterval(() => {
