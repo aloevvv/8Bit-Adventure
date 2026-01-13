@@ -1133,7 +1133,7 @@ const weaponTypes = {
   virus: { name: "Virus Weapon", dmgBonus: 0.50, desc: "DO NOT EQUIP, 8-BIT, THE EVIL IS CORRUPTING YOU" }
 };
 
-  let equippedArmor = null; 
+let equippedArmor = null; 
 let equippedWeapon = null;
 
 function applyEquipmentBonuses() {
@@ -1336,12 +1336,13 @@ const enemyTypes = {
 };
 
   const speakerConfigs = {
-  '8-Bit': { speed: 30, pitch: 1.0, frequency: 2 },
-  'Birthday Bot': { speed: 30, pitch: 1.7, frequency: 3 },
-  'BossRobot': { speed: 30, pitch: 0.6, frequency: 2 }, 
-  'Bodyguard': { speed: 30, pitch: 0.7, frequency: 1 },
-  'Guard': { speed: 40, pitch: 0.6, frequency: 1 },
-  'default': { speed: 30, pitch: 1.0, frequency: 2 }
+  '8-Bit': { speed: 30, pitch: 1.0, frequency: 2, sound: 'blip.wav' },
+  'New': { speed: 30, pitch: 1.0, frequency: 2, sound: 'blub.mp3' },
+  'Birthday Bot': { speed: 30, pitch: 1.7, frequency: 3, sound: 'blip.wav' },
+  'BossRobot': { speed: 30, pitch: 0.6, frequency: 2, sound: 'blip.wav' }, 
+  'Bodyguard': { speed: 30, pitch: 0.7, frequency: 1, sound: 'blip.wav' },
+  'Guard': { speed: 40, pitch: 0.6, frequency: 1, sound: 'blip.wav' },
+  'default': { speed: 30, pitch: 1.0, frequency: 2, sound: 'blip.wav' }
 };
 
   // adjust these things as needed ill have to test em to see if they fit what i want
@@ -4255,20 +4256,21 @@ function startTypewriter(text, element, speaker = null) {
   _currentSpeaker = speaker;
 
   const config = speakerConfigs[speaker] || speakerConfigs['default'];
+  const charSound = new Audio(config.sound);
+  charSound.volume = 0.6;
 
   let i = 0;
   element.innerHTML = speaker ? `<strong>${speaker}</strong>\n\n` : "";
 
-  
   _typingInterval = setInterval(() => {
     if (i < text.length) {
       element.innerHTML += text.charAt(i);
 
-  
       if (i % config.frequency === 0) {
-        blipSound.playbackRate = config.pitch;
-        blipSound.currentTime = 0;
-        blipSound.play().catch(e => {});
+        const playClone = charSound.cloneNode();
+        playClone.playbackRate = config.pitch;
+        playClone.volume = charSound.volume;
+        playClone.play().catch(e => {});
       }
 
       i++;
