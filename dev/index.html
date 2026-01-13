@@ -4387,6 +4387,7 @@ function showDialog(textOrLines, idToMark, opts = {}) {
   }
   
   overlay._markId = idToMark || null;
+  overlay._onComplete = opts.onComplete || null; 
   draw();
 }
 
@@ -11460,6 +11461,12 @@ loadTitleBtn.addEventListener('click', () => {
   const id = overlay._markId;
   overlay._markId = null;
   overlay.style.display = 'none';
+
+    if (overlay._onComplete) {
+    const callback = overlay._onComplete;
+    overlay._onComplete = null;
+    callback();
+  }
   
   if (id) shownDialogs.add(id);
   if (inBattle) {
