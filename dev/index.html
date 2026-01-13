@@ -1337,7 +1337,7 @@ const enemyTypes = {
 
   const speakerConfigs = {
   '8-Bit': { speed: 30, pitch: 1.0, frequency: 1, sound: 'blip.wav' },
-  'New': { speed: 60, pitch: 1.0, frequency: 2, sound: 'blub.mp3' },
+  'New': { speed: 30, pitch: 1.0, frequency: 0.5, sound: 'blub.mp3' },
   'Birthday Bot': { speed: 30, pitch: 1.7, frequency: 3, sound: 'blip.wav' },
   'BossRobot': { speed: 30, pitch: 0.6, frequency: 2, sound: 'blip.wav' }, 
   'Bodyguard': { speed: 30, pitch: 0.7, frequency: 1, sound: 'blip.wav' },
@@ -11217,34 +11217,26 @@ if (door) {
   }
   draw();
 }
-document.getElementById('btn-up').addEventListener('touchstart', () => {
-  dirY = -1;
+document.getElementById('btn-up').addEventListener('click', () => {
+  movePlayer(0, -1);
   currentFacing = 'up';
 });
-document.getElementById('btn-up').addEventListener('touchend', () => {
-  dirY = 0;
-});
-document.getElementById('btn-down').addEventListener('touchstart', () => {
-  dirY = 1;
+
+document.getElementById('btn-down').addEventListener('click', () => {
+  movePlayer(0, 1);
   currentFacing = 'down';
 });
-document.getElementById('btn-down').addEventListener('touchend', () => {
-  dirY = 0;
-});
-document.getElementById('btn-left').addEventListener('touchstart', () => {
-  dirX = -1;
+
+document.getElementById('btn-left').addEventListener('click', () => {
+  movePlayer(-1, 0);
   currentFacing = 'left';
 });
-document.getElementById('btn-left').addEventListener('touchend', () => {
-  dirX = 0;
-});
-document.getElementById('btn-right').addEventListener('touchstart', () => {
-  dirX = 1;
+
+document.getElementById('btn-right').addEventListener('click', () => {
+  movePlayer(1, 0);
   currentFacing = 'right';
 });
-document.getElementById('btn-right').addEventListener('touchend', () => {
-  dirX = 0;
-});
+
 
 document.getElementById('btn-interact').addEventListener('click', () => {
   if (inBattle || isGameOver) return;
