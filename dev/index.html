@@ -1378,7 +1378,7 @@ const levels = [
       { x: 0, y: 200, width: 20, height: 240, destLevel: 13, destX: 580, destY: 240 }
     ],
      battleZones: [
-      { x: 530, y: 80, width: 64, height: 64, encounter: [{ type: "Sniperbot" }], sprite: 'fail' }, // EDIT EDIT
+      { id: 'filter_first', x: 530, y: 80, width: 64, height: 64, encounter: [{ type: "Sniperbot" }], sprite: 'fail' },
       { x: 240, y: 315, width: 64, height: 64, encounter: [{ type: "Sniperbot" }, {type: "Sniperbot"}], sprite: 'fail'},
 ],
     waterZones: [], // make something like { x: 0, y: 0, width: 1, height: 1 } for zones
@@ -1432,7 +1432,7 @@ const levels = [
 iceZones: [],
     battleZones: [
       { x: 507, y: 70, width: 64, height: 64, encounter: [{ type: "Sniperbot" }, {type: "Sniperbot"}], sprite: 'fail' },
-      { x: 240, y: 60, width: 80, height: 80, encounter: [{ type: "Sniperbot" }, {type: "Puncherbot"}, {type: "Sniperbot"}], sprite: 'fail'}
+      { id: 'filter_bots3', x: 240, y: 60, width: 80, height: 80, encounter: [{ type: "Sniperbot" }, {type: "Puncherbot"}, {type: "Sniperbot"}], sprite: 'fail'}
     ],
     dialogZones: [
       {
@@ -1628,7 +1628,6 @@ iceZones: [],
   ],
   sprite: 'fail'
 }
- //LifeStealBoss, CritBoss, CaveBoss, IceBoss, MountainBoss
     ],
     dialogZones: [],
     interactables: []
@@ -1721,7 +1720,7 @@ iceZones: [],
     battleZones: [],
     dialogZones: [],
     interactables: [
-      { name: "dmgPotion5", x: 269, y: 188, width: 32, height: 32, action: "pickup", itemName: "damage_potion"},
+      { id: 'dmgP_5', name: "dmgPotion", x: 269, y: 188, width: 32, height: 32, action: "pickup", itemName: "damage_potion"},
       { name: 'photo1', x: 60, y: 40, width: 55, height: 30, action: 'photo' },
       { name: 'photo2', x: 350, y: 40, width: 80, height: 30, action: 'photo' },
       { name: 'arcadekey', x: 38, y: 131, width: 80, height: 100, action: 'arcadekey' },
