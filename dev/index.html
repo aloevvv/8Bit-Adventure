@@ -1012,7 +1012,7 @@ zoneSprites.bossrobot.src = 'bossrobot.png';
 zoneSprites.robot.src = 'robot.png';
 
 function drawBreathing() {
-  const t = Date.now() * 0.005;
+  const t = Date.now() * 0.002;
 
   if (currentLevel && currentLevel.battleZones) {
     currentLevel.battleZones.forEach(zone => {
