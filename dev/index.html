@@ -4387,6 +4387,7 @@ function showDialog(textOrLines, idToMark, opts = {}) {
   }
   
   overlay._markId = idToMark || null;
+  overlay._onComplete = opts.onComplete || null; 
   draw();
 }
 
@@ -10457,8 +10458,12 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
         { speaker: 'Birthday Bot', text: "Please don't hurt me. It's my birthday, I just wanted to celebrate.", style: 'npc' },
         { speaker: '8-Bit', text: "You and your little gang destroyed my friend's house. I don't care what you're here for.", style: 'dialog' },
         { speaker: 'Birthday Bot', text: "I'm just a kid, you aren't going to kill a kid, are you?", style: 'npc' }
-      ]);
-      gameFlags.birthdaybottalk = true;
+      ], object.id, {
+        onComplete: () => {
+          gameFlags.birthdaybottalk = true;
+          handleInteraction(object); 
+        }
+      });
       return;
     }
 
@@ -11460,6 +11465,12 @@ loadTitleBtn.addEventListener('click', () => {
   const id = overlay._markId;
   overlay._markId = null;
   overlay.style.display = 'none';
+
+    if (overlay._onComplete) {
+    const callback = overlay._onComplete;
+    overlay._onComplete = null;
+    callback();
+  }
   
   if (id) shownDialogs.add(id);
   if (inBattle) {
