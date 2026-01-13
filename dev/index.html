@@ -1006,6 +1006,34 @@ zoneSprites.fail.src = 'fail.png';
 zoneSprites.bossrobot.src = 'bossrobot.png';
 zoneSprites.robot.src = 'robot.png';
 
+function drawBreathing(ctx) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const t = Date.now() * 0.005;
+
+  let i = 0;
+  for (const key in zoneSprites) {
+    const img = zoneSprites[key];
+    if (!img.complete) continue;
+
+    const scaleY = 1.0 + Math.sin(t) * 0.1;
+    const currentH = 64 * scaleY;
+    const offsetHeight = currentH - 64;
+    const drawY = 100 - offsetHeight;
+    const x = 50 + i * 100;
+
+    ctx.drawImage(img, x, drawY, 64, currentH);
+    i++;
+  }
+}
+
+function breathingLoop() {
+  setInterval(() => {
+    drawBreathing(ctx);
+  }, 1000 / 30); 
+}
+
+
 let darkTimerMs = 0;
 let darkTimerLimitMs = 30000;
 let darkTimerTickInterval = null;
@@ -11528,6 +11556,7 @@ function loadLevel(index, newX = x, newY = y) {
     y = newY;
     
     draw();
+    breathingLoop();
     
     setTimeout(() => {
       fadeEl.style.opacity = '0';
