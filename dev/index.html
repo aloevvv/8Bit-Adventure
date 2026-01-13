@@ -1026,13 +1026,6 @@ function drawBreathing(ctx) {
 }
 
 
-function breathingLoop() {
-  setInterval(() => {
-    drawBreathing(ctx);
-  }, 1000 / 30); 
-}
-
-
 let darkTimerMs = 0;
 let darkTimerLimitMs = 30000;
 let darkTimerTickInterval = null;
@@ -11756,6 +11749,9 @@ if (useImage && activeSprite.complete && activeSprite.naturalWidth > 0) {
   ctx.fillStyle = "#0090ff";
   ctx.fillRect(x, y, imageSize, imageSize);
 }
+  setInterval(() => {
+  drawBreathing(ctx);
+}, 1000 / 30);
   
 if (window.gameSettings && window.gameSettings.showZones) {
   ctx.save();
