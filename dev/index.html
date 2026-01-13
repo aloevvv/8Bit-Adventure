@@ -1721,6 +1721,7 @@ iceZones: [],
     battleZones: [],
     dialogZones: [],
     interactables: [
+      { name: "dmgPotion5", x: 269, y: 188, width: 32, height: 32, action: "pickup", itemName: "damage_potion"},
       { name: 'photo1', x: 60, y: 40, width: 55, height: 30, action: 'photo' },
       { name: 'photo2', x: 350, y: 40, width: 80, height: 30, action: 'photo' },
       { name: 'arcadekey', x: 38, y: 131, width: 80, height: 100, action: 'arcadekey' },
@@ -2308,7 +2309,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 128, y: 68, width: 64, height: 64, encounter: [{ type: "Partybot" }], sprite: 'fail'}
+      { id: 'filter_shittingbot', x: 128, y: 68, width: 64, height: 64, encounter: [{ type: "Partybot" }], sprite: 'fail'}
     ],
     dialogZones: [
       {
@@ -2356,7 +2357,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 210, y: 203, width: 80, height: 80, interactRect: { x: 150, y: 203, width: 200, height: 96 }, encounter: [{ type: "Partybot" }, {type: "Partybot"}, {type: "Partybot"}], sprite: 'fail'}
+      { id: 'filter_partybot31', x : 210, y: 203, width: 80, height: 80, interactRect: { x: 150, y: 203, width: 200, height: 96 }, encounter: [{ type: "Partybot" }, {type: "Partybot"}, {type: "Partybot"}], sprite: 'fail'}
     ],
     dialogZones: [],
     interactables: []
