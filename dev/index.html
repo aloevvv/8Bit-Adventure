@@ -1009,21 +1009,27 @@ zoneSprites.robot.src = 'robot.png';
 function drawBreathing(ctx) {
   const t = Date.now() * 0.005;
 
-  let i = 0;
-  for (const key in zoneSprites) {
-    const img = zoneSprites[key];
-    if (!img.complete) continue;
+  if (currentLevel && currentLevel.battleZones) {
+    currentLevel.battleZones.forEach(zone => {
+      if (!zone.sprite) return;
+      const img = zoneSprites[zone.sprite];
+      if (!img || !img.complete) return;
 
-    const scaleY = 1.0 + Math.sin(t) * 0.1;
-    const currentH = 64 * scaleY;
-    const offsetHeight = currentH - 64;
-    const drawY = 100 - offsetHeight;
-    const x = 50 + i * 100;
+      const spriteW = Math.min(zone.width, 100);
+      const spriteH = Math.min(zone.height, 100);
+      const destX = zone.x + (zone.width - spriteW) / 2;
+      const destY = zone.y + (zone.height - spriteH) / 2;
 
-    ctx.drawImage(img, x, drawY, 64, currentH);
-    i++;
+      const scaleY = 1.0 + Math.sin(t) * 0.1;
+      const currentH = spriteH * scaleY;
+      const offsetHeight = currentH - spriteH;
+      const drawY = destY - offsetHeight;
+
+      ctx.drawImage(img, destX, drawY, spriteW, currentH);
+    });
   }
 }
+
 
 
 let darkTimerMs = 0;
