@@ -9285,9 +9285,7 @@ document.addEventListener("keydown", function(event) {
       showTemporaryText("Not enough bolts to play slot machine.");
       return;
     }
-    playing = true;
     slotPopup.style.display = 'flex';
-    resetSlots();
   }
 
   function closeSlotMachine() {
@@ -9326,19 +9324,24 @@ document.addEventListener("keydown", function(event) {
     }
   }
 
-  slotPlayBtn.addEventListener('click', () => {
-    if (playing) return;
-    if ((inventory.get('bolts') || 0) < BET) {
-      showTemporaryText("Not enough bolts to play slot machine.");
-      return;
-    }
-    const curBolts = inventory.get('bolts') || 0;
-    inventory.set('bolts', curBolts - BET);
-    drawInventoryBattlePopup?.();
-    drawGeneralInventory?.();
-    openSlotMachine();
-    startCycle(0);
-  });
+slotPlayBtn.addEventListener('click', () => {
+  if (playing) return;
+
+  if ((inventory.get('bolts') || 0) < BET) {
+    showTemporaryText("Not enough bolts to play slot machine.");
+    return;
+  }
+
+  const curBolts = inventory.get('bolts') || 0;
+  inventory.set('bolts', curBolts - BET);
+  drawInventoryBattlePopup?.();
+  drawGeneralInventory?.();
+
+  playing = true;
+  resetSlots();
+  openSlotMachine();
+  startCycle(0);
+});
 
   slotCloseBtn.addEventListener('click', () => {
     closeSlotMachine();
