@@ -1336,7 +1336,7 @@ const enemyTypes = {
 };
 
   const speakerConfigs = {
-  '8-Bit': { speed: 30, pitch: 1.0, frequency: 2, sound: 'blip.wav' },
+  '8-Bit': { speed: 30, pitch: 1.0, frequency: 1, sound: 'blip.wav' },
   'New': { speed: 30, pitch: 1.0, frequency: 2, sound: 'blub.mp3' },
   'Birthday Bot': { speed: 30, pitch: 1.7, frequency: 3, sound: 'blip.wav' },
   'BossRobot': { speed: 30, pitch: 0.6, frequency: 2, sound: 'blip.wav' }, 
@@ -4492,9 +4492,9 @@ prologueNext.addEventListener('click', () => {
       checkAchievements();
       updateAbilityButtonsUI();
       showDialog([
-      { speaker: '8-Bit', text: "Ughhhh...", style: 'dialog' },
-      { speaker: '8-Bit', text: "I woke up in so much pain...", style: 'dialog' },
-      { speaker: '8-Bit', text: "I guess I gotta explore.", style: 'dialog' }
+      { speaker: 'New', text: "Ughhhh...", style: 'dialog' },
+      { speaker: 'New', text: "I woke up in so much pain...", style: 'dialog' },
+      { speaker: 'New', text: "I guess I gotta explore.", style: 'dialog' }
     ]);
     });
   }
@@ -9356,7 +9356,6 @@ document.addEventListener("keydown", function(event) {
       return;
     }
     const curBolts = inventory.get('bolts') || 0;
-    inventory.set('bolts', curBolts - BET);
     drawInventoryBattlePopup?.();
     drawGeneralInventory?.();
     openSlotMachine();
