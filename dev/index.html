@@ -7899,7 +7899,7 @@ if (willHideBattleBlackout) {
   if (idx > -1) activeEnemies.splice(idx, 1);
 
   const DROP_CHANCE = 0.30;
-
+//bolts
   const boltDroppers = new Set([
     'Sniperbot',
     'Puncherbot',
@@ -7920,7 +7920,24 @@ if (willHideBattleBlackout) {
     const currentBolts = inventory.get('bolts') || 0;
     inventory.set('bolts', currentBolts + 1 + bonusBolts);
   }
-
+//gears
+  const normalGearDroppers = new Set([
+    'Sniperbot',
+    'Puncherbot',
+    'Partybot',
+    'Mousebot',
+    'Drunkard'
+  ]);
+    
+  if (normalGearDroppers.has(enemy.type) && Math.random() < 0.03) {
+    const currentDmgI = inventory.get('gear_dmg_gear_1') || 0;
+    inventory.set('gear_dmg_gear_1', currentDmgI + 1);
+  }
+    if (normalGearDroppers.has(enemy.type) && Math.random() < 0.03) {
+    const currentHpI = inventory.get('gear_hp_gear_1') || 0;
+    inventory.set('gear_hp_gear_1', currentHpI + 1);
+  }
+//other shit
 if (enemy.type === 'Partyblocker') {
   gameFlags.carpass = true;
 }    
