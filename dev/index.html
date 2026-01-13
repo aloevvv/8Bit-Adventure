@@ -11739,6 +11739,7 @@ function draw() {
     }
   });
 }
+  drawBreathing();
  
 const activeSprite = playerSprites[currentFacing];
 
@@ -11748,9 +11749,6 @@ if (useImage && activeSprite.complete && activeSprite.naturalWidth > 0) {
   ctx.fillStyle = "#0090ff";
   ctx.fillRect(x, y, imageSize, imageSize);
 }
-  setInterval(() => {
-  drawBreathing(ctx);
-}, 1000 / 30);
   
 if (window.gameSettings && window.gameSettings.showZones) {
   ctx.save();
@@ -11964,6 +11962,10 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
     }
   });
 }
+
+  setInterval(() => {
+  draw();
+}, 1000 / 30);
 
 const SETTINGS_KEY = '8bitsAdventureSettings';
 const SAVE_SLOT_PREFIX = '8bitsAdventureSave_slot_'; 
