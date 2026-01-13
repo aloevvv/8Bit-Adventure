@@ -9288,7 +9288,6 @@ document.addEventListener("keydown", function(event) {
     playing = true;
     slotPopup.style.display = 'flex';
     resetSlots();
-    startCycle(0);
   }
 
   function closeSlotMachine() {
@@ -9338,6 +9337,7 @@ document.addEventListener("keydown", function(event) {
     drawInventoryBattlePopup?.();
     drawGeneralInventory?.();
     openSlotMachine();
+    startCycle(0);
   });
 
   slotCloseBtn.addEventListener('click', () => {
