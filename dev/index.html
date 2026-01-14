@@ -504,6 +504,53 @@
   background: black;
   pointer-events: none;
 }
+    *{
+  cursor: url("cursor.png") 9 4, auto;
+}
+    .low-hp #damage-overlay {
+  opacity: 1;
+}
+#damage-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2499;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+
+  background:
+    radial-gradient(circle at top left,
+      rgba(255,0,0,0.8) 0%,
+      rgba(255,0,0,0) 70%
+    ),
+    radial-gradient(circle at top right,
+      rgba(255,0,0,0.8) 0%,
+      rgba(255,0,0,0) 70%
+    ),
+
+    radial-gradient(circle at bottom left,
+      rgba(255,0,0,0.8) 0%,
+      rgba(255,0,0,0) 70%
+    ),
+    radial-gradient(circle at bottom right,
+      rgba(255,0,0,0.8) 0%,
+      rgba(255,0,0,0) 70%
+    ),
+    radial-gradient(circle at 20% 40%,
+      rgba(120,0,0,0.5) 0%,
+      rgba(120,0,0,0) 70%
+    ),
+    radial-gradient(circle at 80% 60%,
+      rgba(120,0,0,0.4) 0%,
+      rgba(120,0,0,0) 70%
+    ),
+    radial-gradient(circle at 50% 80%,
+      rgba(120,0,0,0.3) 0%,
+      rgba(120,0,0,0) 70%
+    ),
+    rgba(255,0,0,0.1);
+}
+
     #game-over-overlay {
   position: fixed;
   top: 0;
@@ -7366,6 +7413,12 @@ function enemyAttack(enemy, target) {
   if (playerStats.currentHp < 0) {
     playerStats.currentHp = 0;
   }
+                                         
+    if (playerStats.currentHp <= playerStats.maxHp * 0.25) {
+      document.body.classList.add("low-hp"); 
+    } else {
+      document.body.classList.remove("low-hp");
+    }
 
   updateHp(playerStats.currentHp);
 
