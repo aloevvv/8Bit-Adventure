@@ -12257,14 +12257,13 @@ function closeExportMenu() {
   document.getElementById("export-menu").style.display = "none";
 }
 
-// Keyboard shortcut: Q key
 document.addEventListener("keydown", (e) => {
   if (e.key.toLowerCase() === "q") {
+    if (!devMode) return;
     openExportMenu();
   }
 });
 
-// Close button
 document.getElementById("close-export").addEventListener("click", closeExportMenu);
 
 
