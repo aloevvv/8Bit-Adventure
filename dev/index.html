@@ -4474,7 +4474,6 @@ prologueNext.addEventListener('click', () => {
   if (prologueIndex < prologueImages.length) {
     prologueImage.src = prologueImages[prologueIndex];
   } else {
-    // End of prologue
     prologueOverlay.style.display = 'none';
 
 
@@ -4492,9 +4491,9 @@ prologueNext.addEventListener('click', () => {
       checkAchievements();
       updateAbilityButtonsUI();
       showDialog([
-      { speaker: 'New', text: "Ughhhh...", style: 'dialog' },
-      { speaker: 'New', text: "I woke up in so much pain...", style: 'dialog' },
-      { speaker: 'New', text: "I guess I gotta explore.", style: 'dialog' }
+      { speaker: '8-Bit', text: "Ughhhh...", style: 'dialog' },
+      { speaker: '8-Bit', text: "I woke up in so much pain...", style: 'dialog' },
+      { speaker: '8-Bit', text: "I guess I gotta explore.", style: 'dialog' }
     ]);
     });
   }
@@ -5077,7 +5076,6 @@ if (inBattle) {
   if (itemName === 'bandaid') {
     const healAmount = Math.ceil(playerStats.maxHp * 0.33);
     updateHp(playerStats.currentHp + healAmount);
-    showTemporaryText(`Used a Bandage to heal for ${healAmount} HP!`);
   } else if (itemName === 'emp_grenade') {
   const STUN_DURATION_MS = 4000;
 
@@ -5112,7 +5110,6 @@ if (inBattle) {
     }, STUN_DURATION_MS);
   });
 
-  showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
   drawBattleUI();
   } else if (itemName === 'poison_vial') {
   const POISON_TICK_MS = 500;
@@ -5165,7 +5162,6 @@ if (inBattle) {
         return;
       }
 
-      // expiry
       if (enemy._poisonDuration <= 0) {
         if (enemy._poisonIntervalId != null) {
           clearInterval(enemy._poisonIntervalId);
@@ -5175,8 +5171,6 @@ if (inBattle) {
       }
     }, POISON_TICK_MS);
   });
-
-  showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
 
   } else if (itemName === 'damage_potion') {
     if (damageBoostTimer) {
@@ -5224,7 +5218,6 @@ if (inBattle) {
 
     extraLifeTimerId = setTimeout(() => {
       extraLifeTimerId = null;
-      showTemporaryText('Extra Life expired!');
     }, 5000);
   }
 
@@ -5317,7 +5310,6 @@ function drawBattleUI() {
   });
 }
 
-// Draw player status in battle UI
 function drawPlayerBattleStatus() {
   const playerBattleStatusDiv = document.getElementById('player-battle-status');
   playerBattleStatusDiv.innerHTML = "";
@@ -5334,7 +5326,6 @@ function drawPlayerBattleStatus() {
     nameTxt.style.margin = "0";
     container.appendChild(nameTxt);
 
-    // List of active statuses to check
     const statuses = [
       { active: !!entity._burnType, img: 'burn.png' },
       { active: !!entity.isFrozen, img: 'frozen.png' },
@@ -5659,7 +5650,6 @@ function normalAttack(enemy, target) {
         if (typeof playerTakeDamage === 'function') playerTakeDamage(dmg, enemy);
         else _orig_normalAttack(enemy, target);
       } else {
-        // fallback to original (for ally)
         _orig_normalAttack(enemy, target);
       }
     };
@@ -5683,7 +5673,6 @@ function sniperAttack(enemy, target) {
   if (typeof sniperAttack === 'function') {
     const _orig_sniperAttack = sniperAttack;
     sniperAttack = function(enemy, target) {
-      // compute damage like original wrapper did
       const isCritical = Math.random() < 0.3;
       const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
       if (target === playerStats) {
@@ -5937,8 +5926,6 @@ function lifeStealBossBehavior(enemy, target) {
 
   if (!enemy.stunned) {
     const damage = enemy.damage || 0;
-
-    // Deal damage to target
     if (target === playerStats) {
       playerTakeDamage(damage);
       showTemporaryText(`${enemy.name} life steals you for ${damage} damage!`);
@@ -5953,7 +5940,6 @@ function lifeStealBossBehavior(enemy, target) {
       }
     }
 
-    // Heal boss for damage dealt to either target
     enemy.currentHp += damage;
     if (enemy.currentHp > enemy.maxHp) enemy.currentHp = enemy.maxHp;
     showTemporaryText(`${enemy.name} heals for ${damage} HP!`);
@@ -5964,7 +5950,6 @@ function lifeStealBossBehavior(enemy, target) {
 }
 // Cave boss 
 function caveBossBehavior(enemy, target) {
-  // Spawn shards
   if (!enemy._shardIntervalId) {
     enemy._shardIntervalId = setInterval(() => {
       if (!inBattle) return;
@@ -5991,44 +5976,32 @@ function caveBossBehavior(enemy, target) {
     }, 1500);
   }
 
-  // Blackout cycle
   const hpPercent = (enemy.currentHp / enemy.maxHp) * 100;
   if (hpPercent <= 50) {
     if (!enemy._blackoutRunning) {
       enemy._blackoutRunning = true;
 
-      // Start the repeating cycle
       enemy._blackoutIntervalId = setInterval(() => {
-        // begin blackout
         showBattleBlackout();
-        showTemporaryText('Darkness covers the battlefield!');
-        // end blackout after 9s (1s visibility remains)
         setTimeout(() => {
           hideBattleBlackout();
-          showTemporaryText('You can see for a moment...');
         }, 9000);
       }, 10000);
 
-      // trigger the first cycle immediately
       showBattleBlackout();
-      showTemporaryText('Darkness covers the battlefield!');
       setTimeout(() => {
         hideBattleBlackout();
-        showTemporaryText('You can see for a moment...');
       }, 9000);
     }
   }
 
-  // Regular attacks while not stunned
   if (!enemy.stunned) {
     const dmg = enemy.damage || 0;
     if (target === playerStats) {
       playerTakeDamage(dmg);
-      showTemporaryText(`${enemy.name} lashes out for ${dmg} damage!`);
     } else if (target === activeAlly && activeAlly) {
       activeAlly.currentHp -= dmg;
       if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-      showTemporaryText(`${enemy.name} attacks ${activeAlly.name} for ${dmg} damage!`);
       if (activeAlly.currentHp === 0) {
         showTemporaryText(`${activeAlly.name} has been defeated!`);
         clearInterval(activeAlly.attackTimerId);
@@ -6046,7 +6019,6 @@ function caveBossBehavior(enemy, target) {
   function spawnMountainPen(boss) {
   if (!inBattle || !boss || boss.currentHp <= 0) return null;
 
-  // If a pen already exists (in activeEnemies or referenced on boss), don't spawn another
   if (boss._hasPen || activeEnemies.some(e => e && e._isMountainPen)) return null;
 
   const pen = {
@@ -6065,10 +6037,8 @@ function caveBossBehavior(enemy, target) {
     _spawnedSheep: []
   };
 
-  // Pen behavior: spawn a sheep every sheepSummonIntervalMs
   pen._sheepIntervalId = setInterval(() => {
     if (!inBattle || !activeEnemies.includes(boss) || boss.currentHp <= 0) {
-      // boss dead or battle ended -> clean up
       clearInterval(pen._sheepIntervalId);
       pen._sheepIntervalId = null;
       return;
@@ -6081,7 +6051,6 @@ function caveBossBehavior(enemy, target) {
   boss._hasPen = true;
   boss._penRef = pen;
 
-  showTemporaryText(`${boss.name} conjures a pen!`);
   drawBattleUI();
   return pen;
 }
