@@ -11598,14 +11598,6 @@ function loadLevel(index, newX = x, newY = y) {
   }, 500);
 }
 
-  const items = document.querySelectorAll('#inventory-list .inventory-item');
-items.forEach((item, i) => {
-  const column = Math.floor(i / 10) + 1; //if no work == delete
-  const row = (i % 10) + 1;   
-  item.style.gridColumn = column;
-  item.style.gridRow = row;
-});
-
 
 function isInZone(zones, px, py) {
   if (!zones) return false;
