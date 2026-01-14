@@ -5345,7 +5345,8 @@ function drawPlayerBattleStatus() {
       { active: !!entity.isFrozen, img: 'frozen.png' },
       { active: !!entity.isBlinded, img: 'blinded.png' },
       { active: !!entity.isFogged, img: 'fog.png' },
-      { active: !!entity.isBleeding, img: 'bleed.png' }
+      { active: !!entity.isBleeding, img: 'bleed.png' },
+      { active: !!entity.isTargeted, img: 'target.png' }
     ];
 
     statuses.forEach(s => {
@@ -6852,27 +6853,62 @@ function finalBossStage3Behavior(enemy, target) {
 
 //battlefield boss
 function critBossBehavior(enemy, target) {
-  if (enemy.shieldActive) {
+  if (enemy.stunned || enemy.isStoned) return;
+
+  const hpPercent = (enemy.currentHp / enemy.maxHp) * 100;
+
+  if (hpPercent <= 25) {
+    if (!enemy._phase3Triggered) {
+      enemy._phase3Triggered = true;
+      showBattleDialog([{ speaker: enemy.name, text: "I'll figure out dialogue later.", style: 'boss' }]);
+      
+      enemy._drainInterval = setInterval(() => {
+        if (!inBattle || enemy.currentHp <= 1) {
+          clearInterval(enemy._drainInterval);
+          return;
+        }
+        enemy.currentHp -= 1;
+        drawBattleUI();
+      }, 1000);
+    }
+    normalAttack(enemy, target);
     return;
   }
 
-  if (!enemy.stunned) {
-    const isCrit = Math.random() < 0.5;
-    const baseDamage = enemy.damage || 0;
-    const damage = isCrit ? baseDamage * 3 : baseDamage;
+  if (hpPercent <= 50) {
+    if (!enemy._phase2Triggered) {
+      enemy._phase2Triggered = true;
+      showBattleDialog([{ speaker: enemy.name, text: "I'll figure out dialogue later.", style: 'boss' }]);
 
-    if (target === playerStats) {
-      playerTakeDamage(damage);
-      showTemporaryText(`${enemy.name} ${isCrit ? 'critically attacks' : 'attacks'} you for ${damage} damage!`);
-    } else if (target === activeAlly) {
-      activeAlly.currentHp -= damage;
-      if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-      showTemporaryText(`${enemy.name} ${isCrit ? 'critically attacks' : 'attacks'} ${activeAlly.name} for ${damage} damage!`);
-      if (activeAlly.currentHp === 0) {
-        showTemporaryText(`${activeAlly.name} has been defeated!`);
-        clearInterval(activeAlly.attackTimerId);
-        activeAlly.attackTimerId = null;
-      }
+      playerStats.isTargeted = false;
+      if (activeAlly) activeAlly.isTargeted = false;
+      drawPlayerBattleStatus();
+    }
+    normalAttack(enemy, target);
+    return;
+  }
+
+  const targetedEntity = (playerStats.isTargeted) ? playerStats : (activeAlly && activeAlly.isTargeted ? activeAlly : null);
+
+  if (targetedEntity) {
+    const dmg = enemy.damage * 3;
+    if (targetedEntity === playerStats) {
+      playerTakeDamage(dmg, enemy);
+    } else {
+      targetedEntity.currentHp = Math.max(0, targetedEntity.currentHp - dmg);
+    }
+    showTemporaryText(`CRITICAL STRIKE on marked target for ${dmg} damage!`);
+    
+    targetedEntity.isTargeted = false;
+    drawPlayerBattleStatus();
+  } else {
+    if (Math.random() < 0.30) {
+      const luckyWinner = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
+      luckyWinner.isTargeted = true;
+      showTemporaryText(`${enemy.name} is tracking ${luckyWinner.name || '8-Bit'}!`);
+      drawPlayerBattleStatus();
+    } else {
+      normalAttack(enemy, target);
     }
   }
 }
