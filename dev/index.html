@@ -518,16 +518,6 @@ a:hover,
   cursor: url("pointer.png") 16 16, pointer !important;
 }
 
-.low-hp {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at top left, rgba(255,0,0,0.7), transparent 70%),
-    radial-gradient(circle at top right, rgba(255,0,0,0.7), transparent 70%),
-    radial-gradient(circle at bottom left, rgba(255,0,0,0.7), transparent 70%),
-    radial-gradient(circle at bottom right, rgba(255,0,0,0.7), transparent 70%);
-}
 
 
     #game-over-overlay {
@@ -778,7 +768,7 @@ a:hover,
   </div>
 </div>
 
-  <div class="low-hp"></div>
+  <div id="damage-overlay"></div>
 
 
 <div id="export-menu" style="display:none;position:fixed;top:20%;left:50%;transform:translateX(-50%);
@@ -4626,12 +4616,6 @@ function updateStamina(newStamina) {
 function updateHp(newHealth) {
   if (newHealth < 0) newHealth = 0;
   if (newHealth > playerStats.maxHp) newHealth = playerStats.maxHp;
-
-  if (playerStats.currentHp <= playerStats.maxHp * 0.25) {
-      document.body.classList.add("low-hp"); 
-    } else {
-      document.body.classList.remove("low-hp");
-    }
 
   playerStats.currentHp = newHealth;
 
