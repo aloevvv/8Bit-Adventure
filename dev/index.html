@@ -7358,72 +7358,41 @@ function enemyAttack(enemy, target) {
     }
   }
 }
-  function playerTakeDamage(amount) {
+  function playerTakeDamage(amount, attacker) {
   if (equippedArmor === "haunted") {
     const blockChance = armorTypes["haunted"].blockChance || 0;
     if (Math.random() < blockChance) {
-      showTemporaryText("Haunted Armor blocked the attack!");
       return;
     }
   }
 
-    if (typeof playerTakeDamage === 'function') {
-  const _orig_playerTakeDamage = playerTakeDamage;
-  playerTakeDamage = function(amount, attacker) {
-    // If block active -> ignore damage
-    if (blockActive) {
-      showTemporaryText('Blocked incoming damage!');
-      return;
-    }
+  if (blockActive) {
+    //const blockSfx = new Audio('block.wav');
+    //blockSfx.play().catch(e=>{});
+    return;
+  }
 
-    // If counter window active -> reflect and supposed to stun but there was a bug w that
-    if (counterWindowActive) {
-  
-  if (attacker && typeof attacker.currentHp === 'number') {
-    attacker.currentHp = Math.max(0, attacker.currentHp - (amount * 3));
-
-    if (attacker.currentHp <= 0) {
-      attacker.currentHp === 1;
-    }
-
-    drawBattleUI();
-  } else {
-    const targetAtt = activeEnemies[selectedEnemyIndex];
-    if (targetAtt) {
-      targetAtt.currentHp = Math.max(0, targetAtt.currentHp - (amount * 3));
-
-      if (targetAtt.currentHp <= 0) {
-       targetAtt.currentHp === 1;
-      }
-
+  if (counterWindowActive) {
+    const targetToHit = attacker || activeEnemies[selectedEnemyIndex];
+    if (targetToHit) {
+      targetToHit.currentHp = Math.max(0, targetToHit.currentHp - (amount * 3));
+      spawnDamageNumber(activeEnemies.indexOf(targetToHit), amount * 3);
+      if (targetToHit.currentHp === 0) handleEnemyDeath(targetToHit);
       drawBattleUI();
     }
+    return;
   }
 
-  return;
-}
-
-
-
-    // Else normal behavior
-    return _orig_playerTakeDamage(amount);
-  };
-}
-    
   playerStats.currentHp -= amount;
-    const hurtSound = new Audio('hitHurt.wav');
-      hurtSound.play();
+  
+  const hurtSound = new Audio('hitHurt.wav');
+  hurtSound.play().catch(e=>{});
 
-  if (!canGoBelow1Hp()) { 
-    if (playerStats.currentHp <= 1) {
-      playerStats.currentHp = playerStats.maxHp;
-    }
+  if (!canGoBelow1Hp() && playerStats.currentHp <= 0) {
+    playerStats.currentHp = 1;
   }
 
-  if (playerStats.currentHp < 0) {
-    playerStats.currentHp = 0;
-  }
-                                         
+  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
 
   updateHp(playerStats.currentHp);
 
@@ -7431,6 +7400,7 @@ function enemyAttack(enemy, target) {
     endBattle('lose');
   }
 }
+  
   function createSparks(x, y) {
   const sparkCount = 15;
   
@@ -8224,12 +8194,6 @@ setInterval(() => {
 
   // Spawn first round
   spawnRound(currentRoundIndex);
-
-  const _orig_initiateBattle = typeof initiateBattle === 'function' ? initiateBattle : null;
-initiateBattle = function(zoneType, zoneObject) {
-  if (_orig_initiateBattle) _orig_initiateBattle(zoneType, zoneObject);
-  resetAbilitiesForBattle();
-};
   
   if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
     const allyBase = alliesData.find(a => a.id === equippedAllyId);
