@@ -10524,6 +10524,7 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
               removedWallIds.add('partywall'); 
               currentLevel.walls = currentLevel.walls.filter(w => w.id !== 'partywall');
               showTemporaryText("You killed the birthday bot.");
+              createSparks(115, 275);
               draw();
             }
           },
