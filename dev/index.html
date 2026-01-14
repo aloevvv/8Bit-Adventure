@@ -7401,8 +7401,9 @@ function enemyAttack(enemy, target) {
     if (targetToHit) {
       targetToHit.currentHp = Math.max(0, targetToHit.currentHp - (amount * 3));
       spawnDamageNumber(activeEnemies.indexOf(targetToHit), amount * 3);
-      if (targetToHit.currentHp === 0) handleEnemyDeath(targetToHit);
-      drawBattleUI();
+      if (targetToHit.currentHp <= 0) {
+        targetToHit.currentHp === 1;
+      }
     }
     return;
   }
@@ -7413,7 +7414,7 @@ function enemyAttack(enemy, target) {
   hurtSound.play().catch(e=>{});
 
   if (!canGoBelow1Hp() && playerStats.currentHp <= 0) {
-    playerStats.currentHp = 1;
+    playerStats.currentHp = playerStats.maxHp;
   }
 
   if (playerStats.currentHp < 0) playerStats.currentHp = 0;
