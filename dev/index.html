@@ -508,7 +508,7 @@
   cursor: url("cursor2.png") 6 0, auto;
 }
     .low-hp #damage-overlay {
-  opacity: 0.5;
+  opacity: 1;
 }
 #damage-overlay {
   pointer-events: none;
@@ -536,18 +536,18 @@
       rgba(255,0,0,0.8) 0%,
       rgba(255,0,0,0) 70%
     ),
-    radial-gradient(circle at 20% 40%,
-      rgba(120,0,0,0.5) 0%,
-      rgba(120,0,0,0) 70%
-    ),
-    radial-gradient(circle at 80% 60%,
-      rgba(120,0,0,0.4) 0%,
-      rgba(120,0,0,0) 70%
-    ),
-    radial-gradient(circle at 50% 80%,
-      rgba(120,0,0,0.3) 0%,
-      rgba(120,0,0,0) 70%
-    ),
+    radial-gradient(circle 10px at 20% 40%,
+  rgba(120,0,0,0.5) 0%,
+  rgba(120,0,0,0) 100%
+),
+radial-gradient(circle 10px at 80% 60%,
+  rgba(120,0,0,0.4) 0%,
+  rgba(120,0,0,0) 100%
+),
+radial-gradient(circle 10px at 50% 80%,
+  rgba(120,0,0,0.3) 0%,
+  rgba(120,0,0,0) 100%
+);
     rgba(255,0,0,0.1);
 }
 
