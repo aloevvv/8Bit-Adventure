@@ -507,49 +507,7 @@
     *{
   cursor: url("cursor2.png") 6 0, auto;
 }
-   .low-hp #damage-overlay {
-  opacity: 0.7;
-}
-#damage-overlay {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 2499;
-  opacity: 0.1;
-  /* transition: opacity 0.8s ease; */
-
-  background:
-    radial-gradient(circle at top left,
-      rgba(255,0,0,0.9) 0%,
-      rgba(255,0,0,0) 100%
-    ),
-    radial-gradient(circle at top right,
-      rgba(255,0,0,0.9) 0%,
-      rgba(255,0,0,0) 100%
-    ),
-
-    radial-gradient(circle at bottom left,
-      rgba(255,0,0,0.9) 0%,
-      rgba(255,0,0,0) 100%
-    ),
-    radial-gradient(circle at bottom right,
-      rgba(255,0,0,0.9) 0%,
-      rgba(255,0,0,0) 100%
-    ),
-    radial-gradient(circle 10px at 20% 40%,
-  rgba(120,0,0,0.9) 0%,
-  rgba(120,0,0,0) 100%
-),
-radial-gradient(circle 10px at 80% 60%,
-  rgba(120,0,0,0.9) 0%,
-  rgba(120,0,0,0) 100%
-),
-radial-gradient(circle 10px at 50% 80%,
-  rgba(120,0,0,0.9) 0%,
-  rgba(120,0,0,0) 100%
-);
-}
-
+   
     #game-over-overlay {
   position: fixed;
   top: 0;
@@ -4647,14 +4605,6 @@ function updateHp(newHealth) {
   if (newHealth > playerStats.maxHp) newHealth = playerStats.maxHp;
 
   playerStats.currentHp = newHealth;
-
-  if (playerStats.currentHp === 0) {
-    document.body.classList.remove("low-hp");
-  } else if (playerStats.currentHp <= playerStats.maxHp * 0.25) {
-    document.body.classList.add("low-hp");
-  } else {
-    document.body.classList.remove("low-hp");
-  }
 
   const newWidth = (playerStats.currentHp / playerStats.maxHp) * 100;
   hpBar.style.width = `${newWidth}%`;
