@@ -4291,12 +4291,13 @@ function objPlaceholder() {
   const blipSound = new Audio('blip.wav');
 blipSound.volume = 0.6;
   
-function startTypewriter(text, element, speaker = null, effect = null) {
+function startTypewriter(text, element, speaker = null, effect = null, onFinish = null) {
   clearInterval(_typingInterval);
   _isTyping = true;
   _fullTextToDisplay = text;
   _currentSpeaker = speaker;
   _currentEffect = effect;
+  _currentOnFinish = onFinish;
 
   const config = speakerConfigs[speaker] || speakerConfigs['default'];
   const charSound = new Audio(config.sound);
@@ -4317,7 +4318,6 @@ function startTypewriter(text, element, speaker = null, effect = null) {
           span.style.animationDelay = (i * 0.1) + 's';
       }
       if (effect === 'glitch') span.classList.add('effect-glitch');
-
       element.appendChild(span);
 
       if (i % config.frequency === 0) {
@@ -4327,12 +4327,12 @@ function startTypewriter(text, element, speaker = null, effect = null) {
       }
       i++;
     } else {
-      finishTyping(element);
+      finishTyping(element, onFinish);
     }
   }, config.speed);
 }
 
-function finishTyping(element) {
+function finishTyping(element, onFinish = null) {
   clearInterval(_typingInterval);
   _isTyping = false;
   
@@ -4349,6 +4349,7 @@ function finishTyping(element) {
     if (_currentEffect === 'glitch') span.classList.add('effect-glitch');
     element.appendChild(span);
   }
+  if (onFinish) onFinish();
 }
   
 function findDialogZone(checkX, checkY) {
@@ -4438,37 +4439,38 @@ function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
+  const nextBtn = document.getElementById('dialog-next');
 
   overlay.style.display = 'flex';
   overlay._markId = idToMark || null;
+  nextBtn.style.display = 'none';
 
-  
-  textDiv.innerHTML = '';
   applyDialogStyle(box, opts.style || 'dialog');
 
-  
-  const p = document.createElement('p');
-  p.textContent = dialogText;
-  textDiv.appendChild(p);
+  startTypewriter(dialogText, textDiv, opts.speaker || null, opts.effect, () => {
+    textDiv.appendChild(document.createElement('br'));
+    textDiv.appendChild(document.createElement('br'));
 
-  options.forEach(opt => {
-    const btn = document.createElement('button');
-    btn.textContent = opt.label;
-    btn.className = 'item-use-button';
-    btn.style.marginTop = '8px';
-    btn.style.padding = '8px 16px';
-    btn.style.fontSize = '14px';
-    btn.onclick = () => {
-      overlay.style.display = 'none';
-      if (opt.onSelect) opt.onSelect();
-      if (idToMark) shownDialogs.add(idToMark);
-      draw();
-    };
-    textDiv.appendChild(btn);
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.textContent = opt.label;
+      btn.className = 'item-use-button';
+      btn.style.margin = '8px 10px 0 0';
+      btn.style.padding = '8px 16px';
+      btn.style.fontSize = '14px';
+      btn.onclick = () => {
+        overlay.style.display = 'none';
+        if (opt.onSelect) opt.onSelect();
+        if (idToMark) shownDialogs.add(idToMark);
+        draw();
+      };
+      textDiv.appendChild(btn);
+    });
   });
 }
   
   function showBattleDialog(textOrLines, idToMark, opts = {}) {
+  document.getElementById('dialog-next').style.display = 'inline-block';
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
@@ -4491,6 +4493,7 @@ function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
 }
 
 function showDialog(textOrLines, idToMark, opts = {}) {
+  document.getElementById('dialog-next').style.display = 'inline-block';
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
