@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>8Bit’s Adventure</title>
   <link rel="icon" type="image/png" href="favicon.png" />
-  <!-- Google Font: Press Start 2P -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
@@ -1221,6 +1220,7 @@ inventory.set("poison_vial", 0);
 inventory.set("extra_life", 0);
 inventory.set("damage_potion", 0);
 inventory.set("stamina_potion", 0);
+inventory.set("anti_virus)", 1);
 inventory.set("driftwood", 0);
 
 inventory.set("bolts", 5);
@@ -4950,7 +4950,7 @@ console.log('drawInventoryBattlePopup called, entries:', Array.from(inventory.en
   battleInventoryList.innerHTML = "";
 
  
-  const allowedExact = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'damage_potion', 'stamina_potion', 'driftwood']);
+  const allowedExact = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'damage_potion', 'stamina_potion', 'anti_virus', 'driftwood']);
   const allowedPrefix = ['battle_']; 
 
   
@@ -5087,7 +5087,7 @@ function useItem(itemName) {
   
 if (inBattle) {
 
-  const battleAllowed = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'damage_potion', 'stamina_potion', 'driftwood']);
+  const battleAllowed = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'damage_potion', 'stamina_potion', 'anti_virus', 'driftwood']);
   if (!battleAllowed.has(itemName) && !itemName.startsWith('battle_')) {
     showTemporaryText("You can't use that item during battle.");
     return;
@@ -5224,6 +5224,29 @@ if (inBattle) {
       showTemporaryText(`You repair the raft with driftwood. Raft HP +1 (${window._raft.hp}/${window._raft.maxHp})`);
       drawPlayerBattleStatus();
       drawBattleUI();
+    }
+  } else if (itemName === 'anti_virus') {
+    const boss = activeEnemies.find(e => e.type === "CritBoss");
+    if (boss && (boss.currentHp / boss.maxHp) <= 0.25) {
+        inBattle = false;
+        if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+        if (boss._drainInterval) clearInterval(boss._drainInterval);
+        
+        document.getElementById('battle-overlay').style.display = 'none';
+
+        showDialog([
+          { speaker: boss.name, text: "I... I feel normal again.", style: 'unit' }
+        ], null, {
+          onComplete: () => {
+            gainXP(boss.xpReward);
+            if (defeatedZone) removeZone(defeatedZone);
+            activeEnemies = [];
+            draw();
+          }
+        });
+        return;
+    } else {
+        return;
     }
     
   } else if (itemName === 'extra_life') {
@@ -6867,7 +6890,7 @@ function critBossBehavior(enemy, target) {
   if (hpPercent <= 25) {
     if (!enemy._phase3Triggered) {
       enemy._phase3Triggered = true;
-      showBattleDialog([{ speaker: enemy.name, text: "I'll figure out dialogue later.", style: 'boss' }]);
+      showBattleDialog([{ speaker: enemy.name, text: "8-Bit, please, my systems are losing power...", style: 'unit' }]);
       
       enemy._drainInterval = setInterval(() => {
         if (!inBattle || enemy.currentHp <= 1) {
@@ -6885,7 +6908,7 @@ function critBossBehavior(enemy, target) {
   if (hpPercent <= 50) {
     if (!enemy._phase2Triggered) {
       enemy._phase2Triggered = true;
-      showBattleDialog([{ speaker: enemy.name, text: "I'll figure out dialogue later.", style: 'boss' }]);
+      showBattleDialog([{ speaker: enemy.name, text: "I think I'm regaining myself...", style: 'boss' }]);
 
       playerStats.isTargeted = false;
       if (activeAlly) activeAlly.isTargeted = false;
@@ -6904,7 +6927,6 @@ function critBossBehavior(enemy, target) {
     } else {
       targetedEntity.currentHp = Math.max(0, targetedEntity.currentHp - dmg);
     }
-    showTemporaryText(`CRITICAL STRIKE on marked target for ${dmg} damage!`);
     
     targetedEntity.isTargeted = false;
     drawPlayerBattleStatus();
@@ -6912,7 +6934,6 @@ function critBossBehavior(enemy, target) {
     if (Math.random() < 0.30) {
       const luckyWinner = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
       luckyWinner.isTargeted = true;
-      showTemporaryText(`${enemy.name} is tracking ${luckyWinner.name || '8-Bit'}!`);
       drawPlayerBattleStatus();
     } else {
       normalAttack(enemy, target);
@@ -6970,7 +6991,7 @@ function endBattle(outcome) {
         inBattle = true;
         drawBattleUI();
         drawPlayerBattleStatus();
-        return; // Important to return early so battle continues
+        return; 
       }
     }
 
@@ -7367,6 +7388,8 @@ function enemyAttack(enemy, target) {
   }
 
   if (blockActive) {
+    if (playerStats.isTargeted) {
+  } else {
     //const blockSfx = new Audio('block.wav');
     //blockSfx.play().catch(e=>{});
     return;
@@ -7948,6 +7971,22 @@ if (enemy.type === 'Partyblocker') {
   healedHp = Math.round(healedHp);
   playerStats.currentHp = healedHp;
   updateHp(playerStats.currentHp);
+}
+    
+    if (enemy.type === "CritBoss") {
+    setTimeout(() => {
+        showDialog([
+            { speaker: "Deadshot", text: "Argh...", style: 'unit' },
+            { speaker: "Deadshot", text: "I feel weak... but cleared.", style: 'unit' },
+            { speaker: "Deadshot", text: "Normal.", style: 'unit' },
+            { speaker: "Deadshot", text: "8-Bit, I am so sorry for my betrayal.", style: 'unit' },
+            { speaker: "Deadshot", text: "I wish things hadn't come to this, but they had.", style: 'unit' },
+            { speaker: "Deadshot", text: "It was nice to meet you, but I fear this is the end.", style: 'unit' },
+            { speaker: "Deadshot", text: "I understand if you decide to finish me off.", style: 'unit' },
+            { speaker: "Deadshot", text: "You cannot trust me again.", style: 'unit' },
+            { speaker: "8-Bit", text: "I...", style: 'dialog' }
+        ]);
+    }, 1000);
 }
 
   
