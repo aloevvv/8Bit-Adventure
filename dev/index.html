@@ -285,6 +285,29 @@
   opacity: 0 !important;
   transition: opacity 0.7s ease-out !important;
 }
+@keyframes char-shake {
+  0% { transform: translate(1px, 1px); }
+  25% { transform: translate(-1px, -1px); }
+  50% { transform: translate(-1px, 1px); }
+  75% { transform: translate(1px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes char-wave {
+  from { transform: translateY(0); }
+  to { transform: translateY(-5px); }
+}
+@keyframes char-glitch {
+  0% { opacity: 1; transform: skew(0deg); }
+  20% { opacity: 0.8; transform: skew(10deg); color: #ff00ff; }
+  40% { opacity: 1; transform: skew(-10deg); color: #00ffff; }
+  100% { opacity: 1; transform: skew(0deg); }
+}
+
+.dialog-char { display: inline-block; min-width: 0.2em; }
+.effect-shake { animation: char-shake 0.15s infinite; }
+.effect-wave { animation: char-wave 0.5s infinite alternate ease-in-out; }
+.effect-glitch { animation: char-glitch 0.2s infinite; }
+    
     .enemy-target.stunned {
   filter: grayscale(100%);
   opacity: 0.6;
@@ -4268,43 +4291,64 @@ function objPlaceholder() {
   const blipSound = new Audio('blip.wav');
 blipSound.volume = 0.6;
   
-function startTypewriter(text, element, speaker = null) {
+function startTypewriter(text, element, speaker = null, effect = null) {
   clearInterval(_typingInterval);
   _isTyping = true;
   _fullTextToDisplay = text;
   _currentSpeaker = speaker;
+  _currentEffect = effect;
 
   const config = speakerConfigs[speaker] || speakerConfigs['default'];
   const charSound = new Audio(config.sound);
-  charSound.volume = 0.6;
+  charSound.volume = 0.5;
 
   let i = 0;
   element.innerHTML = speaker ? `<strong>${speaker}</strong>\n\n` : "";
 
   _typingInterval = setInterval(() => {
     if (i < text.length) {
-      element.innerHTML += text.charAt(i);
+      const char = text.charAt(i);
+      const span = document.createElement('span');
+      span.className = 'dialog-char';
+      span.textContent = char;
+      if (effect === 'shaky') span.classList.add('effect-shake');
+      if (effect === 'sine' || effect === 'wave') {
+          span.classList.add('effect-wave');
+          span.style.animationDelay = (i * 0.1) + 's';
+      }
+      if (effect === 'glitch') span.classList.add('effect-glitch');
+
+      element.appendChild(span);
 
       if (i % config.frequency === 0) {
         const playClone = charSound.cloneNode();
         playClone.playbackRate = config.pitch;
-        playClone.volume = charSound.volume;
         playClone.play().catch(e => {});
       }
-
       i++;
     } else {
       finishTyping(element);
     }
-  }, config.speed); 
+  }, config.speed);
 }
 
 function finishTyping(element) {
   clearInterval(_typingInterval);
   _isTyping = false;
-  element.innerHTML = _currentSpeaker ? 
-    `<strong>${_currentSpeaker}</strong>\n\n${_fullTextToDisplay}` : 
-    _fullTextToDisplay;
+  
+  element.innerHTML = _currentSpeaker ? `<strong>${_currentSpeaker}</strong>\n\n` : "";
+  for (let i = 0; i < _fullTextToDisplay.length; i++) {
+    const span = document.createElement('span');
+    span.className = 'dialog-char';
+    span.textContent = _fullTextToDisplay[i];
+    if (_currentEffect === 'shaky') span.classList.add('effect-shake');
+    if (_currentEffect === 'sine' || _currentEffect === 'wave') {
+        span.classList.add('effect-wave');
+        span.style.animationDelay = (i * 0.1) + 's';
+    }
+    if (_currentEffect === 'glitch') span.classList.add('effect-glitch');
+    element.appendChild(span);
+  }
 }
   
 function findDialogZone(checkX, checkY) {
@@ -4332,12 +4376,13 @@ function normalizeDialogLines(textOrLines, defaultStyle) {
   const lines = Array.isArray(textOrLines) ? textOrLines.slice() : [String(textOrLines)];
   return lines.map(line => {
     if (typeof line === 'string') {
-      return { speaker: null, text: line, style: defaultStyle || 'dialog' };
+      return { speaker: null, text: line, style: defaultStyle || 'dialog', effect: null };
     }
     return {
       speaker: line.speaker || null,
       text: line.text != null ? String(line.text) : '',
-      style: line.style || defaultStyle || 'dialog'
+      style: line.style || defaultStyle || 'dialog',
+      effect: line.effect || null
     };
   });
 }
@@ -10562,9 +10607,10 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
 
     if (!gameFlags.birthdaybottalk) {
       showDialog([
-        { speaker: 'Birthday Bot', text: "Please don't hurt me. It's my birthday, I just wanted to celebrate.", style: 'npc' },
-        { speaker: '8-Bit', text: "You and your little gang destroyed my friend's house. I don't care what you're here for.", style: 'dialog' },
-        { speaker: 'Birthday Bot', text: "I'm just a kid, you aren't going to kill a kid, are you?", style: 'npc' }
+        { speaker: 'Birthday Bot', text: "Please don't hurt me. It's my birthday, I just wanted to celebrate.", style: 'npc', effect: 'shaky' },
+        { speaker: '8-Bit', text: "You and your little gang destroyed my friend's house.", style: 'dialog' },
+        { speaker: '8-Bit', text: "I don't care what you're here for.", style: 'dialog' },
+        { speaker: 'Birthday Bot', text: "I'm just a kid, you aren't going to kill a kid, are you?", style: 'npc', effect: 'shaky' }
       ], object.id, {
         onComplete: () => {
           gameFlags.birthdaybottalk = true;
@@ -11580,11 +11626,11 @@ loadTitleBtn.addEventListener('click', () => {
     nextLine = _dialogQueue.shift();
   }
 
-  if (nextLine) {
-    applyDialogStyle(box, nextLine.style || 'dialog');
-    startTypewriter(nextLine.text, textDiv, nextLine.speaker);
-    return;
-  }
+if (nextLine) {
+  applyDialogStyle(box, nextLine.style || 'dialog');
+  startTypewriter(nextLine.text, textDiv, nextLine.speaker, nextLine.effect); 
+  return;
+}
 
   const id = overlay._markId;
   overlay._markId = null;
