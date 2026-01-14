@@ -4296,6 +4296,7 @@ function startTypewriter(text, element, speaker = null, effect = null) {
   _isTyping = true;
   _fullTextToDisplay = text;
   _currentSpeaker = speaker;
+  _currentEffect = effect;
 
   const config = speakerConfigs[speaker] || speakerConfigs['default'];
   const charSound = new Audio(config.sound);
@@ -4312,8 +4313,8 @@ function startTypewriter(text, element, speaker = null, effect = null) {
       span.textContent = char;
       if (effect === 'shaky') span.classList.add('effect-shake');
       if (effect === 'sine' || effect === 'wave') {
-        span.classList.add('effect-wave');
-        span.style.animationDelay = (i * 0.1) + 's';
+          span.classList.add('effect-wave');
+          span.style.animationDelay = (i * 0.1) + 's';
       }
       if (effect === 'glitch') span.classList.add('effect-glitch');
 
@@ -4322,36 +4323,33 @@ function startTypewriter(text, element, speaker = null, effect = null) {
       if (i % config.frequency === 0) {
         const playClone = charSound.cloneNode();
         playClone.playbackRate = config.pitch;
-        playClone.play().catch(() => {});
+        playClone.play().catch(e => {});
       }
       i++;
     } else {
-      finishTyping(element, text, speaker, effect);
+      finishTyping(element);
     }
   }, config.speed);
 }
 
-function finishTyping(element, text, speaker, effect) {
+function finishTyping(element) {
   clearInterval(_typingInterval);
   _isTyping = false;
-
-  element.innerHTML = speaker ? `<strong>${speaker}</strong>\n\n` : "";
-  for (let i = 0; i < text.length; i++) {
+  
+  element.innerHTML = _currentSpeaker ? `<strong>${_currentSpeaker}</strong>\n\n` : "";
+  for (let i = 0; i < _fullTextToDisplay.length; i++) {
     const span = document.createElement('span');
     span.className = 'dialog-char';
-    span.textContent = text[i];
-
-    if (effect === 'shaky') span.classList.add('effect-shake');
-    if (effect === 'sine' || effect === 'wave') {
-      span.classList.add('effect-wave');
-      span.style.animationDelay = (i * 0.1) + 's';
+    span.textContent = _fullTextToDisplay[i];
+    if (_currentEffect === 'shaky') span.classList.add('effect-shake');
+    if (_currentEffect === 'sine' || _currentEffect === 'wave') {
+        span.classList.add('effect-wave');
+        span.style.animationDelay = (i * 0.1) + 's';
     }
-    if (effect === 'glitch') span.classList.add('effect-glitch');
-
+    if (_currentEffect === 'glitch') span.classList.add('effect-glitch');
     element.appendChild(span);
   }
 }
-
   
 function findDialogZone(checkX, checkY) {
   const hitboxX = checkX + (typeof hitboxOffsetX !== 'undefined' ? hitboxOffsetX : 0);
@@ -4557,9 +4555,9 @@ prologueNext.addEventListener('click', () => {
       checkAchievements();
       updateAbilityButtonsUI();
       showDialog([
-      { speaker: '8-Bit', text: "Ughhhh...", style: 'dialog' },
-      { speaker: '8-Bit', text: "I woke up in so much pain...", style: 'dialog' },
-      { speaker: '8-Bit', text: "I guess I gotta explore.", style: 'dialog' }
+      { speaker: '8-Bit', text: "Ughhhh...", style: 'dialog', effect: 'sine' }, // edit edit
+      { speaker: '8-Bit', text: "I woke up in so much pain...", style: 'dialog', effect: 'glitch' },
+      { speaker: '8-Bit', text: "I guess I gotta explore.", style: 'dialog', effect: 'shaky' }
     ]);
     });
   }
