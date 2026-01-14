@@ -4486,7 +4486,7 @@ function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
     const line = _battleDialogQueue.shift();
     overlay.style.display = 'flex';
     applyDialogStyle(box, line.style);
-    startTypewriter(line.text, textDiv, line.speaker);
+    startTypewriter(line.text, textDiv, line.speaker, line.effect);
   }
 }
 
@@ -4503,7 +4503,7 @@ function showDialog(textOrLines, idToMark, opts = {}) {
     const line = _dialogQueue.shift();
     applyDialogStyle(box, line.style);
     
-    startTypewriter(line.text, textDiv, line.speaker);
+    startTypewriter(line.text, textDiv, line.speaker, line.effect);
   }
   
   overlay._markId = idToMark || null;
@@ -4555,9 +4555,9 @@ prologueNext.addEventListener('click', () => {
       checkAchievements();
       updateAbilityButtonsUI();
       showDialog([
-      { speaker: '8-Bit', text: "Ughhhh...", style: 'dialog', effect: 'sine' }, // edit edit
-      { speaker: '8-Bit', text: "I woke up in so much pain...", style: 'dialog', effect: 'sine' },
-      { speaker: '8-Bit', text: "I guess I gotta explore.", style: 'dialog', effect: 'sine' }
+      { speaker: '8-Bit', text: "Ughhhh...", style: 'dialog' },
+      { speaker: '8-Bit', text: "I woke up in so much pain...", style: 'dialog' },
+      { speaker: '8-Bit', text: "I guess I gotta explore.", style: 'dialog' }
     ]);
     });
   }
@@ -10613,8 +10613,10 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
         { speaker: 'Birthday Bot', text: "I'm just a kid, you aren't going to kill a kid, are you?", style: 'npc', effect: 'shaky' }
       ], object.id, {
         onComplete: () => {
+          setTimeout(() => {
           gameFlags.birthdaybottalk = true;
           handleInteraction(object); 
+          }, 500);
         }
       });
       return;
