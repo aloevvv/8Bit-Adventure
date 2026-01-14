@@ -4646,7 +4646,17 @@ function updateStamina(newStamina) {
 function updateHp(newHealth) {
   if (newHealth < 0) newHealth = 0;
   if (newHealth > playerStats.maxHp) newHealth = playerStats.maxHp;
+
   playerStats.currentHp = newHealth;
+
+  if (playerStats.currentHp === 0) {
+    document.body.classList.remove("low-hp");
+  } else if (playerStats.currentHp <= playerStats.maxHp * 0.25) {
+    document.body.classList.add("low-hp");
+  } else {
+    document.body.classList.remove("low-hp");
+  }
+
   const newWidth = (playerStats.currentHp / playerStats.maxHp) * 100;
   hpBar.style.width = `${newWidth}%`;
   hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
@@ -7416,11 +7426,6 @@ function enemyAttack(enemy, target) {
     playerStats.currentHp = 0;
   }
                                          
-    if (playerStats.currentHp <= playerStats.maxHp * 0.25) {
-      document.body.classList.add("low-hp"); 
-    } else {
-      document.body.classList.remove("low-hp");
-    }
 
   updateHp(playerStats.currentHp);
 
