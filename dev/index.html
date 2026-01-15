@@ -5284,6 +5284,7 @@ if (inBattle) {
         if (boss._drainInterval) clearInterval(boss._drainInterval);
         
         document.getElementById('battle-overlay').style.display = 'none';
+        goodPoints += 1;
 
         showDialog([
           { speaker: boss.name, text: "I... I feel normal again.", style: 'unit' }
@@ -10636,6 +10637,7 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
             label: "Kill",
             onSelect: () => {
               gameFlags.birthdaybotkilled = true;
+              badPoints += 1;
               currentLevel.interactables = currentLevel.interactables.filter(o => o.id !== object.id);
               removedInteractableIds.add(object.id);
               removedWallIds.add('partywall'); 
@@ -10650,6 +10652,7 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
             label: "Spare",
             onSelect: () => {
               gameFlags.birthdaybotspared = true;
+              goodPoints += 1;
               removedWallIds.add('partywall'); 
               currentLevel.walls = currentLevel.walls.filter(w => w.id !== 'partywall');
               showDialog([
