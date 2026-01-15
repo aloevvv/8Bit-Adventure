@@ -198,6 +198,77 @@
   50% { transform: translateX(-50%) scale(1.3); }
   100% { transform: translateX(-50%) scale(1); }
 }
+    #boil-ui {
+  background:#111;
+  padding:20px;
+  border:3px solid #4caf50;
+  width:500px;
+  font-family:monospace;
+  color:white;
+}
+
+#boil-container {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:20px;
+}
+
+#kettle {
+  width:120px;
+  height:80px;
+  background:#333;
+  border:3px solid #777;
+  position:relative;
+}
+
+.steam {
+  width:10px;
+  height:10px;
+  background:#666;
+  position:absolute;
+  animation:steamRise 1.2s infinite;
+}
+
+.s1 { left:20px; top:-10px; animation-delay:0s; }
+.s2 { left:50px; top:-10px; animation-delay:0.3s; }
+.s3 { left:80px; top:-10px; animation-delay:0.6s; }
+
+@keyframes steamRise {
+  0% { opacity:0; transform:translateY(0); }
+  50% { opacity:1; transform:translateY(-10px); }
+  100% { opacity:0; transform:translateY(-20px); }
+}
+
+#boil-bar {
+  width:300px;
+  height:20px;
+  background:#222;
+  border:2px solid #999;
+  position:relative;
+}
+
+#green-zone {
+  position:absolute;
+  left:140px;
+  width:20px;
+  height:100%;
+  background:#00ff00;
+}
+
+#red-progress {
+  position:absolute;
+  left:0;
+  top:0;
+  height:100%;
+  width:0;
+  background:#ff0000;
+}
+
+#boil-instructions {
+  font-size:14px;
+  opacity:0.8;
+}
     .attack-bar-container {
   width: 100%;
   height: 9px;
@@ -842,6 +913,23 @@ a:hover,
   </div>
 </div>
 
+  <div id="boil-ui" style="display:none;">
+  <div id="boil-container">
+    <div id="kettle">
+      <div class="steam s1"></div>
+      <div class="steam s2"></div>
+      <div class="steam s3"></div>
+    </div>
+
+    <div id="boil-bar">
+      <div id="green-zone"></div>
+      <div id="red-progress"></div>
+    </div>
+
+    <div id="boil-instructions">Press SPACE to stop</div>
+  </div>
+</div>
+
 
   <div id="slot-machine-popup" style="display:none; position:fixed; inset:0; z-index:5000; background:rgba(0,0,0,0.85); flex-direction: column; align-items:center; justify-content:center; font-family:'Press Start 2P', sans-serif; color:white;">
   <div style="background:#002591; border:2px solid black; padding:20px; width:300px; text-align:center; border-radius:8px;">
@@ -1250,6 +1338,14 @@ inventory.set("anti_virus", 1);
 inventory.set("driftwood", 0);
 
 inventory.set("bolts", 5);
+inventory.set("water", 0);
+inventory.set("boiled_water", 0);
+inventory.set("water_1", 0);
+inventory.set("honey", 0);
+inventory.set("spice", 0);
+inventory.set("b_tea", 0);
+inventory.set("h_tea", 0);
+inventory.set("s_tea", 0);
   
 inventory.set("hammer", 0);
 inventory.set("laser_cutter", 0);
@@ -1561,6 +1657,7 @@ iceZones: [],
 { id: "slap_board_1", name: "slap_board", x: 360, y: 220, width: 96, height: 96, action: "slap_jack" },
 { id: "slot_machine_1", name: "slot_machine", x: 320, y: 180, width: 96, height: 96, action: "slot_machine" },
 { id: "shop1", name: "shop", x: 400, y: 300, width: 50, height: 50, action: "shop" },
+{ id: "boil", name: "boil", x: 400, y: 355, width: 50, height: 50, action: "boil" },
       { id: "chest_001", name: "wooden_chest", x: 78, y: 70, width: 64, height: 64, action: "chest",
     rewards: [["bandaid",1], ["emp_grenade",1]], opened: false }
     ]
@@ -9739,7 +9836,54 @@ slotPlayBtn.addEventListener('click', () => {
 
   updateUi();
 })();
-  
+
+  let boilActive = false;
+let boilInterval = null;
+let boilProgress = 0;
+
+function openBoilUI() {
+  if ((inventory.get("water") || 0) <= 0) {
+    console.log("No water to boil");
+    return;
+  }
+
+  inventory.set("water", inventory.get("water") - 1);
+
+  boilProgress = 0;
+  boilActive = true;
+
+  document.getElementById("boil-ui").style.display = "block";
+  document.getElementById("red-progress").style.width = "0px";
+
+  startBoilBar();
+}
+  document.addEventListener("keydown", e => {
+  if (!boilActive) return;
+  if (e.code !== "Space") return;
+
+  finishBoiling();
+});
+
+  function finishBoiling() {
+  boilActive = false;
+  clearInterval(boilInterval);
+
+  const center = 150;
+  const perfectMin = center - 15;
+  const perfectMax = center + 15;
+
+  let result = "water_1";
+
+  if (boilProgress >= perfectMin && boilProgress <= perfectMax) {
+    result = "boiled_water";
+  }
+
+  inventory.set(result, (inventory.get(result) || 0) + 1);
+
+  document.getElementById("boil-ui").style.display = "none";
+}
+
+
 -
 (function installSimpleShop() {
   if (document.getElementById('simple-shop-popup')) return;
@@ -10417,6 +10561,10 @@ function handleInteraction(object) {
     }
     showDialog(object.messages?.opened || "You may go now.", object.dialogId);
     draw();
+    return;
+  }
+  if (object.action === "boil") {
+    openBoilUI();
     return;
   }
 
