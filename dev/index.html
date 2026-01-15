@@ -11154,6 +11154,10 @@ if (toggleAutosaveMessage) {
   const has = (name) => (inventory.get("amulet_" + name) || 0) > 0;
 
   if (key === 'q' && has("clicking")) {
+     const isDialogActive = document.getElementById('dialog-overlay').style.display === 'flex';
+        if (isDialogActive) {
+        return;
+      }
     activeAmulets.clicking = !activeAmulets.clicking;
     toggleAutofire(activeAmulets.clicking);
     showTemporaryText("Clicking Amulet: " + (activeAmulets.clicking ? "ON" : "OFF"));
