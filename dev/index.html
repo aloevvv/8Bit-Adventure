@@ -213,7 +213,6 @@
   flex-direction: row;
   padding: 20px;
   gap: 20px;
-  font-family: monospace;
 }
 
 #tea-slots {
@@ -10038,16 +10037,29 @@ function brewTea() {
   
   document.getElementById("brew-tea-btn").onclick = () => {
   const result = brewTea();
+
+  const usedItems = Object.values(teaSlots).filter(x => x);
+
   teaSlots.water = null;
   teaSlots.honey = null;
   teaSlots.spice = null;
 
-  if (result !== "invalid") {
-    inventory.set(result, (inventory.get(result) || 0) + 1);
+  if (result === "invalid") {
+    usedItems.forEach(item => {
+      inventory.set(item, (inventory.get(item) || 0) + 1);
+    });
+
+    document.getElementById("tea-ui").style.display = "none";
+    drawTeaUI();
+    return;
   }
+
+  inventory.set(result, (inventory.get(result) || 0) + 1);
+  document.getElementById("tea-ui").style.display = "none";
 
   drawTeaUI();
 };
+
 
 
   
