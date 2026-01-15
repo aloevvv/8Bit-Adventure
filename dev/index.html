@@ -12857,6 +12857,13 @@ function executeDevCommand(input) {
     showTemporaryText(`Good: ${goodPoints} | Bad: ${badPoints}`);
   break;
 
+  case '/outlines':
+      gameSettings.showZones = !gameSettings.showZones;
+      showTemporaryText("Debug Outlines: " + (gameSettings.showZones ? "ON" : "OFF"));
+      saveSettings();
+      draw();
+      break;
+
     case '/stamina':
       updateStamina(playerStats.maxStamina);
       showTemporaryText("Stamina Refilled!");
