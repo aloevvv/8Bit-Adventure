@@ -12542,9 +12542,7 @@ levels.forEach(level => {
     if (saveData.settings) {
       Object.assign(gameSettings, saveData.settings);
       const sel = document.getElementById('difficulty-select');
-      const chk = document.getElementById('toggle-zones');
       if (sel) sel.value = gameSettings.difficulty;
-      if (chk) chk.checked = !!gameSettings.showZones;
     }
 
     loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
@@ -12575,12 +12573,6 @@ document.getElementById('difficulty-select').addEventListener('change', (e) => {
   showTemporaryText(`Difficulty set to ${gameSettings.difficulty}`);
 });
 
-
-document.getElementById('toggle-zones').addEventListener('change', (e) => {
-  gameSettings.showZones = !!e.target.checked;
-  saveSettings();
-  draw();
-});
 
 
 loadSettings();
