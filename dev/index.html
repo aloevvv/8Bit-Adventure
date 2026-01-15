@@ -9866,6 +9866,17 @@ function openBoilUI() {
 
   startBoilBar();
 }
+
+  function startBoilBar() {
+  boilInterval = setInterval(() => {
+    boilProgress += 2;
+    if (boilProgress > 300) boilProgress = 300;
+
+    document.getElementById("red-progress").style.width = boilProgress + "px";
+  }, 30);
+}
+
+  
   document.addEventListener("keydown", e => {
   if (!boilActive) return;
   if (e.code !== "Space") return;
@@ -9888,6 +9899,7 @@ function openBoilUI() {
   }
 
   inventory.set(result, (inventory.get(result) || 0) + 1);
+  showTemporaryText('You boiled the water!');
 
   document.getElementById("boil-ui").style.display = "none";
 }
