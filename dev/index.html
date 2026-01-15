@@ -6956,7 +6956,7 @@ function critBossBehavior(enemy, target) {
   if (hpPercent <= 50) {
     if (!enemy._phase2Triggered) {
       enemy._phase2Triggered = true;
-      showBattleDialog([{ speaker: enemy.name, text: "I think I'm regaining myself...", style: 'boss' }]);
+      showBattleDialog([{ speaker: enemy.name, text: "I think I'm regaining myself...", style: 'unit' }]);
 
       playerStats.isTargeted = false;
       if (activeAlly) activeAlly.isTargeted = false;
