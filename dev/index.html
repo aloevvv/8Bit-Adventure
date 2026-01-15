@@ -863,11 +863,6 @@ a:hover,
 </div>
 
       <div style="margin:8px 0;">
-        <label style="display:block; font-size:10px;">Show Zones & Walls</label>
-        <input id="toggle-zones" type="checkbox" /> Show debug outlines
-      </div>
-
-      <div style="margin:8px 0;">
   <label style="display:block; font-size:10px;">Autosave</label>
   <input id="toggle-autosave" type="checkbox" /> Enable Autosave<br>
   <input id="toggle-autosave-message" type="checkbox" /> Show Autosave Message
@@ -11435,14 +11430,10 @@ function updateBox(id, name, filled, rarity) {
     }
   });
 
-  // Initialize UI controls
   const difficultySelect = document.getElementById('difficulty-select');
-  const toggleZones = document.getElementById('toggle-zones');
 
   if (difficultySelect) difficultySelect.value = window.gameSettings.difficulty || 'normal';
-  if (toggleZones) toggleZones.checked = !!window.gameSettings.showZones;
 
-  // Change handlers (guarded so missing helpers won't break)
   if (difficultySelect) {
     difficultySelect.addEventListener('change', (e) => {
       window.gameSettings.difficulty = e.target.value;
@@ -11454,18 +11445,7 @@ function updateBox(id, name, filled, rarity) {
     console.warn('Settings wiring: no #difficulty-select found');
   }
 
-  if (toggleZones) {
-    toggleZones.addEventListener('change', (e) => {
-      window.gameSettings.showZones = !!e.target.checked;
-      if (typeof saveSettings === 'function') try { saveSettings(); } catch(_) {}
-      if (typeof draw === 'function') draw();
-      else console.log('Toggled showZones to', window.gameSettings.showZones);
-    });
-  } else {
-    console.warn('Settings wiring: no #toggle-zones found');
-  }
-
-  const toggleAutosave = document.getElementById('toggle-autosave');
+const toggleAutosave = document.getElementById('toggle-autosave');
 const toggleAutosaveMessage = document.getElementById('toggle-autosave-message');
 
 if (toggleAutosave) {
