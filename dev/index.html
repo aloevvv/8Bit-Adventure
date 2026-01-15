@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <style>
+  <style>   
     body {
       background: #333;
       color: white;
@@ -9915,7 +9915,7 @@ let boilProgress = 0;
 
 function openBoilUI() {
   if ((inventory.get("water") || 0) <= 0) {
-    console.log("No water to boil");
+    showTemporaryText("You need water to boil!");
     return;
   }
 
@@ -10047,6 +10047,7 @@ function brewTea() {
   if (result === "invalid") {
     usedItems.forEach(item => {
       inventory.set(item, (inventory.get(item) || 0) + 1);
+      showTemporaryText('Bad recipe.');
     });
 
     document.getElementById("tea-ui").style.display = "none";
@@ -10055,6 +10056,7 @@ function brewTea() {
   }
 
   inventory.set(result, (inventory.get(result) || 0) + 1);
+  showTemporaryText('You brewed a tea!');
   document.getElementById("tea-ui").style.display = "none";
 
   drawTeaUI();
