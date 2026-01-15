@@ -12423,9 +12423,7 @@ function loadSettings() {
   }
  
   const sel = document.getElementById('difficulty-select');
-  const chk = document.getElementById('toggle-zones');
   if (sel) sel.value = gameSettings.difficulty || 'normal';
-  if (chk) chk.checked = !!gameSettings.showZones;
 }
 function saveSettings() {
   try {
