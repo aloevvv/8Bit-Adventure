@@ -1024,6 +1024,9 @@ let gameFlags = {
   lightsFixed: false
 };
 
+let goodPoints = 0;
+let badPoints = 0;
+
 
 let shownDialogs = new Set();
 let _dialogQueue = [];
@@ -12124,6 +12127,8 @@ function saveToSlot(slotNumber) {
     playerPosition: { x, y },
     shownDialogs: Array.from(shownDialogs),
     gameFlags,
+    goodPoints: goodPoints,
+    badPoints: badPoints,
     currentObjective,
     objectiveCompleted,
     alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
@@ -12169,6 +12174,8 @@ function loadFromSlot(slotNumber) {
       setObjective(saveData.currentObjective);
       if (saveData.objectiveCompleted) completeObjective();
     }
+goodPoints = saveData.goodPoints || 0;
+badPoints = saveData.badPoints || 0;
 
     removedInteractableIds = new Set(saveData.removedInteractableIds || []);
     removedWallIds = new Set(saveData.removedWallIds || []);
@@ -12270,7 +12277,9 @@ function saveGame() {
   currentLevelIndex,
   playerPosition: { x, y },
   shownDialogs: Array.from(shownDialogs),
-    gameFlags: gameFlags, 
+    gameFlags: gameFlags,
+    goodPoints: goodPoints,
+    badPoints: badPoints,
     currentObjective: currentObjective,
     objectiveCompleted: objectiveCompleted,
   alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
@@ -12345,6 +12354,8 @@ function loadGame() {
       if (saveData.objectiveCompleted) completeObjective();
     }
 
+    goodPoints = saveData.goodPoints || 0;
+    badPoints = saveData.badPoints || 0;
  
     removedInteractableIds = new Set(saveData.removedInteractableIds || []);
     removedWallIds = new Set(saveData.removedWallIds || []);
@@ -12472,7 +12483,7 @@ function executeDevCommand(input) {
 
   switch (cmd) {
     case '/help':
-      console.log("Commands: /warp [lvl] [x] [y], /give [item] [qty], /lvlup, /unlockall, /battle [enemyName], /god, /heal");
+      console.log("Commands: /warp [lvl] [x] [y], /give [item] [qty], /lvlup, /unlockall, /battle [enemyName], /god, /heal, /points");
       break;
 
     case '/warp':
@@ -12524,6 +12535,10 @@ function executeDevCommand(input) {
       }
       showTemporaryText("Team Healed!");
       break;
+
+    case '/points':
+    showTemporaryText(`Good: ${goodPoints} | Bad: ${badPoints}`);
+  break;
 
     case '/stamina':
       updateStamina(playerStats.maxStamina);
