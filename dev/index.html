@@ -1168,6 +1168,7 @@ let allyTargetMode = 'Current';
 let gameFlags = {
   isPowered: false,
   arcadegatetalk: false,
+  arcadegate2: false,
   carpass: false,
   atticlever: false,
   birthdaybottalk: false,
@@ -12862,6 +12863,18 @@ function executeDevCommand(input) {
         initiateBattle('interactable', { encounter: [{ type: enemyType }] });
       } else {
         showTemporaryText("Enemy type not found.");
+      }
+      break;
+
+    case '/flag':
+      const flagName = args[0];
+    
+      if (gameFlags.hasOwnProperty(flagName)) {
+        gameFlags[flagName] = true;
+        showTemporaryText(`Flag [${flagName}] is TRUE`);
+        draw(); 
+      } else {
+        showTemporaryText(`Error: Flag '${flagName}' not found.`);
       }
       break;
 
