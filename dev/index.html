@@ -10705,6 +10705,45 @@ function checkInteraction(checkX, checkY) {
 function handleInteraction(object) {
   if (!object) return;
 
+  if (object.targetWallId) {
+    const targetLvl = (typeof object.targetLevelIdx === 'number') ? object.targetLevelIdx : currentLevelIndex;
+    removedWallIds.add(object.targetWallId);
+    toggleWallById(object.targetWallId, false, targetLvl);
+  }
+  
+  if (object.action === "arcadeoldbot") {
+    showDialog([
+      { speaker: 'Old Bot', text: "Hello, dear traveller—", style: 'npc' },
+      { speaker: '8-Bit', text: "I don't have time for this", style: 'dialog' }
+    ]);
+  } else if (gameFlags.arcadegate2) {
+    showDialog([
+  { speaker: '8-Bit', text: "You know anything about that gate up ahead?", style: 'dialog' },
+  { speaker: 'Old Bot', text: "Oh, yes, quite a lot actually!", style: 'npc' },
+  { speaker: 'Old Bot', text: "Kept it safe for a long while.", style: 'npc' },
+  { speaker: '8-Bit', text: "A while huh?", style: 'dialog' },
+  { speaker: '8-Bit', text: "Be serious, old man.", style: 'dialog' },
+  { speaker: '8-Bit', text: "I've lived in this city since forever, and there has never been any gates here.", style: 'dialog' },
+  { speaker: 'Old Bot', text: "Oh dear.", style: 'npc' },
+  { speaker: 'Old Bot', text: "You must have been knocked out for a long time.", style: 'npc' },
+  { speaker: '8-Bit', text: "Ha, you're telling me that there has always been a gate there?", style: 'dialog' },
+  { speaker: 'Old Bot', text: "Always been, pal.", style: 'npc' },
+  { speaker: '8-Bit', text: "Wait, hold on, aren't you supposed to be fighting me or something?", style: 'dialog' },
+  { speaker: 'Old Bot', text: "Do you think this old body has the machinery to fight?", style: 'npc' },
+  { speaker: 'Old Bot', text: "No, dear traveller, I cannot.", style: 'npc' },
+  { speaker: 'Old Bot', text: "Do you not know a thing?", style: 'npc' },
+  { speaker: '8-Bit', text: "I don't.", style: 'dialog' },
+  { speaker: 'Old Bot', text: "The bots around town started acting particularly strange recently.", style: 'npc' },
+  { speaker: 'Old Bot', text: "They're more authorative, more ruthless, and they slaughter anyone who's in their path.", style: 'npc' },
+  { speaker: 'Old Bot', text: "My friends started to change too.", style: 'npc' },
+  { speaker: 'Old Bot', text: "Most bots did.", style: 'npc' },
+  { speaker: 'Old Bot', text: "I don't know why I kept my programming, but I did.", style: 'npc' },
+  { speaker: '8-Bit', text: "Like a virus or something?", style: 'dialog' },
+  { speaker: 'Old Bot', text: "Perhaps.", style: 'npc' }
+]);
+    return;
+  }
+
   if (object.action === "recruit") {
     const preText = object.recruitDialog || [
       `You meet ${object.displayName || 'someone'}.`,
@@ -11061,7 +11100,6 @@ if (object.action === 'target_practice' && object.name === 'target_board') {
   return;
 }
 if (object.action === 'slap_jack') {
-  // Open Slap Jack UI (wagering done in UI)
   if (window.openSlapJack) window.openSlapJack();
   return;
 }
