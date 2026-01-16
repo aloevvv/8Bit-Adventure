@@ -1169,6 +1169,8 @@ let gameFlags = {
   isPowered: false,
   arcadegatetalk: false,
   arcadegate2: false,
+  arcadeoldbottalk: false,
+  arcadeoldbotNO: false,
   carpass: false,
   atticlever: false,
   birthdaybottalk: false,
@@ -1584,7 +1586,9 @@ const levels = [
     darkZones: [],
     battleZones: [],
     dialogZones: [],
-    interactables: []
+    interactables: [
+       { id: 'arcadeoldbot', name: 'arcadeoldbot', x: 0, y: 0, width: 50, height: 50, action: 'arcadeoldbot' }
+    ]
   },
   {
     bgSrc: "arcadeinside.png",
@@ -4767,6 +4771,9 @@ drillImg.src = 'drill.png';
 
 const blockadeImg = new Image();
 blockadeImg.src = 'blockade.png';
+
+const aOldBotImg = new Image();
+aOldBotImg.src = 'arcadeoldbot.png';
 
 const dmgPotionImg = new Image();
 dmgPotionImg.src = 'dmgPotion.png';
@@ -10701,7 +10708,8 @@ function checkInteraction(checkX, checkY) {
   return null;
 }
 
-
+//if ((inventory.get("tea") || 0) > 0) {
+  
 // Handle interaction actions
 function handleInteraction(object) {
   if (!object) return;
@@ -10713,11 +10721,132 @@ function handleInteraction(object) {
   }
   
   if (object.action === "arcadeoldbot") {
+    if (gameFlags.arcadeoldbotquest) {
     showDialog([
-      { speaker: 'Old Bot', text: "Hello, dear traveller—", style: 'npc' },
-      { speaker: '8-Bit', text: "I don't have time for this", style: 'dialog' }
+      { speaker: 'Old Bot', text: "I'm patient, I'll wait.", style: 'npc' }
     ]);
-  } else if (gameFlags.arcadegate2) {
+      return;
+    }
+    if (gameFlags.arcadeoldbottalk) {
+      showDialogWithOptions(
+        "I want to ask",
+        [
+          {
+            label: "Where are my friends?",
+            onSelect: () => {
+              gameFlags.arcadeoldbotquest = true;
+              showDialog([
+                { speaker: 'Old Bot', text: "To be frank, most likely dead.", style: 'npc' },
+                { speaker: 'Old Bot', text: "I heard from the others what they do to brawlers.", style: 'npc' },
+                { speaker: 'Old Bot', text: "Though, I've heard of a small resistence group.", style: 'npc' },
+                { speaker: 'Old Bot', text: "There's about five of them, and other than you, the only brawlers left in this world.", style: 'npc' },
+                { speaker: 'Old Bot', text: "A small chance they could be one of them.", style: 'npc' },
+                { speaker: '8-Bit', text: "I hope so.", style: 'dialog' },
+                { speaker: 'Old Bot', text: "...", style: 'npc' },
+                { speaker: 'Old Bot', text: "Lad, you wanted to get past this gate, yes?", style: 'npc' },
+                { speaker: '8-Bit', text: "Yeah.", style: 'npc' },
+                { speaker: 'Old Bot', text: "Tell you what, give me some honeyed tea and I'll give you the key.", style: 'npc' },
+                { speaker: 'Old Bot', text: "There's another house, an old friend of mine's nearby, always used to go there for a nice drink.", style: 'npc' },
+                { speaker: 'Old Bot', text: "It's above the arcade.", style: 'npc' },
+                { speaker: 'Old Bot', text: "I'd like just one moment of normalcy again.", style: 'npc' },
+  ],
+  object.id,
+  {
+    onComplete: () => {
+      setTimeout(() => {
+        if (gameFlags.birthdaybotkilled) {
+          showDialogWithOptions(
+            "Can I trust you with that?",
+            [
+              {
+                label: "Yes",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "Good, I await some nice tea.", style: 'npc' }
+                  ]);
+                }
+              },
+              {
+                label: "No",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "You're an honest lad, I can respect that.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "But go get some tea for me, alright?", style: 'npc' }
+                  ]);
+                  gameFlags.arcadeoldbotNO = true;
+                }
+              }
+            ],
+            object.id,
+            { style: 'npc', speaker: 'Old Bot' }
+          );
+        } else {
+          return;
+        }
+      }, 500);
+    }
+  }
+);
+            }
+          },
+          {
+            label: "Can I pass?",
+            onSelect: () => {
+              gameFlags.arcadeoldbotquest = true;
+              showDialog([
+                { speaker: 'Old Bot', text: "Perhaps.", style: 'npc' },
+                { speaker: 'Old Bot', text: "Just do a little favor, old pal.", style: 'npc' },
+                { speaker: 'Old Bot', text: "Get me some honeyed tea and I'll give you the key to the gate.", style: 'npc' },
+                { speaker: 'Old Bot', text: "There's another house, an old friend of mine's nearby, always used to go there for a nice drink.", style: 'npc' },
+                { speaker: 'Old Bot', text: "It's above the arcade.", style: 'npc' },
+                { speaker: 'Old Bot', text: "I'd like just one more moment of normalcy again.", style: 'npc' },
+              ],
+  object.id,
+  {
+    onComplete: () => {
+      setTimeout(() => {
+        if (gameFlags.birthdaybotkilled) {
+          showDialogWithOptions(
+            "Can I trust you with that?",
+            [
+              {
+                label: "Yes",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "Good, I await some nice tea.", style: 'npc' }
+                  ]);
+                }
+              },
+              {
+                label: "No",
+                onSelect: () => {
+                  showDialog([
+                   { speaker: 'Old Bot', text: "You're an honest lad, I can respect that.", style: 'npc' },
+                   { speaker: 'Old Bot', text: "But go get some tea for me, alright, lad?", style: 'npc' }
+                  ]);
+                  gameflags.arcadeoldbotNO = true;
+                }
+              }
+            ],
+            object.id,
+            { style: 'npc', speaker: 'Old Bot' }
+          );
+        } else {
+          return;
+        }
+      }, 500);
+    }
+  }
+);
+            }
+          }
+        ],
+        object.id,
+        { style: 'dialog', speaker: '8-Bit' }
+      );
+      return;
+    }
+    if (gameFlags.arcadegate2) {
     showDialog([
   { speaker: '8-Bit', text: "You know anything about that gate up ahead?", style: 'dialog' },
   { speaker: 'Old Bot', text: "Oh, yes, quite a lot actually!", style: 'npc' },
@@ -10741,8 +10870,26 @@ function handleInteraction(object) {
   { speaker: 'Old Bot', text: "I don't know why I kept my programming, but I did.", style: 'npc' },
   { speaker: '8-Bit', text: "Like a virus or something?", style: 'dialog' },
   { speaker: 'Old Bot', text: "Perhaps.", style: 'npc' }
-]);
+],
+  object.id,
+  {
+    onComplete: () => {
+      setTimeout(() => {
+        gameFlags.arcadeoldbottalk = true;
+        handleInteraction(object); 
+      }, 500);
+    }
+  }
+);
     return;
+  }
+else {
+    showDialog([
+      { speaker: 'Old Bot', text: "Hello, dear traveller—", style: 'npc' },
+      { speaker: '8-Bit', text: "I don't have time for this.", style: 'dialog' }
+    ]);
+    return;
+    }
   }
 
   if (object.action === "recruit") {
@@ -12411,6 +12558,17 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   if (obj.name === "blockade") {
     if (blockadeImg && blockadeImg.complete) {
       ctx.drawImage(blockadeImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#444";
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
+
+  currentLevel.interactables.forEach(obj => {
+  if (obj.name === "arcadeoldbot") {
+    if (aOldBotImg && aOldBotImg.complete) {
+      ctx.drawImage(aOldBotImg, obj.x, obj.y, obj.width, obj.height);
     } else {
       ctx.fillStyle = "#444";
       ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
