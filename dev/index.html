@@ -5592,6 +5592,7 @@ function drawPlayerBattleStatus() {
       { active: !!entity.isBlinded, img: 'blinded.png' },
       { active: !!entity.isFogged, img: 'fog.png' },
       { active: !!entity.isBleeding, img: 'bleed.png' },
+      { active: !!entity.isWeakened, img: 'weak.png' ),
       { active: !!entity.isTargeted, img: 'target.png' }
     ];
 
@@ -5882,6 +5883,7 @@ function drawPlayerBattleStatus() {
     'blind': 'isBlinded',
     'frozen': 'isFrozen',
     'fog': 'isFogged'
+    'weaken': 'isWeakened'
   };
   
   const flag = statusMap[status];
@@ -8368,9 +8370,11 @@ function endBattle(outcome) {
     ent.isFrozen = false;
     ent.isBlinded = false;
     ent.isFogged = false;
-    // Clear timeouts too if they exist
+    ent.isWeakened = false;
     if (ent.isBlindedTimeout) clearTimeout(ent.isBlindedTimeout);
     if (ent.isFrozenTimeout) clearTimeout(ent.isFrozenTimeout);
+    if (ent.isFoggedTimeout) clearTimeout(ent.isFoggedTimeout);
+    if (ent.isWeakenedTimeout) clearTimeout(ent.isWeakenedTimeout);
   });
   
   drawPlayerBattleStatus();
@@ -11691,28 +11695,24 @@ achievementsButton.addEventListener('click', () => {
     achievementsPopup.style.display = 'none';
   }
 });
-  function spawnDamageNumber(enemyIndex, amount) {
-  
+  function spawnDamageNumber(enemyIndex, amount, color = "#ffffff") {
   const enemyButtons = document.querySelectorAll('.enemy-target');
- 
   const targetBtn = Array.from(enemyButtons).find(b => parseInt(b.dataset.enemyIndex) === enemyIndex);
   
   if (!targetBtn) return;
 
-  
   const rect = targetBtn.getBoundingClientRect();
-  
   const dmgEl = document.createElement('div');
   dmgEl.className = 'damage-number';
-  dmgEl.textContent = `-${amount}`;
   
+  dmgEl.textContent = isNaN(amount) ? amount : `-${amount}`;
+  dmgEl.style.color = color;
 
   dmgEl.style.left = (rect.left + rect.width / 2) + 'px';
   dmgEl.style.top = (rect.top) + 'px';
 
   document.body.appendChild(dmgEl);
 
- 
   setTimeout(() => {
     dmgEl.remove();
   }, 1000);
@@ -11732,6 +11732,7 @@ function performPlayerAttack() {
   if (!targetEnemy) return;
 
   if (targetEnemy.isStoned) {
+    spawnDamageNumber(selectedEnemyIndex, "BLOCKED", "#aaaaaa");
     //const dinkSound = new Audio('sfx.wav');
     //dinkSound.volume = 0.3;
     //dinkSound.play().catch(e=>{});
@@ -11739,22 +11740,25 @@ function performPlayerAttack() {
   }
   
   if (playerStats.isBlinded && Math.random() < 0.5) {
-      return;
-    }
+    spawnDamageNumber(selectedEnemyIndex, "MISS", "#aaaaaa");
+    return;
+  }
 
 if (activeAmulets.bullets && playerStats.currentStamina < 3) {
     showTemporaryText("Not enough stamina to fire!");
     return;
   }
   if (targetEnemy.shieldActive) {
-    showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
+    spawnDamageNumber(selectedEnemyIndex, "BLOCKED", "#00ffff");
   } else {
     let finalDmg = playerStats.damage;
     if (activeAmulets.bullets) finalDmg *= 1.5;
     if (activeAmulets.health) finalDmg *= 0.5;
     if (activeAmulets.sacrifice) finalDmg *= 1.5;
     if (activeAmulets.xp) finalDmg *= 0.5;
-    
+    if (playerStats.isWeakened) {
+    finalDmg *= 0.5;
+  }
     finalDmg = Math.floor(finalDmg);
     targetEnemy.currentHp -= finalDmg;
     spawnDamageNumber(selectedEnemyIndex, finalDmg);
