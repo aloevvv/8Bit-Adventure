@@ -10066,13 +10066,12 @@ function brewTea() {
 
   if (has("water_1") && has("honey") && items.length === 2)
     return "b_tea";
-  if ((has("water_1") || has("boiled_water")) && items.length === 1)
-    return "w_tea";
   if (has("boiled_water") && has("honey") && items.length === 2)
     return "h_tea";
-
   if (has("boiled_water") && has("honey") && has("spice"))
     return "s_tea";
+  if (has("water_1") && has("honey") && has("spice"))
+    return "h_tea";
   if (has("spice") && (has("water_1") || has("boiled_water")))
     return "b_tea";
 
