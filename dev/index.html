@@ -8515,6 +8515,13 @@ setInterval(() => {
   selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
+
+  if (activeEnemies.length > 0 && activeEnemies[0].type === 'OldBot') {
+    showBattleDialog([
+      { speaker: 'Old Bot', text: "My old cane will break your frame!", style: 'npc' },
+      { speaker: '8-Bit', text: "Oh, you're one to talk, old man." }
+    ]);
+  }
   
   if (activeEnemies.length > 0 && activeEnemies[0].type === 'Dummy') {
     showBattleDialog([
@@ -8829,6 +8836,7 @@ function doCleanse() {
       target._burnType = null;
       target.isBlinded = false;
       target.isFogged = false;
+      target.isWeakened = false;
       somethingWasRemoved = true;
     }
   });
