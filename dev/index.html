@@ -7555,21 +7555,30 @@ function resumeBattleTimersAfterDialog() {
   if (!inBattle) return;
   if (!_battleDialogPausedState) return;
 
+  const now = Date.now();
+
   activeEnemies.forEach(e => {
+    e.lastAttackAt = now; 
     e.attackTimerId = setInterval(() => performEnemyAction(e), e.attackSpeed);
   });
 
   if (!staminaRegenIntervalId) {
-    staminaRegenIntervalId = setInterval(() => { updateStamina(playerStats.currentStamina + 1); drawPlayerBattleStatus(); }, 100);
+    staminaRegenIntervalId = setInterval(() => { 
+      updateStamina(playerStats.currentStamina + 1); 
+      drawPlayerBattleStatus(); 
+    }, 100);
   }
-  if (!abilityRegenIntervalId) startAbilityRegen();
-  if (_battleDialogPausedState.allyAttackTimerId && activeAlly && !activeAlly.attackTimerId) startAllyAttacking();
- 
 
+  if (!abilityRegenIntervalId) startAbilityRegen();
+  
+  if (_battleDialogPausedState.allyAttackTimerId && activeAlly && !activeAlly.attackTimerId) {
+    startAllyAttacking();
+  }
   const attackBtn = document.getElementById('attack-button');
   const sp1 = document.getElementById('special-attack-button-1');
   const sp2 = document.getElementById('special-attack-button-2');
   const invBtn = document.getElementById('inventory-battle-button');
+  
   if (attackBtn) attackBtn.disabled = false;
   if (sp1) sp1.disabled = false;
   if (sp2) sp2.disabled = false;
