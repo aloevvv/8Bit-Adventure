@@ -1172,6 +1172,7 @@ let gameFlags = {
   arcadegate2: false,
   arcadeoldbottalk: false,
   arcadeoldbotNO: false,
+  arcadeoldbottea: false,
   carpass: false,
   atticlever: false,
   birthdaybottalk: false,
@@ -10758,6 +10759,73 @@ function handleInteraction(object) {
   
   if (object.action === "arcadeoldbot") {
 
+    if (gameFlags.arcadeoldbottea) {
+      showDialogWithOptions(
+        "There are a lot of infected bots around here, so I must ask, do you know how to battle?",
+        [
+          {
+            label: "Of course!",
+            onSelect: () => {
+              showDialog([
+                { speaker: 'Old Bot', text: "That's some nice spirit!", style: 'npc' }
+              ]);
+            }
+          },
+          {
+            label: "Not really",
+            onSelect: () => {
+              showDialogWithOptions(
+            "What do you wish to know about, then?",
+            [
+              {
+                label: "Attacking",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "Your blaster looks like it has no cooldown.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Try rapid firing as quickly as you can.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Before your enemies are able to charge up their own attacks.", style: 'npc' }
+                  ]);
+                }
+              },
+              {
+                label: "Stamina",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "Looks like your systems generate 10 of them every second.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "You can use them to power up your blaster for a special attack.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Perhaps you could even find a way to channel them in other ways.", style: 'npc' }
+                  ]);
+                }
+              },
+              {
+                label: "Abilities",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "You have quite the strong frame.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Tough enough to allow you to resist most attacks for a few seconds at a time.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Bet you can activate that protocol by pressing that Z button over there.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "I see another protocol of yours is ricocheting technology.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Allows you to send back enemy attacks for about a second.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "I'd say that pressing X activates that one.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "And your systems are quite sturdy with great virus detection.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "You can flush out any bad effects with button C on your frame.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "You're quite the battle robot.", style: 'npc' }
+                  ]);
+                }
+              }
+            ],
+            object.id,
+            { style: 'npc', speaker: 'Old Bot' }
+          );
+        }
+      }
+    ],
+    object.id,
+    { style: 'npc', speaker: 'Old Bot' }
+  );
+  return;
+}
+
     if ((inventory.get("b_tea") || 0) > 0 && gameFlags.arcadeoldbotNO) {
 showDialog([
       { speaker: 'Old Bot', text: "Oh, you're back with the tea!", style: 'npc' },
@@ -10772,6 +10840,8 @@ showDialog([
         onComplete: () => {
           setTimeout(() => {
           initiateBattle('interactable', { encounter: [{ type: 'OldBot' }] });
+          currentLevel.interactables = currentLevel.interactables.filter(o => o.id !== object.id);
+          removedInteractableIds.add(object.id);
           }, 500);
         }
       });
@@ -10786,6 +10856,7 @@ showDialog([
       { speaker: 'Old Bot', text: "Whatever lad, it's fine.", style: 'npc' },
       { speaker: 'Old Bot', text: "Here's the key. Talk to me again if you want any help.", style: 'npc' }
     ]);
+      gameFlags.arcadeoldbottea = true;
 return;
     }
     
@@ -10796,6 +10867,7 @@ showDialog([
       { speaker: 'Old Bot', text: "Just what I asked for!", style: 'npc' },
       { speaker: 'Old Bot', text: "Here's the key, lad. Talk to me again if you want any help.", style: 'npc' }
     ]);
+      gameFlags.arcadeoldbottea = true;
 return;
     }
     
@@ -10808,6 +10880,7 @@ showDialog([
       { speaker: 'Old Bot', text: "I feel at home again.", style: 'npc' },
       { speaker: 'Old Bot', text: "Here's the key. Talk to me again if you want any help.", style: 'npc' }
     ]);
+   gameFlags.arcadeoldbottea = true;
 return;
     }
       
