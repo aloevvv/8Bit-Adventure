@@ -1515,6 +1515,7 @@ const enemyTypes = {
   Puncherbot: { name: "Puncher", maxHp: 90, damage: 1, xpReward: 5, behavior: "normalAttack" },
   Attictank: { name: "Dusty Bot", maxHp: 1500, damage: 1, xpReward: 14, behavior: "normalAttack" },
   Atticsniper: { name: "Dusty Sniper", maxHp: 1000, attackSpeed: 3000, damage: 3, xpReward: 12, behavior: "sniperAttack" },
+  OldBot: { name: "Old Bot", maxHp: 10000, attackSpeed: 5000, damage: 10, xpReward: 200, behavior: "oldBotBehavior" },
   Sandbot: { name: "Sandy Bot", maxHp: 100, attackSpeed: 2000, damage: 3, xpReward: 10, behavior: "sandBehavior" },
   Smokebang: { name: "Smoke Bomb Bot", maxHp: 100, attackSpeed: 2000, damage: 3, xpReward: 10, behavior: "smokeBehavior" },
   Swordsman: { name: "Sword Bot", maxHp: 150, attackSpeed: 2500, damage: 3, xpReward: 10, behavior: "swordBehavior" },
@@ -7238,6 +7239,11 @@ function endBattle(outcome) {
   }
 }
 
+  function oldBotBehavior(enemy, target) {
+    applyStatusEffect(playerStats, 'weaken', 99999);
+    normalAttack(enemy, target);
+}
+
 
 function smokeBehavior(enemy, target) {
     const now = Date.now();
@@ -7299,6 +7305,8 @@ if (behavior === 'normalAttack') {
   normalAttack(enemy, target);
 } else if (behavior === 'sniperAttack') {
   sniperAttack(enemy, target);
+} else if (behavior === 'oldBotBehavior') {
+  oldBotBehavior(enemy, target);
 } else if (behavior === 'sandBehavior') {
   sandBehavior(enemy, target);
 } else if (behavior === 'smokeBehavior') {
@@ -10738,6 +10746,60 @@ function handleInteraction(object) {
   }
   
   if (object.action === "arcadeoldbot") {
+
+    if ((inventory.get("b_tea") || 0) > 0 && gameFlags.arcadeoldbotNO) {
+showDialog([
+      { speaker: 'Old Bot', text: "Oh, you're back with the tea!", style: 'npc' },
+      { speaker: 'Old Bot', text: "...", style: 'npc' },
+      { speaker: 'Old Bot', text: "WHAT IS THIS?", style: 'npc' },
+      { speaker: 'Old Bot', text: "DAMN YOU!", style: 'npc' },
+      { speaker: 'Old Bot', text: "I KNEW YOU COULDN'T BE TRUSTED!", style: 'npc' },
+      { speaker: 'Old Bot', text: "I ASKED YOU FOR HONEYED TEA, NOT THIS LOAD OF RUBBISH!", style: 'npc' },
+      { speaker: 'Old Bot', text: "PERISH!", style: 'npc' }
+    ],
+           object.id, {
+        onComplete: () => {
+          setTimeout(() => {
+          initiateBattle('interactable', { encounter: [{ type: 'OldBot' }] });
+          }, 500);
+        }
+      });
+return;
+    }
+    
+    if ((inventory.get("b_tea") || 0) > 0) {
+showDialog([
+      { speaker: 'Old Bot', text: "Oh, you're back with the tea!", style: 'npc' },
+      { speaker: 'Old Bot', text: "...", style: 'npc' },
+      { speaker: 'Old Bot', text: "This is just basic tea!", style: 'npc' },
+      { speaker: 'Old Bot', text: "Whatever lad, it's fine.", style: 'npc' },
+      { speaker: 'Old Bot', text: "Here's the key. Talk to me again if you want any help.", style: 'npc' }
+    ]);
+return;
+    }
+    
+    if ((inventory.get("h_tea") || 0) > 0) {
+showDialog([
+      { speaker: 'Old Bot', text: "Oh, you're back with the tea!", style: 'npc' },
+      { speaker: 'Old Bot', text: "...", style: 'npc' },
+      { speaker: 'Old Bot', text: "Just what I asked for!", style: 'npc' },
+      { speaker: 'Old Bot', text: "Here's the key, lad. Talk to me again if you want any help.", style: 'npc' }
+    ]);
+return;
+    }
+    
+    if ((inventory.get("s_tea") || 0) > 0) {
+showDialog([
+      { speaker: 'Old Bot', text: "Oh, you're back with the tea!", style: 'npc' },
+      { speaker: 'Old Bot', text: "...", style: 'npc' },
+      { speaker: 'Old Bot', text: "This is better than I remember it being", style: 'npc' },
+      { speaker: 'Old Bot', text: "Thanks for this, pal.", style: 'npc' },
+      { speaker: 'Old Bot', text: "I feel at home again.", style: 'npc' },
+      { speaker: 'Old Bot', text: "Here's the key. Talk to me again if you want any help.", style: 'npc' }
+    ]);
+return;
+    }
+      
     if (gameFlags.arcadeoldbotquest) {
     showDialog([
       { speaker: 'Old Bot', text: "I'm patient, I'll wait.", style: 'npc' }
