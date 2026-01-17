@@ -1729,6 +1729,7 @@ iceZones: [],
 { id: "slap_board_1", name: "slap_board", x: 360, y: 220, width: 96, height: 96, action: "slap_jack" },
 { id: "slot_machine_1", name: "slot_machine", x: 320, y: 180, width: 96, height: 96, action: "slot_machine" },
 { id: "shop1", name: "shop", x: 400, y: 300, width: 50, height: 50, action: "shop" },
+{ id: "shop2", name: "shop", x: 350, y: 300, width: 50, height: 50, action: "shop", shopType: "gears" },
 { id: "boil", name: "boil", x: 400, y: 355, width: 50, height: 50, action: "boil" },
 { id: "tea", name: "tea", x: 400, y: 410, width: 50, height: 50, action: "tea" },
       { id: "chest_001", name: "wooden_chest", x: 78, y: 70, width: 64, height: 64, action: "chest",
@@ -10088,21 +10089,37 @@ function brewTea() {
 
 
 
-  
+  const SHOP_CATALOGS = {
+  battle: {
+    title: "Battle Equipment",
+    stock: {
+      bandaid: 6,
+      emp_grenade: 10,
+      extra_life: 20,
+      poison_vial: 7,
+      damage_potion: 9,
+      stamina_potion: 5
+    }
+  },
+  gears: {
+    title: "Gears",
+    stock: {
+      gear_hp_gear_1: 10,
+      gear_dmg_gear_1: 10
+    }
+  },
+  plant: {
+    title: "Herbs & Spices",
+    stock: {
+      spice: 7,
+      honey: 5
+    }
+  }
+};
 
   
 (function installSimpleShop() {
   if (document.getElementById('simple-shop-popup')) return;
-
-  
-  const shopPrices = {
-    bandaid: 6,
-    emp_grenade: 10,
-    extra_life: 20,
-    poison_vial: 7,
-    damage_potion: 9,
-    stamina_potion: 5
-  };
 
   const shopOverlay = document.createElement('div');
   shopOverlay.id = 'simple-shop-popup';
@@ -10199,10 +10216,51 @@ function brewTea() {
   });
 
 
-  window.openShop = function() {
-    renderShopItems();
-    shopOverlay.style.display = 'flex';
-  };
+  window.openShop = function(type) {
+  const catalog = SHOP_CATALOGS[type] || SHOP_CATALOGS['battle'];
+  const itemsContainer = document.getElementById('simple-shop-items');
+  const shopOverlay = document.getElementById('simple-shop-popup');
+  
+  shopOverlay.querySelector('strong').textContent = catalog.title;
+  
+  itemsContainer.innerHTML = '';
+
+  Object.keys(catalog.stock).forEach(key => {
+    const price = catalog.stock[key];
+    const displayName = key.replace(/gear_|armor_|weapon_/g, '').replace(/_/g, ' ').toUpperCase();
+    
+    const row = document.createElement('div');
+    Object.assign(row.style, { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' });
+    
+    row.innerHTML = `
+      <div style="text-align:left;">
+        <div style="font-size:10px;">${displayName}</div>
+        <div style="font-size:9px;color:#00ff00;">${price} Bolts</div>
+      </div>
+    `;
+
+    const buyBtn = document.createElement('button');
+    buyBtn.textContent = 'BUY';
+    buyBtn.className = 'item-use-button';
+    buyBtn.onclick = () => {
+      const bolts = inventory.get('bolts') || 0;
+      if (bolts >= price) {
+        inventory.set('bolts', bolts - price);
+        inventory.set(key, (inventory.get(key) || 0) + 1);
+        showTemporaryText(`Purchased ${displayName}!`);
+        drawInventoryBattlePopup?.();
+        drawGeneralInventory?.();
+      } else {
+        showTemporaryText("Not enough bolts!");
+      }
+    };
+
+    row.appendChild(buyBtn);
+    itemsContainer.appendChild(row);
+  });
+
+  shopOverlay.style.display = 'flex';
+};
 
   renderShopItems();
 })();
@@ -11257,9 +11315,9 @@ if (object.action === 'target_practice' && object.name === 'target_board') {
   return;
 }
  if (object.action === 'shop') {
-  window.openShop();
+  window.openShop(object.shopType || 'battle');
   return;
-} 
+}
   if (object.action === 'slot_machine') {
   if (window.openSlotMachine) window.openSlotMachine();
   return;
