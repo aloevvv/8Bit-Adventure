@@ -996,6 +996,14 @@ a:hover,
   </div>
 </div>
 
+  <div id="farm-ui" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:5000; align-items:center; justify-content:center; font-family:'Press Start 2P'; color:white;">
+  <div style="background:#4b2d12; border:4px solid #fff; padding:20px; width:350px; text-align:center;">
+    <h3>Plant a Seed</h3>
+    <div id="farm-seed-list" style="max-height:200px; overflow-y:auto; margin:15px 0; text-align:left;"></div>
+    <button class="item-use-button" onclick="document.getElementById('farm-ui').style.display='none'">Cancel</button>
+  </div>
+</div>
+
 
   <div id="slot-machine-popup" style="display:none; position:fixed; inset:0; z-index:5000; background:rgba(0,0,0,0.85); flex-direction: column; align-items:center; justify-content:center; font-family:'Press Start 2P', sans-serif; color:white;">
   <div style="background:#002591; border:2px solid black; padding:20px; width:300px; text-align:center; border-radius:8px;">
@@ -10108,8 +10116,76 @@ function brewTea() {
   drawTeaUI();
 };
 
+  
+const GROWTH_STAGE_TIME = 5 * 60 * 1000; 
 
+let farmingData = new Map(); 
 
+const farmSprites = {
+  stage0: new Image(),
+  stage1: new Image(),
+  stage2: new Image(),
+  stage3: new Image(),
+  stage4: new Image() 
+};
+farmSprites.stage0.src = "stage0.png";
+farmSprites.stage1.src = "stage1.png";
+farmSprites.stage2.src = "stage2.png";
+farmSprites.stage3.src = "stage3.png";
+farmSprites.stage4.src = "stage4.png";
+
+   function getPlotStage(plotId) {
+  const data = farmingData.get(plotId);
+  if (!data) return 0;
+
+  const elapsed = Date.now() - data.plantedAt;
+  const stage = Math.floor(elapsed / GROWTH_STAGE_TIME) + 1;
+  
+  return Math.min(4, stage);
+}
+
+function openFarmUI(plotId) {
+  const list = document.getElementById('farm-seed-list');
+  list.innerHTML = "";
+  
+  let hasSeeds = false;
+  inventory.forEach((qty, itemName) => {
+    if (itemName.startsWith("seed_") && qty > 0) {
+      hasSeeds = true;
+      const btn = document.createElement('div');
+      btn.className = "clickable";
+      btn.style.padding = "10px";
+      btn.style.borderBottom = "1px solid #666";
+      btn.textContent = `${itemName.replace('seed_', '').toUpperCase()} (${qty})`;
+      btn.onclick = () => plantSeed(plotId, itemName);
+      list.appendChild(btn);
+    }
+  });
+
+  if (!hasSeeds) list.innerHTML = "No seeds in inventory.";
+  document.getElementById('farm-ui').style.display = 'flex';
+}
+
+function plantSeed(plotId, seedType) {
+  inventory.set(seedType, inventory.get(seedType) - 1);
+  farmingData.set(plotId, {
+    seedType: seedType,
+    plantedAt: Date.now()
+  });
+  document.getElementById('farm-ui').style.display = 'none';
+  showTemporaryText(`Planted ${seedType.replace('seed_', '')}!`);
+  draw();
+}
+
+function harvestPlot(plotId) {
+  const data = farmingData.get(plotId);
+  const resultItem = data.seedType.replace('seed_', '');
+  
+  inventory.set(resultItem, (inventory.get(resultItem) || 0) + 1);
+  farmingData.delete(plotId); 
+  showTemporaryText(`Harvested a ${resultItem}!`);
+  draw();
+}
   
 
   
@@ -11259,6 +11335,20 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
 
   loadLevel(object.destLevel, object.destX, object.destY);
   draw();
+  return;
+}
+
+  if (object.action === "farm") {
+  const plotId = object.id;
+  const stage = getPlotStage(plotId);
+
+  if (stage === 0) {
+    openFarmUI(plotId);
+  } else if (stage === 4) {
+    harvestPlot(plotId);
+  } else {
+    showTemporaryText("The plant is still growing!");
+  }
   return;
 }
 
@@ -12588,6 +12678,15 @@ if (gameSettings.showZones) {
 }
 
   currentLevel.interactables.forEach(obj => {
+  if (obj.action === "farm") {
+    const stage = getPlotStage(obj.id);
+    const img = farmSprites[`stage${stage}`];
+    if (img && img.complete) {
+      ctx.drawImage(img, obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+
+  currentLevel.interactables.forEach(obj => {
   if (obj.action === "pickup") {
  
     let imgToDraw = null;
@@ -12836,6 +12935,7 @@ function saveToSlot(slotNumber) {
     removedWallIds: Array.from(removedWallIds),
     removedInteractableIds: Array.from(removedInteractableIds),
     removedBattleZoneIds: Array.from(removedBattleZoneIds),
+    farmingData: Array.from(farmingData.entries()),
     openedChestIds: Array.from(openedChestIds || []),
     achievements: achievements.map(a => ({
       id: a.id,
@@ -12868,7 +12968,7 @@ function loadFromSlot(slotNumber) {
     }
 goodPoints = saveData.goodPoints || 0;
 badPoints = saveData.badPoints || 0;
-
+    farmingData = new Map(saveData.farmingData || []);
     removedInteractableIds = new Set(saveData.removedInteractableIds || []);
     removedWallIds = new Set(saveData.removedWallIds || []);
     shownDialogs = new Set(saveData.shownDialogs || []);
