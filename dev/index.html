@@ -1166,6 +1166,7 @@ const hpText = document.getElementById('hp-text');
 let selectedEnemyIndex = 0;
 let allyTargetMode = 'Current';
 let gameFlags = {
+  firsthit: false,
   isPowered: false,
   arcadegatetalk: false,
   arcadegate2: false,
@@ -8524,6 +8525,13 @@ setInterval(() => {
     if (activeAlly && activeAlly.currentHp > 0) {
       target = (Math.random() < 0.5) ? playerStats : activeAlly;
     }
+
+    if (!gameFlags.firsthit) {
+   showBattleDialog([
+      { speaker: '8-Bit', text: "Ow! Next time, I should try blocking.", style: 'dialog' }
+    ]);
+      gameFlags.firsthit = true;
+  }
 
     const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
   
