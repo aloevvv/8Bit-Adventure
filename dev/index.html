@@ -10857,7 +10857,10 @@ showDialog([
       { speaker: 'Old Bot', text: "Here's the key. Talk to me again if you want any help.", style: 'npc' }
     ]);
       gameFlags.arcadeoldbottea = true;
-return;
+     const currentBasicT = inventory.get("b_tea") || 0;
+ if (currentBasicT > 0) {
+ inventory.set("b_tea", currentBasicT - 1); 
+}
     }
     
     if ((inventory.get("h_tea") || 0) > 0) {
@@ -10868,6 +10871,10 @@ showDialog([
       { speaker: 'Old Bot', text: "Here's the key, lad. Talk to me again if you want any help.", style: 'npc' }
     ]);
       gameFlags.arcadeoldbottea = true;
+      const currentHoneyT = inventory.get("h_tea") || 0;
+ if (currentHoneyT > 0) {
+ inventory.set("h_tea", currentHoneyT - 1); 
+}
 return;
     }
     
@@ -10875,12 +10882,16 @@ return;
 showDialog([
       { speaker: 'Old Bot', text: "Oh, you're back with the tea!", style: 'npc' },
       { speaker: 'Old Bot', text: "...", style: 'npc' },
-      { speaker: 'Old Bot', text: "This is better than I remember it being", style: 'npc' },
+      { speaker: 'Old Bot', text: "This is better than I remember it being.", style: 'npc' },
       { speaker: 'Old Bot', text: "Thanks for this, pal.", style: 'npc' },
       { speaker: 'Old Bot', text: "I feel at home again.", style: 'npc' },
       { speaker: 'Old Bot', text: "Here's the key. Talk to me again if you want any help.", style: 'npc' }
     ]);
    gameFlags.arcadeoldbottea = true;
+  const currentSpiceT = inventory.get("s_tea") || 0;
+ if (currentSpiceT > 0) {
+ inventory.set("s_tea", currentSpiceT - 1); 
+}
 return;
     }
       
