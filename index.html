@@ -4,11 +4,10 @@
   <meta charset="UTF-8" />
   <title>8Bit’s Adventure</title>
   <link rel="icon" type="image/png" href="favicon.png" />
-  <!-- Google Font: Press Start 2P -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <style>
+  <style>   
     body {
       background: #333;
       color: white;
@@ -166,6 +165,169 @@
   0% { transform: translate(0, 0) scale(1); opacity: 1; }
   100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
 }
+.sword-trail {
+  position: fixed;
+  width: 150px;
+  height: 40px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  transform: rotate(-30deg) skewX(-45deg);
+  pointer-events: none;
+  z-index: 10002;
+  animation: swordSlash 0.4s ease-out forwards;
+}
+
+@keyframes swordSlash {
+  0% { transform: translate(-100px, 0) rotate(-30deg) scaleX(0); opacity: 0; }
+  50% { transform: translate(0, 0) rotate(-30deg) scaleX(1.5); opacity: 1; }
+  100% { transform: translate(100px, 0) rotate(-30deg) scaleX(0); opacity: 0; }
+}
+.telegraph-mark {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ff0000;
+  font-size: 30px;
+  font-weight: bold;
+  text-shadow: 2px 2px black;
+  animation: pulse 0.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.3); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+  #tea-ui {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 480px;
+  height: 400px;
+  background: #001a33;
+  border: 4px solid white;
+  z-index: 5000;
+  color: white;
+  display: none;
+  flex-direction: row;
+  padding: 20px;
+  gap: 20px;
+}
+
+#tea-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tea-slot {
+  width: 150px;
+  height: 40px;
+  background: #002591;
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+#tea-inventory-list {
+  flex-grow: 1;
+  border-left: 2px solid white;
+  padding-left: 10px;
+  overflow-y: auto;
+}
+
+#tea-inventory-list div {
+  background: #333;
+  padding: 8px;
+  margin-bottom: 5px;
+  border: 2px solid #999;
+  cursor: pointer;
+}
+
+
+#boil-ui {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 480px;
+  height: 300px;
+  background: #001a33;
+  border: 4px solid white;
+  z-index: 5000;
+  color: white;
+  display: none;
+  flex-direction: column;
+  padding: 20px;
+}
+
+#boil-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  flex-grow: 1;
+}
+
+
+#kettle {
+  width:120px;
+  height:80px;
+  background:#333;
+  border:3px solid #777;
+  position:relative;
+}
+
+.steam {
+  width:10px;
+  height:10px;
+  background:#666;
+  position:absolute;
+  animation:steamRise 1.2s infinite;
+}
+
+.s1 { left:20px; top:-10px; animation-delay:0s; }
+.s2 { left:50px; top:-10px; animation-delay:0.3s; }
+.s3 { left:80px; top:-10px; animation-delay:0.6s; }
+
+@keyframes steamRise {
+  0% { opacity:0; transform:translateY(0); }
+  50% { opacity:1; transform:translateY(-10px); }
+  100% { opacity:0; transform:translateY(-20px); }
+}
+
+#boil-bar {
+  width:300px;
+  height:20px;
+  background:#222;
+  border:2px solid #999;
+  position:relative;
+}
+
+#green-zone {
+  position:absolute;
+  left:140px;
+  width:20px;
+  height:100%;
+  background:#00ff00;
+}
+
+#red-progress {
+  position:absolute;
+  left:0;
+  top:0;
+  height:100%;
+  width:0;
+  background:#ff0000;
+}
+
+#boil-instructions {
+  font-size:14px;
+  opacity:0.8;
+}
     .attack-bar-container {
   width: 100%;
   height: 9px;
@@ -253,6 +415,29 @@
   opacity: 0 !important;
   transition: opacity 0.7s ease-out !important;
 }
+@keyframes char-shake {
+  0% { transform: translate(1px, 1px); }
+  25% { transform: translate(-1px, -1px); }
+  50% { transform: translate(-1px, 1px); }
+  75% { transform: translate(1px, -1px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes char-wave {
+  from { transform: translateY(0); }
+  to { transform: translateY(-5px); }
+}
+@keyframes char-glitch {
+  0% { opacity: 1; transform: skew(0deg); }
+  20% { opacity: 0.8; transform: skew(10deg); color: #ff00ff; }
+  40% { opacity: 1; transform: skew(-10deg); color: #00ffff; }
+  100% { opacity: 1; transform: skew(0deg); }
+}
+
+.dialog-char { display: inline-block; min-width: 0.2em; }
+.effect-shake { animation: char-shake 0.15s infinite; }
+.effect-wave { animation: char-wave 0.5s infinite alternate ease-in-out; }
+.effect-glitch { animation: char-glitch 0.2s infinite; }
+    
     .enemy-target.stunned {
   filter: grayscale(100%);
   opacity: 0.6;
@@ -268,6 +453,22 @@
     .enemy-target.enraged {
   box-shadow: 0 0 10px 10px rgba(255, 0, 0, 0.8);
   border-color: #FF0000;
+}
+    .enemy-target.stoned {
+  filter: grayscale(100%) brightness(0.7);
+  border-color: #888 !important;
+  box-shadow: none !important;
+}
+    .burn-rocket-hud {
+  box-shadow: 0 0 15px 5px orange !important;
+  border: 2px solid orange !important;
+  transition: box-shadow 0.3s ease;
+}
+
+.burn-mountain-hud {
+  box-shadow: 0 0 15px 5px red !important;
+  border: 2px solid red !important;
+  transition: box-shadow 0.3s ease;
 }
     #player-battle-status .hp-bar-container:last-of-type .hp-bar {
       background-color: #00FFFF;
@@ -290,7 +491,7 @@
   display: none;
   position: absolute;    
   bottom: 46px;            
-  left: 50%;
+  left: 75%;
   transform: translateX(-50%);
   width: 280px;
   max-height: 380px;
@@ -322,17 +523,49 @@
   padding:6px;
   border-radius:4px;
 }
+    #achievements-popup {
+  left: 60%;
+}
 
+#party-popup {
+  left: 20%;
+}
+  #general-inventory-list {
+  display: grid;
+  grid-template-rows: repeat(15, 25px); 
+  grid-auto-flow: column; 
+  grid-auto-columns: 240px; 
+  gap: 10px;
+  width: auto;
+  max-width: 900px;
+  max-height: 450px; 
+  overflow-x: auto; 
+  overflow-y: hidden;
+  padding: 5px;
+}
 
+#general-inventory-list p {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  line-height: 25px; 
+}
     #inventory-list {
-      display: flex;
-      flex-direction: row;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-      max-height: 250px;
-      overflow-y: auto;
-    }
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-height: 250px;
+  overflow-y: auto;  
+}
+  #inventory-popup.stats-popup {
+  width: 900px;
+  max-width: 900px;
+  bottom: 100%;
+  left: 100px;
+}
+
     .inventory-item {
       display: flex;
       flex-direction: column;
@@ -375,6 +608,33 @@
     .item-use-button:hover {
       background-color: #555;
     }
+    #equips-popup {
+  position: fixed;               
+  transform: translate(-50%, -50%); 
+  width: 480px;
+  height: 400px;
+  background: #001a33;
+  border: 4px solid white;
+  z-index: 5000;      
+  color: white;
+  display: none;
+  flex-direction: column;
+  padding: 20px;
+}
+
+
+.slot-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+.equip-slot {
+  width: 80px; height: 60px; border: 2px dashed #555; display: flex; 
+  align-items: center; justify-content: center; font-size: 9px; cursor: pointer; text-align: center;
+}
+.equip-slot.filled { border: 2px solid white; background: #002591; }
+#equips-list-display { 
+  flex-grow: 1; border-top: 2px solid white; padding-top: 10px; overflow-y: auto; text-align: left;
+}
+.equip-item-row {
+  display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px solid #333;
+}
 
 .tp-target {
   position: absolute;
@@ -405,6 +665,21 @@
   background: black;
   pointer-events: none;
 }
+    *{
+  cursor: url("cursor2.png") 6 0, auto;
+}
+    
+button,
+button:hover,
+a,
+a:hover,
+.clickable,
+.clickable:hover {
+  cursor: url("pointer.png") 16 16, pointer !important;
+}
+
+
+
     #game-over-overlay {
   position: fixed;
   top: 0;
@@ -440,11 +715,14 @@
   </style>
 </head>
 <body>
-  <!-- Title screen overlay -->
+
 <div id="title-screen" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#001a33;z-index:3000;">
   <div style="text-align:center;color:white;">
     <h1 style="font-family:'Press Start 2P',sans-serif;margin-bottom:20px;">8-Bit's Adventure</h1>
+    
     <button id="play-button" style="font-family:'Press Start 2P',sans-serif;padding:12px 20px;font-size:14px;cursor:pointer;">Play</button>
+    <br><br>
+    <button id="load-title-button" style="font-family:'Press Start 2P',sans-serif;padding:12px 20px;font-size:14px;cursor:pointer;">Load Game</button>
   </div>
 
   <p style="
@@ -460,6 +738,7 @@
     Arrow/WASD to move, X to interact
   </p>
 </div>
+
 
   <div id="prologue-overlay" style="
   display: none;
@@ -517,6 +796,51 @@
     </div>
   </div>
 
+    <div class="hud-section" id="equips">
+  <p id="equips-button" style="cursor:pointer;">Equips</p> 
+
+  <div id="equips-popup" style="
+    display:none; 
+    position:fixed; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    width: 500px; 
+    max-width: 90vw;
+    height: 500px; 
+    background: #001a33; 
+    border: 4px solid white; 
+    z-index: 5000; 
+    color: white; 
+    font-family: 'Press Start 2P'; 
+    padding: 20px; 
+    flex-direction: column;
+    box-sizing: border-box;
+    box-shadow: 0 0 100px rgba(0,0,0,0.8);
+  ">
+    
+    <h2 style="text-align:center; font-size:16px; margin-bottom:10px;">Equipment & Gears</h2>
+    <p id="equipping-target-name" style="text-align:center; font-size:10px; color:#aaa; margin-bottom:20px;">   </p>
+    
+    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:30px;">
+      <div id="slot-armor" class="equip-box" style="width:85px; height:70px; border:2px dashed #666; font-size:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Armor</div>
+      <div id="slot-weapon" class="equip-box" style="width:85px; height:70px; border:2px dashed #666; font-size:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Weapon</div>
+      <div id="slot-gear-0" class="equip-box" style="width:85px; height:70px; border:2px dashed #666; font-size:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Gear</div>
+      <div id="slot-gear-1" class="equip-box" style="width:85px; height:70px; border:2px dashed #666; font-size:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Gear</div>
+      <div id="slot-gear-2" class="equip-box" style="width:85px; height:70px; border:2px dashed #666; font-size:8px; display:flex; align-items:center; justify-content:center; cursor:pointer; text-align:center; background: rgba(255,255,255,0.05);">Gear</div>
+    </div>
+
+    <div style="text-align:center; font-size:11px; border-bottom:2px solid white; padding-bottom:10px; margin-bottom:10px;">Available Items</div>
+
+    <div id="equips-inventory-list" style="flex-grow:1; overflow-y:auto; padding-right:10px; text-align: left;">
+    </div>
+
+    <div style="text-align:center; margin-top:15px;">
+      <button class="item-use-button" onclick="document.getElementById('equips-popup').style.display='none'">Close Menu</button>
+    </div>
+  </div>
+</div>
+
     <div class="hud-section" id="achievements">
   <p id="achievements-button">Achievements</p>
   <div id="achievements-popup" class="stats-popup" style="display:none; max-height: 300px; overflow-y:auto;">
@@ -524,7 +848,9 @@
 </div>
 
   <div class="hud-section" id="settings">
-    <p id="settings-button">Settings</p>
+    <p id="settings-button">
+  <img src="settings.png" alt="Settings" style="width:32px; height:32px;">
+</p>
     <div id="settings-popup" class="stats-popup" style="display:none; width:280px;">
       <h4>Settings</h4>
 
@@ -533,7 +859,7 @@
         <select id="difficulty-select" style="width:100%; font-family:'Press Start 2P',sans-serif;">
           <option value="normal">Normal</option>
           <option value="hard">Hard</option>
-          <option value="hard">Extreme</option>
+          <option value="extreme">Extreme</option>
           <option value="ultimate">Ultimate</option>
         </select>
       </div>
@@ -542,11 +868,6 @@
   <label style="display:block; font-size:10px;">Mobile Mode</label>
   <input id="toggle-mobile-mode" type="checkbox" /> Enable Mobile Controls
 </div>
-
-      <div style="margin:8px 0;">
-        <label style="display:block; font-size:10px;">Show Zones & Walls</label>
-        <input id="toggle-zones" type="checkbox" /> Show debug outlines
-      </div>
 
       <div style="margin:8px 0;">
   <label style="display:block; font-size:10px;">Autosave</label>
@@ -602,6 +923,19 @@
   </div>
 </div>
 
+  <div id="damage-overlay"></div>
+
+
+<div id="export-menu" style="display:none;position:fixed;top:20%;left:50%;transform:translateX(-50%);
+     background:#222;color:#fff;padding:20px;border:2px solid #fff;z-index:5000;">
+  <h3>Exported Save</h3>
+  <textarea id="export-box" rows="6" cols="60" readonly></textarea>
+  <br>
+  <button id="close-export">Close</button>
+</div>
+
+
+
 <div id="password-popup" style="display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,0.8);">
   <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100%;">
     <div style="background:#002591; padding:20px; border:2px solid black; font-family:'Press Start 2P',sans-serif; color:white; width:300px; text-align:center;">
@@ -637,6 +971,43 @@
       <div style="font-size:11px;">Attempts left: <span id="tp-attempts">5</span></div>
       <div style="font-size:11px;">Click targets to score</div>
     </div>
+  </div>
+</div>
+
+  <div id="tea-ui">
+  <div id="tea-slots">
+    <div class="tea-slot" id="slot-water">Water Slot</div>
+    <div class="tea-slot" id="slot-honey">Honey Slot</div>
+    <div class="tea-slot" id="slot-spice">Spice Slot</div>
+    <button id="brew-tea-btn">Brew</button>
+  </div>
+
+  <div id="tea-inventory-list"></div>
+</div>
+
+
+ <div id="boil-ui">
+  <div id="boil-container">
+    <div id="kettle">
+      <div class="steam s1"></div>
+      <div class="steam s2"></div>
+      <div class="steam s3"></div>
+    </div>
+
+    <div id="boil-bar">
+      <div id="red-progress"></div>
+      <div id="green-zone"></div>
+    </div>
+
+    <div id="boil-instructions">Press SPACE to stop</div>
+  </div>
+</div>
+
+  <div id="farm-ui" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:5000; align-items:center; justify-content:center; font-family:'Press Start 2P'; color:white;">
+  <div style="background:#4b2d12; border:4px solid #fff; padding:20px; width:350px; text-align:center;">
+    <h3>Plant a Seed</h3>
+    <div id="farm-seed-list" style="max-height:200px; overflow-y:auto; margin:15px 0; text-align:left;"></div>
+    <button class="item-use-button" onclick="document.getElementById('farm-ui').style.display='none'">Cancel</button>
   </div>
 </div>
 
@@ -701,6 +1072,11 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
       Win by collecting 30 cards in your pile. Wrong slap penalizes you (-3 cards).
     </div>
   </div>
+</div>
+
+  <div id="dev-console" style="display:none; position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:10000; width:400px; background:rgba(0,0,0,0.9); border:2px solid #00ff00; padding:10px; font-family:'monospace';">
+  <div style="color:#00ff00; font-size:10px; margin-bottom:5px;">DEV CONSOLE: Type command and press Enter</div>
+  <input id="dev-input" type="text" style="width:100%; background:#111; color:#00ff00; border:1px solid #00ff00; outline:none; font-family:'monospace';" placeholder="/help" />
 </div>
 
   <div id="demo-popup" style="display:none;">
@@ -772,6 +1148,7 @@ canvas.tabIndex = 0;
 canvas.focus();
 canvas.addEventListener('click', () => canvas.focus());
 
+const devMode = false;
 // Player and game variables
 let isGameOver = false;
 let x = 150, y = 50;
@@ -804,8 +1181,13 @@ const hpText = document.getElementById('hp-text');
 let selectedEnemyIndex = 0;
 let allyTargetMode = 'Current';
 let gameFlags = {
+  firsthit: false,
   isPowered: false,
   arcadegatetalk: false,
+  arcadegate2: false,
+  arcadeoldbottalk: false,
+  arcadeoldbotNO: false,
+  arcadeoldbottea: false,
   carpass: false,
   atticlever: false,
   birthdaybottalk: false,
@@ -815,6 +1197,9 @@ let gameFlags = {
   interactedWithDeadBody: false,
   lightsFixed: false
 };
+
+let goodPoints = 0;
+let badPoints = 0;
 
 
 let shownDialogs = new Set();
@@ -843,6 +1228,34 @@ zoneSprites.fail.src = 'fail.png';
   zoneSprites.mouse.src = 'mouse.png';
 zoneSprites.bossrobot.src = 'bossrobot.png';
 zoneSprites.robot.src = 'robot.png';
+
+function drawBreathing() {
+  const t = Date.now() * 0.002;
+
+  if (currentLevel && currentLevel.battleZones) {
+    currentLevel.battleZones.forEach(zone => {
+      if (!zone.sprite) return;
+      const img = zoneSprites[zone.sprite];
+      if (!img || !img.complete || img.naturalWidth === 0) return;
+
+      const spriteW = Math.min(zone.width, 100);
+      const spriteH = Math.min(zone.height, 100);
+      const destX = zone.x + (zone.width - spriteW) / 2;
+      const destY = zone.y + (zone.height - spriteH) / 2;
+
+ 
+      const scaleY = 1.0 + Math.sin(t) * 0.08; 
+      const currentH = spriteH * scaleY;
+      
+      const offsetHeight = currentH - spriteH;
+      const drawY = destY - offsetHeight;
+
+      ctx.drawImage(img, destX, drawY, spriteW, currentH);
+    });
+  }
+}
+
+
 
 let darkTimerMs = 0;
 let darkTimerLimitMs = 30000;
@@ -902,54 +1315,102 @@ let currentRoundIndex = 0;
   defense: false
 };
 
+  const gearTypes = {
+  hp_gear_1: { name: "HP Gear I", rarity: "common", hp: 5, desc: "+5 HP" },
+  dmg_gear_1: { name: "Dmg Gear I", rarity: "common", dmg: 1, desc: "+1 Damage" },
+  hp_gear_2: { name: "HP Gear II", rarity: "rare", hp: 8, desc: "+8 HP" },
+  dmg_gear_2: { name: "Dmg Gear II", rarity: "rare", dmg: 2, desc: "+2 Damage" },
+  hp_gear_3: { name: "HP Gear III", rarity: "super_rare", hp: 12, desc: "+12 HP" },
+  dmg_gear_3: { name: "Dmg Gear III", rarity: "super_rare", dmg: 3, desc: "+3 Damage" },
+  magnet_gear: { name: "Magnet Gear", rarity: "epic", desc: "Enemies drop +1 bolt" },
+  steal_gear: { name: "Stealing Gear", rarity: "epic", desc: "Delay enemy attacks by 0.01s. Stackable" },
+  vampire_gear: { name: "Vampire Gear", rarity: "mythic", desc: "Heals 10% HP for each kill" },
+  statue_gear: { name: "Stone Gear", rarity: "mythic", desc: "Main attack has 1% to turn enemies to stone for 4s" }
+};
+
+const rarityColors = {
+  common: "#ffffff", rare: "#2ecc71", super_rare: "#3498db", 
+  epic: "#9b59b6", mythic: "#e74c3c", legendary: "#f39c12"
+};
+
+let equippedGears = [null, null, null];
+
   const armorTypes = {
-  retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0 },
-  v8:    { name: "V8 Armor", hpBonus: 0.20, passiveHealPercent: 0 },
-  saloon:{ name: "Saloon Armor", hpBonus: 0.40, passiveHealPercent: 0.02 },
-  haunted:{name: "Haunted Armor", hpBonus: 0.30, passiveHealPercent: 0, blockChance: 0.15 },
-  virus: { name: "Virus Armor", hpBonus: 0.50, passiveHealPercent: 0 }
+  retro: { name: "Retro Armor", hpBonus: 0.10, passiveHealPercent: 0, desc: "+ 10% HP" },
+  v8:    { name: "V8 Armor", hpBonus: 0.20, passiveHealPercent: 0, desc: "+ 20% HP" },
+  saloon:{ name: "Saloon Armor", hpBonus: 0.40, passiveHealPercent: 0.02, desc: "+ 40% HP, heals 1% per sec" },
+  haunted:{name: "Haunted Armor", hpBonus: 0.30, passiveHealPercent: 0, blockChance: 0.15, desc: "+ 30% HP, 30% chance to block" },
+  virus: { name: "Virus Armor", hpBonus: 0.50, passiveHealPercent: 0, desc: "FORBIDDEN TO WEAR, TURN BACK 8-BIT, THERE IS STILL GOOD INSIDE YOU" }
 };
 
 const weaponTypes = {
-  retro: { name: "Retro Weapon", dmgBonus: 0.10 },
-  v8:    { name: "V8 Weapon", dmgBonus: 0.20 },
-  saloon:{ name: "Saloon Weapon", dmgBonus: 0.15 },
-  haunted:{name: "Haunted Weapon", dmgBonus: 0.25 },
-  virus: { name: "Virus Weapon", dmgBonus: 0.50 }
+  retro: { name: "Retro Weapon", dmgBonus: 0.10, desc: "+ 10% Damage" },
+  v8:    { name: "V8 Weapon", dmgBonus: 0.20, desc: "+ 20% Damage" },
+  saloon:{ name: "Saloon Weapon", dmgBonus: 0.15, desc: "+ 15% Damage" },
+  haunted:{name: "Haunted Weapon", dmgBonus: 0.25, desc: "+ 25% Damage" },
+  virus: { name: "Virus Weapon", dmgBonus: 0.50, desc: "DO NOT EQUIP, 8-BIT, THE EVIL IS CORRUPTING YOU" }
 };
 
-  let equippedArmor = null; 
+let equippedArmor = null; 
 let equippedWeapon = null;
 
 function applyEquipmentBonuses() {
-  
   const baseMaxHp = playerStats.baseMaxHp;
   const baseDamage = playerStats.baseDamage;
 
- 
-  let armorBonusHp = 0;
+  playerStats.maxHp = baseMaxHp;
+  playerStats.damage = baseDamage;
+
   if (equippedArmor && armorTypes[equippedArmor]) {
-    armorBonusHp = Math.floor(baseMaxHp * armorTypes[equippedArmor].hpBonus);
+    const armorBonusHp = Math.floor(baseMaxHp * armorTypes[equippedArmor].hpBonus);
+    playerStats.maxHp = baseMaxHp + armorBonusHp;
   }
 
-  
-  let weaponBonusDmg = 0;
   if (equippedWeapon && weaponTypes[equippedWeapon]) {
-    weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
+    const weaponBonusDmg = Math.floor(baseDamage * weaponTypes[equippedWeapon].dmgBonus);
+    playerStats.damage = baseDamage + weaponBonusDmg;
   }
 
- 
-  playerStats.maxHp = baseMaxHp + armorBonusHp;
-  playerStats.damage = baseDamage + weaponBonusDmg;
+  if (activeAlly) {
+    activeAlly.maxHp = activeAlly.baseMaxHp;
+    activeAlly.damage = activeAlly.baseDamage;
+    activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+  }
 
+  if (activeAmulets.sacrifice) {
+    playerStats.maxHp = Math.floor(baseMaxHp * 1.5);
+    if (activeAlly) {
+      activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
+      activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
+    }
+  }
+
+  if (activeAmulets.xp) {
+    playerStats.maxHp = Math.floor(baseMaxHp * 0.5);
+    if (activeAlly) {
+      activeAlly.maxHp = Math.floor(activeAlly.baseMaxHp * 0.5);
+      activeAlly.damage = Math.floor(activeAlly.baseDamage * 0.5);
+    }
+  }
+
+  equippedGears.forEach(gearId => {
+    if (gearId && gearTypes[gearId]) {
+      if (gearTypes[gearId].hp) playerStats.maxHp += gearTypes[gearId].hp;
+      if (gearTypes[gearId].dmg) playerStats.damage += gearTypes[gearId].dmg;
+    }
+  });
 
   if (playerStats.currentHp > playerStats.maxHp) {
     playerStats.currentHp = playerStats.maxHp;
   }
+  
+  if (activeAlly) activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
 
   updateHp(playerStats.currentHp);
   updateStatsPopup();
 }
+
+
 
   
 
@@ -959,9 +1420,21 @@ inventory.set("poison_vial", 0);
 inventory.set("extra_life", 0);
 inventory.set("damage_potion", 0);
 inventory.set("stamina_potion", 0);
+inventory.set("anti_virus", 0);
 inventory.set("driftwood", 0);
 
 inventory.set("bolts", 5);
+inventory.set("water", 0);
+inventory.set("boiled_water", 0);
+inventory.set("water_1", 0);
+inventory.set("tealeaf", 0);
+inventory.set("seed_tealeaf", 0);
+inventory.set("seed_spice", 0);
+inventory.set("honey", 0);
+inventory.set("spice", 0);
+inventory.set("b_tea", 0);
+inventory.set("h_tea", 0);
+inventory.set("s_tea", 0);
   
 inventory.set("hammer", 0);
 inventory.set("laser_cutter", 0);
@@ -980,6 +1453,17 @@ inventory.set("amulet_stealing", 0);
 inventory.set("amulet_sacrifice", 0);
 inventory.set("amulet_xp", 0);
 inventory.set("amulet_defense", 0);
+
+inventory.set("gear_dmg_gear_1", 0);
+inventory.set("gear_hp_gear_1", 0);
+inventory.set("gear_dmg_gear_2", 0);
+inventory.set("gear_hp_gear_2", 0);
+inventory.set("gear_dmg_gear_3", 0);
+inventory.set("gear_hp_gear_3", 0);
+inventory.set("gear_vampire_gear", 0);
+inventory.set("gear_statue_gear", 0);
+inventory.set("gear_magnet_gear", 0);
+inventory.set("gear_steal_gear", 0);
   
 inventory.set("armor_retro", 0);
 inventory.set("armor_v8", 0);
@@ -1022,7 +1506,7 @@ let playerStats = {
   baseDamage: 2
 };
 const alliesData = [
-  { id: 'ally1', name: 'Lou', baseMaxHp: 30, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10 },
+  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10 },
   { id: 'ally2', name: 'Buzz', baseMaxHp: 58, baseDamage: 4, attackIntervalMs: 2200, level: 1, xp: 0, xpToNextLevel: 10 },
   { id: 'ally3', name: 'Colt', baseMaxHp: 23, baseDamage: 6, attackIntervalMs: 3000, level: 1, xp: 0, xpToNextLevel: 10 },
   { id: 'ally4', name: 'Otis', baseMaxHp: 45, baseDamage: 4, attackIntervalMs: 2000, level: 1, xp: 0, xpToNextLevel: 10 },
@@ -1035,6 +1519,7 @@ let equippedAllyId = null;
 let activeAlly = null;           
 let allyAttackTimerId = null; 
 
+  
 let inBattle = false;
 
 const enemyTypes = {
@@ -1049,6 +1534,10 @@ const enemyTypes = {
   Puncherbot: { name: "Puncher", maxHp: 90, damage: 1, xpReward: 5, behavior: "normalAttack" },
   Attictank: { name: "Dusty Bot", maxHp: 1500, damage: 1, xpReward: 14, behavior: "normalAttack" },
   Atticsniper: { name: "Dusty Sniper", maxHp: 1000, attackSpeed: 3000, damage: 3, xpReward: 12, behavior: "sniperAttack" },
+  OldBot: { name: "Old Bot", maxHp: 10000, attackSpeed: 5000, damage: 10, xpReward: 200, behavior: "oldBotBehavior" },
+  Sandbot: { name: "Sandy Bot", maxHp: 100, attackSpeed: 2000, damage: 3, xpReward: 10, behavior: "sandBehavior" },
+  Smokebang: { name: "Smoke Bomb Bot", maxHp: 100, attackSpeed: 2000, damage: 3, xpReward: 10, behavior: "smokeBehavior" },
+  Swordsman: { name: "Sword Bot", maxHp: 150, attackSpeed: 2500, damage: 3, xpReward: 10, behavior: "swordBehavior" },
   Mousebot: { name: "Quickbot", maxHp: 500, attackSpeed: 1000, damage: 2, xpReward: 8, behavior: "normalAttack" },
   Partyguard: { name: "Bodyguard", maxHp: 2200, damage: 1, xpReward: 100, behavior: "normalAttack", isBoss: true, defaultResistances: {stun: true, poison:true }},
   BossBot: { name: "BossRobot", maxHp: 100, damage: 4, xpReward: 50, isBoss: true, behavior: "bossBehavior", defaultResistances: {stun: true, poison:true }},
@@ -1061,7 +1550,7 @@ const enemyTypes = {
   CritBoss: { name: "Deadshot", maxHp: 100, damage: 7, xpReward: 1, behavior: "critBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   CaveBoss: { name: "Stoneforce", maxHp: 200, damage: 4, xpReward: 150, isBoss: true, behavior: "caveBossBehavior", defaultResistances: { stun: true, poison: true }},
   CrystalShard: { name: "Crystal Shard", maxHp: 5, damage: 2, xpReward: 1, behavior: "normalAttack" },
-  MountainBoss: { name: "Autoyvern", maxHp: 250, damage: 1, xpReward: 200, behavior: "mountainBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
+  MountainBoss: { name: "Autoyvern", maxHp: 10000, damage: 1, xpReward: 200, behavior: "mountainBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   GhostBoss: { name: "The Maestro", maxHp: 450, damage: 3, xpReward: 150, behavior: "ghostBossBehavior", isBoss: true, defaultResistances: {stun: true, poison:true }},
   Train: { name: "Train Carriage", maxHp: 40, damage: 0, xpReward: 0, behavior: "normalAttack"},
   SpectralMinion: { name: "Spirit", maxHp: 12, damage: 3, xpReward: 1, behavior: "normalAttack" },
@@ -1078,12 +1567,13 @@ const enemyTypes = {
 };
 
   const speakerConfigs = {
-  '8-Bit': { speed: 30, pitch: 1.0, frequency: 2 },
-  'Birthday Bot': { speed: 30, pitch: 1.7, frequency: 3 },
-  'BossRobot': { speed: 30, pitch: 0.6, frequency: 2 }, 
-  'Bodyguard': { speed: 30, pitch: 0.7, frequency: 1 },
-  'Guard': { speed: 40, pitch: 0.6, frequency: 1 },
-  'default': { speed: 30, pitch: 1.0, frequency: 2 }
+  '8-Bit': { speed: 30, pitch: 1.0, frequency: 2, sound: 'blip.wav' },
+  'New': { speed: 30, pitch: 1.0, frequency: 2, sound: 'blub2.mp3' },
+  'Birthday Bot': { speed: 30, pitch: 1.7, frequency: 3, sound: 'blip.wav' },
+  'BossRobot': { speed: 30, pitch: 0.6, frequency: 2, sound: 'blip.wav' }, 
+  'Bodyguard': { speed: 30, pitch: 0.7, frequency: 1, sound: 'blip.wav' },
+  'Guard': { speed: 40, pitch: 0.6, frequency: 1, sound: 'blip.wav' },
+  'default': { speed: 30, pitch: 1.0, frequency: 2, sound: 'blip.wav' }
 };
 
   // adjust these things as needed ill have to test em to see if they fit what i want
@@ -1174,7 +1664,7 @@ const levels = [
       { x: 0, y: 200, width: 20, height: 240, destLevel: 13, destX: 580, destY: 240 }
     ],
      battleZones: [
-      { x: 530, y: 80, width: 64, height: 64, encounter: [{ type: "Sniperbot" }], sprite: 'fail' },
+      { id: 'filter_first', x: 530, y: 80, width: 64, height: 64, encounter: [{ type: "Sniperbot" }], sprite: 'fail' },
       { x: 240, y: 315, width: 64, height: 64, encounter: [{ type: "Sniperbot" }, {type: "Sniperbot"}], sprite: 'fail'},
 ],
     waterZones: [], // make something like { x: 0, y: 0, width: 1, height: 1 } for zones
@@ -1228,7 +1718,7 @@ const levels = [
 iceZones: [],
     battleZones: [
       { x: 507, y: 70, width: 64, height: 64, encounter: [{ type: "Sniperbot" }, {type: "Sniperbot"}], sprite: 'fail' },
-      { x: 240, y: 60, width: 80, height: 80, encounter: [{ type: "Sniperbot" }, {type: "Puncherbot"}, {type: "Sniperbot"}], sprite: 'fail'}
+      { id: 'filter_bots3', x: 240, y: 60, width: 80, height: 80, encounter: [{ type: "Sniperbot" }, {type: "Puncherbot"}, {type: "Sniperbot"}], sprite: 'fail'}
     ],
     dialogZones: [
       {
@@ -1252,11 +1742,13 @@ iceZones: [],
   destX: 100,
   destY: 100
 },
-    
+    //{ id: "plot_01", name: "farm_plot", x: 100, y: 100, width: 64, height: 64, action: "farm" },
 { name: 'target_board', x: 360, y: 120, width: 96, height: 96, action: 'target_practice' },
 { id: "slap_board_1", name: "slap_board", x: 360, y: 220, width: 96, height: 96, action: "slap_jack" },
 { id: "slot_machine_1", name: "slot_machine", x: 320, y: 180, width: 96, height: 96, action: "slot_machine" },
 { id: "shop1", name: "shop", x: 400, y: 300, width: 50, height: 50, action: "shop" },
+//{ id: "boil", name: "boil", x: 400, y: 355, width: 50, height: 50, action: "boil" },
+//{ id: "tea", name: "tea", x: 400, y: 410, width: 50, height: 50, action: "tea" },
       { id: "chest_001", name: "wooden_chest", x: 78, y: 70, width: 64, height: 64, action: "chest",
     rewards: [["bandaid",1], ["emp_grenade",1]], opened: false }
     ]
@@ -1424,7 +1916,6 @@ iceZones: [],
   ],
   sprite: 'fail'
 }
- //LifeStealBoss, CritBoss, CaveBoss, IceBoss, MountainBoss
     ],
     dialogZones: [],
     interactables: []
@@ -1517,6 +2008,7 @@ iceZones: [],
     battleZones: [],
     dialogZones: [],
     interactables: [
+      { id: 'dmgP_5', name: "dmgPotion", x: 269, y: 188, width: 32, height: 32, action: "pickup", itemName: "damage_potion"},
       { name: 'photo1', x: 60, y: 40, width: 55, height: 30, action: 'photo' },
       { name: 'photo2', x: 350, y: 40, width: 80, height: 30, action: 'photo' },
       { name: 'arcadekey', x: 38, y: 131, width: 80, height: 100, action: 'arcadekey' },
@@ -1879,6 +2371,7 @@ iceZones: [],
     battleZones: [],
     dialogZones: [],
     interactables: [
+      { name: "dmgPotion", x: 150, y: 300, width: 32, height: 32, action: "pickup", itemName: "damage_potion"},
       { name: "friendhousecrack", x: 378, y: 368, width: 300, height: 120, action: "friendhousecrack" }
     ]
   },
@@ -2103,7 +2596,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 128, y: 68, width: 64, height: 64, encounter: [{ type: "Partybot" }], sprite: 'fail'}
+      { id: 'filter_shittingbot', x: 128, y: 68, width: 64, height: 64, encounter: [{ type: "Partybot" }], sprite: 'fail'}
     ],
     dialogZones: [
       {
@@ -2151,7 +2644,7 @@ iceZones: [],
     ],
     darkZones: [],
     battleZones: [
-      { x: 210, y: 203, width: 80, height: 80, interactRect: { x: 150, y: 203, width: 200, height: 96 }, encounter: [{ type: "Partybot" }, {type: "Partybot"}, {type: "Partybot"}], sprite: 'fail'}
+      { id: 'filter_partybot31', x : 210, y: 203, width: 80, height: 80, interactRect: { x: 150, y: 203, width: 200, height: 96 }, encounter: [{ type: "Partybot" }, {type: "Partybot"}, {type: "Partybot"}], sprite: 'fail'}
     ],
     dialogZones: [],
     interactables: []
@@ -2443,6 +2936,7 @@ iceZones: [],
     battleZones: [],
     dialogZones: [],
     interactables: [
+      { id: 'dmgP_1', name: "dmgPotion", x: 210, y: 159, width: 32, height: 32, action: "pickup", itemName: "damage_potion"},
       { name: "friendhousecake", x: 240, y: 236, width: 190, height: 200, action: "friendhousecake" }
     ]
   },
@@ -2522,6 +3016,7 @@ iceZones: [],
     ],
     dialogZones: [],
     interactables: [
+      { id: 'dmgP_2', name: "dmgPotion", x: 117, y: 219, width: 32, height: 32, action: "pickup", itemName: "damage_potion"},
       { name: "television", x: 154, y: 50, width: 290, height: 150, action: "television" }
     ]
   },
@@ -2608,7 +3103,9 @@ iceZones: [],
     darkZones: [],
     battleZones: [],
     dialogZones: [],
-    interactables: []
+    interactables: [
+      { id: 'dmgP_3', name: "dmgPotion", x: 141, y: 333, width: 32, height: 32, action: "pickup", itemName: "damage_potion"}
+    ]
   },
   {
     bgSrc: "friendhouse30_48.png",
@@ -3985,42 +4482,65 @@ function objPlaceholder() {
   const blipSound = new Audio('blip.wav');
 blipSound.volume = 0.6;
   
-function startTypewriter(text, element, speaker = null) {
+function startTypewriter(text, element, speaker = null, effect = null, onFinish = null) {
   clearInterval(_typingInterval);
   _isTyping = true;
   _fullTextToDisplay = text;
   _currentSpeaker = speaker;
+  _currentEffect = effect;
+  _currentOnFinish = onFinish;
 
   const config = speakerConfigs[speaker] || speakerConfigs['default'];
+  const charSound = new Audio(config.sound);
+  charSound.volume = 0.5;
 
   let i = 0;
   element.innerHTML = speaker ? `<strong>${speaker}</strong>\n\n` : "";
 
-  
   _typingInterval = setInterval(() => {
     if (i < text.length) {
-      element.innerHTML += text.charAt(i);
-
-  
-      if (i % config.frequency === 0) {
-        blipSound.playbackRate = config.pitch;
-        blipSound.currentTime = 0;
-        blipSound.play().catch(e => {});
+      const char = text.charAt(i);
+      const span = document.createElement('span');
+      span.className = 'dialog-char';
+      span.textContent = char;
+      if (effect === 'shaky') span.classList.add('effect-shake');
+      if (effect === 'sine' || effect === 'wave') {
+          span.classList.add('effect-wave');
+          span.style.animationDelay = (i * 0.1) + 's';
       }
+      if (effect === 'glitch') span.classList.add('effect-glitch');
+      element.appendChild(span);
 
+      if (i % config.frequency === 0) {
+        const playClone = charSound.cloneNode();
+        playClone.playbackRate = config.pitch;
+        playClone.play().catch(e => {});
+      }
       i++;
     } else {
-      finishTyping(element);
+      finishTyping(element, onFinish);
     }
-  }, config.speed); 
+  }, config.speed);
 }
 
-function finishTyping(element) {
+function finishTyping(element, onFinish = null) {
   clearInterval(_typingInterval);
   _isTyping = false;
-  element.innerHTML = _currentSpeaker ? 
-    `<strong>${_currentSpeaker}</strong>\n\n${_fullTextToDisplay}` : 
-    _fullTextToDisplay;
+  
+  element.innerHTML = _currentSpeaker ? `<strong>${_currentSpeaker}</strong>\n\n` : "";
+  for (let i = 0; i < _fullTextToDisplay.length; i++) {
+    const span = document.createElement('span');
+    span.className = 'dialog-char';
+    span.textContent = _fullTextToDisplay[i];
+    if (_currentEffect === 'shaky') span.classList.add('effect-shake');
+    if (_currentEffect === 'sine' || _currentEffect === 'wave') {
+        span.classList.add('effect-wave');
+        span.style.animationDelay = (i * 0.1) + 's';
+    }
+    if (_currentEffect === 'glitch') span.classList.add('effect-glitch');
+    element.appendChild(span);
+  }
+  if (onFinish) onFinish();
 }
   
 function findDialogZone(checkX, checkY) {
@@ -4048,12 +4568,13 @@ function normalizeDialogLines(textOrLines, defaultStyle) {
   const lines = Array.isArray(textOrLines) ? textOrLines.slice() : [String(textOrLines)];
   return lines.map(line => {
     if (typeof line === 'string') {
-      return { speaker: null, text: line, style: defaultStyle || 'dialog' };
+      return { speaker: null, text: line, style: defaultStyle || 'dialog', effect: null };
     }
     return {
       speaker: line.speaker || null,
       text: line.text != null ? String(line.text) : '',
-      style: line.style || defaultStyle || 'dialog'
+      style: line.style || defaultStyle || 'dialog',
+      effect: line.effect || null
     };
   });
 }
@@ -4109,37 +4630,38 @@ function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
+  const nextBtn = document.getElementById('dialog-next');
 
   overlay.style.display = 'flex';
   overlay._markId = idToMark || null;
+  nextBtn.style.display = 'none';
 
-  
-  textDiv.innerHTML = '';
   applyDialogStyle(box, opts.style || 'dialog');
 
-  
-  const p = document.createElement('p');
-  p.textContent = dialogText;
-  textDiv.appendChild(p);
+  startTypewriter(dialogText, textDiv, opts.speaker || null, opts.effect, () => {
+    textDiv.appendChild(document.createElement('br'));
+    textDiv.appendChild(document.createElement('br'));
 
-  options.forEach(opt => {
-    const btn = document.createElement('button');
-    btn.textContent = opt.label;
-    btn.className = 'item-use-button';
-    btn.style.marginTop = '8px';
-    btn.style.padding = '8px 16px';
-    btn.style.fontSize = '14px';
-    btn.onclick = () => {
-      overlay.style.display = 'none';
-      if (opt.onSelect) opt.onSelect();
-      if (idToMark) shownDialogs.add(idToMark);
-      draw();
-    };
-    textDiv.appendChild(btn);
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.textContent = opt.label;
+      btn.className = 'item-use-button';
+      btn.style.margin = '8px 10px 0 0';
+      btn.style.padding = '8px 16px';
+      btn.style.fontSize = '14px';
+      btn.onclick = () => {
+        overlay.style.display = 'none';
+        if (opt.onSelect) opt.onSelect();
+        if (idToMark) shownDialogs.add(idToMark);
+        draw();
+      };
+      textDiv.appendChild(btn);
+    });
   });
 }
   
   function showBattleDialog(textOrLines, idToMark, opts = {}) {
+  document.getElementById('dialog-next').style.display = 'inline-block';
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
@@ -4157,11 +4679,12 @@ function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
     const line = _battleDialogQueue.shift();
     overlay.style.display = 'flex';
     applyDialogStyle(box, line.style);
-    startTypewriter(line.text, textDiv, line.speaker);
+    startTypewriter(line.text, textDiv, line.speaker, line.effect);
   }
 }
 
 function showDialog(textOrLines, idToMark, opts = {}) {
+  document.getElementById('dialog-next').style.display = 'inline-block';
   const overlay = document.getElementById('dialog-overlay');
   const box = document.getElementById('dialog-box');
   const textDiv = document.getElementById('dialog-text');
@@ -4174,10 +4697,11 @@ function showDialog(textOrLines, idToMark, opts = {}) {
     const line = _dialogQueue.shift();
     applyDialogStyle(box, line.style);
     
-    startTypewriter(line.text, textDiv, line.speaker);
+    startTypewriter(line.text, textDiv, line.speaker, line.effect);
   }
   
   overlay._markId = idToMark || null;
+  overlay._onComplete = opts.onComplete || null; 
   draw();
 }
 
@@ -4208,7 +4732,6 @@ prologueNext.addEventListener('click', () => {
   if (prologueIndex < prologueImages.length) {
     prologueImage.src = prologueImages[prologueIndex];
   } else {
-    // End of prologue
     prologueOverlay.style.display = 'none';
 
 
@@ -4268,6 +4791,15 @@ drillImg.src = 'drill.png';
 const blockadeImg = new Image();
 blockadeImg.src = 'blockade.png';
 
+const aOldBotImg = new Image();
+aOldBotImg.src = 'arcadeoldbot.png';
+
+const dmgPotionImg = new Image();
+dmgPotionImg.src = 'dmgPotion.png';
+
+const stmPotionImg = new Image();
+stmPotionImg.src = 'stmPotion.png';
+
 const arcadegateImg = new Image();
 arcadegateImg.src = 'arcadegate.png';
 
@@ -4326,7 +4858,9 @@ function updateStamina(newStamina) {
 function updateHp(newHealth) {
   if (newHealth < 0) newHealth = 0;
   if (newHealth > playerStats.maxHp) newHealth = playerStats.maxHp;
+
   playerStats.currentHp = newHealth;
+
   const newWidth = (playerStats.currentHp / playerStats.maxHp) * 100;
   hpBar.style.width = `${newWidth}%`;
   hpText.textContent = `${playerStats.currentHp}/${playerStats.maxHp}`;
@@ -4393,25 +4927,9 @@ function ensureFiniteNumber(v, fallback) {
 }
 
 function levelUpAlly(ally) {
-  console.log('levelUp start', { id: ally.id, name: ally.name, before: { ...ally } });
-
-  ally.level = ensureFiniteNumber(ally.level, 1);
-  ally.xp = ensureFiniteNumber(ally.xp, 0);
-  ally.xpToNextLevel = ensureFiniteNumber(ally.xpToNextLevel, 10);
-  ally.baseMaxHp = ensureFiniteNumber(ally.baseMaxHp, null);
-  ally.baseDamage = ensureFiniteNumber(ally.baseDamage, null);
-
-  const baseAllyTemplate = alliesData.find(a => a.id === ally.id);
-  if (baseAllyTemplate) {
-    if (ally.baseMaxHp === null) ally.baseMaxHp = ensureFiniteNumber(baseAllyTemplate.baseMaxHp, 1);
-    if (ally.baseDamage === null) ally.baseDamage = ensureFiniteNumber(baseAllyTemplate.baseDamage, 0);
-  } else {
-    if (ally.baseMaxHp === null) ally.baseMaxHp = 1;
-    if (ally.baseDamage === null) ally.baseDamage = 0;
-  }
-
   let leveled = false;
-  while (ally.xp >= ally.xpToNextLevel && ally.xpToNextLevel > 0) {
+  
+  while (ally.xp >= ally.xpToNextLevel) {
     leveled = true;
     ally.level++;
     ally.xp -= ally.xpToNextLevel;
@@ -4419,38 +4937,25 @@ function levelUpAlly(ally) {
 
     ally.baseMaxHp += Math.floor(3 + (ally.level / 2));
     ally.baseDamage += Math.floor(1 + (ally.level / 6));
-
-    console.log('leveled one step', {
-      id: ally.id, level: ally.level, xp: ally.xp,
-      xpToNextLevel: ally.xpToNextLevel, baseMaxHp: ally.baseMaxHp, baseDamage: ally.baseDamage
-    });
   }
 
   if (leveled) {
     ally.maxHp = ally.baseMaxHp;
     ally.currentHp = ally.maxHp;
-    showTemporaryText(`${ally.name} leveled up to ${ally.level}!`);
+    showTemporaryText(`${ally.name} reached Level ${ally.level}!`);
+    
+    const masterAlly = alliesData.find(a => a.id === ally.id);
+    if (masterAlly) {
+      masterAlly.level = ally.level;
+      masterAlly.xp = ally.xp;
+      masterAlly.xpToNextLevel = ally.xpToNextLevel;
+      masterAlly.baseMaxHp = ally.baseMaxHp;
+      masterAlly.baseDamage = ally.baseDamage;
+    }
+    
     drawPartyStatus();
-  } else {
-    console.log('no level up: xp below threshold', { xp: ally.xp, xpToNextLevel: ally.xpToNextLevel });
   }
-
-
-  const baseAlly = alliesData.find(a => a.id === ally.id);
-  if (baseAlly) {
-    baseAlly.level = ally.level;
-    baseAlly.xp = ally.xp;
-    baseAlly.xpToNextLevel = ally.xpToNextLevel;
-    baseAlly.baseMaxHp = ally.baseMaxHp;
-    baseAlly.baseDamage = ally.baseDamage;
-    console.log('synced to template', { before: baseAlly });
-  } else {
-    console.warn('No base template found for ally id', ally.id);
-  }
-
-  console.log('levelUp end', { id: ally.id, after: { ...ally } });
 }
-
 
 
 function levelUp() {
@@ -4473,12 +4978,19 @@ function levelUp() {
 
 function gainXP(amount) {
   const mult = getDifficultyMultipliers();
-  const boostedAmount = Math.floor(amount * mult.xpMult);
-
-  playerStats.xp += boostedAmount;
+  let xp = Math.floor(amount * mult.xpMult);
+  
+  if (activeAmulets.xp) xp *= 1.5;
+  
+  playerStats.xp += Math.floor(xp);
 
   if (activeAlly) {
-    activeAlly.xp += boostedAmount;
+    activeAlly.xp += Math.floor(xp);
+
+    const masterAlly = alliesData.find(a => a.id === activeAlly.id);
+    if (masterAlly) {
+      masterAlly.xp = activeAlly.xp; 
+    }
     while (activeAlly.xp >= activeAlly.xpToNextLevel) {
       levelUpAlly(activeAlly);
     }
@@ -4631,24 +5143,6 @@ function drawGeneralInventory() {
     if (quantity > 0) {
       const p = document.createElement('p');
       p.textContent = `${itemName.replace(/_/g, ' ')}: ${quantity}`;
-
-   
-      if (itemName.startsWith("armor_")) {
-        const type = itemName.replace("armor_", "");
-        const equipBtn = document.createElement('button');
-        equipBtn.textContent = "Equip";
-        equipBtn.className = 'item-use-button';
-        equipBtn.onclick = () => equipArmor(type);
-        p.appendChild(equipBtn);
-      } else if (itemName.startsWith("weapon_")) {
-        const type = itemName.replace("weapon_", "");
-        const equipBtn = document.createElement('button');
-        equipBtn.textContent = "Equip";
-        equipBtn.className = 'item-use-button';
-        equipBtn.onclick = () => equipWeapon(type);
-        p.appendChild(equipBtn);
-      }
-
       inventoryList.appendChild(p);
     }
   });
@@ -4698,7 +5192,7 @@ console.log('drawInventoryBattlePopup called, entries:', Array.from(inventory.en
   battleInventoryList.innerHTML = "";
 
  
-  const allowedExact = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'damage_potion', 'stamina_potion', 'driftwood']);
+  const allowedExact = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'damage_potion', 'stamina_potion', 'anti_virus', 'driftwood']);
   const allowedPrefix = ['battle_']; 
 
   
@@ -4835,7 +5329,7 @@ function useItem(itemName) {
   
 if (inBattle) {
 
-  const battleAllowed = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'damage_potion', 'stamina_potion', 'driftwood']);
+  const battleAllowed = new Set(['bandaid','emp_grenade','poison_vial','extra_life', 'damage_potion', 'stamina_potion', 'anti_virus', 'driftwood']);
   if (!battleAllowed.has(itemName) && !itemName.startsWith('battle_')) {
     showTemporaryText("You can't use that item during battle.");
     return;
@@ -4845,7 +5339,6 @@ if (inBattle) {
   if (itemName === 'bandaid') {
     const healAmount = Math.ceil(playerStats.maxHp * 0.33);
     updateHp(playerStats.currentHp + healAmount);
-    showTemporaryText(`Used a Bandage to heal for ${healAmount} HP!`);
   } else if (itemName === 'emp_grenade') {
   const STUN_DURATION_MS = 4000;
 
@@ -4880,7 +5373,6 @@ if (inBattle) {
     }, STUN_DURATION_MS);
   });
 
-  showTemporaryText('Used an EMP Grenade! Some enemies stunned for 4 seconds!');
   drawBattleUI();
   } else if (itemName === 'poison_vial') {
   const POISON_TICK_MS = 500;
@@ -4933,7 +5425,6 @@ if (inBattle) {
         return;
       }
 
-      // expiry
       if (enemy._poisonDuration <= 0) {
         if (enemy._poisonIntervalId != null) {
           clearInterval(enemy._poisonIntervalId);
@@ -4943,8 +5434,6 @@ if (inBattle) {
       }
     }, POISON_TICK_MS);
   });
-
-  showTemporaryText('Used a Poison Vial! Enemies are taking poison damage!');
 
   } else if (itemName === 'damage_potion') {
     if (damageBoostTimer) {
@@ -4978,6 +5467,30 @@ if (inBattle) {
       drawPlayerBattleStatus();
       drawBattleUI();
     }
+  } else if (itemName === 'anti_virus') {
+    const boss = activeEnemies.find(e => e.type === "CritBoss");
+    if (boss && (boss.currentHp / boss.maxHp) <= 0.25) {
+        inBattle = false;
+        if (enemyAttackIntervalId) clearInterval(enemyAttackIntervalId);
+        if (boss._drainInterval) clearInterval(boss._drainInterval);
+        
+        document.getElementById('battle-overlay').style.display = 'none';
+        goodPoints += 1;
+
+        showDialog([
+          { speaker: boss.name, text: "I... I feel normal again.", style: 'unit' }
+        ], null, {
+          onComplete: () => {
+            gainXP(boss.xpReward);
+            if (defeatedZone) removeZone(defeatedZone);
+            activeEnemies = [];
+            draw();
+          }
+        });
+        return;
+    } else {
+        return;
+    }
     
   } else if (itemName === 'extra_life') {
     if (extraLifeTimerId) {
@@ -4992,7 +5505,6 @@ if (inBattle) {
 
     extraLifeTimerId = setTimeout(() => {
       extraLifeTimerId = null;
-      showTemporaryText('Extra Life expired!');
     }, 5000);
   }
 
@@ -5041,6 +5553,8 @@ function drawBattleUI() {
   const enemyDisplay = document.getElementById('enemy-display');
   enemyDisplay.innerHTML = "";
 
+  const isFogged = playerStats.isFogged;
+
   activeEnemies.forEach((enemy, index) => {
     const container = document.createElement('div');
     container.style.display = "flex";
@@ -5048,50 +5562,90 @@ function drawBattleUI() {
     container.style.alignItems = "center";
 
     const enemyButton = document.createElement('button');
-    enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
     enemyButton.className = 'enemy-target';
-    
+
+    if (isFogged) {
+      enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ???/???</p>`;
+    } else {
+      enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ${enemy.currentHp}/${enemy.maxHp}</p>`;
+    }
+
     if (enemy.shieldActive) enemyButton.classList.add('shielded');
     if (enemy.stunned) enemyButton.classList.add('stunned');
     if (enemy.poisoned) enemyButton.classList.add('poisoned');
     if (enemy.enraged) enemyButton.classList.add('enraged');
-    // stupid add editing in the main build instead of dev build
+    if (enemy.isStoned) enemyButton.classList.add('stoned');
     if (index === selectedEnemyIndex) enemyButton.classList.add('selected');
-    
+
     enemyButton.dataset.enemyIndex = index;
 
     const barContainer = document.createElement('div');
     barContainer.className = 'attack-bar-container';
-    
+
+    if (isFogged) {
+      barContainer.style.visibility = 'hidden';
+    }
+
     const barFill = document.createElement('div');
     barFill.className = 'attack-bar-fill';
     barFill.id = `attack-bar-${index}`;
-    
+
     barContainer.appendChild(barFill);
-    
     container.appendChild(enemyButton);
     container.appendChild(barContainer);
     enemyDisplay.appendChild(container);
   });
 }
 
-// Draw player status in battle UI
 function drawPlayerBattleStatus() {
   const playerBattleStatusDiv = document.getElementById('player-battle-status');
   playerBattleStatusDiv.innerHTML = "";
 
-  // Player block
+ function createHeader(entity, defaultName) {
+    const container = document.createElement('div');
+    container.style.display = 'flex';
+    container.style.alignItems = 'center';
+    container.style.gap = '5px';
+    container.style.marginBottom = '4px';
+
+    const nameTxt = document.createElement('p');
+    nameTxt.textContent = entity.name || defaultName;
+    nameTxt.style.margin = "0";
+    container.appendChild(nameTxt);
+
+    const statuses = [
+      { active: !!entity._burnType, img: 'burn.png' },
+      { active: !!entity.isFrozen, img: 'frozen.png' },
+      { active: !!entity.isBlinded, img: 'blinded.png' },
+      { active: !!entity.isFogged, img: 'fog.png' },
+      { active: !!entity.isBleeding, img: 'bleed.png' },
+      { active: !!entity.isWeakened, img: 'weak.png' },
+      { active: !!entity.isTargeted, img: 'target.png' }
+    ];
+
+    statuses.forEach(s => {
+      if (s.active) {
+        const icon = document.createElement('img');
+        icon.src = s.img;
+        icon.style.width = '24px';
+        icon.style.height = '24px';
+        container.appendChild(icon);
+      }
+    });
+    return container;
+  }
+
   const leftBlock = document.createElement('div');
   leftBlock.style.display = 'inline-block';
   leftBlock.style.verticalAlign = 'top';
   leftBlock.style.marginRight = '12px';
 
-  const playerName = document.createElement('p');
-  playerName.textContent = '8-Bit';
-  leftBlock.appendChild(playerName);
+  leftBlock.appendChild(createHeader(playerStats, '8-Bit'));
 
   const hpContainer = document.createElement('div');
   hpContainer.className = 'hp-bar-container';
+  if (playerStats._burnType === 'rocket') hpContainer.classList.add('burn-rocket-hud');
+  if (playerStats._burnType === 'mountain') hpContainer.classList.add('burn-mountain-hud');
   hpContainer.style.width = '150px';
   hpContainer.style.height = '15px';
   hpContainer.style.position = 'relative';
@@ -5100,7 +5654,7 @@ function drawPlayerBattleStatus() {
   innerHpBar.className = 'hp-bar';
   innerHpBar.style.width = `${(playerStats.currentHp / playerStats.maxHp) * 100}%`;
   innerHpBar.style.height = '100%';
-  innerHpBar.style.backgroundColor = '#00FF00'; // force HP green
+  innerHpBar.style.backgroundColor = '#00FF00';
 
   const hpTxt = document.createElement('div');
   hpTxt.className = 'hp-text';
@@ -5115,13 +5669,12 @@ function drawPlayerBattleStatus() {
   rightBlock.style.verticalAlign = 'top';
 
   if (activeAlly) {
-    const allyName = document.createElement('p');
-    allyName.textContent = `${activeAlly.name} (Lvl ${activeAlly.level})`;
-    allyName.style.fontWeight = 'bold';
-    rightBlock.appendChild(allyName);
+    rightBlock.appendChild(createHeader(activeAlly, 'Ally'));
 
     const allyHpContainer = document.createElement('div');
     allyHpContainer.className = 'hp-bar-container';
+    if (activeAlly._burnType === 'rocket') allyHpContainer.classList.add('burn-rocket-hud');
+    if (activeAlly._burnType === 'mountain') allyHpContainer.classList.add('burn-mountain-hud');
     allyHpContainer.style.width = '120px';
     allyHpContainer.style.height = '15px';
     allyHpContainer.style.position = 'relative';
@@ -5293,6 +5846,10 @@ function drawPlayerBattleStatus() {
     if (!activeEnemies.length) return;
     let targetEnemy = null;
 
+  if (activeAlly.isBlinded && Math.random() < 0.5) {
+      return;
+    }
+
     if (allyTargetMode === 'Current') {
       targetEnemy = activeEnemies[selectedEnemyIndex] || activeEnemies[0];
     } 
@@ -5311,6 +5868,10 @@ function drawPlayerBattleStatus() {
     }
 
     if (!targetEnemy) return;
+
+  if (targetEnemy.isStoned) {
+    return;
+  }
 
     if (targetEnemy.shieldActive) {
       showTemporaryText(`${activeAlly.name}'s attack was blocked by shield!`);
@@ -5344,6 +5905,29 @@ function drawPlayerBattleStatus() {
   }, activeAlly.attackIntervalMs);
 }
 
+  function applyStatusEffect(target, status, duration) {
+  const statusMap = {
+    'blind': 'isBlinded',
+    'frozen': 'isFrozen',
+    'fog': 'isFogged',
+    'weaken': 'isWeakened'
+  };
+  
+  const flag = statusMap[status];
+  if (!flag) return;
+  target[flag] = true;
+  drawPlayerBattleStatus();
+
+  if (target[flag + 'Timeout']) clearTimeout(target[flag + 'Timeout']);
+
+  target[flag + 'Timeout'] = setTimeout(() => {
+    target[flag] = false;
+    showTemporaryText(`${target.name || '8-Bit'} recovered from ${status}!`);
+    drawPlayerBattleStatus();
+    if (status === 'fog') drawBattleUI(); 
+  }, duration);
+}
+
 // Enemy behaviors
 // normal enemy attack
 function normalAttack(enemy, target) {
@@ -5356,7 +5940,6 @@ function normalAttack(enemy, target) {
         if (typeof playerTakeDamage === 'function') playerTakeDamage(dmg, enemy);
         else _orig_normalAttack(enemy, target);
       } else {
-        // fallback to original (for ally)
         _orig_normalAttack(enemy, target);
       }
     };
@@ -5380,7 +5963,6 @@ function sniperAttack(enemy, target) {
   if (typeof sniperAttack === 'function') {
     const _orig_sniperAttack = sniperAttack;
     sniperAttack = function(enemy, target) {
-      // compute damage like original wrapper did
       const isCritical = Math.random() < 0.3;
       const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
       if (target === playerStats) {
@@ -5413,64 +5995,54 @@ function bossBehavior(enemy, target) {
   if (!enemy.shieldActivatedAt) enemy.shieldActivatedAt = 0;
   if (!enemy.shieldCooldownEnd) enemy.shieldCooldownEnd = 0;
 
+  if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
+    const burnTarget = (target === playerStats) ? playerStats : activeAlly;
+    if (burnTarget && !burnTarget._rocketTimerRunning) {
+      showTemporaryText(`${enemy.name}'s rocket hits ${burnTarget.name || '8-Bit'}!`);
+      burnTarget._burnType = 'rocket';
+      burnTarget._rocketTimerRunning = true;
+      let burnTicks = 0;
+      const rId = setInterval(() => {
+        burnTicks++;
+        if (!inBattle || burnTicks > 4 || !burnTarget._burnType) {
+          clearInterval(rId);
+          burnTarget._burnType = null;
+          burnTarget._rocketTimerRunning = false;
+          drawPlayerBattleStatus();
+          return;
+        }
+        const tickDmg = Math.max(2, Math.floor(playerStats.maxHp * 0.05));
+        if (burnTarget === playerStats) playerTakeDamage(tickDmg);
+        else burnTarget.currentHp = Math.max(0, burnTarget.currentHp - tickDmg);
+        drawPlayerBattleStatus();
+      }, 800);
+    }
+    enemy.rocketActive = false;
+  }
+
+  if (!enemy.rocketActive && Math.random() < 0.25) {
+    enemy.rocketActive = true;
+    enemy.rocketTicksLeft = 1; 
+    showTemporaryText(`${enemy.name} locks on with a rocket!`);
+  }
+
   if (enemy.shieldActive) {
     if (now >= enemy.shieldActivatedAt + 2000) {
       enemy.shieldActive = false;
-      enemy.shieldCooldownEnd = now + 3000;
-      showTemporaryText(`${enemy.name}'s shield fades.`);
+      enemy.shieldCooldownEnd = now + 4000;
     }
+    return; 
   } else {
     if (now >= enemy.shieldCooldownEnd) {
       enemy.shieldActive = true;
       enemy.shieldActivatedAt = now;
-      showTemporaryText(`${enemy.name} activates a shield!`);
+      return;
     }
   }
 
-  if (enemy.rocketActive && enemy.rocketTicksLeft > 0) {
-    const rocketTickDamage = Math.ceil(playerStats.maxHp * 0.05);
-    if (target === playerStats) {
-      playerTakeDamage(rocketTickDamage);
-    } else if (target === activeAlly) {
-      activeAlly.currentHp -= rocketTickDamage;
-      if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-      if (activeAlly.currentHp === 0) {
-        showTemporaryText(`${activeAlly.name} has been defeated!`);
-        clearInterval(activeAlly.attackTimerId);
-        activeAlly.attackTimerId = null;
-      }
-    }
-    enemy.rocketTicksLeft--;
-    showTemporaryText(`${enemy.name}'s rocket hits ${target === playerStats ? 'you' : activeAlly.name} for ${rocketTickDamage} damage!`);
-    if (enemy.rocketTicksLeft === 0) {
-      enemy.rocketActive = false;
-      showTemporaryText("The rocket damage ends.");
-    }
-  }
-
-  if (enemy.shieldActive) return;
-
-  if (!enemy.rocketActive && Math.random() < 0.25) {
-    enemy.rocketActive = true;
-    enemy.rocketTicksLeft = 4;
-    showTemporaryText(`${enemy.name} launches a rocket!`);
-  }
-
-  const damage = enemy.damage || 0;
-  if (target === playerStats) {
-    playerTakeDamage(damage);
-    showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
-  } else if (target === activeAlly) {
-    activeAlly.currentHp -= damage;
-    if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-    showTemporaryText(`${enemy.name} attacks ${activeAlly.name} for ${damage} damage!`);
-    if (activeAlly.currentHp === 0) {
-      showTemporaryText(`${activeAlly.name} has been defeated!`);
-      clearInterval(activeAlly.attackTimerId);
-      activeAlly.attackTimerId = null;
-    }
-  }
+  normalAttack(enemy, target);
 }
+
 
 function summonerBehavior(enemy, target) {
   if (!enemy.lastSummonTime) enemy.lastSummonTime = 0;
@@ -5512,6 +6084,21 @@ function secondStageBossBehavior(enemy, target) {
   }
 }
 
+  function sandBehavior(enemy, target) {
+  const now = Date.now();
+  if (!enemy._lastBlindAt) enemy._lastBlindAt = 0;
+
+  if (now - enemy._lastBlindAt >= 10000) {
+    enemy._lastBlindAt = now;
+ 
+    applyStatusEffect(playerStats, 'blind', 5000); 
+
+    if (activeAlly) applyStatusEffect(activeAlly, 'blind', 5000);
+  }
+
+  normalAttack(enemy, target);
+}
+
   // snowtel boss
 function iceBossBehavior(enemy, target) {
   const now = Date.now();
@@ -5521,15 +6108,13 @@ function iceBossBehavior(enemy, target) {
   if (enemy.shieldActive) {
     return;
   }
-
-  // Freeze cooldown: every 8 seconds
   if (now - enemy.lastFreezeTime >= 8000) {
     enemy.lastFreezeTime = now;
 
-    // Freeze effect: disable attack button and freeze players for 3 seconds
-    showTemporaryText(`${enemy.name} unleashes an icy blast! Everyone is frozen!`);
+    playerStats.isFrozen = true;
+    if (activeAlly) activeAlly.isFrozen = true;
+    drawPlayerBattleStatus();
 
-    // Disable player's attack button
     const attackButton = document.getElementById('attack-button');
     const specialButton1 = document.getElementById('special-attack-button-1');
     const specialButton2 = document.getElementById('special-attack-button-2');
@@ -5540,7 +6125,6 @@ function iceBossBehavior(enemy, target) {
     if (specialButton2) specialButton2.disabled = true;
     if (inventoryBattleButton) inventoryBattleButton.disabled = true;
 
-    // Also stun active ally if present
     if (activeAlly) {
       activeAlly.stunned = true;
     }
@@ -5551,18 +6135,75 @@ function iceBossBehavior(enemy, target) {
       if (specialButton2) specialButton2.disabled = false;
       if (inventoryBattleButton) inventoryBattleButton.disabled = false;
 
+      playerStats.isFrozen = false;
       if (activeAlly) {
         activeAlly.stunned = false;
+        activeAlly.isFrozen = false;
       }
-      showTemporaryText(`The ice melts away, and you can move again!`);
       drawPlayerBattleStatus();
     }, 3000);
 
     return;
   }
-
-  // Normal attack if not frozen/stunned
   if (!enemy.stunned) {
+    normalAttack(enemy, target);
+  }
+}
+
+function swordBehavior(enemy, target) {
+  if (enemy.stunned) return;
+
+  const now = Date.now();
+
+  if (Math.random() < 0.4 && !enemy.isTelegraphing) {
+    enemy.isTelegraphing = true;
+    
+
+    const enemyButtons = document.querySelectorAll('.enemy-target');
+    const enemyIdx = activeEnemies.indexOf(enemy);
+    const targetBtn = Array.from(enemyButtons).find(b => parseInt(b.dataset.enemyIndex) === enemyIdx);
+    
+    let mark = null;
+    if (targetBtn) {
+      mark = document.createElement('div');
+      mark.className = 'telegraph-mark';
+      mark.textContent = '!';
+      targetBtn.style.position = 'relative';
+      targetBtn.appendChild(mark);
+    }
+
+    setTimeout(() => {
+      if (!inBattle || enemy.currentHp <= 0) {
+        if (mark) mark.remove();
+        return;
+      }
+      
+      if (mark) mark.remove();
+      enemy.isTelegraphing = false;
+
+      const hud = document.getElementById('player-battle-status');
+      const rect = hud.getBoundingClientRect();
+      const slash = document.createElement('div');
+      slash.className = 'sword-trail';
+      slash.style.left = rect.left + 'px';
+      slash.style.top = (rect.top + 20) + 'px';
+      document.body.appendChild(slash);
+      setTimeout(() => slash.remove(), 400);
+      const bleedTarget = (target === playerStats) ? playerStats : activeAlly;
+      if (bleedTarget) {
+        bleedTarget.isBleeding = true;
+        showTemporaryText(`${enemy.name} applied BLEED to ${bleedTarget.name || '8-Bit'}!`);
+        
+        setTimeout(() => {
+          bleedTarget.isBleeding = false;
+          drawPlayerBattleStatus();
+        }, 6000);
+      }
+      
+      drawPlayerBattleStatus();
+    }, 1000);
+
+  } else if (!enemy.isTelegraphing) {
     normalAttack(enemy, target);
   }
 }
@@ -5575,8 +6216,6 @@ function lifeStealBossBehavior(enemy, target) {
 
   if (!enemy.stunned) {
     const damage = enemy.damage || 0;
-
-    // Deal damage to target
     if (target === playerStats) {
       playerTakeDamage(damage);
       showTemporaryText(`${enemy.name} life steals you for ${damage} damage!`);
@@ -5591,7 +6230,6 @@ function lifeStealBossBehavior(enemy, target) {
       }
     }
 
-    // Heal boss for damage dealt to either target
     enemy.currentHp += damage;
     if (enemy.currentHp > enemy.maxHp) enemy.currentHp = enemy.maxHp;
     showTemporaryText(`${enemy.name} heals for ${damage} HP!`);
@@ -5602,7 +6240,6 @@ function lifeStealBossBehavior(enemy, target) {
 }
 // Cave boss 
 function caveBossBehavior(enemy, target) {
-  // Spawn shards
   if (!enemy._shardIntervalId) {
     enemy._shardIntervalId = setInterval(() => {
       if (!inBattle) return;
@@ -5629,44 +6266,32 @@ function caveBossBehavior(enemy, target) {
     }, 1500);
   }
 
-  // Blackout cycle
   const hpPercent = (enemy.currentHp / enemy.maxHp) * 100;
   if (hpPercent <= 50) {
     if (!enemy._blackoutRunning) {
       enemy._blackoutRunning = true;
 
-      // Start the repeating cycle
       enemy._blackoutIntervalId = setInterval(() => {
-        // begin blackout
         showBattleBlackout();
-        showTemporaryText('Darkness covers the battlefield!');
-        // end blackout after 9s (1s visibility remains)
         setTimeout(() => {
           hideBattleBlackout();
-          showTemporaryText('You can see for a moment...');
         }, 9000);
       }, 10000);
 
-      // trigger the first cycle immediately
       showBattleBlackout();
-      showTemporaryText('Darkness covers the battlefield!');
       setTimeout(() => {
         hideBattleBlackout();
-        showTemporaryText('You can see for a moment...');
       }, 9000);
     }
   }
 
-  // Regular attacks while not stunned
   if (!enemy.stunned) {
     const dmg = enemy.damage || 0;
     if (target === playerStats) {
       playerTakeDamage(dmg);
-      showTemporaryText(`${enemy.name} lashes out for ${dmg} damage!`);
     } else if (target === activeAlly && activeAlly) {
       activeAlly.currentHp -= dmg;
       if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-      showTemporaryText(`${enemy.name} attacks ${activeAlly.name} for ${dmg} damage!`);
       if (activeAlly.currentHp === 0) {
         showTemporaryText(`${activeAlly.name} has been defeated!`);
         clearInterval(activeAlly.attackTimerId);
@@ -5684,7 +6309,6 @@ function caveBossBehavior(enemy, target) {
   function spawnMountainPen(boss) {
   if (!inBattle || !boss || boss.currentHp <= 0) return null;
 
-  // If a pen already exists (in activeEnemies or referenced on boss), don't spawn another
   if (boss._hasPen || activeEnemies.some(e => e && e._isMountainPen)) return null;
 
   const pen = {
@@ -5703,10 +6327,8 @@ function caveBossBehavior(enemy, target) {
     _spawnedSheep: []
   };
 
-  // Pen behavior: spawn a sheep every sheepSummonIntervalMs
   pen._sheepIntervalId = setInterval(() => {
     if (!inBattle || !activeEnemies.includes(boss) || boss.currentHp <= 0) {
-      // boss dead or battle ended -> clean up
       clearInterval(pen._sheepIntervalId);
       pen._sheepIntervalId = null;
       return;
@@ -5719,7 +6341,6 @@ function caveBossBehavior(enemy, target) {
   boss._hasPen = true;
   boss._penRef = pen;
 
-  showTemporaryText(`${boss.name} conjures a pen!`);
   drawBattleUI();
   return pen;
 }
@@ -5793,13 +6414,11 @@ function startMountainPenCycle(boss) {
   spawnMountainPen(boss);
 }
 function mountainBossBehavior(enemy, target) {
-  // set up on first tick
   if (!enemy._initialized) {
     enemy._initialized = true;
     enemy._spawnAt = Date.now();
-    enemy._fireTicks = []; // track active fire tick intervals (so we can clear)
+    enemy._fireTicks = [];
     enemy.enraged = false;
-    // after 30s become enraged if still alive
     enemy._enrageTimeout = setTimeout(() => {
       if (activeEnemies.includes(enemy) && enemy.currentHp > 0) {
         enemy.enraged = true;
@@ -5808,54 +6427,60 @@ function mountainBossBehavior(enemy, target) {
     }, 30000);
   }
 
-  // If shield active, skip other actions
   if (enemy.shieldActive) return;
 
-  // 33% chance to spit fire each action -> apply a DOT tick every 1s for 4 ticks (massive)
   if (Math.random() < 0.33) {
     const DOT_TICKS = 4;
     const DOT_INTERVAL = 1000;
-    const baseDot = Math.max(5, Math.round(enemy.damage * 0.8)); // base per tick
+    const baseDot = Math.max(5, Math.round(enemy.damage * 0.8));
     let ticks = 0;
-    showTemporaryText(`${enemy.name} spits a cone of fire!`);
+
+    const dotTarget = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
+  
+  if (Math.random() < 0.35 && !dotTarget._burnType) {
+    const DOT_TICKS = 4;
+    let ticks = 0;
+    showTemporaryText(`${enemy.name} uses Fire Breath on ${dotTarget.name || '8-Bit'}!`);
+    dotTarget._burnType = 'mountain'; 
+
     const id = setInterval(() => {
-      if (!activeEnemies.includes(enemy) || ticks >= DOT_TICKS) {
+      ticks++;
+      if (!inBattle || ticks > DOT_TICKS || !dotTarget._burnType) {
         clearInterval(id);
+        dotTarget._burnType = null; 
+        drawPlayerBattleStatus();
         return;
       }
-      // apply to chosen target(s)
-      const dotDamage = baseDot;
-      // prefer player, if ally present sometimes hit them
-      const dotTarget = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
-      if (dotTarget === playerStats) {
-        playerTakeDamage(dotDamage);
-        showTemporaryText(`${enemy.name}'s fire scorches you for ${dotDamage} damage!`);
-      } else {
-        activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dotDamage);
-        showTemporaryText(`${enemy.name}'s fire scorches ${activeAlly.name} for ${dotDamage} damage!`);
-      }
-      ticks++;
-      drawBattleUI();
+      
+      const baseDot = Math.max(2, Math.round(enemy.damage * 0.8));
+      if (dotTarget === playerStats) playerTakeDamage(baseDot);
+      else dotTarget.currentHp = Math.max(0, dotTarget.currentHp - baseDot);
+      
       drawPlayerBattleStatus();
-      drawPartyStatus();
-    }, DOT_INTERVAL);
+    }, 1000);
     enemy._fireTicks.push(id);
   }
-  if (!enemy._penCycleStarted && (enemy.currentHp / enemy.maxHp) <= 0.30) { startMountainPenCycle(enemy); }
+}
 
-  function mountainBossPenTrigger(enemy) {
+  if (!enemy._penCycleStarted && (enemy.currentHp / enemy.maxHp) <= 0.30) {
+    startMountainPenCycle(enemy);
+  }
+
+function mountainBossPenTrigger(enemy) {
   if (!enemy || enemy._penCycleStarted) return;
   if ((enemy.currentHp / (enemy.maxHp || 1)) <= 0.30) {
     startMountainPenCycle(enemy);
     showTemporaryText(`${enemy.name} starts searching for pens to heal!`);
   }
 }
-  // normal attack (double damage if enraged)
+
+  
   const baseDamage = enemy.damage || 0;
   const finalDamage = enemy.enraged ? baseDamage * 2 : baseDamage;
-  // choose target
+
   let chosen = playerStats;
   if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.4) chosen = activeAlly;
+
   if (chosen === playerStats) {
     playerTakeDamage(finalDamage);
     showTemporaryText(`${enemy.name} bites and smashes you for ${finalDamage} damage!`);
@@ -5870,21 +6495,30 @@ function mountainBossBehavior(enemy, target) {
   }
 }
 
-// Ensure cleanup in handleEnemyDeath for MountainBoss (clear timers)
+
 const _orig_handleEnemyDeath = handleEnemyDeath;
 handleEnemyDeath = function(enemy, idx) {
-  // clear boss-specific timers/intervals safely
   try {
-    if (enemy._enrageTimeout) { clearTimeout(enemy._enrageTimeout); enemy._enrageTimeout = null; }
+    if (enemy._enrageTimeout) {
+      clearTimeout(enemy._enrageTimeout);
+      enemy._enrageTimeout = null;
+    }
     if (enemy._fireTicks && enemy._fireTicks.length) {
       enemy._fireTicks.forEach(id => clearInterval(id));
       enemy._fireTicks = [];
+      playerStats._burnType = null;
+      if (activeAlly) activeAlly._burnType = null;
+      drawPlayerBattleStatus();
+      drawPartyStatus();
     }
     if (enemy._shardIntervalId) { clearInterval(enemy._shardIntervalId); enemy._shardIntervalId = null; }
     if (enemy._blackoutIntervalId) { clearInterval(enemy._blackoutIntervalId); enemy._blackoutIntervalId = null; }
-  } catch (e) { console.warn('cleanup error', e); }
+  } catch (e) {
+    console.warn('cleanup error', e);
+  }
   return _orig_handleEnemyDeath(enemy, idx);
 };
+
 
 // ghost
 // ---------- spawnGhostTrains ----------
@@ -6440,6 +7074,8 @@ function finalBossStage2Behavior(enemy, target) {
           currentHp: Math.max(1, Math.floor((base.maxHp || 40) * (mult.enemyHp || 1))),
           damage: Math.max(0, Math.floor((base.damage || 0) * (mult.enemyDmg || 1))),
           xpReward: base.xpReward || 0,
+          attackSpeed: 2000, 
+          lastAttackAt: Date.now(),
           shieldActive: false,
           stunned: false,
           poisoned: false,
@@ -6492,27 +7128,60 @@ function finalBossStage3Behavior(enemy, target) {
 
 //battlefield boss
 function critBossBehavior(enemy, target) {
-  if (enemy.shieldActive) {
+  if (enemy.stunned || enemy.isStoned) return;
+
+  const hpPercent = (enemy.currentHp / enemy.maxHp) * 100;
+
+  if (hpPercent <= 25) {
+    if (!enemy._phase3Triggered) {
+      enemy._phase3Triggered = true;
+      showBattleDialog([{ speaker: enemy.name, text: "8-Bit, please, my systems are losing power...", style: 'unit' }]);
+      
+      enemy._drainInterval = setInterval(() => {
+        if (!inBattle || enemy.currentHp <= 1) {
+          clearInterval(enemy._drainInterval);
+          return;
+        }
+        enemy.currentHp -= 1;
+        drawBattleUI();
+      }, 1000);
+    }
+    normalAttack(enemy, target);
     return;
   }
 
-  if (!enemy.stunned) {
-    const isCrit = Math.random() < 0.5;
-    const baseDamage = enemy.damage || 0;
-    const damage = isCrit ? baseDamage * 3 : baseDamage;
+  if (hpPercent <= 50) {
+    if (!enemy._phase2Triggered) {
+      enemy._phase2Triggered = true;
+      showBattleDialog([{ speaker: enemy.name, text: "I think I'm regaining myself...", style: 'unit' }]);
 
-    if (target === playerStats) {
-      playerTakeDamage(damage);
-      showTemporaryText(`${enemy.name} ${isCrit ? 'critically attacks' : 'attacks'} you for ${damage} damage!`);
-    } else if (target === activeAlly) {
-      activeAlly.currentHp -= damage;
-      if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-      showTemporaryText(`${enemy.name} ${isCrit ? 'critically attacks' : 'attacks'} ${activeAlly.name} for ${damage} damage!`);
-      if (activeAlly.currentHp === 0) {
-        showTemporaryText(`${activeAlly.name} has been defeated!`);
-        clearInterval(activeAlly.attackTimerId);
-        activeAlly.attackTimerId = null;
-      }
+      playerStats.isTargeted = false;
+      if (activeAlly) activeAlly.isTargeted = false;
+      drawPlayerBattleStatus();
+    }
+    normalAttack(enemy, target);
+    return;
+  }
+
+  const targetedEntity = (playerStats.isTargeted) ? playerStats : (activeAlly && activeAlly.isTargeted ? activeAlly : null);
+
+  if (targetedEntity) {
+    const dmg = enemy.damage * 3;
+    if (targetedEntity === playerStats) {
+      playerTakeDamage(dmg, enemy);
+    } else {
+      targetedEntity.currentHp = Math.max(0, targetedEntity.currentHp - dmg);
+    }
+    
+    targetedEntity.isTargeted = false;
+    drawPlayerBattleStatus();
+  } else {
+    if (Math.random() < 0.30) {
+      const luckyWinner = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
+      luckyWinner.isTargeted = true;
+      drawPlayerBattleStatus();
+    } else {
+      normalAttack(enemy, target);
     }
   }
 }
@@ -6567,7 +7236,7 @@ function endBattle(outcome) {
         inBattle = true;
         drawBattleUI();
         drawPlayerBattleStatus();
-        return; // Important to return early so battle continues
+        return; 
       }
     }
 
@@ -6585,6 +7254,24 @@ function endBattle(outcome) {
   } else if (outcome === 'lose') {
     showGameOver();
   }
+}
+
+  function oldBotBehavior(enemy, target) {
+    applyStatusEffect(playerStats, 'weaken', 99999);
+    normalAttack(enemy, target);
+}
+
+
+function smokeBehavior(enemy, target) {
+    const now = Date.now();
+    if (!enemy._lastFogAt) enemy._lastFogAt = 0;
+
+    if (now - enemy._lastFogAt >= 10000) {
+        enemy._lastFogAt = now;
+        applyStatusEffect(playerStats, 'fog', 5000);
+        if (activeAlly) applyStatusEffect(activeAlly, 'fog', 5000);
+    }
+    normalAttack(enemy, target);
 }
 
 // Healer: heals all allies every 3 seconds
@@ -6635,6 +7322,12 @@ if (behavior === 'normalAttack') {
   normalAttack(enemy, target);
 } else if (behavior === 'sniperAttack') {
   sniperAttack(enemy, target);
+} else if (behavior === 'oldBotBehavior') {
+  oldBotBehavior(enemy, target);
+} else if (behavior === 'sandBehavior') {
+  sandBehavior(enemy, target);
+} else if (behavior === 'smokeBehavior') {
+  smokeBehavior(enemy, target);
 } else if (behavior === 'caveBossBehavior') {
   caveBossBehavior(enemy, target);
 } else if (behavior === 'bossBehavior') {
@@ -6782,12 +7475,21 @@ function reduceDarkTimer(ms) {
 })();
 
 function updateAbilityButtonsUI() {
-  const now = Date.now();
+  const isFrozen = playerStats.isFrozen;
+
   ['block','counter','cleanse'].forEach(name => {
     const btn = document.getElementById(`ability-${name}`);
     if (!btn) return;
     const overlay = btn.querySelector(`.${btn.id}-overlay`);
     const cd = abilityCooldowns[name] || 0;
+
+    if (isFrozen) {
+      btn.disabled = true;
+      btn.style.opacity = '0.3'; 
+      if (overlay) overlay.style.display = 'none';
+      return;
+    }
+
     if (cd <= 0) {
       btn.disabled = false;
       if (overlay) overlay.style.display = 'none';
@@ -6813,17 +7515,22 @@ function startAbilityRegen() {
   if (abilityRegenIntervalId) clearInterval(abilityRegenIntervalId);
   abilityRegenIntervalId = setInterval(() => {
     let changed = false;
+    let tickReduction = 200;
+    if (activeAmulets.defense) tickReduction += 200;
+
     ['block','counter','cleanse'].forEach(name => {
       if (abilityCooldowns[name] > 0) {
-        abilityCooldowns[name] = Math.max(0, abilityCooldowns[name] - 200);
+        abilityCooldowns[name] = Math.max(0, abilityCooldowns[name] - tickReduction);
         changed = true;
       } else {
         abilityCooldowns[name] = 0;
       }
     });
+
     if (changed) updateAbilityButtonsUI();
   }, 200);
 }
+
 
 function stopAbilityRegen() {
   if (abilityRegenIntervalId) {
@@ -6873,21 +7580,30 @@ function resumeBattleTimersAfterDialog() {
   if (!inBattle) return;
   if (!_battleDialogPausedState) return;
 
+  const now = Date.now();
+
   activeEnemies.forEach(e => {
+    e.lastAttackAt = now; 
     e.attackTimerId = setInterval(() => performEnemyAction(e), e.attackSpeed);
   });
 
   if (!staminaRegenIntervalId) {
-    staminaRegenIntervalId = setInterval(() => { updateStamina(playerStats.currentStamina + 1); drawPlayerBattleStatus(); }, 100);
+    staminaRegenIntervalId = setInterval(() => { 
+      updateStamina(playerStats.currentStamina + 1); 
+      drawPlayerBattleStatus(); 
+    }, 100);
   }
-  if (!abilityRegenIntervalId) startAbilityRegen();
-  if (_battleDialogPausedState.allyAttackTimerId && activeAlly && !activeAlly.attackTimerId) startAllyAttacking();
- 
 
+  if (!abilityRegenIntervalId) startAbilityRegen();
+  
+  if (_battleDialogPausedState.allyAttackTimerId && activeAlly && !activeAlly.attackTimerId) {
+    startAllyAttacking();
+  }
   const attackBtn = document.getElementById('attack-button');
   const sp1 = document.getElementById('special-attack-button-1');
   const sp2 = document.getElementById('special-attack-button-2');
   const invBtn = document.getElementById('inventory-battle-button');
+  
   if (attackBtn) attackBtn.disabled = false;
   if (sp1) sp1.disabled = false;
   if (sp2) sp2.disabled = false;
@@ -6924,72 +7640,52 @@ function enemyAttack(enemy, target) {
     }
   }
 }
-  function playerTakeDamage(amount) {
+  function playerTakeDamage(amount, attacker) {
   if (equippedArmor === "haunted") {
     const blockChance = armorTypes["haunted"].blockChance || 0;
     if (Math.random() < blockChance) {
-      showTemporaryText("Haunted Armor blocked the attack!");
       return;
     }
   }
 
-    if (typeof playerTakeDamage === 'function') {
-  const _orig_playerTakeDamage = playerTakeDamage;
-  playerTakeDamage = function(amount, attacker) {
-    // If block active -> ignore damage
-    if (blockActive) {
-      showTemporaryText('Blocked incoming damage!');
-      return;
-    }
-
-    // If counter window active -> reflect and supposed to stun but there was a bug w that
-    if (counterWindowActive) {
-  
-  // reflect to attacker if valid object reference with hp
-  if (attacker && typeof attacker.currentHp === 'number') {
-    attacker.currentHp = Math.max(0, attacker.currentHp - (amount * 3));
-
-    if (attacker.currentHp === 0) {
-      handleEnemyDeath(attacker);
-    }
-
-    drawBattleUI();
+  if (blockActive) {
+    if (playerStats.isTargeted) {
   } else {
-    const targetAtt = activeEnemies[selectedEnemyIndex];
-    if (targetAtt) {
-      targetAtt.currentHp = Math.max(0, targetAtt.currentHp - (amount * 3));
+    //const blockSfx = new Audio('block.wav');
+    //blockSfx.play().catch(e=>{});
+    return;
+  }
+}
 
-      if (targetAtt.currentHp === 0) {
-        handleEnemyDeath(targetAtt);
+  if (counterWindowActive) {
+    const targetToHit = attacker || activeEnemies[selectedEnemyIndex];
+    if (targetToHit) {
+      targetToHit.currentHp = Math.max(0, targetToHit.currentHp - (amount * 3));
+      spawnDamageNumber(activeEnemies.indexOf(targetToHit), amount * 3);
+      if (targetToHit.currentHp <= 0) {
+        targetToHit.currentHp === 1;
       }
-
-      drawBattleUI();
     }
+    return;
   }
 
-  return;
-}
-
-
-
-    // Else normal behavior
-    return _orig_playerTakeDamage(amount);
-  };
-}
-    
   playerStats.currentHp -= amount;
-    const hurtSound = new Audio('hitHurt.wav');
-      hurtSound.play();
 
-  if (!canGoBelow1Hp()) { 
-    if (playerStats.currentHp <= 1) {
-      playerStats.currentHp = playerStats.maxHp;
-    }
+  if (!gameFlags.firsthit) {
+   showBattleDialog([
+      { speaker: '8-Bit', text: "Ow! Next time, I should try blocking.", style: 'dialog' }
+    ]);
+      gameFlags.firsthit = true;
+  }
+  
+  const hurtSound = new Audio('hitHurt.wav');
+  hurtSound.play().catch(e=>{});
+
+  if (!canGoBelow1Hp() && playerStats.currentHp <= 0) {
+    playerStats.currentHp = playerStats.maxHp;
   }
 
-  if (playerStats.currentHp < 0) {
-    playerStats.currentHp = 0;
-  }
+  if (playerStats.currentHp < 0) playerStats.currentHp = 0;
 
   updateHp(playerStats.currentHp);
 
@@ -6997,6 +7693,7 @@ function enemyAttack(enemy, target) {
     endBattle('lose');
   }
 }
+  
   function createSparks(x, y) {
   const sparkCount = 15;
   
@@ -7132,6 +7829,8 @@ deathSound.play();
           currentHp: Math.max(1, Math.floor((base.maxHp||1) * mult.enemyHp)),
           damage: Math.max(0, Math.floor((base.damage||0) * mult.enemyDmg)),
           xpReward: base.xpReward || 0,
+          attackSpeed: 2000, 
+          lastAttackAt: Date.now(),
           shieldActive: false, stunned: false, poisoned: false,
           resistances: base.defaultResistances || {}
         };
@@ -7317,6 +8016,8 @@ deathSound.play();
           currentHp: Math.max(1, Math.floor((base3.maxHp||1) * mult3.enemyHp)),
           damage: Math.max(0, Math.floor((base3.damage||0) * mult3.enemyDmg)),
           xpReward: base3.xpReward || 0,
+          attackSpeed: 2000, 
+          lastAttackAt: Date.now(),
           shieldActive: false, stunned: false, poisoned: false,
           resistances: base3.defaultResistances || {}
         };
@@ -7488,31 +8189,77 @@ if (willHideBattleBlackout) {
     enemy.behaviorTimers = [];
   }
 
-  // remove the enemy from activeEnemies
   const idx = activeEnemies.indexOf(enemy);
   if (idx > -1) activeEnemies.splice(idx, 1);
 
-  try {
-  const DROP_CHANCE = 0.10;
-  if (enemy.type === 'Sniperbot' && Math.random() < DROP_CHANCE) {
+  const DROP_CHANCE = 0.30;
+//bolts
+  const boltDroppers = new Set([
+    'Sniperbot',
+    'Puncherbot',
+    'Partybot',
+    'Mousebot',
+    'Drunkard',
+    'Partyguard',
+    'Partyblocker',
+    'Partygoers',
+    'Attictank',
+    'Atticsniper'
+  ]);
+
+  let bonusBolts = 0;
+  if (equippedGears.includes('magnet_gear')) bonusBolts = 1;
+
+  if (boltDroppers.has(enemy.type) && Math.random() < DROP_CHANCE) {
     const currentBolts = inventory.get('bolts') || 0;
-    inventory.set('bolts', currentBolts + 1);
+    inventory.set('bolts', currentBolts + 1 + bonusBolts);
   }
-    if (enemy.type === 'Puncherbot' && Math.random() < DROP_CHANCE) {
-    const currentBolts = inventory.get('bolts') || 0;
-    inventory.set('bolts', currentBolts + 1);
-  }
-    if (enemy.type === 'Partybot' && Math.random() < DROP_CHANCE) {
-    const currentBolts = inventory.get('bolts') || 0;
-    inventory.set('bolts', currentBolts + 1);
-  }
-} catch (e) {
-  console.warn('Bolt drop failed:', e);
-}
-    if (enemy.type === 'Partyblocker') {
-   gameFlags.carpass = true;
-  }
+//gears
+  const normalGearDroppers = new Set([
+    'Sniperbot',
+    'Puncherbot',
+    'Partybot',
+    'Mousebot',
+    'Drunkard'
+  ]);
     
+  if (normalGearDroppers.has(enemy.type) && Math.random() < 0.03) {
+    const currentDmgI = inventory.get('gear_dmg_gear_1') || 0;
+    inventory.set('gear_dmg_gear_1', currentDmgI + 1);
+  }
+    if (normalGearDroppers.has(enemy.type) && Math.random() < 0.03) {
+    const currentHpI = inventory.get('gear_hp_gear_1') || 0;
+    inventory.set('gear_hp_gear_1', currentHpI + 1);
+  }
+//other shit
+if (enemy.type === 'Partyblocker') {
+  gameFlags.carpass = true;
+}    
+   if (equippedGears.includes('vampire_gear')) {
+  let healedHp = playerStats.currentHp + 0.1 * playerStats.maxHp;
+  healedHp = Math.min(playerStats.maxHp, Math.max(0, healedHp));
+  healedHp = Math.round(healedHp);
+  playerStats.currentHp = healedHp;
+  updateHp(playerStats.currentHp);
+}
+    
+    if (enemy.type === "CritBoss") {
+    setTimeout(() => {
+        showDialog([
+            { speaker: "Deadshot", text: "Argh...", style: 'unit' },
+            { speaker: "Deadshot", text: "I feel weak... but cleared.", style: 'unit' },
+            { speaker: "Deadshot", text: "Normal.", style: 'unit' },
+            { speaker: "Deadshot", text: "8-Bit, I am so sorry for my betrayal.", style: 'unit' },
+            { speaker: "Deadshot", text: "I wish things hadn't come to this, but they had.", style: 'unit' },
+            { speaker: "Deadshot", text: "It was nice to meet you, but I fear this is the end.", style: 'unit' },
+            { speaker: "Deadshot", text: "I understand if you decide to finish me off.", style: 'unit' },
+            { speaker: "Deadshot", text: "You cannot trust me again.", style: 'unit' },
+            { speaker: "8-Bit", text: "I...", style: 'dialog' }
+        ]);
+    }, 1000);
+}
+
+  
   achievementsMap['kill_enemies'].progress++;
   achievementsMap['kill_enemies2'].progress++;
   achievementsMap['kill_enemies3'].progress++;
@@ -7554,7 +8301,6 @@ function healAllyAfterBattle() {
   if (activeAlly && activeAlly.currentHp > 0) {
     const healAmount = Math.ceil(activeAlly.maxHp * 0.33);
     activeAlly.currentHp = Math.min(activeAlly.currentHp + healAmount, activeAlly.maxHp);
-    showTemporaryText(`${activeAlly.name} healed for ${healAmount} HP after battle.`);
   }
 }
 
@@ -7667,6 +8413,22 @@ function endBattle(outcome) {
   };
 }
 
+  const entities = [playerStats, activeAlly];
+  entities.forEach(ent => {
+    if (!ent) return;
+    ent._burnType = null;
+    ent.isFrozen = false;
+    ent.isBlinded = false;
+    ent.isFogged = false;
+    ent.isWeakened = false;
+    if (ent.isBlindedTimeout) clearTimeout(ent.isBlindedTimeout);
+    if (ent.isFrozenTimeout) clearTimeout(ent.isFrozenTimeout);
+    if (ent.isFoggedTimeout) clearTimeout(ent.isFoggedTimeout);
+    if (ent.isWeakenedTimeout) clearTimeout(ent.isWeakenedTimeout);
+  });
+  
+  drawPlayerBattleStatus();
+
   if (staminaRegenIntervalId) { clearInterval(staminaRegenIntervalId); staminaRegenIntervalId = null; }
   if (enemyAttackIntervalId) { clearInterval(enemyAttackIntervalId); enemyAttackIntervalId = null; }
   if (activeAlly && activeAlly.attackTimerId) {
@@ -7679,6 +8441,12 @@ function endBattle(outcome) {
   for (let key in activeAmulets) {
     activeAmulets[key] = false; 
   }
+
+  playerStats.maxHp = playerStats.baseMaxHp; 
+playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+  updateHp(playerStats.currentHp);
+
+  applyEquipmentBonuses();
 
   if (armorHealIntervalId) {
     clearInterval(armorHealIntervalId);
@@ -7715,6 +8483,7 @@ function initiateBattle(zoneType, zoneObject) {
   armorHealIntervalId = setInterval(passiveArmorHeal, 1000);
 
  staminaRegenIntervalId = setInterval(() => {
+if (activeAmulets.stealing) return;
   let regenAmount = 1;
   if (activeAmulets.stamina) regenAmount += 1;
   
@@ -7736,20 +8505,14 @@ setInterval(() => {
 
   // Spawn first round
   spawnRound(currentRoundIndex);
-
-  const _orig_initiateBattle = typeof initiateBattle === 'function' ? initiateBattle : null;
-initiateBattle = function(zoneType, zoneObject) {
-  if (_orig_initiateBattle) _orig_initiateBattle(zoneType, zoneObject);
-  // reset and start per-battle ability regen
-  resetAbilitiesForBattle();
-};
   
-  // Setup activeAlly if equipped
   if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
     const allyBase = alliesData.find(a => a.id === equippedAllyId);
     activeAlly = {
       id: allyBase.id,
       name: allyBase.name,
+      baseMaxHp: allyBase.baseMaxHp, 
+      baseDamage: allyBase.baseDamage,
       maxHp: allyBase.baseMaxHp,
       currentHp: allyBase.baseMaxHp,
       damage: allyBase.baseDamage,
@@ -7769,6 +8532,13 @@ initiateBattle = function(zoneType, zoneObject) {
   selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
+
+  if (activeEnemies.length > 0 && activeEnemies[0].type === 'OldBot') {
+    showBattleDialog([
+      { speaker: 'Old Bot', text: "My old cane will break your frame!", style: 'npc' },
+      { speaker: '8-Bit', text: "Oh, you're one to talk, old man." }
+    ]);
+  }
   
   if (activeEnemies.length > 0 && activeEnemies[0].type === 'Dummy') {
     showBattleDialog([
@@ -7778,20 +8548,24 @@ initiateBattle = function(zoneType, zoneObject) {
   }
       if (activeEnemies.length > 0 && activeEnemies[0].type === 'Partyblocker') {
     showBattleDialog([
-      { speaker: 'Bot', text: "Yeah, we're strong and we're gonna kick your ass!" }
+      { speaker: 'Bot', text: "Yeah, we're strong and we're gonna kick your ass!", style: 'npc' }
     ]);
   }
   if (activeEnemies.length > 0 && activeEnemies[0].type === 'Partyguard') {
     showBattleDialog([
-      { speaker: 'Bodyguard', text: "You shall not pass, brawler!" },
-      { speaker: '8-Bit', text: "Excuse me? You're the intruder here, not me, man." },
-      { speaker: 'Bodyguard', text: "Enough chat. The party must not be stopped." }
+      { speaker: 'Bodyguard', text: "You shall not pass, brawler!", style: 'npc' },
+      { speaker: '8-Bit', text: "Excuse me? You're the intruder here, not me, man.", style: 'dialog' },
+      { speaker: 'Bodyguard', text: "Enough chat. The party must not be stopped.", style: 'npc' }
     ]);
   }
 }
 
   function performEnemyAction(enemy) {
   if (!inBattle || isGameOver || enemy.currentHp <= 0) return;
+
+  if (enemy.isStoned) {
+    return;
+  }
   
 
   if (!enemy.stunned) {
@@ -7800,12 +8574,21 @@ initiateBattle = function(zoneType, zoneObject) {
       target = (Math.random() < 0.5) ? playerStats : activeAlly;
     }
 
+
     const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
   
    if (behavior === 'normalAttack') {
   normalAttack(enemy, target);
 } else if (behavior === 'sniperAttack') {
   sniperAttack(enemy, target);
+} else if (behavior === 'oldBotBehavior') {
+  oldBotBehavior(enemy, target);
+} else if (behavior === 'swordBehavior') {
+  swordBehavior(enemy, target);
+} else if (behavior === 'sandBehavior') {
+  sandBehavior(enemy, target);
+} else if (behavior === 'smokeBehavior') {
+  smokeBehavior(enemy, target);
 } else if (behavior === 'caveBossBehavior') {
   caveBossBehavior(enemy, target);
 } else if (behavior === 'bossBehavior') {
@@ -7853,6 +8636,7 @@ initiateBattle = function(zoneType, zoneObject) {
   if (!inBattle || isGameOver || _battleDialogPausedState) return;
 
   activeEnemies.forEach((enemy, index) => {
+    enemy.attackTime = enemy.attackSpeed;
     const bar = document.getElementById(`attack-bar-${index}`);
     if (bar) {
       if (enemy.stunned) {
@@ -7862,8 +8646,13 @@ initiateBattle = function(zoneType, zoneObject) {
       
       bar.style.backgroundColor = "#f00"; 
       const elapsed = Date.now() - enemy.lastAttackAt;
-      const progress = Math.min(100, (elapsed / enemy.attackSpeed) * 100);
+      const progress = Math.min(100, (elapsed / enemy.attackTime) * 100);
       bar.style.width = progress + "%";
+      if (elapsed >= enemy.attackTime) {
+        performEnemyAction(enemy);
+        enemy.lastAttackAt = Date.now();
+        enemy.attackTime = enemy.attackSpeed;
+      }
     }
   });
 }, 33);
@@ -7914,10 +8703,11 @@ function spawnRound(roundIdx) {
     };
 
     newEnemy.attackTimerId = setInterval(() => {
+      enemy.attackTime = enemy.attackSpeed;
       if (typeof performEnemyAction === 'function') {
         performEnemyAction(newEnemy);
       }
-    }, newEnemy.attackSpeed);
+    }, newEnemy.attackTime);
 
     return newEnemy;
   });
@@ -7939,6 +8729,7 @@ function spawnRound(roundIdx) {
   selectedEnemyIndex = 0;
   drawBattleUI();
   drawPlayerBattleStatus();
+  startAbilityRegen();
 }
   // Unlock an ally and update UI/save state
 function unlockAlly(allyId) {
@@ -7983,6 +8774,18 @@ const ach = achievementsMap[`ally_unlock_${allyId}`];
   setTimeout(() => {
     body.classList.remove('shaking');
   }, 1000);
+}
+
+  function applyStonedEffect(enemy) {
+  if (enemy.isStoned || enemy.isBoss) return;
+
+  enemy.isStoned = true;
+  drawBattleUI();
+
+  setTimeout(() => {
+    enemy.isStoned = false;
+    drawBattleUI();
+  }, 4000);
 }
 
 function checkAchievements() {
@@ -8037,45 +8840,28 @@ function doCounter() {
   }, ABILITIES.counter.windowMs);
 }
 
-// Cleanse: remove fire/burn/poison status from player and ally
 function doCleanse() {
-  if (abilityCooldowns.cleanse > 0) {
-    showTemporaryText('Cleanse not ready.');
-    return;
-  }
-  if (activeAmulets.stamina) {
-  return;
-}
+  if (abilityCooldowns.cleanse > 0 || playerStats.isFrozen) return;
+  
   triggerAbilityCooldown('cleanse');
 
-  const removed = [];
-  if (playerStats && playerStats._burned) { playerStats._burned = false; removed.push('burn'); }
-  if (playerStats && playerStats._poisoned) { playerStats._poisoned = false; removed.push('poison'); }
-  ['burned','burning','poisoned'].forEach(k => {
-    if (playerStats && playerStats[k]) { playerStats[k] = false; if (!removed.includes(k)) removed.push(k); }
+  const targets = [playerStats, activeAlly].filter(t => t !== null);
+  let somethingWasRemoved = false;
+
+  targets.forEach(target => {
+    if (target._burnType || target.isBlinded || target.isFogged) {
+      target._burnType = null;
+      target.isBlinded = false;
+      target.isFogged = false;
+      target.isWeakened = false;
+      somethingWasRemoved = true;
+    }
   });
 
-  if (activeAlly) {
-    if (activeAlly._burned) { activeAlly._burned = false; removed.push(`${activeAlly.name}: burn`); }
-    if (activeAlly._poisoned) { activeAlly._poisoned = false; removed.push(`${activeAlly.name}: poison`); }
-    ['burned','burning','poisoned'].forEach(k => {
-      if (activeAlly && activeAlly[k]) { activeAlly[k] = false; if (!removed.includes(k)) removed.push(k); }
-    });
+  if (somethingWasRemoved) {
+    drawPlayerBattleStatus();
+    drawBattleUI();
   }
-
-  if (playerStats && playerStats._burnIntervalId) {
-    clearInterval(playerStats._burnIntervalId);
-    playerStats._burnIntervalId = null;
-  }
-  if (activeAlly && activeAlly._burnIntervalId) {
-    clearInterval(activeAlly._burnIntervalId);
-    activeAlly._burnIntervalId = null;
-  }
-
-  showTemporaryText(removed.length ? `Cleanse removed: ${removed.join(', ')}` : 'Nothing to cleanse.');
-  updateAbilityButtonsUI();
-  drawPlayerBattleStatus();
-  drawPartyStatus();
 }
 
   (function wireAbilityButtons() {
@@ -8812,10 +9598,7 @@ document.addEventListener("keydown", function(event) {
       showTemporaryText("Not enough bolts to play slot machine.");
       return;
     }
-    playing = true;
     slotPopup.style.display = 'flex';
-    resetSlots();
-    startCycle(0);
   }
 
   function closeSlotMachine() {
@@ -8854,18 +9637,24 @@ document.addEventListener("keydown", function(event) {
     }
   }
 
-  slotPlayBtn.addEventListener('click', () => {
-    if (playing) return;
-    if ((inventory.get('bolts') || 0) < BET) {
-      showTemporaryText("Not enough bolts to play slot machine.");
-      return;
-    }
-    const curBolts = inventory.get('bolts') || 0;
-    inventory.set('bolts', curBolts - BET);
-    drawInventoryBattlePopup?.();
-    drawGeneralInventory?.();
-    openSlotMachine();
-  });
+slotPlayBtn.addEventListener('click', () => {
+  if (playing) return;
+
+  if ((inventory.get('bolts') || 0) < BET) {
+    showTemporaryText("Not enough bolts to play slot machine.");
+    return;
+  }
+
+  const curBolts = inventory.get('bolts') || 0;
+  inventory.set('bolts', curBolts - BET);
+  drawInventoryBattlePopup?.();
+  drawGeneralInventory?.();
+
+  playing = true;
+  resetSlots();
+  openSlotMachine();
+  startCycle(0);
+});
 
   slotCloseBtn.addEventListener('click', () => {
     closeSlotMachine();
@@ -8883,7 +9672,6 @@ document.addEventListener("keydown", function(event) {
       return;
     }
     const curBolts = inventory.get('bolts') || 0;
-    inventory.set('bolts', curBolts - BET);
     drawInventoryBattlePopup?.();
     drawGeneralInventory?.();
     openSlotMachine();
@@ -9180,8 +9968,232 @@ document.addEventListener("keydown", function(event) {
 
   updateUi();
 })();
+
+  let boilActive = false;
+let boilInterval = null;
+let boilProgress = 0;
+
+function openBoilUI() {
+  if ((inventory.get("water") || 0) <= 0) {
+    showTemporaryText("You need water to boil!");
+    return;
+  }
+
+  inventory.set("water", inventory.get("water") - 1);
+
+  boilProgress = 0;
+  boilActive = true;
+
+  document.getElementById("boil-ui").style.display = "block";
+  document.getElementById("red-progress").style.width = "0px";
+
+  startBoilBar();
+}
+
+  function startBoilBar() {
+  boilInterval = setInterval(() => {
+    boilProgress += 2;
+    if (boilProgress > 300) boilProgress = 300;
+
+    document.getElementById("red-progress").style.width = boilProgress + "px";
+  }, 30);
+}
+
   
--
+  document.addEventListener("keydown", e => {
+  if (!boilActive) return;
+  if (e.code !== "Space") return;
+
+  finishBoiling();
+});
+
+  function finishBoiling() {
+  boilActive = false;
+  clearInterval(boilInterval);
+
+  const center = 150;
+  const perfectMin = center - 15;
+  const perfectMax = center + 15;
+
+  let result = "water_1";
+
+  if (boilProgress >= perfectMin && boilProgress <= perfectMax) {
+    result = "boiled_water";
+  }
+
+  inventory.set(result, (inventory.get(result) || 0) + 1);
+  showTemporaryText('You boiled the water!');
+
+  document.getElementById("boil-ui").style.display = "none";
+}
+
+let teaSlots = {
+  water: null,
+  honey: null,
+  spice: null
+};
+
+  function openTeaUI() {
+  document.getElementById("tea-ui").style.display = "flex";
+  drawTeaUI();
+}
+
+  function drawTeaUI() {
+  ["water","honey","spice"].forEach(slot => {
+    const el = document.getElementById("slot-" + slot);
+    el.innerHTML = teaSlots[slot] ? teaSlots[slot] : slot.toUpperCase();
+    el.onclick = () => {
+      if (teaSlots[slot]) {
+        inventory.set(teaSlots[slot], (inventory.get(teaSlots[slot]) || 0) + 1);
+        teaSlots[slot] = null;
+        drawTeaUI();
+      }
+    };
+  });
+
+  const list = document.getElementById("tea-inventory-list");
+  list.innerHTML = "";
+
+  inventory.forEach((qty, key) => {
+    if (qty <= 0) return;
+
+    const div = document.createElement("div");
+    div.textContent = `${key} (${qty})`;
+    div.onclick = () => addToTeaSlot(key);
+    list.appendChild(div);
+  });
+}
+  function addToTeaSlot(item) {
+  const slotOrder = ["water","honey","spice"];
+
+  for (let s of slotOrder) {
+    if (!teaSlots[s]) {
+      teaSlots[s] = item;
+      inventory.set(item, inventory.get(item) - 1);
+      drawTeaUI();
+      return;
+    }
+  }
+}
+function brewTea() {
+  const items = Object.values(teaSlots).filter(x => x);
+
+  const has = x => items.includes(x);
+
+  if (has("water_1") && has("honey") && items.length === 2)
+    return "b_tea";
+  if (has("boiled_water") && has("honey") && items.length === 2)
+    return "h_tea";
+  if (has("boiled_water") && has("honey") && has("spice"))
+    return "s_tea";
+  if (has("water_1") && has("honey") && has("spice"))
+    return "h_tea";
+  if (has("spice") && (has("water_1") || has("boiled_water")))
+    return "b_tea";
+
+  return "invalid";
+}
+  
+  document.getElementById("brew-tea-btn").onclick = () => {
+  const result = brewTea();
+
+  const usedItems = Object.values(teaSlots).filter(x => x);
+
+  teaSlots.water = null;
+  teaSlots.honey = null;
+  teaSlots.spice = null;
+
+  if (result === "invalid") {
+    usedItems.forEach(item => {
+      inventory.set(item, (inventory.get(item) || 0) + 1);
+      showTemporaryText('Bad recipe.');
+    });
+
+    document.getElementById("tea-ui").style.display = "none";
+    drawTeaUI();
+    return;
+  }
+
+  inventory.set(result, (inventory.get(result) || 0) + 1);
+  showTemporaryText('You brewed a tea!');
+  document.getElementById("tea-ui").style.display = "none";
+
+  drawTeaUI();
+};
+
+  
+const GROWTH_STAGE_TIME = 5 * 60 * 1000; 
+
+let farmingData = new Map(); 
+
+const farmSprites = {
+  stage0: new Image(),
+  stage1: new Image(),
+  stage2: new Image(),
+  stage3: new Image(),
+  stage4: new Image() 
+};
+farmSprites.stage0.src = "stage0.png";
+farmSprites.stage1.src = "stage1.png";
+farmSprites.stage2.src = "stage2.png";
+farmSprites.stage3.src = "stage3.png";
+farmSprites.stage4.src = "stage4.png";
+
+   function getPlotStage(plotId) {
+  const data = farmingData.get(plotId);
+  if (!data) return 0;
+
+  const elapsed = Date.now() - data.plantedAt;
+  const stage = Math.floor(elapsed / GROWTH_STAGE_TIME) + 1;
+  
+  return Math.min(4, stage);
+}
+
+function openFarmUI(plotId) {
+  const list = document.getElementById('farm-seed-list');
+  list.innerHTML = "";
+  
+  let hasSeeds = false;
+  inventory.forEach((qty, itemName) => {
+    if (itemName.startsWith("seed_") && qty > 0) {
+      hasSeeds = true;
+      const btn = document.createElement('div');
+      btn.className = "clickable";
+      btn.style.padding = "10px";
+      btn.style.borderBottom = "1px solid #666";
+      btn.textContent = `${itemName.replace('seed_', '').toUpperCase()} (${qty})`;
+      btn.onclick = () => plantSeed(plotId, itemName);
+      list.appendChild(btn);
+    }
+  });
+
+  if (!hasSeeds) list.innerHTML = "No seeds in inventory.";
+  document.getElementById('farm-ui').style.display = 'flex';
+}
+
+function plantSeed(plotId, seedType) {
+  inventory.set(seedType, inventory.get(seedType) - 1);
+  farmingData.set(plotId, {
+    seedType: seedType,
+    plantedAt: Date.now()
+  });
+  document.getElementById('farm-ui').style.display = 'none';
+  showTemporaryText(`Planted ${seedType.replace('seed_', '')}!`);
+  draw();
+}
+
+function harvestPlot(plotId) {
+  const data = farmingData.get(plotId);
+  const resultItem = data.seedType.replace('seed_', '');
+  
+  inventory.set(resultItem, (inventory.get(resultItem) || 0) + 1);
+  farmingData.delete(plotId); 
+  showTemporaryText(`Harvested a ${resultItem}!`);
+  draw();
+}
+  
+
+  
 (function installSimpleShop() {
   if (document.getElementById('simple-shop-popup')) return;
 
@@ -9189,7 +10201,7 @@ document.addEventListener("keydown", function(event) {
   const shopPrices = {
     bandaid: 6,
     emp_grenade: 10,
-    extra_life: 15,
+    extra_life: 20,
     poison_vial: 7,
     damage_potion: 9,
     stamina_potion: 5
@@ -9316,7 +10328,7 @@ const wiresPopupHtml = `
 <div id="wires-popup" style="
   display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
   z-index:5000; color:white; font-family:'Press Start 2P',sans-serif; 
-  padding:20px; box-sizing:border-box; user-select:none;">
+  padding:20px; box-sizing:border-box; user-select:none; touch-action: none;">
   <h3>Wires</h3>
   <div style="display:flex; justify-content:space-between; width:640px; margin:auto;">
     
@@ -9404,6 +10416,11 @@ function setupWiresListeners() {
     slot.addEventListener('dragleave', onWireDragLeave);
     slot.addEventListener('drop', onWireDrop);
   });
+  wires.forEach(wire => {
+    wire.addEventListener('touchstart', onTouchStart, { passive: false });
+    wire.addEventListener('touchmove', onTouchMove, { passive: false });
+    wire.addEventListener('touchend', onTouchEnd, { passive: false });
+  });
 }
 
 
@@ -9458,6 +10475,76 @@ function onWireDrop(e) {
   }
   e.currentTarget.style.backgroundColor = 'transparent';
   wiresState.draggingWire = null;
+}
+
+let touchGhost = null;
+let activeTouchWire = null;
+
+function onTouchStart(e) {
+  if (wiresState.connected.has(e.target.dataset.wire)) return;
+  e.preventDefault();
+
+  activeTouchWire = e.target;
+  const wireColor = activeTouchWire.dataset.wire;
+  
+  touchGhost = activeTouchWire.cloneNode(true);
+  touchGhost.style.position = 'fixed';
+  touchGhost.style.width = activeTouchWire.offsetWidth + 'px';
+  touchGhost.style.height = activeTouchWire.offsetHeight + 'px';
+  touchGhost.style.zIndex = '10001';
+  touchGhost.style.pointerEvents = 'none';
+  touchGhost.style.opacity = '0.8';
+  touchGhost.style.left = e.touches[0].clientX - (activeTouchWire.offsetWidth / 2) + 'px';
+  touchGhost.style.top = e.touches[0].clientY - (activeTouchWire.offsetHeight / 2) + 'px';
+  
+  document.body.appendChild(touchGhost);
+  wiresState.draggingWire = wireColor;
+}
+
+function onTouchMove(e) {
+  if (!touchGhost) return;
+  e.preventDefault();
+  
+  touchGhost.style.left = e.touches[0].clientX - (touchGhost.offsetWidth / 2) + 'px';
+  touchGhost.style.top = e.touches[0].clientY - (touchGhost.offsetHeight / 2) + 'px';
+
+  const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+  const slot = el ? el.closest('.wire-slot') : null;
+  
+  document.querySelectorAll('.wire-slot').forEach(s => s.style.backgroundColor = 'transparent');
+  
+  if (slot && slot.dataset.wire === wiresState.draggingWire) {
+    slot.style.backgroundColor = slot.dataset.wire;
+  }
+}
+
+function onTouchEnd(e) {
+  if (!touchGhost) return;
+  
+  const touch = e.changedTouches[0];
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const slot = el ? el.closest('.wire-slot') : null;
+
+  if (slot && slot.dataset.wire === wiresState.draggingWire && !wiresState.connected.has(wiresState.draggingWire)) {
+    const wireColor = wiresState.draggingWire;
+    wiresState.connected.add(wireColor);
+
+    activeTouchWire.draggable = false;
+    activeTouchWire.style.opacity = '0.4';
+
+    slot.textContent = `${capitalize(wireColor)} Connected`;
+    slot.style.backgroundColor = wireColor;
+
+    if (wiresState.connected.size === 4) {
+      document.getElementById('wires-close-btn').disabled = false;
+    }
+  }
+
+  if (touchGhost) touchGhost.remove();
+  touchGhost = null;
+  activeTouchWire = null;
+  wiresState.draggingWire = null;
+  document.querySelectorAll('.wire-slot').forEach(s => s.style.backgroundColor = 'transparent');
 }
 
 function capitalize(str) {
@@ -9741,10 +10828,349 @@ function checkInteraction(checkX, checkY) {
   return null;
 }
 
-
+//if ((inventory.get("tea") || 0) > 0) 
+  
 // Handle interaction actions
 function handleInteraction(object) {
   if (!object) return;
+
+  if (object.targetWallId) {
+    const targetLvl = (typeof object.targetLevelIdx === 'number') ? object.targetLevelIdx : currentLevelIndex;
+    removedWallIds.add(object.targetWallId);
+    toggleWallById(object.targetWallId, false, targetLvl);
+  }
+  
+  if (object.action === "arcadeoldbot") {
+
+    if (gameFlags.arcadeoldbottea) {
+      showDialogWithOptions(
+        "There are a lot of infected bots around here, so I must ask, do you know how to battle?",
+        [
+          {
+            label: "Of course!",
+            onSelect: () => {
+              showDialog([
+                { speaker: 'Old Bot', text: "That's some nice spirit!", style: 'npc' }
+              ]);
+            }
+          },
+          {
+            label: "Not really",
+            onSelect: () => {
+              showDialogWithOptions(
+            "What do you wish to know about, then?",
+            [
+              {
+                label: "Attacking",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "Your blaster looks like it has no cooldown.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Try rapid firing as quickly as you can.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Before your enemies are able to charge up their own attacks.", style: 'npc' }
+                  ]);
+                }
+              },
+              {
+                label: "Stamina",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "Looks like your systems generate 10 of them every second.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "You can use them to power up your blaster for a special attack.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Perhaps you could even find a way to channel them in other ways.", style: 'npc' }
+                  ]);
+                }
+              },
+              {
+                label: "Abilities",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "You have quite the strong frame.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Tough enough to allow you to resist most attacks for a few seconds at a time.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Bet you can activate that protocol by pressing that Z button over there.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "I see another protocol of yours is ricocheting technology.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "Allows you to send back enemy attacks for about a second.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "I'd say that pressing X activates that one.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "And your systems are quite sturdy with great virus detection.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "You can flush out any bad effects with button C on your frame.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "You're quite the battle robot.", style: 'npc' }
+                  ]);
+                }
+              }
+            ],
+            object.id,
+            { style: 'npc', speaker: 'Old Bot' }
+          );
+        }
+      }
+    ],
+    object.id,
+    { style: 'npc', speaker: 'Old Bot' }
+  );
+  return;
+}
+
+    if ((inventory.get("b_tea") || 0) > 0 && gameFlags.arcadeoldbotNO) {
+showDialog([
+      { speaker: 'Old Bot', text: "Oh, you're back with the tea!", style: 'npc' },
+      { speaker: 'Old Bot', text: "...", style: 'npc' },
+      { speaker: 'Old Bot', text: "WHAT IS THIS?", style: 'npc' },
+      { speaker: 'Old Bot', text: "DAMN YOU!", style: 'npc' },
+      { speaker: 'Old Bot', text: "I KNEW YOU COULDN'T BE TRUSTED!", style: 'npc' },
+      { speaker: 'Old Bot', text: "I ASKED YOU FOR HONEYED TEA, NOT THIS LOAD OF RUBBISH!", style: 'npc' },
+      { speaker: 'Old Bot', text: "PERISH!", style: 'npc' }
+    ],
+           object.id, {
+        onComplete: () => {
+          setTimeout(() => {
+          initiateBattle('interactable', { encounter: [{ type: 'OldBot' }] });
+          currentLevel.interactables = currentLevel.interactables.filter(o => o.id !== object.id);
+          removedInteractableIds.add(object.id);
+          }, 500);
+        }
+      });
+return;
+    }
+    
+    if ((inventory.get("b_tea") || 0) > 0) {
+  showDialog(
+    [
+      { speaker: 'Old Bot', text: "Oh, you're back with the tea!", style: 'npc' },
+      { speaker: 'Old Bot', text: "...", style: 'npc' },
+      { speaker: 'Old Bot', text: "This is just basic tea!", style: 'npc' },
+      { speaker: 'Old Bot', text: "Whatever lad, it's fine.", style: 'npc' },
+      { speaker: 'Old Bot', text: "Here's the key. Talk to me again if you want any help.", style: 'npc' }
+    ],
+    object.id,
+    {
+      onComplete: () => {
+        gameFlags.arcadeoldbottea = true;
+        const currentBasicT = inventory.get("b_tea") || 0;
+        if (currentBasicT > 0) {
+          inventory.set("b_tea", currentBasicT - 1);
+        }
+      }
+    }
+  );
+  return;
+}
+
+if ((inventory.get("h_tea") || 0) > 0) {
+  showDialog(
+    [
+      { speaker: 'Old Bot', text: "Oh, you're back with the tea!", style: 'npc' },
+      { speaker: 'Old Bot', text: "...", style: 'npc' },
+      { speaker: 'Old Bot', text: "Just what I asked for!", style: 'npc' },
+      { speaker: 'Old Bot', text: "Here's the key, lad. Talk to me again if you want any help.", style: 'npc' }
+    ],
+    object.id,
+    {
+      onComplete: () => {
+        gameFlags.arcadeoldbottea = true;
+        const currentHoneyT = inventory.get("h_tea") || 0;
+        if (currentHoneyT > 0) {
+          inventory.set("h_tea", currentHoneyT - 1);
+        }
+      }
+    }
+  );
+  return;
+}
+    
+    if ((inventory.get("s_tea") || 0) > 0) {
+  showDialog(
+    [
+      { speaker: 'Old Bot', text: "Oh, you're back with the tea!", style: 'npc' },
+      { speaker: 'Old Bot', text: "...", style: 'npc' },
+      { speaker: 'Old Bot', text: "This is better than I remember it being.", style: 'npc' },
+      { speaker: 'Old Bot', text: "Thanks for this, pal.", style: 'npc' },
+      { speaker: 'Old Bot', text: "I feel at home again.", style: 'npc' },
+      { speaker: 'Old Bot', text: "Here's the key. Talk to me again if you want any help.", style: 'npc' }
+    ],
+    object.id,
+    {
+      onComplete: () => {
+        gameFlags.arcadeoldbottea = true;
+        const currentSpiceT = inventory.get("s_tea") || 0;
+        if (currentSpiceT > 0) {
+          inventory.set("s_tea", currentSpiceT - 1);
+        }
+      }
+    }
+  );
+  return;
+}
+
+      
+    if (gameFlags.arcadeoldbotquest) {
+    showDialog([
+      { speaker: 'Old Bot', text: "I'm patient, I'll wait.", style: 'npc' }
+    ]);
+      return;
+    }
+    if (gameFlags.arcadeoldbottalk) {
+      showDialogWithOptions(
+        "I want to ask",
+        [
+          {
+            label: "Where are my friends?",
+            onSelect: () => {
+              gameFlags.arcadeoldbotquest = true;
+              showDialog([
+                { speaker: 'Old Bot', text: "To be frank, most likely dead.", style: 'npc' },
+                { speaker: 'Old Bot', text: "I heard from the others what they do to brawlers.", style: 'npc' },
+                { speaker: 'Old Bot', text: "Though, I've heard of a small resistence group.", style: 'npc' },
+                { speaker: 'Old Bot', text: "There's about five of them, and other than you, the only brawlers left in this world.", style: 'npc' },
+                { speaker: 'Old Bot', text: "A small chance they could be one of them.", style: 'npc' },
+                { speaker: '8-Bit', text: "I hope so.", style: 'dialog' },
+                { speaker: 'Old Bot', text: "...", style: 'npc' },
+                { speaker: 'Old Bot', text: "Lad, you wanted to get past this gate, yes?", style: 'npc' },
+                { speaker: '8-Bit', text: "Yeah.", style: 'npc' },
+                { speaker: 'Old Bot', text: "Tell you what, give me some honeyed tea and I'll give you the key.", style: 'npc' },
+                { speaker: 'Old Bot', text: "There's another house, an old friend of mine's nearby, always used to go there for a nice drink.", style: 'npc' },
+                { speaker: 'Old Bot', text: "It's above the arcade.", style: 'npc' },
+                { speaker: 'Old Bot', text: "I'd like just one moment of normalcy again.", style: 'npc' },
+  ],
+  object.id,
+  {
+    onComplete: () => {
+      setTimeout(() => {
+        if (gameFlags.birthdaybotkilled) {
+          showDialogWithOptions(
+            "Can I trust you with that?",
+            [
+              {
+                label: "Yes",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "Good, I await some nice tea.", style: 'npc' }
+                  ]);
+                }
+              },
+              {
+                label: "No",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "You're an honest lad, I can respect that.", style: 'npc' },
+                    { speaker: 'Old Bot', text: "But go get some tea for me, alright?", style: 'npc' }
+                  ]);
+                  gameFlags.arcadeoldbotNO = true;
+                }
+              }
+            ],
+            object.id,
+            { style: 'npc', speaker: 'Old Bot' }
+          );
+        } else {
+          return;
+        }
+      }, 500);
+    }
+  }
+);
+            }
+          },
+          {
+            label: "Can I pass?",
+            onSelect: () => {
+              gameFlags.arcadeoldbotquest = true;
+              showDialog([
+                { speaker: 'Old Bot', text: "Perhaps.", style: 'npc' },
+                { speaker: 'Old Bot', text: "Just do a little favor, old pal.", style: 'npc' },
+                { speaker: 'Old Bot', text: "Get me some honeyed tea and I'll give you the key to the gate.", style: 'npc' },
+                { speaker: 'Old Bot', text: "There's another house, an old friend of mine's nearby, always used to go there for a nice drink.", style: 'npc' },
+                { speaker: 'Old Bot', text: "It's above the arcade.", style: 'npc' },
+                { speaker: 'Old Bot', text: "I'd like just one more moment of normalcy again.", style: 'npc' },
+              ],
+  object.id,
+  {
+    onComplete: () => {
+      setTimeout(() => {
+        if (gameFlags.birthdaybotkilled) {
+          showDialogWithOptions(
+            "Can I trust you with that?",
+            [
+              {
+                label: "Yes",
+                onSelect: () => {
+                  showDialog([
+                    { speaker: 'Old Bot', text: "Good, I await some nice tea.", style: 'npc' }
+                  ]);
+                }
+              },
+              {
+                label: "No",
+                onSelect: () => {
+                  showDialog([
+                   { speaker: 'Old Bot', text: "You're an honest lad, I can respect that.", style: 'npc' },
+                   { speaker: 'Old Bot', text: "But go get some tea for me, alright, lad?", style: 'npc' }
+                  ]);
+                  gameflags.arcadeoldbotNO = true;
+                }
+              }
+            ],
+            object.id,
+            { style: 'npc', speaker: 'Old Bot' }
+          );
+        } else {
+          return;
+        }
+      }, 500);
+    }
+  }
+);
+            }
+          }
+        ],
+        object.id,
+        { style: 'dialog', speaker: '8-Bit' }
+      );
+      return;
+    }
+    if (gameFlags.arcadegate2) {
+    showDialog([
+  { speaker: '8-Bit', text: "You know anything about that gate up ahead?", style: 'dialog' },
+  { speaker: 'Old Bot', text: "Oh, yes, quite a lot actually!", style: 'npc' },
+  { speaker: 'Old Bot', text: "Kept it safe for a long while.", style: 'npc' },
+  { speaker: '8-Bit', text: "A while huh?", style: 'dialog' },
+  { speaker: '8-Bit', text: "Be serious, old man.", style: 'dialog' },
+  { speaker: '8-Bit', text: "I've lived in this city since forever, and there has never been any gates here.", style: 'dialog' },
+  { speaker: 'Old Bot', text: "Oh dear.", style: 'npc' },
+  { speaker: 'Old Bot', text: "You must have been knocked out for a long time.", style: 'npc' },
+  { speaker: '8-Bit', text: "Ha, you're telling me that there has always been a gate there?", style: 'dialog' },
+  { speaker: 'Old Bot', text: "Always been, pal.", style: 'npc' },
+  { speaker: '8-Bit', text: "Wait, hold on, aren't you supposed to be fighting me or something?", style: 'dialog' },
+  { speaker: 'Old Bot', text: "Do you think this old body has the machinery to fight?", style: 'npc' },
+  { speaker: 'Old Bot', text: "No, dear traveller, I cannot.", style: 'npc' },
+  { speaker: 'Old Bot', text: "Do you not know a thing?", style: 'npc' },
+  { speaker: '8-Bit', text: "I don't.", style: 'dialog' },
+  { speaker: 'Old Bot', text: "The bots around town started acting particularly strange recently.", style: 'npc' },
+  { speaker: 'Old Bot', text: "They're more authorative, more ruthless, and they slaughter anyone who's in their path.", style: 'npc' },
+  { speaker: 'Old Bot', text: "My friends started to change too.", style: 'npc' },
+  { speaker: 'Old Bot', text: "Most bots did.", style: 'npc' },
+  { speaker: 'Old Bot', text: "I don't know why I kept my programming, but I did.", style: 'npc' },
+  { speaker: '8-Bit', text: "Like a virus or something?", style: 'dialog' },
+  { speaker: 'Old Bot', text: "Perhaps.", style: 'npc' }
+],
+  object.id,
+  {
+    onComplete: () => {
+      setTimeout(() => {
+        gameFlags.arcadeoldbottalk = true;
+        handleInteraction(object); 
+      }, 500);
+    }
+  }
+);
+    return;
+  }
+else {
+    showDialog([
+      { speaker: 'Old Bot', text: "Hello, dear traveller—", style: 'npc' },
+      { speaker: '8-Bit', text: "I don't have time for this.", style: 'dialog' }
+    ]);
+    return;
+    }
+  }
 
   if (object.action === "recruit") {
     const preText = object.recruitDialog || [
@@ -9785,6 +11211,14 @@ function handleInteraction(object) {
     draw();
     return;
   }
+  if (object.action === "boil") {
+    openBoilUI();
+    return;
+  }
+  if (object.action === "tea") {
+  openTeaUI();
+  return;
+}
 
   if (object.action === "photo") {
     showDialog([
@@ -9932,6 +11366,20 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
   return;
 }
 
+  if (object.action === "farm") {
+  const plotId = object.id;
+  const stage = getPlotStage(plotId);
+
+  if (stage === 0) {
+    openFarmUI(plotId);
+  } else if (stage === 4) {
+    harvestPlot(plotId);
+  } else {
+    showTemporaryText("The plant is still growing!");
+  }
+  return;
+}
+
 
   if (object.action === 'wires') {
     openWires();
@@ -9980,11 +11428,18 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
 
     if (!gameFlags.birthdaybottalk) {
       showDialog([
-        { speaker: 'Birthday Bot', text: "Please don't hurt me. It's my birthday, I just wanted to celebrate.", style: 'npc' },
-        { speaker: '8-Bit', text: "You and your little gang destroyed my friend's house. I don't care what you're here for.", style: 'dialog' },
-        { speaker: 'Birthday Bot', text: "I'm just a kid, you aren't going to kill a kid, are you?", style: 'npc' }
-      ]);
-      gameFlags.birthdaybottalk = true;
+        { speaker: 'Birthday Bot', text: "Please don't hurt me. It's my birthday, I just wanted to celebrate.", style: 'npc', effect: 'shaky' },
+        { speaker: '8-Bit', text: "You and your little gang destroyed my friend's house.", style: 'dialog' },
+        { speaker: '8-Bit', text: "I don't care what you're here for.", style: 'dialog' },
+        { speaker: 'Birthday Bot', text: "I'm just a kid, you aren't going to kill a kid, are you?", style: 'npc', effect: 'shaky' }
+      ], object.id, {
+        onComplete: () => {
+          setTimeout(() => {
+          gameFlags.birthdaybottalk = true;
+          handleInteraction(object); 
+          }, 500);
+        }
+      });
       return;
     }
 
@@ -9996,11 +11451,14 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
             label: "Kill",
             onSelect: () => {
               gameFlags.birthdaybotkilled = true;
+              badPoints += 1;
               currentLevel.interactables = currentLevel.interactables.filter(o => o.id !== object.id);
               removedInteractableIds.add(object.id);
               removedWallIds.add('partywall'); 
               currentLevel.walls = currentLevel.walls.filter(w => w.id !== 'partywall');
               showTemporaryText("You killed the birthday bot.");
+              const deathSound = new Audio('enemydie.wav');
+              deathSound.play();
               draw();
             }
           },
@@ -10008,6 +11466,7 @@ if (object.action === "open_door" && object.id === "friendhousedoor") {
             label: "Spare",
             onSelect: () => {
               gameFlags.birthdaybotspared = true;
+              goodPoints += 1;
               removedWallIds.add('partywall'); 
               currentLevel.walls = currentLevel.walls.filter(w => w.id !== 'partywall');
               showDialog([
@@ -10083,7 +11542,6 @@ if (object.action === 'target_practice' && object.name === 'target_board') {
   return;
 }
 if (object.action === 'slap_jack') {
-  // Open Slap Jack UI (wagering done in UI)
   if (window.openSlapJack) window.openSlapJack();
   return;
 }
@@ -10303,13 +11761,147 @@ document.addEventListener('DOMContentLoaded', () => {
   const partyPopup = document.getElementById('party-popup');
   const statsPopup = document.getElementById('stats-popup');
 
+  const equipsBtn = document.getElementById('equips-button');
+if (equipsBtn) {
+  equipsBtn.style.display = 'inline-block';
+  equipsBtn.onclick = () => {
+    const popup = document.getElementById('equips-popup');
+    const hidden = window.getComputedStyle(popup).display === 'none';
+    popup.style.display = hidden ? 'flex' : 'none';
+    if (!hidden) return;
+    drawEquipsUI();
+  };
+}
+
+function drawEquipsUI() {
+  updateBox('slot-armor', equippedArmor ? armorTypes[equippedArmor].name : "Armor", !!equippedArmor);
+  updateBox('slot-weapon', equippedWeapon ? weaponTypes[equippedWeapon].name : "Weapon", !!equippedWeapon);
+  equippedGears.forEach((g, i) => {
+    updateBox(`slot-gear-${i}`, g ? gearTypes[g].name : "Gear", !!g, g ? gearTypes[g].rarity : null);
+  });
+
+  document.getElementById('slot-armor').onclick = () => {
+  if (equippedArmor === "virus") { 
+    return;
+  }
+    if (equippedArmor) {
+      const key = "armor_" + equippedArmor;
+      inventory.set(key, (inventory.get(key) || 0) + 1);
+      equippedArmor = null;
+    }
+    applyEquipmentBonuses();
+    drawEquipsUI();
+  };
+
+  document.getElementById('slot-weapon').onclick = () => {
+  if (equippedWeapon === "virus") {
+  return;
+  }
+    if (equippedWeapon) {
+      const key = "weapon_" + equippedWeapon;
+      inventory.set(key, (inventory.get(key) || 0) + 1);
+      equippedWeapon = null;
+    }
+    applyEquipmentBonuses();
+    drawEquipsUI();
+  };
+
+  equippedGears.forEach((g, i) => {
+    document.getElementById(`slot-gear-${i}`).onclick = () => {
+      if (equippedGears[i]) {
+        const key = "gear_" + equippedGears[i];
+        inventory.set(key, (inventory.get(key) || 0) + 1);
+        equippedGears[i] = null;
+      }
+      applyEquipmentBonuses();
+      drawEquipsUI();
+    };
+  });
+
+  const list = document.getElementById('equips-inventory-list');
+  list.innerHTML = "";
+  inventory.forEach((qty, key) => {
+    if (qty <= 0) return;
+    let item = null, type = "";
+
+    if (key.startsWith("armor_")) { item = armorTypes[key.replace("armor_","")]; type="armor"; }
+    if (key.startsWith("weapon_")) { item = weaponTypes[key.replace("weapon_","")]; type="weapon"; }
+    if (key.startsWith("gear_")) { item = gearTypes[key.replace("gear_","")]; type="gear"; }
+
+    if (item) {
+      const div = document.createElement('div');
+      div.style.padding = "10px";
+      div.style.margin = "5px";
+      div.style.background = "#002591";
+      div.style.border = `2px solid ${type === 'gear' ? rarityColors[item.rarity] : 'white'}`;
+      div.title = item.desc;
+      div.innerHTML = `<strong>${item.name}</strong> <small>(${type})</small> <button class="item-use-button" style="float:right">Equip</button>`;
+      div.querySelector('button').onclick = () => {
+        if (type === 'gear') {
+  const gearKey = key.replace("gear_", "");
+  const qty = inventory.get(key) || 0;
+  if (qty > 0) {
+    const idx = equippedGears.indexOf(null);
+    if (idx !== -1) {
+      if (equippedGears[idx]) {
+        const oldKey = "gear_" + equippedGears[idx];
+        inventory.set(oldKey, (inventory.get(oldKey) || 0) + 1);
+      }
+      equippedGears[idx] = gearKey;
+      inventory.set(key, qty - 1);
+    }
+  }
+} else if (type === 'armor') {
+    if (equippedArmor === "virus") {
+        return; 
+      }
+  const armorKey = key.replace("armor_", "");
+  const qty = inventory.get(key) || 0;
+  if (qty > 0) {
+    if (equippedArmor) {
+      const oldKey = "armor_" + equippedArmor;
+      inventory.set(oldKey, (inventory.get(oldKey) || 0) + 1);
+    }
+    equippedArmor = armorKey;
+    inventory.set(key, qty - 1);
+  }
+    } else if (type === 'weapon') {
+          if (equippedWeapon === "virus") {
+            return;
+          }
+  const weaponKey = key.replace("weapon_", "");
+  const qty = inventory.get(key) || 0;
+  if (qty > 0) {
+    if (equippedWeapon) {
+      const oldKey = "weapon_" + equippedWeapon;
+      inventory.set(oldKey, (inventory.get(oldKey) || 0) + 1);
+     }
+    equippedWeapon = weaponKey;
+    inventory.set(key, qty - 1);
+   }
+}
+        applyEquipmentBonuses();
+        drawEquipsUI();
+      };
+      list.appendChild(div);
+    }
+  });
+}
+
+function updateBox(id, name, filled, rarity) {
+  const el = document.getElementById(id);
+  el.textContent = name;
+  el.style.border = filled ? `3px solid ${rarity ? rarityColors[rarity] : 'white'}` : "2px dashed #666";
+  el.style.background = filled ? "#003cbd" : "transparent";
+}
+
+
   if (!settingsButton) return console.error('Settings wiring: missing #settings-button in DOM');
   if (!settingsPopup) return console.error('Settings wiring: missing #settings-popup in DOM');
 
-  // Safe defaults for gameSettings if not present
   window.gameSettings = window.gameSettings || { difficulty: 'normal', showZones: false };
 
-  // Toggle behavior (matches other HUD popup logic)
+
   settingsButton.addEventListener('click', () => {
     try {
       const hidden = window.getComputedStyle(settingsPopup).display === 'none';
@@ -10322,14 +11914,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Initialize UI controls
   const difficultySelect = document.getElementById('difficulty-select');
-  const toggleZones = document.getElementById('toggle-zones');
 
   if (difficultySelect) difficultySelect.value = window.gameSettings.difficulty || 'normal';
-  if (toggleZones) toggleZones.checked = !!window.gameSettings.showZones;
 
-  // Change handlers (guarded so missing helpers won't break)
   if (difficultySelect) {
     difficultySelect.addEventListener('change', (e) => {
       window.gameSettings.difficulty = e.target.value;
@@ -10341,18 +11929,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.warn('Settings wiring: no #difficulty-select found');
   }
 
-  if (toggleZones) {
-    toggleZones.addEventListener('change', (e) => {
-      window.gameSettings.showZones = !!e.target.checked;
-      if (typeof saveSettings === 'function') try { saveSettings(); } catch(_) {}
-      if (typeof draw === 'function') draw();
-      else console.log('Toggled showZones to', window.gameSettings.showZones);
-    });
-  } else {
-    console.warn('Settings wiring: no #toggle-zones found');
-  }
-
-  const toggleAutosave = document.getElementById('toggle-autosave');
+const toggleAutosave = document.getElementById('toggle-autosave');
 const toggleAutosaveMessage = document.getElementById('toggle-autosave-message');
 
 if (toggleAutosave) {
@@ -10373,6 +11950,7 @@ if (toggleAutosaveMessage) {
   });
 }
 
+
   document.addEventListener("keydown", function(e) {
   if (!inBattle) return;
   const key = e.key.toLowerCase();
@@ -10380,6 +11958,10 @@ if (toggleAutosaveMessage) {
   const has = (name) => (inventory.get("amulet_" + name) || 0) > 0;
 
   if (key === 'q' && has("clicking")) {
+     const isDialogActive = document.getElementById('dialog-overlay').style.display === 'flex';
+        if (isDialogActive) {
+        return;
+      }
     activeAmulets.clicking = !activeAmulets.clicking;
     toggleAutofire(activeAmulets.clicking);
     showTemporaryText("Clicking Amulet: " + (activeAmulets.clicking ? "ON" : "OFF"));
@@ -10403,6 +11985,75 @@ if (toggleAutosaveMessage) {
     activeAmulets.health = !activeAmulets.health;
     showTemporaryText("Health Amulet: " + (activeAmulets.health ? "ON" : "OFF"));
   }
+
+if (key === 't' && has("stealing")) {
+    if (activeAmulets.stamina) showTemporaryText("Conflict: Stamina Amulet active!");
+    else activeAmulets.stealing = !activeAmulets.stealing;
+  }
+
+if (key === 'y' && has("sacrifice")) {
+  activeAmulets.sacrifice = !activeAmulets.sacrifice;
+  if (activeAmulets.sacrifice) {
+    playerStats.maxHp = Math.floor(playerStats.baseMaxHp * 1.5);
+    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+    updateHp(playerStats.currentHp);
+    applyEquipmentBonuses();
+  } else {
+    playerStats.maxHp = playerStats.baseMaxHp;
+    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+    if (activeAlly) {
+      activeAlly.damage = activeAlly.baseDamage;
+      activeAlly.maxHp = activeAlly.baseMaxHp;
+      activeAlly.currentHp = Math.min(activeAlly.currentHp, activeAlly.maxHp);
+    }
+
+    applyEquipmentBonuses();
+    updateHp(playerStats.currentHp);
+  }
+}
+    
+if (key === 'u' && has("xp")) {
+  activeAmulets.xp = !activeAmulets.xp;
+  if (activeAmulets.xp) {
+    playerStats.maxHp = Math.floor(playerStats.baseMaxHp * 0.5);
+    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+    updateHp(playerStats.currentHp);
+    applyEquipmentBonuses();
+  } else {
+    playerStats.maxHp = playerStats.baseMaxHp;
+    playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+    applyEquipmentBonuses();
+    updateHp(playerStats.currentHp);
+  }
+}
+
+
+
+  if (key === 'i' && has("defense")) {
+  if (activeAmulets.stamina) {
+    showTemporaryText("Conflict: Stamina Amulet active!");
+  } else {
+    activeAmulets.defense = !activeAmulets.defense;
+    if (activeAmulets.defense) {
+      playerStats.maxHp = Math.floor(playerStats.baseMaxHp * 0.8);
+      playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+      updateHp(playerStats.currentHp);
+    } else {
+      playerStats.maxHp = playerStats.baseMaxHp;
+      playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
+
+      updateHp(playerStats.currentHp);
+    }
+  }
+}
+drawBattleUI();
+    drawPlayerBattleStatus();
+    
 });
   
 const mobileToggle = document.getElementById('toggle-mobile-mode');
@@ -10462,11 +12113,26 @@ if (door) {
   }
   draw();
 }
+document.getElementById('btn-up').addEventListener('click', () => {
+  movePlayer(0, -1);
+  currentFacing = 'up';
+});
 
-document.getElementById('btn-up').addEventListener('click', () => movePlayer(0, -1));
-document.getElementById('btn-down').addEventListener('click', () => movePlayer(0, 1));
-document.getElementById('btn-left').addEventListener('click', () => movePlayer(-1, 0));
-document.getElementById('btn-right').addEventListener('click', () => movePlayer(1, 0));
+document.getElementById('btn-down').addEventListener('click', () => {
+  movePlayer(0, 1);
+  currentFacing = 'down';
+});
+
+document.getElementById('btn-left').addEventListener('click', () => {
+  movePlayer(-1, 0);
+  currentFacing = 'left';
+});
+
+document.getElementById('btn-right').addEventListener('click', () => {
+  movePlayer(1, 0);
+  currentFacing = 'right';
+});
+
 
 document.getElementById('btn-interact').addEventListener('click', () => {
   if (inBattle || isGameOver) return;
@@ -10509,28 +12175,24 @@ achievementsButton.addEventListener('click', () => {
     achievementsPopup.style.display = 'none';
   }
 });
-  function spawnDamageNumber(enemyIndex, amount) {
-  
+  function spawnDamageNumber(enemyIndex, amount, color = "#ffffff") {
   const enemyButtons = document.querySelectorAll('.enemy-target');
- 
   const targetBtn = Array.from(enemyButtons).find(b => parseInt(b.dataset.enemyIndex) === enemyIndex);
   
   if (!targetBtn) return;
 
-  
   const rect = targetBtn.getBoundingClientRect();
-  
   const dmgEl = document.createElement('div');
   dmgEl.className = 'damage-number';
-  dmgEl.textContent = `-${amount}`;
   
+  dmgEl.textContent = isNaN(amount) ? amount : `-${amount}`;
+  dmgEl.style.color = color;
 
   dmgEl.style.left = (rect.left + rect.width / 2) + 'px';
   dmgEl.style.top = (rect.top) + 'px';
 
   document.body.appendChild(dmgEl);
 
- 
   setTimeout(() => {
     dmgEl.remove();
   }, 1000);
@@ -10549,30 +12211,69 @@ function performPlayerAttack() {
   const targetEnemy = activeEnemies[selectedEnemyIndex];
   if (!targetEnemy) return;
 
-  if (activeAmulets.bullets && playerStats.currentStamina < 3) {
-    showTemporaryText("Not enough stamina to fire!");
+  if (targetEnemy.isStoned) {
+    spawnDamageNumber(selectedEnemyIndex, "BLOCKED", "#aaaaaa");
+    //const dinkSound = new Audio('sfx.wav');
+    //dinkSound.volume = 0.3;
+    //dinkSound.play().catch(e=>{});
+    return;
+  }
+  
+  if (playerStats.isBlinded && Math.random() < 0.5) {
+    spawnDamageNumber(selectedEnemyIndex, "MISS", "#aaaaaa");
     return;
   }
 
+if (activeAmulets.bullets && playerStats.currentStamina < 3) {
+    showTemporaryText("Not enough stamina to fire!");
+    return;
+  }
   if (targetEnemy.shieldActive) {
-    showTemporaryText(`${targetEnemy.name}'s shield blocks your attack!`);
+    spawnDamageNumber(selectedEnemyIndex, "BLOCKED", "#00ffff");
   } else {
     let finalDmg = playerStats.damage;
     if (activeAmulets.bullets) finalDmg *= 1.5;
     if (activeAmulets.health) finalDmg *= 0.5;
-    
+    if (activeAmulets.sacrifice) finalDmg *= 1.5;
+    if (activeAmulets.xp) finalDmg *= 0.5;
+    if (playerStats.isWeakened) {
+    finalDmg *= 0.5;
+  }
     finalDmg = Math.floor(finalDmg);
     targetEnemy.currentHp -= finalDmg;
     spawnDamageNumber(selectedEnemyIndex, finalDmg);
 
     if (activeAmulets.health) {
+        if (!playerStats.isBleeding) {
        updateHp(playerStats.currentHp + finalDmg);
     }
+  }
 
     if (activeAmulets.bullets) {
        updateStamina(playerStats.currentStamina - 3);
     }
   }
+
+  if (activeAmulets.stealing) {
+        targetEnemy.lastAttackAt += 50; 
+        targetEnemy.lastAttackAt += 50; 
+    }
+  
+  if (playerStats.isBleeding) {
+    playerStats.currentHp = Math.max(1, playerStats.currentHp - 1);
+    updateHp(playerStats.currentHp);
+  }
+
+  const statueCount = equippedGears.filter(g => g === 'statue_gear').length;
+  if (statueCount > 0 && Math.random() < (0.01 * statueCount)) {
+    applyStonedEffect(targetEnemy);
+  }
+
+  const stealCount = equippedGears.filter(g => g === 'steal_gear').length;
+    if (stealCount > 0) {
+        targetEnemy.attackTime += (10 * stealCount);
+        targetEnemy.lastAttackAt += (10 * stealCount);
+    }
   if (targetEnemy.currentHp <= 0) {
     handleEnemyDeath(targetEnemy);
     if (selectedEnemyIndex >= activeEnemies.length) {
@@ -10702,6 +12403,25 @@ document.getElementById('inventory-battle-button').addEventListener('click', () 
   }
 });
 
+  const loadTitleBtn = document.getElementById('load-title-button');
+
+loadTitleBtn.addEventListener('click', () => {
+  const saved = localStorage.getItem('8bitsAdventureSave');
+  
+  if (!saved) {
+    return;
+  }
+
+  titleScreen.style.display = 'none';
+  loadGame();
+
+  if (objectiveBox) objectiveBox.style.display = 'block';
+
+  draw();
+  updateStatsPopup();
+  drawPartyStatus();
+});
+
   document.getElementById('dialog-next').addEventListener('click', () => {
   const overlay = document.getElementById('dialog-overlay');
   const textDiv = document.getElementById('dialog-text');
@@ -10719,15 +12439,21 @@ document.getElementById('inventory-battle-button').addEventListener('click', () 
     nextLine = _dialogQueue.shift();
   }
 
-  if (nextLine) {
-    applyDialogStyle(box, nextLine.style || 'dialog');
-    startTypewriter(nextLine.text, textDiv, nextLine.speaker);
-    return;
-  }
+if (nextLine) {
+  applyDialogStyle(box, nextLine.style || 'dialog');
+  startTypewriter(nextLine.text, textDiv, nextLine.speaker, nextLine.effect); 
+  return;
+}
 
   const id = overlay._markId;
   overlay._markId = null;
   overlay.style.display = 'none';
+
+    if (overlay._onComplete) {
+    const callback = overlay._onComplete;
+    overlay._onComplete = null;
+    callback();
+  }
   
   if (id) shownDialogs.add(id);
   if (inBattle) {
@@ -10749,28 +12475,40 @@ function loadLevel(index, newX = x, newY = y) {
 
   if (gameSettings.autosave) {
     saveGame();
-    if (gameSettings.autosaveMessage) {
-      showTemporaryText("Autosaving..."); 
-    }
+    if (gameSettings.autosaveMessage) showTemporaryText("Autosaving...");
   }
 
-  setTimeout(() => {
+
+  const nextBg = new Image();
+  const nextLevelData = levels[index];
+
+  const finalizeLoad = () => {
     currentLevelIndex = index;
-    currentLevel = levels[currentLevelIndex];
-
-    bgImg = new Image();
-    bgImg.onload = () => {
-        draw();
-        fadeEl.style.opacity = '0';
-    };
-    bgImg.src = currentLevel.bgSrc;
-
+    currentLevel = nextLevelData;
+    bgImg = nextBg;
     x = newX;
     y = newY;
+    
+    draw();
+    
+    setTimeout(() => {
+      fadeEl.style.opacity = '0';
+    }, 100); 
+  };
 
-    draw(); 
+  nextBg.onload = finalizeLoad; 
+
+  nextBg.onerror = () => {
+    console.warn("Resource Load Error: Background image not found or offline. Falling back to default color.");
+
+    finalizeLoad();
+  };
+
+  setTimeout(() => {
+    nextBg.src = nextLevelData.bgSrc;
   }, 500);
 }
+
 
 function isInZone(zones, px, py) {
   if (!zones) return false;
@@ -10897,14 +12635,14 @@ function checkDoorCollision(newX, newY) {
   return null;
 }
 
-// Draw game world and player
+
 function draw() {
   if (inBattle || isGameOver) return;
 
-  // clear canvas first
+  
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // draw background only when the image is ready
+  
   if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
     ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
   } else {
@@ -10916,32 +12654,15 @@ function draw() {
   for (const wall of currentLevel.walls) {
     ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
   }
-  if (currentLevel && currentLevel.battleZones) {
-  currentLevel.battleZones.forEach(zone => {
-    if (!zone.sprite) return;
-    const sprite = zoneSprites[zone.sprite];
-    if (!sprite) return;
-    
-    const spriteW = Math.min(zone.width, 100); // cap to avoid oversized sprites
-    const spriteH = Math.min(zone.height, 100);
-    const destX = zone.x + (zone.width - spriteW) / 2;
-    const destY = zone.y + (zone.height - spriteH) / 2;
-    if (sprite.complete && sprite.naturalWidth > 0) {
-      ctx.drawImage(sprite, destX, destY, spriteW, spriteH);
-    } else {
-      
-      ctx.fillStyle = 'rgba(255,0,0,0.0)';
-      ctx.fillRect(destX, destY, spriteW, spriteH);
-    }
-  });
-}
+  
+  drawBreathing();
  
 const activeSprite = playerSprites[currentFacing];
 
 if (useImage && activeSprite.complete && activeSprite.naturalWidth > 0) {
   ctx.drawImage(activeSprite, x, y, imageSize, imageSize);
 } else {
-  ctx.fillStyle = "#0090ff"; // Fallback blue square
+  ctx.fillStyle = "#0090ff";
   ctx.fillRect(x, y, imageSize, imageSize);
 }
   
@@ -10963,19 +12684,19 @@ if (window.gameSettings && window.gameSettings.showZones) {
   }
 
 if (gameSettings.showZones) {
-  // walls outline
+ 
   ctx.save();
   ctx.strokeStyle = 'rgba(255,255,0,0.9)';
   ctx.lineWidth = 2;
   currentLevel.walls.forEach(w => {
     ctx.strokeRect(w.x + 0.5, w.y + 0.5, w.width, w.height);
   });
-  // interactable boxes
+
   ctx.strokeStyle = 'rgba(0,255,255,0.9)';
   currentLevel.interactables.forEach(obj => {
     ctx.strokeRect(obj.x + 0.5, obj.y + 0.5, obj.width, obj.height);
   });
-  // battle zones
+
   ctx.strokeStyle = 'rgba(255,0,0,0.9)';
   (currentLevel.battleZones || []).forEach(z => {
     const r = z.interactRect || { x: z.x, y: z.y, width: z.width, height: z.height };
@@ -10985,8 +12706,18 @@ if (gameSettings.showZones) {
 }
 
   currentLevel.interactables.forEach(obj => {
+  if (obj.action === "farm") {
+    const stage = getPlotStage(obj.id);
+    const img = farmSprites[`stage${stage}`];
+    if (img && img.complete) {
+      ctx.drawImage(img, obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
+
+  currentLevel.interactables.forEach(obj => {
   if (obj.action === "pickup") {
-    // Draw key items with their images
+ 
     let imgToDraw = null;
     if (obj.name === "hammer") imgToDraw = hammerImg;
     else if (obj.name === "keycard") imgToDraw = keycardImg;
@@ -10994,19 +12725,21 @@ if (gameSettings.showZones) {
     else if (obj.name === "laser_cutter") imgToDraw = laserCutterImg;
     else if (obj.name === "raft") imgToDraw = raftImg;
     else if (obj.name === "torch") imgToDraw = torchImg;
+    else if (obj.name === "dmgPotion") imgToDraw = dmgPotionImg;
+    else if (obj.name === "staminaPotion") imgToDraw = stmPotionImg;
     else if (obj.name === "drill") imgToDraw = drillImg;
 
     if (imgToDraw && imgToDraw.complete) {
       ctx.drawImage(imgToDraw, obj.x, obj.y, obj.width, obj.height);
     } else {
-      ctx.fillStyle = "#cc9900"; // fallback color
+      ctx.fillStyle = "#cc9900"; 
       ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
     }
   } else if (obj.action === "break" && obj.name === "steel_block") {
     if (steelBlockImg.complete) {
       ctx.drawImage(steelBlockImg, obj.x, obj.y, obj.width, obj.height);
     } else {
-      ctx.fillStyle = "#888"; // fallback gray
+      ctx.fillStyle = "#888";
       ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
     }
   }
@@ -11044,14 +12777,14 @@ if (gameSettings.showZones) {
   }
 });
 
-  // Draw levers and controllers
+
 (currentLevel.interactables || []).forEach(obj => {
   if (!obj) return;
   if (obj.action === 'lever') {
     if (typeof obj.currentState === 'undefined') obj.currentState = !!obj.initialState;
     const imgToDraw = obj.currentState ? leverOnImg : leverOffImg;
     if (imgToDraw && imgToDraw.complete && imgToDraw.naturalWidth > 0) {
-      // draw using object rect if provided, otherwise use image size
+    
       const w = obj.width || 16;
       const h = obj.height || 16;
       ctx.drawImage(imgToDraw, obj.x, obj.y, w, h);
@@ -11060,7 +12793,7 @@ if (gameSettings.showZones) {
       ctx.fillRect(obj.x, obj.y, obj.width || 12, obj.height || 12);
     }
   } else if (obj.action === 'lever_controller') {
-    // simple controller visual
+  
     ctx.fillStyle = '#8844ff';
     ctx.fillRect(obj.x, obj.y, obj.width || 12, obj.height || 12);
     ctx.fillStyle = 'white';
@@ -11073,11 +12806,11 @@ if (gameSettings.showZones) {
 currentLevel.interactables.forEach(obj => {
   if (obj.action === "chest") {
     if (obj.opened) {
-      // open chest sprite (or fallback)
+   
       if (openChestImg && openChestImg.complete) ctx.drawImage(openChestImg, obj.x, obj.y, obj.width, obj.height);
       else { ctx.fillStyle = "#775533"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
     } else {
-      // closed chest sprite (or fallback)
+      
       if (closedChestImg && closedChestImg.complete) ctx.drawImage(closedChestImg, obj.x, obj.y, obj.width, obj.height);
       else { ctx.fillStyle = "#aa7722"; ctx.fillRect(obj.x, obj.y, obj.width, obj.height); }
     }
@@ -11111,16 +12844,16 @@ function isInDarkZone(px, py) {
   }
   return false;
 }
-// Draw poison zones
+
 if (currentLevel.poisonZones) {
-  ctx.fillStyle = "rgba(0, 255, 0, 0.4)"; // semi-transparent green
+  ctx.fillStyle = "rgba(0, 255, 0, 0.4)";
   currentLevel.poisonZones.forEach(zone => {
     ctx.fillRect(zone.x, zone.y, zone.width, zone.height);
   });
 }
-  // After all normal drawing is done
+
 if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
-  // Draw solid black overlay to simulate darkness
+
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
@@ -11129,6 +12862,17 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   if (obj.name === "blockade") {
     if (blockadeImg && blockadeImg.complete) {
       ctx.drawImage(blockadeImg, obj.x, obj.y, obj.width, obj.height);
+    } else {
+      ctx.fillStyle = "#444";
+      ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+    }
+  }
+});
+
+  currentLevel.interactables.forEach(obj => {
+  if (obj.name === "arcadeoldbot") {
+    if (aOldBotImg && aOldBotImg.complete) {
+      ctx.drawImage(aOldBotImg, obj.x, obj.y, obj.width, obj.height);
     } else {
       ctx.fillStyle = "#444";
       ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
@@ -11147,7 +12891,7 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   }
 });
 
-  // stone
+
   currentLevel.interactables.forEach(obj => {
     if (obj.name === "big_stone" || obj.name === "bigStone") {
       if (stoneImg.complete) ctx.drawImage(stoneImg, obj.x, obj.y, obj.width, obj.height);
@@ -11155,6 +12899,10 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
     }
   });
 }
+
+  setInterval(() => {
+  draw();
+}, 1000 / 30);
 
 const SETTINGS_KEY = '8bitsAdventureSettings';
 const SAVE_SLOT_PREFIX = '8bitsAdventureSave_slot_'; 
@@ -11178,11 +12926,9 @@ function loadSettings() {
   } catch (e) {
     console.error('Failed to load settings', e);
   }
-  // apply UI initial values
+ 
   const sel = document.getElementById('difficulty-select');
-  const chk = document.getElementById('toggle-zones');
   if (sel) sel.value = gameSettings.difficulty || 'normal';
-  if (chk) chk.checked = !!gameSettings.showZones;
 }
 function saveSettings() {
   try {
@@ -11192,7 +12938,6 @@ function saveSettings() {
   }
 }
 
-// === Save slot helpers ===
 function saveToSlot(slotNumber) {
   const key = SAVE_SLOT_PREFIX + slotNumber;
   const saveData = {
@@ -11202,6 +12947,8 @@ function saveToSlot(slotNumber) {
     playerPosition: { x, y },
     shownDialogs: Array.from(shownDialogs),
     gameFlags,
+    goodPoints: goodPoints,
+    badPoints: badPoints,
     currentObjective,
     objectiveCompleted,
     alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
@@ -11247,7 +12994,8 @@ function loadFromSlot(slotNumber) {
       setObjective(saveData.currentObjective);
       if (saveData.objectiveCompleted) completeObjective();
     }
-
+goodPoints = saveData.goodPoints || 0;
+badPoints = saveData.badPoints || 0;
     removedInteractableIds = new Set(saveData.removedInteractableIds || []);
     removedWallIds = new Set(saveData.removedWallIds || []);
     shownDialogs = new Set(saveData.shownDialogs || []);
@@ -11298,9 +13046,7 @@ levels.forEach(level => {
     if (saveData.settings) {
       Object.assign(gameSettings, saveData.settings);
       const sel = document.getElementById('difficulty-select');
-      const chk = document.getElementById('toggle-zones');
       if (sel) sel.value = gameSettings.difficulty;
-      if (chk) chk.checked = !!gameSettings.showZones;
     }
 
     loadLevel(saveData.currentLevelIndex, saveData.playerPosition.x, saveData.playerPosition.y);
@@ -11318,7 +13064,6 @@ levels.forEach(level => {
   }
 }
 
-// === Hook up settings UI buttons ===
 document.getElementById('save-slot-1').addEventListener('click', () => saveToSlot(1));
 document.getElementById('save-slot-2').addEventListener('click', () => saveToSlot(2));
 document.getElementById('save-slot-3').addEventListener('click', () => saveToSlot(3));
@@ -11326,19 +13071,12 @@ document.getElementById('load-slot-1').addEventListener('click', () => loadFromS
 document.getElementById('load-slot-2').addEventListener('click', () => loadFromSlot(2));
 document.getElementById('load-slot-3').addEventListener('click', () => loadFromSlot(3));
 
-// difficulty selector
 document.getElementById('difficulty-select').addEventListener('change', (e) => {
   gameSettings.difficulty = e.target.value;
   saveSettings();
   showTemporaryText(`Difficulty set to ${gameSettings.difficulty}`);
 });
 
-// toggle zones
-document.getElementById('toggle-zones').addEventListener('change', (e) => {
-  gameSettings.showZones = !!e.target.checked;
-  saveSettings();
-  draw();
-});
 
 
 loadSettings();
@@ -11350,7 +13088,9 @@ function saveGame() {
   currentLevelIndex,
   playerPosition: { x, y },
   shownDialogs: Array.from(shownDialogs),
-    gameFlags: gameFlags, 
+    gameFlags: gameFlags,
+    goodPoints: goodPoints,
+    badPoints: badPoints,
     currentObjective: currentObjective,
     objectiveCompleted: objectiveCompleted,
   alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
@@ -11374,11 +13114,34 @@ function saveGame() {
   unlocked: a.unlocked
 }));
   localStorage.setItem('8bitsAdventureSave', JSON.stringify(saveData));
-  showTemporaryText('Game saved!');
   console.log('Game saved:', saveData);
 }
 
-// Load game state from localStorage
+  function exportSave() {
+  const rawSave = localStorage.getItem("8bitsAdventureSave");
+  document.getElementById("export-box").value = rawSave || "No save found";
+}
+
+
+function openExportMenu() {
+  exportSave();
+  document.getElementById("export-menu").style.display = "block";
+}
+
+function closeExportMenu() {
+  document.getElementById("export-menu").style.display = "none";
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key.toLowerCase() === "q") {
+    if (!devMode) return;
+    openExportMenu();
+  }
+});
+
+document.getElementById("close-export").addEventListener("click", closeExportMenu);
+
+
 function loadGame() {
   const saved = localStorage.getItem('8bitsAdventureSave');
   if (!saved) {
@@ -11402,6 +13165,8 @@ function loadGame() {
       if (saveData.objectiveCompleted) completeObjective();
     }
 
+    goodPoints = saveData.goodPoints || 0;
+    badPoints = saveData.badPoints || 0;
  
     removedInteractableIds = new Set(saveData.removedInteractableIds || []);
     removedWallIds = new Set(saveData.removedWallIds || []);
@@ -11497,25 +13262,136 @@ levels.forEach(level => {
   });
 }
 
+const devConsole = document.getElementById('dev-console');
+const devInput = document.getElementById('dev-input');
+
+
+window.addEventListener('keydown', (e) => {
+  if (!devMode) return;
+  
+  if (e.key === '-') {
+    e.preventDefault();
+    const isHidden = devConsole.style.display === 'none';
+    devConsole.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) devInput.focus();
+  }
+});
+
+
+devInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const raw = devInput.value.trim();
+    if (raw) executeDevCommand(raw);
+    devInput.value = "";
+    devConsole.style.display = 'none';
+  }
+});
+
+function executeDevCommand(input) {
+  const parts = input.replace(/[(),]/g, ' ').split(/\s+/);
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1);
+
+  switch (cmd) {
+    case '/help':
+      console.log("Commands: /warp [lvl] [x] [y], /give [item] [qty], /lvlup, /unlockall, /battle [enemyName], /god, /heal, /points");
+      break;
+
+    case '/warp':
+      loadLevel(parseInt(args[0]), parseInt(args[1]), parseInt(args[2]));
+      break;
+
+    case '/give':
+      const itemName = args[0];
+      const qty = parseInt(args[1]) || 1;
+      inventory.set(itemName, (inventory.get(itemName) || 0) + qty);
+      showTemporaryText(`Gave ${qty} ${itemName}`);
+      break;
+
+    case '/lvlup':
+      levelUp();
+      break;
+
+    case '/unlockall':
+      alliesData.forEach(a => unlockedAllies.add(a.id));
+      showTemporaryText("All allies unlocked!");
+      drawPartyList();
+      break;
+
+    case '/battle':
+      const enemyType = args[0];
+      if (enemyTypes[enemyType]) {
+        initiateBattle('interactable', { encounter: [{ type: enemyType }] });
+      } else {
+        showTemporaryText("Enemy type not found.");
+      }
+      break;
+
+    case '/flag':
+      const flagName = args[0];
+    
+      if (gameFlags.hasOwnProperty(flagName)) {
+        gameFlags[flagName] = true;
+        showTemporaryText(`Flag [${flagName}] is TRUE`);
+        draw(); 
+      } else {
+        showTemporaryText(`Error: Flag '${flagName}' not found.`);
+      }
+      break;
+
+    case '/god':
+      playerStats.baseMaxHp = 9999;
+      playerStats.maxHp = 9999;
+      playerStats.currentHp = 9999;
+      playerStats.damage = 999;
+      updateHp(9999);
+      updateStatsPopup();
+      showTemporaryText("GOD MODE ACTIVE");
+      break;
+
+    case '/heal':
+      playerStats.currentHp = playerStats.maxHp;
+      updateHp(playerStats.currentHp);
+      if (activeAlly) {
+        activeAlly.currentHp = activeAlly.maxHp;
+        drawPartyStatus();
+      }
+      showTemporaryText("Team Healed!");
+      break;
+
+    case '/points':
+    showTemporaryText(`Good: ${goodPoints} | Bad: ${badPoints}`);
+  break;
+
+  case '/outlines':
+      gameSettings.showZones = !gameSettings.showZones;
+      showTemporaryText("Debug Outlines: " + (gameSettings.showZones ? "ON" : "OFF"));
+      saveSettings();
+      draw();
+      break;
+
+    case '/stamina':
+      updateStamina(playerStats.maxStamina);
+      showTemporaryText("Stamina Refilled!");
+      break;
+
+    default:
+      showTemporaryText("Unknown command. Type /help");
+  }
+}
+
 
 const gameHud = document.getElementById('game-hud');
 if (gameHud) {
-  const saveButton = document.createElement('button');
-  saveButton.textContent = 'Save Game';
-  saveButton.style.fontFamily = "'Press Start 2P', sans-serif";
-  saveButton.style.margin = '0 10px';
-  saveButton.onclick = saveGame;
-  gameHud.appendChild(saveButton);
-
   const loadButton = document.createElement('button');
-  loadButton.textContent = 'Load Game';
+  loadButton.textContent = 'Load Autosave';
   loadButton.style.fontFamily = "'Press Start 2P', sans-serif";
   loadButton.style.margin = '0 10px';
   loadButton.onclick = loadGame;
   gameHud.appendChild(loadButton);
 }
   
-// Keyboard movement and interaction
+
 canvas.addEventListener('keydown', function(e) {
   const isDialogActive = document.getElementById('dialog-overlay').style.display === 'flex';
 if (inBattle || isGameOver || isDialogActive || document.getElementById('fade-overlay').style.opacity > 0) {
@@ -11533,7 +13409,7 @@ if (inBattle || isGameOver || isDialogActive || document.getElementById('fade-ov
     e.preventDefault();
   }
 
-  // interaction key
+
   if (key === 'x') {
     e.preventDefault();
     const interactableObject =
@@ -11573,13 +13449,13 @@ if (key === 'arrowdown' || key === 's') {
   nextX = x + dirX * speed;
   nextY = y + dirY * speed;
 
-  // Check water crossing
+
   if (isInWater(nextX, nextY) && (inventory.get('raft') || 0) <= 0) {
     showTemporaryText("You need a raft to cross water!");
     return;
   }
 
-  // Check poison crossing
+
   if (isInPoison(nextX, nextY) && (inventory.get('gas_mask') || 0) <= 0) {
     showTemporaryText("You need a gas mask to cross poison!");
     return;
