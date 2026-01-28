@@ -467,36 +467,52 @@
   content: "";
   position: absolute;
   left: 0;
-  bottom: -8px;
+  bottom: -12px;
   width: 100%;
-  height: 15px;
+  height: 40px;
   pointer-events: none;
-
   background:
-    radial-gradient(circle at 10% 60%, white 0 60%, transparent 61%) 0 0 / 20% 100% repeat-x,
-    radial-gradient(circle at 50% 70%, white 0 60%, transparent 61%) 0 0 / 25% 100% repeat-x,
-    radial-gradient(circle at 90% 50%, white 0 60%, transparent 61%) 0 0 / 22% 100% repeat-x;
+    repeating-linear-gradient(
+      to right,
+      white 0 20px,
+      white 20px 20px,
+      transparent 20px 40px
+    );
+  mask:
+    repeating-linear-gradient(
+      to right,
+      black 0 20px,
+      black 20px calc(20px + 10px * var(--rnd, 1)),
+      transparent calc(20px + 10px * var(--rnd, 1)) 40px
+    );
 }
 
 .enemy-target.snow::before {
   content: "";
   position: absolute;
   left: 0;
-  bottom: 22px;
+  bottom: 28px;
   width: 100%;
-  height: 10px;
+  height: 30px;
   pointer-events: none;
 
   background: repeating-linear-gradient(
-    180deg,
-    transparent 0,
-    transparent 6px,
-    white 3px,
-    white 7px
+    to right,
+    white 0 12px,
+    transparent 12px 24px
   );
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-  mask-image: linear-gradient(to bottom, black, transparent);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    0 100%
+  );
+  mask: repeating-linear-gradient(
+    to right,
+    linear-gradient(to bottom, black 0, transparent 100%) 0 0 / 24px 100%
+  );
 }
+
     .burn-rocket-hud {
   box-shadow: 0 0 15px 5px orange !important;
   border: 2px solid orange !important;
