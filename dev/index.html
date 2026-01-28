@@ -5633,7 +5633,7 @@ const abilityNames = {
   ally6: "Ability | Max Energy"
 };
 
-  const abilityCooldowns = {
+  const allyAbilityCooldowns = {
   ally1: 20000,
   ally2: 15000,
   ally3: 23000,
@@ -5647,7 +5647,7 @@ let allyAbilityCooldown = 0;
 function useAllyAbility(ally) {
   const now = Date.now();
 
-  const cd = abilityCooldowns[ally.id] || 20000;
+  const cd = allyAbilityCooldowns[ally.id] || 20000;
   if (now < allyAbilityCooldown) return;
 
   if (ally.id === "ally1") {
