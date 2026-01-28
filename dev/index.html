@@ -8767,13 +8767,13 @@ function spawnRound(roundIdx) {
   drawPlayerBattleStatus();
   startAbilityRegen();
 }
-  // Unlock an ally and update UI/save state
 function unlockAlly(allyId) {
   if (!allyId) return;
   if (unlockedAllies.has(allyId)) {
     showTemporaryText(`${alliesData.find(a => a.id === allyId)?.name || allyId} is already unlocked.`);
     return;
   }
+
   const ally = alliesData.find(a => a.id === allyId);
   if (!ally) {
     console.warn('unlockAlly: unknown allyId', allyId);
@@ -8782,22 +8782,26 @@ function unlockAlly(allyId) {
   }
 
   unlockedAllies.add(allyId);
-  // Auto-equip if nothing equipped yet
+  const allyObj = allies.find(a => a.id === allyId);
+  if (allyObj) allyObj.unlocked = true;
+
   if (!equippedAllyId) {
     equippedAllyId = allyId;
     showTemporaryText(`${ally.name} has joined and was auto-equipped.`);
   } else {
     showTemporaryText(`${ally.name} has joined your party!`);
   }
-const ach = achievementsMap[`ally_unlock_${allyId}`];
+
+  const ach = achievementsMap[`ally_unlock_${allyId}`];
   if (ach && !ach.unlocked) {
     ach.progress = 1;
     checkAchievements();
   }
-  
-  drawPartyList();
+
+  drawPartyUI();
   drawPartyStatus();
 }
+
   function triggerScreenShake() {
   const body = document.body;
   
@@ -13349,10 +13353,12 @@ function executeDevCommand(input) {
       break;
 
     case '/unlockall':
-      alliesData.forEach(a => unlockedAllies.add(a.id));
-      showTemporaryText("All allies unlocked!");
-      drawPartyList();
-      break;
+  alliesData.forEach(a => unlockedAllies.add(a.id));
+  allies.forEach(a => a.unlocked = true);
+  showTemporaryText("All allies unlocked!");
+  drawPartyUI();
+  break;
+
 
     case '/battle':
       const enemyType = args[0];
