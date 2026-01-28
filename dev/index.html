@@ -896,7 +896,7 @@ a:hover,
 
   <div id="fade-overlay" style="position:fixed; inset:0; background:black; opacity:0; pointer-events:none; z-index:9999; transition: opacity 0.25s;"></div>
 
-<div id="ally-info-popup" style="display:none; position:absolute; right: 50%; top: 20%; width:320px; background:#002591; border:4px solid white; padding:15px; color:white; z-index:1001; font-family:'Press Start 2P';">
+<div id="ally-info-popup" style="display:none; position:absolute; right: 80%; top: 10%; width:320px; background:#002591; border:4px solid white; padding:15px; color:white; z-index:1001; font-family:'Press Start 2P';">
     <div style="display:flex; justify-content:space-between; align-items: flex-start; margin-bottom:10px;">
         <span id="info-name" style="font-size:14px; border-bottom:2px solid white;">NAME</span>
         <span id="info-stats" style="font-size:8px; text-align:right;">LVL 1 HP:1 DMG: 1</span>
@@ -1529,7 +1529,7 @@ let playerStats = {
   baseDamage: 2
 };
 const alliesData = [
-  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10 },
+  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, passive: "Slows target atk meter by 20%", active: "Freeze target (20s)", starPowers: ["xx", "xx"], portrait: "lou_portrait.png" },
   { id: 'ally2', name: 'Buzz', baseMaxHp: 58, baseDamage: 4, attackIntervalMs: 2200, level: 1, xp: 0, xpToNextLevel: 10 },
   { id: 'ally3', name: 'Colt', baseMaxHp: 23, baseDamage: 6, attackIntervalMs: 3000, level: 1, xp: 0, xpToNextLevel: 10 },
   { id: 'ally4', name: 'Otis', baseMaxHp: 45, baseDamage: 4, attackIntervalMs: 2000, level: 1, xp: 0, xpToNextLevel: 10 },
