@@ -5324,14 +5324,14 @@ const allyInfoPopup = document.getElementById('ally-info-popup');
 function drawPartyUI() {
   const container = document.getElementById('party-list');
   container.innerHTML = '';
-  const unlockedAlli = allies.filter(a => a.unlocked);
+  const unlockedAlli = alliesData.filter(a => a.unlocked);
   
   if (unlockedAlli.length === 0) {
     container.innerHTML = '<div style="font-size:8px; padding:20px; color:#aaa; text-align:center;">No allies unlocked yet.</div>';
     return;
   }
 
-  allies.forEach((ally, index) => {
+  alliesData.forEach((ally, index) => {
     if (!ally.unlocked) return;
     const div = document.createElement('div');
     div.style.padding = "10px";
