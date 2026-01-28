@@ -5327,7 +5327,7 @@ function drawPartyUI() {
     div.style.borderBottom = "1px solid #ffffff22";
     div.style.cursor = "pointer";
     const isEquipped = (selectedAllyIndex === index);
-    div.innerHTML = `${isEquipped ? '<span style="color:#00ffff;">[E]</span> ' : ''}${ally.name} (Lvl ${ally.lvl})`;
+    div.innerHTML = `${isEquipped ? '<span style="color:#00ffff;">[E]</span> ' : ''}${ally.name} (Lvl ${ally.level})`;
     
     div.onclick = () => openAllyInfo(index);
     container.appendChild(div);
@@ -5340,13 +5340,13 @@ function openAllyInfo(index) {
   const ally = allies[index];
   const infoPopup = document.getElementById('ally-info-popup');
   document.getElementById('info-name').textContent = ally.name;
-  document.getElementById('info-stats').textContent = `LVL ${ally.lvl} HP:${ally.hp} DMG:${ally.dmg}`;
+  document.getElementById('info-stats').textContent = `LVL ${ally.level} HP:${ally.baseMaxHP} DMG:${ally.baseDamage}`;
   document.getElementById('info-passive').textContent = ally.passive;
   document.getElementById('info-active').textContent = ally.active;
   const slots = document.querySelectorAll('.star-power-slot');
   slots.forEach((slot, i) => {
-      slot.innerHTML = ally.lvl >= 30 ? "⭐" : "🔒";
-      slot.title = ally.lvl >= 30 ? ally.starPowers[i] : "Unlocks at Lvl 30";
+      slot.innerHTML = ally.level >= 30 ? "⭐" : "🔒";
+      slot.title = ally.level >= 30 ? ally.starPowers[i] : "Unlocks at Lvl 30";
   });
   document.getElementById('info-equip-btn').onclick = () => {
     selectedAllyIndex = index;
