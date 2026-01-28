@@ -5969,20 +5969,22 @@ function drawPlayerBattleStatus() {
     }
 
 if (activeAlly.id === 'ally1') {
-  targetEnemy.snow = true;
-  if (!targetEnemy.snowOriginalAttackTime) {
-    targetEnemy.snowOriginalAttackTime = targetEnemy.attackTime;
-  }
-  targetEnemy.attackTime = targetEnemy.snowOriginalAttackTime * 1.25;
-  clearTimeout(targetEnemy.snowTimeout);
-  targetEnemy.snowTimeout = setTimeout(() => {
-    targetEnemy.snow = false;
-    if (targetEnemy.snowOriginalAttackTime) {
-      targetEnemy.attackTime = targetEnemy.snowOriginalAttackTime;
-      targetEnemy.snowOriginalAttackTime = null;
-    }
-  }, 5000);
+    targetEnemy.snow = true;
+
+    const now = Date.now();
+    const timeSinceLast = now - targetEnemy.lastAttackAt;
+    const timeRemaining = targetEnemy.attackTime - timeSinceLast;
+    const extraDelay = timeRemaining * 0.20;
+
+    targetEnemy.attackTime += extraDelay;
+    targetEnemy.lastAttackAt += extraDelay;
+
+    clearTimeout(targetEnemy.snowTimeout);
+    targetEnemy.snowTimeout = setTimeout(() => {
+        targetEnemy.snow = false;
+    }, 5000);
 }
+
 
 
 
