@@ -1173,7 +1173,28 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
   <div id="objective-text" style="font-size: 14px;">Explore the arcade area</div>
   <div id="objective-status" style="margin-top: 15px; font-size: 24px; color: #00FF00; display: none;">&#10003;</div>
 </div>
+  
 
+  <div id="achievement-popup-box" style="
+  position: fixed;
+  top: 200px;
+  right: 10px;
+  width: 260px;
+  background-color: #002591;
+  color: white;
+  border: 4px solid white;
+  padding: 15px;
+  font-family: 'Press Start 2P', sans-serif;
+  z-index: 9000;
+  display: none;
+  opacity: 1;
+  transition: opacity 1s ease-out;
+  text-align: left;
+">
+  <div style="font-size: 10px; color: #00ffff; margin-bottom: 10px;">ACHIEVEMENT UNLOCKED</div>
+  <div id="ach-popup-name" style="font-size: 12px; margin-bottom: 8px;"></div>
+  <div id="ach-popup-desc" style="font-size: 8px; line-height: 1.4; opacity: 0.8;"></div>
+</div>
 
   
 <div id="battle-blackout" style="display:none; position:fixed; inset:0; z-index:2500; background:black; pointer-events:none;"></div>
@@ -10959,7 +10980,7 @@ function drawAchievementsUI() {
   achievements.forEach(ach => {
     const div = document.createElement('div');
     div.textContent = ach.unlocked ? `✓ ${ach.name}` : `🔒 ${ach.name}`;
-    div.title = ach.unlocked ? '' : ach.description; // Hover text only if locked
+    div.title = ach.unlocked ? '' : ach.description;
     div.style.cursor = ach.unlocked ? 'default' : 'help';
     div.style.padding = '4px 0';
     if (ach.unlocked) div.style.color = 'lightgreen';
@@ -10968,10 +10989,46 @@ function drawAchievementsUI() {
   });
 }
 
-  function showAchievementUnlocked(ach) {
-  showTemporaryText(`Achievement unlocked: ${ach.name}!`);
+let achievementQueue = [];
+let isShowingAchievement = false;
+
+function showAchievementUnlocked(ach) {
+  achievementQueue.push(ach);
+  processAchievementQueue();
 }
-// Check collision with interactables
+
+function processAchievementQueue() {
+  if (isShowingAchievement || achievementQueue.length === 0) return;
+
+  isShowingAchievement = true;
+  const ach = achievementQueue.shift();
+  
+  const box = document.getElementById('achievement-popup-box');
+  const nameEl = document.getElementById('ach-popup-name');
+  const descEl = document.getElementById('ach-popup-desc');
+
+  // my victory is unused but it sounds so good for achievements so why not
+  const achSfx = new Audio('victory.wav'); 
+  achSfx.volume = 0.5;
+  achSfx.play().catch(e => {});
+
+  nameEl.textContent = ach.name;
+  descEl.textContent = ach.description;
+
+  box.style.display = 'block';
+  box.style.opacity = '1';
+  setTimeout(() => {
+    box.style.opacity = '0';
+    
+    setTimeout(() => {
+      box.style.display = 'none';
+      isShowingAchievement = false;
+      processAchievementQueue();
+    }, 1000); 
+
+  }, 4000);
+}
+  
 function checkInteraction(checkX, checkY) {
   const hitboxX = checkX + hitboxOffsetX;
   const hitboxY = checkY + hitboxOffsetY;
