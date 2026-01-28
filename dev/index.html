@@ -783,7 +783,6 @@ a:hover,
       <h4>Party</h4>
       <div id="party-list"></div>
       <div style="margin-top:8px;">
-        <button id="equip-ally-button" class="item-use-button">Equip Selected Ally</button>
       </div>
     </div>
   </div>
@@ -897,7 +896,31 @@ a:hover,
 
   <div id="fade-overlay" style="position:fixed; inset:0; background:black; opacity:0; pointer-events:none; z-index:9999; transition: opacity 0.25s;"></div>
 
+<div id="ally-info-popup" style="display:none; position:absolute; left:220px; bottom:0; width:320px; background:#002591; border:4px solid white; padding:15px; color:white; z-index:1001; font-family:'Press Start 2P';">
+    <div style="display:flex; justify-content:space-between; align-items: flex-start; margin-bottom:10px;">
+        <span id="info-name" style="font-size:14px; border-bottom:2px solid white;">NAME</span>
+        <span id="info-stats" style="font-size:8px; text-align:right;">LVL 1 HP:1 DMG: 1</span>
+    </div>
 
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <div id="info-portrait" style="width:80px; height:80px; border:2px solid white; background:#001a66;"></div>
+        <div style="flex:1; font-size:8px;">
+            <div style="color:#00ffff; margin-bottom:4px;">PASSIVE</div>
+            <div id="info-passive" style="margin-bottom:8px; line-height:1.2;">...</div>
+            <div style="color:#00ffff; margin-bottom:4px;">ACTIVE</div>
+            <div id="info-active" style="line-height:1.2;">...</div>
+        </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+        <div style="display:flex; gap:5px;">
+            <div class="star-power-slot" style="width:40px; height:40px; border:2px solid #555; background:#222; display:flex; align-items:center; justify-content:center; font-size:18px;">🔒</div>
+            <div class="star-power-slot" style="width:40px; height:40px; border:2px solid #555; background:#222; display:flex; align-items:center; justify-content:center; font-size:18px;">🔒</div>
+        </div>
+        <button id="info-equip-btn" class="item-use-button" style="padding:10px;">EQUIP</button>
+    </div>
+</div>
+  
   <div id="battle-overlay">
     <div id="enemy-display"></div>
     <div id="player-battle-status"></div>
@@ -5228,71 +5251,70 @@ console.log('drawInventoryBattlePopup called, entries:', Array.from(inventory.en
   }
 }
 
-  const partyButton = document.getElementById('party-button');
+const partyButton = document.getElementById('party-button');
+partyButton.addEventListener('click', toggleParty);
 const partyPopup = document.getElementById('party-popup');
-const partyListDiv = document.getElementById('party-list');
-const equipAllyButton = document.getElementById('equip-ally-button');
+const allyInfoPopup = document.getElementById('ally-info-popup');
 
-partyButton.addEventListener('click', () => {
-  if (partyPopup.style.display === 'none') {
-    drawPartyList();
-    partyPopup.style.display = 'block';
-  } else {
-    partyPopup.style.display = 'none';
-  }
-});
-
-function drawPartyList() {
-  partyListDiv.innerHTML = '';
-  if (unlockedAllies.size === 0) {
-    partyListDiv.innerHTML = '<p>No allies unlocked yet.</p>';
-    equipAllyButton.disabled = true;
+function drawPartyUI() {
+  const container = document.getElementById('party-list');
+  container.innerHTML = '';
+  
+  if (!allies || allies.length === 0) {
+    container.innerHTML = '<p>No allies unlocked yet.</p>';
     return;
   }
 
-  equipAllyButton.disabled = false;
-
-  unlockedAllies.forEach(allyId => {
-    const ally = alliesData.find(a => a.id === allyId);
-    if (!ally) return;
-
+  allies.forEach((ally, index) => {
     const div = document.createElement('div');
-    div.className = 'party-ally-item';
-    div.textContent = `${ally.name} (Lvl ${ally.level}, HP: ${ally.baseMaxHp}, DMG: ${ally.baseDamage})`;
-    div.dataset.allyId = ally.id;
-    div.style.cursor = 'pointer';
+    div.className = 'clickable-ally';
+    div.style.padding = "8px";
+    div.style.borderBottom = "1px solid #ffffff33";
+    div.style.cursor = "pointer";
 
-    if (ally.id === equippedAllyId) {
-      div.style.fontWeight = 'bold';
-      div.style.color = 'yellow';
-    }
+    div.innerHTML = `
+      ${ally.name}
+      <span style="font-size:8px; opacity:0.7;">(Lvl ${ally.lvl})</span>
+    `;
 
-    div.onclick = () => {
-      const prevSelected = partyListDiv.querySelector('.selected');
-      if (prevSelected) prevSelected.classList.remove('selected');
-      div.classList.add('selected');
-    };
-
-    partyListDiv.appendChild(div);
+    div.onclick = () => openAllyInfo(index);
+    container.appendChild(div);
   });
 }
+function openAllyInfo(index) {
+  const ally = allies[index];
 
-equipAllyButton.addEventListener('click', () => {
-  const selectedDiv = partyListDiv.querySelector('.selected');
-  if (!selectedDiv) {
-    showTemporaryText('Select an ally to equip.');
-    return;
+  document.getElementById('info-name').textContent = ally.name;
+  document.getElementById('info-stats').textContent =
+    `LVL ${ally.lvl} HP${ally.hp} DMG ${ally.dmg}`;
+
+  document.getElementById('info-passive').textContent = ally.passive;
+  document.getElementById('info-active').textContent = ally.active;
+
+  const equipBtn = document.getElementById('info-equip-btn');
+  equipBtn.onclick = () => {
+    selectedAllyIndex = index;
+    allyInfoPopup.style.display = 'none';
+    partyPopup.style.display = 'none';
+    showTemporaryText(`${ally.name} equipped!`);
+  };
+
+  allyInfoPopup.style.display = 'block';
+}
+
+function toggleParty() {
+  const p = partyPopup;
+  const i = allyInfoPopup;
+
+  if (p.style.display === 'flex') {
+    p.style.display = 'none';
+    i.style.display = 'none';
+  } else {
+    p.style.display = 'flex';
+    drawPartyUI();
   }
-  const allyId = selectedDiv.dataset.allyId;
-  if (!unlockedAllies.has(allyId)) {
-    showTemporaryText('This ally is not unlocked.');
-    return;
-  }
-  equippedAllyId = allyId;
-  showTemporaryText(`Equipped ${alliesData.find(a => a.id === allyId).name} as ally.`);
-  partyPopup.style.display = 'none';
-  drawPartyList();
-});
+}
+
 
 function equipArmor(type) {
   if (!armorTypes[type]) {
