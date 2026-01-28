@@ -8921,7 +8921,7 @@ function unlockAlly(allyId) {
   }
 
   unlockedAllies.add(allyId);
-  const allyObj = allies.find(a => a.id === allyId);
+  const allyObj = alliesData.find(a => a.id === allyId);
   if (allyObj) allyObj.unlocked = true;
 
   if (!equippedAllyId) {
@@ -13529,7 +13529,7 @@ function executeDevCommand(input) {
 
     case '/unlockall':
   alliesData.forEach(a => unlockedAllies.add(a.id));
-  allies.forEach(a => a.unlocked = true);
+  alliesData.forEach(a => a.unlocked = true);
   showTemporaryText("All allies unlocked!");
   drawPartyUI();
   break;
