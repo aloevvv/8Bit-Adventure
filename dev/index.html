@@ -5276,6 +5276,7 @@ function drawPartyUI() {
   }
 
   allies.forEach((ally, index) => {
+    if (!unlockedAllies.has(ally.id)) return;
     const div = document.createElement('div');
     div.className = 'clickable-ally';
     div.style.padding = "8px";
