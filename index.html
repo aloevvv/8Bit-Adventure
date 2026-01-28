@@ -463,36 +463,39 @@
   position: relative;
   overflow: visible;
 }
+.enemy-target.snow::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -8px;
+  width: 100%;
+  height: 15px;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 10% 60%, white 0 60%, transparent 61%) 0 0 / 20% 100% repeat-x,
+    radial-gradient(circle at 50% 70%, white 0 60%, transparent 61%) 0 0 / 25% 100% repeat-x,
+    radial-gradient(circle at 90% 50%, white 0 60%, transparent 61%) 0 0 / 22% 100% repeat-x;
+}
 
 .enemy-target.snow::before {
   content: "";
   position: absolute;
   left: 0;
-  bottom: -12px;
+  bottom: 22px;
   width: 100%;
-  height: 12px; 
+  height: 10px;
   pointer-events: none;
 
   background: repeating-linear-gradient(
-    to bottom,
-    white 0,
-    white 6px,
+    180deg,
+    transparent 0,
     transparent 6px,
-    transparent 12px
+    white 6px,
+    white 14px
   );
-}
-.enemy-target.snow::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -20px;
-  width: 100%;
-  height: 16px;
-  pointer-events: none;
-
-  background:
-    radial-gradient(circle at 20% 100%, white 0 60%, transparent 61%) 0 0 / 25% 100% repeat-x,
-    radial-gradient(circle at 60% 100%, white 0 60%, transparent 61%) 0 0 / 30% 100% repeat-x;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  mask-image: linear-gradient(to bottom, black, transparent);
 }
     .burn-rocket-hud {
   box-shadow: 0 0 15px 5px orange !important;
