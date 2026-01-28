@@ -4388,6 +4388,15 @@ levels.forEach(level => {
     checkCondition: () => achievementsMap['kill_tutorial_dummy'].progress >= 1
   },
     {
+    id: 'old_man_killer',
+    name: 'Retired Scrap',
+    description: 'Send an old man to the nursing home',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['old_man_killer'].progress >= 1
+  },
+    {
     id: 'tp_beat_master',
     name: 'Sharp Shot',
     description: 'Beat Unit 318920s score in Target Practice',
@@ -4485,20 +4494,44 @@ levels.forEach(level => {
     progress: 0,
     unlocked: false,
     checkCondition: () => achievementsMap['kill_finaleboss'].progress >= 1
+  },
+    {
+    id: 'neutral_ending',
+    name: 'World Restored',
+    description: 'Obtain the neutral ending',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['neutral_ending'].progress >= 1
+  },
+    {
+    id: 'bad_ending',
+    name: 'Bloodlust',
+    description: 'Obtain the bad ending',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['bad_ending'].progress >= 1
+  },
+  {
+    id: 'good_ending',
+    name: 'Absolution',
+    description: 'Obtain the good ending',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['good_ending'].progress >= 1
+  },
+    {
+    id: 'love_ending',
+    name: 'Love Overcomes All',
+    description: 'Obtain the romance ending',
+    target: 1,
+    progress: 0,
+    unlocked: false,
+    checkCondition: () => achievementsMap['love_ending'].progress >= 1
   }
 ];
-
-  alliesData.forEach(ally => {
-  achievements.push({
-    id: `ally_unlock_${ally.id}`,
-    name: `Unlock ${ally.name}`,
-    description: `Unlock the ally ${ally.name}.`,
-    progress: 0,
-    target: 1,
-    unlocked: false,
-    checkCondition: function() { return this.progress >= this.target; }
-  });
-});
 
     const achievementsMap = {};
 achievements.forEach(a => achievementsMap[a.id] = a);
