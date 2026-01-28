@@ -5296,22 +5296,25 @@ function drawPartyUI() {
 function openAllyInfo(index) {
   const ally = allies[index];
   const infoPopup = document.getElementById('ally-info-popup');
+
   document.getElementById('info-name').textContent = ally.name;
   document.getElementById('info-stats').textContent = `LVL ${ally.lvl} HP:${ally.hp} DMG:${ally.dmg}`;
   document.getElementById('info-passive').textContent = ally.passive;
   document.getElementById('info-active').textContent = ally.active;
-  
+
   const equipBtn = document.getElementById('info-equip-btn');
   equipBtn.onclick = () => {
-    selectedAllyIndex = index; 
+    selectedAllyIndex = index;
     if (window.player) {
-        player.equippedAlly = ally; 
+      player.equippedAlly = ally;
     }
     infoPopup.style.display = 'none';
     document.getElementById('party-popup').style.display = 'none';
+  };
 
   infoPopup.style.display = 'block';
 }
+
 
 function toggleParty() {
   const p = partyPopup;
