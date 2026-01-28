@@ -1601,16 +1601,6 @@ const alliesData = [
   { id: 'ally6', name: 'Max', baseMaxHp: 36, baseDamage: 4, attackIntervalMs: 1000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false },
 ];
 
-  const allies = alliesData.map(a => ({
-  id: a.id,
-  name: a.name,
-  baseMaxHp: a.baseMaxHp,
-  baseDamage: a.baseDamage,
-  level: a.level,
-  passive: a.passive || "No passive yet",
-  active: a.active || "No active yet"
-}));
-
 let unlockedAllies = new Set();
 let equippedAllyId = null;      
 let activeAlly = null;           
@@ -5358,7 +5348,7 @@ function drawPartyUI() {
 let selectedAllyIndex = -1; 
 
 function openAllyInfo(index) {
-  const ally = allies[index];
+  const ally = alliesData[index];
   const infoPopup = document.getElementById('ally-info-popup');
   document.getElementById('info-name').textContent = ally.name;
   const currentMaxHp = ally.baseMaxHp;
@@ -5375,9 +5365,9 @@ function openAllyInfo(index) {
   document.getElementById('info-equip-btn').onclick = () => {
     selectedAllyIndex = index;
     
-    window.currentAlly = allies[index]; 
+    window.currentAlly = alliesData[index]; 
     equippedAllyId = ally.id;
-    if(window.player) window.player.equippedAlly = allies[index];
+    if(window.player) window.player.equippedAlly = alliesData[index];
     infoPopup.style.display = 'none';
     document.getElementById('party-popup').style.display = 'none';
     showTemporaryText(`${ally.name} equipped!`);
