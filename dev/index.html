@@ -1537,6 +1537,16 @@ const alliesData = [
   { id: 'ally6', name: 'Max', baseMaxHp: 36, baseDamage: 4, attackIntervalMs: 1000, level: 1, xp: 0, xpToNextLevel: 10 },
 ];
 
+  const allies = alliesData.map(a => ({
+  id: a.id,
+  name: a.name,
+  lvl: a.level,
+  hp: a.baseMaxHp,
+  dmg: a.baseDamage,
+  passive: a.passive || "No passive yet",
+  active: a.active || "No active yet"
+}));
+
 let unlockedAllies = new Set();
 let equippedAllyId = null;      
 let activeAlly = null;           
