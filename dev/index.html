@@ -8789,6 +8789,7 @@ setInterval(() => {
   if (!inBattle || isGameOver || _battleDialogPausedState) return;
 
   activeEnemies.forEach((enemy, index) => {
+    enemy.attackTime = enemy.attackSpeed;
     const bar = document.getElementById(`attack-bar-${index}`);
     if (bar) {
       if (enemy.stunned) {
