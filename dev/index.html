@@ -1602,6 +1602,11 @@ const alliesData = [
 ];
 
   const allies = alliesData.map(a => ({
+  id: a.id,
+  name: a.name,
+  baseMaxHP: a.baseMaxHP,
+  baseDamage: a.baseDamage,
+  level: a.level,
   passive: a.passive || "No passive yet",
   active: a.active || "No active yet"
 }));
