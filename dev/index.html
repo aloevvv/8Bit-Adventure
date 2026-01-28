@@ -5308,10 +5308,10 @@ function openAllyInfo(index) {
     selectedAllyIndex = index;
     
     window.currentAlly = allies[index]; 
+    equippedAllyId = ally.id;
     if(window.player) window.player.equippedAlly = allies[index];
     infoPopup.style.display = 'none';
     document.getElementById('party-popup').style.display = 'none';
-    
     showTemporaryText(`${ally.name} equipped!`);
     drawPartyUI();
   };
