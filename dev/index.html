@@ -5403,6 +5403,34 @@ function equipWeapon(type) {
   applyEquipmentBonuses();
   showTemporaryText(`Equipped ${weaponTypes[type].name}`);
 }
+
+      function applyStun(enemy, duration) {
+  if (!enemy || enemy.resistances?.stun) return;
+
+  enemy.stunned = true;
+  if (enemy._stunTimeout) {
+    clearTimeout(enemy._stunTimeout);
+    enemy._stunTimeout = null;
+  }
+
+  enemy._stunTimeout = setTimeout(() => {
+    if (!enemy || enemy.removed || enemy.currentHp == null) {
+      if (enemy?._stunTimeout) {
+        clearTimeout(enemy._stunTimeout);
+        enemy._stunTimeout = null;
+      }
+      if (enemy) enemy.stunned = false;
+      drawBattleUI();
+      return;
+    }
+
+    enemy.stunned = false;
+    enemy._stunTimeout = null;
+    drawBattleUI();
+  }, duration);
+
+  drawBattleUI();
+}
   
 
 function useItem(itemName) {
@@ -5421,42 +5449,10 @@ if (inBattle) {
   if (itemName === 'bandaid') {
     const healAmount = Math.ceil(playerStats.maxHp * 0.33);
     updateHp(playerStats.currentHp + healAmount);
-  } else if (itemName === 'emp_grenade') {
-  const STUN_DURATION_MS = 4000;
-
-  activeEnemies.forEach(enemy => {
-    if (enemy.resistances && enemy.resistances.stun) return;
-
-  
-    enemy.stunned = true;
-
-    if (enemy._stunTimeout != null) {
-      clearTimeout(enemy._stunTimeout);
-      enemy._stunTimeout = null;
-    }
-
-
-    enemy._stunTimeout = setTimeout(() => {
-     
-      if (!enemy || enemy.removed || enemy.currentHp == null) {
-        if (enemy && enemy._stunTimeout != null) {
-          clearTimeout(enemy._stunTimeout);
-          enemy._stunTimeout = null;
-        }
-        if (enemy) enemy.stunned = false;
-        drawBattleUI();
-        return;
-      }
-
-     
-      enemy.stunned = false;
-      enemy._stunTimeout = null;
-      drawBattleUI();
-    }, STUN_DURATION_MS);
-  });
-
+ } else if (itemName === 'emp_grenade') {
+  activeEnemies.forEach(enemy => applyStun(enemy, 4000));
   drawBattleUI();
-  } else if (itemName === 'poison_vial') {
+} else if (itemName === 'poison_vial') {
   const POISON_TICK_MS = 500;
   const POISON_DURATION_MS = 3000;
   const poisonDamagePerTick = Math.max(1, Math.ceil(200 * playerStats.damage / 100));
@@ -5626,6 +5622,33 @@ function updateProgressiveDarknessUI() {
     hud.textContent = `Dark Timer: ${secondsLeft}s`;
     hud.style.opacity = frac > 0 ? '1' : '0';
   }
+}
+
+const abilityNames = {
+  ally1: "Cyro Syrup",
+  ally2: "biden blast",
+  ally3: "curse of rah",
+  ally4: "idk bro"
+};
+
+  let allyAbilityCooldown = 0;
+  
+  function useAllyAbility(ally) {
+  const now = Date.now();
+
+  if (now < allyAbilityCooldown) {
+    const remaining = Math.ceil((allyAbilityCooldown - now) / 1000);
+    return;
+  }
+
+  if (ally.id === "ally1") {
+    const target = activeEnemies[selectedEnemyIndex];
+    if (target) {
+      applyStun(target, 4000);
+    }
+  }
+
+  allyAbilityCooldown = now + 20000;
 }
 
 
@@ -5833,7 +5856,33 @@ function drawPlayerBattleStatus() {
       targetDiv.appendChild(btn);
     });
     playerBattleStatusDiv.appendChild(targetDiv);
-  }
+    
+const abilityBtn = document.createElement('button');
+abilityBtn.className = 'item-use-button';
+abilityBtn.style.marginTop = "6px";
+abilityBtn.style.width = "100%";
+abilityBtn.style.padding = "6px";
+abilityBtn.style.fontSize = "11px";
+abilityBtn.style.backgroundColor = "#444";
+
+abilityBtn.onclick = () => {
+    useAllyAbility(activeAlly);
+};
+
+const now = Date.now();
+const cdRemaining = allyAbilityCooldown - now;
+
+if (cdRemaining > 0) {
+    abilityBtn.disabled = true;
+    abilityBtn.style.opacity = "0.5";
+    abilityBtn.textContent = `Cooldown: ${Math.ceil(cdRemaining / 1000)}s`;
+} else {
+    abilityBtn.disabled = false;
+    abilityBtn.style.opacity = "1";
+    abilityBtn.textContent = abilityNames[activeAlly.id] || "Ability";
+}
+
+playerBattleStatusDiv.appendChild(abilityBtn);
   
   if (window._raft) {
     const raftContainer = document.createElement('div');
@@ -8739,7 +8788,6 @@ setInterval(() => {
   if (!inBattle || isGameOver || _battleDialogPausedState) return;
 
   activeEnemies.forEach((enemy, index) => {
-    enemy.attackTime = enemy.attackSpeed;
     const bar = document.getElementById(`attack-bar-${index}`);
     if (bar) {
       if (enemy.stunned) {
