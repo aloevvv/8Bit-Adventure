@@ -5361,7 +5361,10 @@ function openAllyInfo(index) {
   const ally = allies[index];
   const infoPopup = document.getElementById('ally-info-popup');
   document.getElementById('info-name').textContent = ally.name;
-  document.getElementById('info-stats').textContent = `LVL ${ally.level} HP:${ally.baseMaxHP} DMG:${ally.baseDamage}`;
+  const currentMaxHp = ally.baseMaxHp;
+  const currentDamage = ally.baseDamage;
+  document.getElementById('info-stats').textContent =
+  `LVL ${ally.level} HP ${currentMaxHp} DMG ${currentDamage}`;
   document.getElementById('info-passive').textContent = ally.passive;
   document.getElementById('info-active').textContent = ally.active;
   const slots = document.querySelectorAll('.star-power-slot');
