@@ -5625,30 +5625,38 @@ function updateProgressiveDarknessUI() {
 }
 
 const abilityNames = {
-  ally1: "Cyro Syrup",
-  ally2: "biden blast",
-  ally3: "curse of rah",
-  ally4: "idk bro"
+  ally1: "Ability | Cyro Syrup",
+  ally2: "Ability | Whistle Taunt",
+  ally3: "Ability | Silver Bullet",
+  ally4: "Ability | Ink Ejection",
+  ally5: "Ability | Sing-a-long",
+  ally6: "Ability | Max Energy"
 };
 
-  let allyAbilityCooldown = 0;
+  const abilityCooldowns = {
+  ally1: 20000,
+  ally2: 15000,
+  ally3: 23000,
+  ally4: 18000,
+  ally5: 25000,
+  ally6: 1
+};
+
+let allyAbilityCooldown = 0;
   
-  function useAllyAbility(ally) {
+function useAllyAbility(ally) {
   const now = Date.now();
 
-  if (now < allyAbilityCooldown) {
-    const remaining = Math.ceil((allyAbilityCooldown - now) / 1000);
-    return;
-  }
+  const cd = abilityCooldowns[ally.id] || 20000;
+  if (now < allyAbilityCooldown) return;
 
   if (ally.id === "ally1") {
     const target = activeEnemies[selectedEnemyIndex];
-    if (target) {
-      applyStun(target, 4000);
-    }
+    if (target) applyStun(target, 4000);
   }
 
-  allyAbilityCooldown = now + 20000;
+  allyAbilityCooldown = now + cd;
+  drawPlayerBattleStatus();
 }
 
 
