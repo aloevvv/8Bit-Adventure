@@ -1529,12 +1529,12 @@ let playerStats = {
   baseDamage: 2
 };
 const alliesData = [
-  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, passive: "Slows target atk meter by 20%", active: "Freeze target (20s)", starPowers: ["xx", "xx"], portrait: "lou_portrait.png" },
-  { id: 'ally2', name: 'Buzz', baseMaxHp: 58, baseDamage: 4, attackIntervalMs: 2200, level: 1, xp: 0, xpToNextLevel: 10 },
-  { id: 'ally3', name: 'Colt', baseMaxHp: 23, baseDamage: 6, attackIntervalMs: 3000, level: 1, xp: 0, xpToNextLevel: 10 },
-  { id: 'ally4', name: 'Otis', baseMaxHp: 45, baseDamage: 4, attackIntervalMs: 2000, level: 1, xp: 0, xpToNextLevel: 10 },
-  { id: 'ally5', name: 'Janet', baseMaxHp: 40, baseDamage: 3, attackIntervalMs: 1500, level: 1, xp: 0, xpToNextLevel: 10 },
-  { id: 'ally6', name: 'Max', baseMaxHp: 36, baseDamage: 4, attackIntervalMs: 1000, level: 1, xp: 0, xpToNextLevel: 10 },
+  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Slows target atk meter by 20%", active: "Freeze target (20s)", starPowers: ["xx", "xx"], portrait: "lou_portrait.png" },
+  { id: 'ally2', name: 'Buzz', baseMaxHp: 58, baseDamage: 4, attackIntervalMs: 2200, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false },
+  { id: 'ally3', name: 'Colt', baseMaxHp: 23, baseDamage: 6, attackIntervalMs: 3000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false },
+  { id: 'ally4', name: 'Otis', baseMaxHp: 45, baseDamage: 4, attackIntervalMs: 2000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false },
+  { id: 'ally5', name: 'Janet', baseMaxHp: 40, baseDamage: 3, attackIntervalMs: 1500, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false },
+  { id: 'ally6', name: 'Max', baseMaxHp: 36, baseDamage: 4, attackIntervalMs: 1000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false },
 ];
 
   const allies = alliesData.map(a => ({
@@ -5269,48 +5269,48 @@ const allyInfoPopup = document.getElementById('ally-info-popup');
 function drawPartyUI() {
   const container = document.getElementById('party-list');
   container.innerHTML = '';
+  const unlockedAlli = allies.filter(a => a.unlocked);
   
-  if (!allies || allies.length === 0) {
-    container.innerHTML = '<p>No allies unlocked yet.</p>';
+  if (unlockedAlli.length === 0) {
+    container.innerHTML = '<div style="font-size:8px; padding:20px; color:#aaa; text-align:center;">No allies unlocked yet.</div>';
     return;
   }
 
   allies.forEach((ally, index) => {
-    if (!unlockedAllies.has(ally.id)) return;
+    if (!ally.unlocked) return; 
+
     const div = document.createElement('div');
     div.className = 'clickable-ally';
-    div.style.padding = "8px";
+    div.style.padding = "12px 8px";
     div.style.borderBottom = "1px solid #ffffff33";
     div.style.cursor = "pointer";
+    const isEquipped = (typeof selectedAllyIndex !== 'undefined' && selectedAllyIndex === index);
+    const indicator = isEquipped ? '<span style="color:#00ffff;">[E]</span> ' : '';
 
-    div.innerHTML = `
-      ${ally.name}
-      <span style="font-size:8px; opacity:0.7;">(Lvl ${ally.lvl})</span>
-    `;
-
+    div.innerHTML = `${indicator}${ally.name} (Lvl ${ally.lvl})`;
+    
     div.onclick = () => openAllyInfo(index);
     container.appendChild(div);
   });
 }
 function openAllyInfo(index) {
   const ally = allies[index];
-
+  const infoPopup = document.getElementById('ally-info-popup');
   document.getElementById('info-name').textContent = ally.name;
-  document.getElementById('info-stats').textContent =
-    `LVL ${ally.lvl} HP${ally.hp} DMG ${ally.dmg}`;
-
+  document.getElementById('info-stats').textContent = `LVL ${ally.lvl} HP:${ally.hp} DMG:${ally.dmg}`;
   document.getElementById('info-passive').textContent = ally.passive;
   document.getElementById('info-active').textContent = ally.active;
-
+  
   const equipBtn = document.getElementById('info-equip-btn');
   equipBtn.onclick = () => {
-    selectedAllyIndex = index;
-    allyInfoPopup.style.display = 'none';
-    partyPopup.style.display = 'none';
-    showTemporaryText(`${ally.name} equipped!`);
-  };
+    selectedAllyIndex = index; 
+    if (window.player) {
+        player.equippedAlly = ally; 
+    }
+    infoPopup.style.display = 'none';
+    document.getElementById('party-popup').style.display = 'none';
 
-  allyInfoPopup.style.display = 'block';
+  infoPopup.style.display = 'block';
 }
 
 function toggleParty() {
