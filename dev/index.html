@@ -5383,6 +5383,10 @@ let selectedAllyIndex = -1;
 function openAllyInfo(index) {
   const ally = alliesData[index];
   const infoPopup = document.getElementById('ally-info-popup');
+  const portraitDiv = document.getElementById("info-portrait");
+  portraitDiv.style.backgroundImage = `url(${ally.portrait})`;
+  portraitDiv.style.backgroundSize = "cover";
+  portraitDiv.style.backgroundPosition = "center";
   document.getElementById('info-name').textContent = ally.name;
   const currentMaxHp = ally.baseMaxHp;
   const currentDamage = ally.baseDamage;
