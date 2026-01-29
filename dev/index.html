@@ -5744,9 +5744,11 @@ function useAllyAbility(ally) {
   if (ally.id === "ally2") {
   playerStats.isTargeted = false;
   activeAlly.isTargeted = true;
+  activeAlly.isTaunting = true;
   activeAlly.damageReduction = 0.40;
   setTimeout(() => {
     activeAlly.isTargeted = false;
+    activeAlly.isTaunting = false;
     activeAlly.damageReduction = 0;
   }, 3000);
 }
