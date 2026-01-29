@@ -5752,6 +5752,24 @@ function useAllyAbility(ally) {
     activeAlly.damageReduction = 0;
   }, 3000);
 }
+  if (ally.id === "ally3") {
+  const target = ally.currentTarget;
+  if (!target) return;
+  let dmg;
+  if (target.isBoss) {
+    dmg = ally.damage * 5;
+  } else {
+    dmg = Math.floor(target.maxHp * 0.20);
+  }
+  target.currentHp -= dmg;
+  if (target.currentHp < 0) target.currentHp = 0;
+  const enemyIdx = activeEnemies.indexOf(target);
+  spawnDamageNumber(enemyIdx, dmg);
+
+  if (target.currentHp === 0) {
+    handleEnemyDeath(target);
+  }
+}
 
   allyAbilityCooldown = now + cd;
   drawPlayerBattleStatus();
