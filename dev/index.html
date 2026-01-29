@@ -6220,7 +6220,8 @@ if (activeAlly && activeAlly.isTaunting) {
       activeAlly.attackTimerId = null;
     }
   }
-  return damage;
+  return { damage, target };
+
 }
 
 function sniperAttack(enemy, target) {
