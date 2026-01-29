@@ -5702,8 +5702,7 @@ function useAllyAbility(ally) {
   if (now < allyAbilityCooldown) return;
 
   if (ally.id === "ally1") {
-    const target = activeEnemies[selectedEnemyIndex];
-    if (target) applyStun(target, 4000);
+    if (targetEnemy) applyStun(targetEnemy, 4000);
   }
 
   allyAbilityCooldown = now + cd;
