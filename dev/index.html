@@ -5738,8 +5738,9 @@ function useAllyAbility(ally) {
   if (now < allyAbilityCooldown) return;
 
   if (ally.id === "ally1") {
-    if (targetEnemy) applyStun(targetEnemy, 4000);
-  }
+  const target = ally.currentTarget;
+  if (target) applyStun(target, 4000);
+}
 
   allyAbilityCooldown = now + cd;
   drawPlayerBattleStatus();
@@ -6095,6 +6096,7 @@ playerBattleStatusDiv.appendChild(abilityBtn);
     }
 
     if (!targetEnemy) return;
+  activeAlly.currentTarget = targetEnemy;
 
   if (targetEnemy.isStoned) {
     return;
