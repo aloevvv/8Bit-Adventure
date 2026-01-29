@@ -5744,7 +5744,7 @@ const abilityNames = {
   ally3: 23000,
   ally4: 18000,
   ally5: 25000,
-  ally6: 1
+  ally6: 19000
 };
 
 let allyAbilityCooldown = 0;
@@ -5794,6 +5794,10 @@ function useAllyAbility(ally) {
     applyInk(enemy, 0.35, 5000);
   }
 }
+  if (ally.id === "ally5") {
+  applyStatusEffect(activeAlly, 'strong', 6000);
+  applyStatusEffect(playerStats, 'strong', 6000);
+  }
   allyAbilityCooldown = now + cd;
   drawPlayerBattleStatus();
 }
@@ -5896,6 +5900,7 @@ function drawPlayerBattleStatus() {
       { active: !!entity.isFogged, img: 'fog.png' },
       { active: !!entity.isBleeding, img: 'bleed.png' },
       { active: !!entity.isWeakened, img: 'weak.png' },
+      { active: !!entity.isStrong, img: 'strong.png' },
       { active: !!entity.isTargeted, img: 'target.png' }
     ];
 
@@ -6182,6 +6187,9 @@ playerBattleStatusDiv.appendChild(abilityBtn);
 } else {
 
   let dmg = activeAlly.damage;
+      if (activeAlly.isStrong) {
+        dmg *= 1.25;
+      }
   if (activeAlly.id === "ally3") {
     if (Math.random() < 0.07) {
       dmg *= 2;
@@ -6243,7 +6251,8 @@ if (activeAlly.id === "ally2") {
     'blind': 'isBlinded',
     'frozen': 'isFrozen',
     'fog': 'isFogged',
-    'weaken': 'isWeakened'
+    'weaken': 'isWeakened',
+    'strong': 'isStrong'
   };
   
   const flag = statusMap[status];
@@ -8683,10 +8692,12 @@ function endBattle(outcome) {
     ent.isBlinded = false;
     ent.isFogged = false;
     ent.isWeakened = false;
+    ent.isStrong = false;
     if (ent.isBlindedTimeout) clearTimeout(ent.isBlindedTimeout);
     if (ent.isFrozenTimeout) clearTimeout(ent.isFrozenTimeout);
     if (ent.isFoggedTimeout) clearTimeout(ent.isFoggedTimeout);
     if (ent.isWeakenedTimeout) clearTimeout(ent.isWeakenedTimeout);
+    if (ent.isStrongTimeout) clearTimeout(ent.isStrongTimeout);
   });
   
   drawPlayerBattleStatus();
@@ -12548,6 +12559,9 @@ if (activeAmulets.bullets && playerStats.currentStamina < 3) {
     if (playerStats.isWeakened) {
     finalDmg *= 0.5;
   }
+    if (playerStats.isStrong) {
+    finalDmg *= 1.25;
+  }
     finalDmg = Math.floor(finalDmg);
     targetEnemy.currentHp -= finalDmg;
     spawnDamageNumber(selectedEnemyIndex, finalDmg);
@@ -12565,7 +12579,7 @@ if (activeAmulets.bullets && playerStats.currentStamina < 3) {
 
   if (activeAmulets.stealing) {
         targetEnemy.lastAttackAt += 50; 
-        targetEnemy.lastAttackAt += 50; 
+        targetEnemy.attackTime += 50;
     }
   
   if (playerStats.isBleeding) {
