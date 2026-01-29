@@ -6189,6 +6189,11 @@ if (activeAlly.id === 'ally1') {
 // Enemy behaviors
 // normal enemy attack
 function normalAttack(enemy, target) {
+  
+if (activeAlly && activeAlly.isTaunting) {
+  target = activeAlly;
+}
+
   let damage = enemy.damage || 0;
 
   if (enemy.weakened) {
