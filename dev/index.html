@@ -8432,6 +8432,7 @@ if (enemy.type === 'Partyblocker') {
   achievementsMap['kill_enemies'].progress++;
   achievementsMap['kill_enemies2'].progress++;
   achievementsMap['kill_enemies3'].progress++;
+  if (enemy.type === 'OldBot') achievementsMap['old_bot_killer'].progress = 1;
   if (enemy.type === 'BossBot' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_bossbot'].progress = 1;
   if (enemy.type === 'IceBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_icebot'].progress = 1;
   if (enemy.type === 'LifeStealBoss' && gameSettings.difficulty === 'ultimate') achievementsMap['kill_lifestealboss'].progress = 1;
@@ -8453,6 +8454,14 @@ if (enemy.type === 'Partyblocker') {
     clearInterval(enemy._poisonIntervalId);
     enemy._poisonIntervalId = null;
   }
+if (enemy.weakened) {
+  enemy.weakened = false;
+  enemy.weakenMultiplier = 1;
+  if (enemy._weakenTimeout) {
+    clearTimeout(enemy._weakenTimeout);
+    enemy._weakenTimeout = null;
+  }
+}
   enemy.stunned = false;
   enemy.poisoned = false;
 
