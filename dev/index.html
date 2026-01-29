@@ -5491,6 +5491,24 @@ function equipWeapon(type) {
   drawBattleUI();
 }
 
+  function applyInk(enemy, missChance, duration) {
+  if (!enemy || enemy.isBoss) return;
+
+  enemy.inked = true;
+  enemy.missChance = missChance;
+
+  if (enemy._inkTimeout) {
+    clearTimeout(enemy._inkTimeout);
+  }
+
+  enemy._inkTimeout = setTimeout(() => {
+    enemy.inked = false;
+    enemy.missChance = 0;
+    enemy._inkTimeout = null;
+    drawBattleUI();
+  }, duration);
+}
+
       function applyStun(enemy, duration) {
   if (!enemy || enemy.resistances?.stun) return;
 
@@ -5771,6 +5789,11 @@ function useAllyAbility(ally) {
   }
 }
 
+  if (ally.id === "ally4") {
+  for (const enemy of activeEnemies) {
+    applyInk(enemy, 0.35, 5000);
+  }
+}
   allyAbilityCooldown = now + cd;
   drawPlayerBattleStatus();
 }
@@ -6218,6 +6241,11 @@ if (activeAlly.id === "ally2") {
 // Enemy behaviors
 // normal enemy attack
 function normalAttack(enemy, target) {
+
+if (enemy.missChance && Math.random() < enemy.missChance) {
+  return { damage: 0, target };
+}
+
   
 if (activeAlly && activeAlly.isTaunting) {
   target = activeAlly;
