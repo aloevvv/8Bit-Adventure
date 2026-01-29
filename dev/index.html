@@ -5741,6 +5741,15 @@ function useAllyAbility(ally) {
   const target = ally.currentTarget;
   if (target) applyStun(target, 4000);
 }
+  if (ally.id === "ally2") {
+  playerStats.isTargeted = false;
+  activeAlly.isTargeted = true;
+  activeAlly.damageReduction = 0.40;
+  setTimeout(() => {
+    activeAlly.isTargeted = false;
+    activeAlly.damageReduction = 0;
+  }, 3000);
+}
 
   allyAbilityCooldown = now + cd;
   drawPlayerBattleStatus();
@@ -6185,12 +6194,19 @@ function normalAttack(enemy, target) {
   if (enemy.weakened) {
     damage = Math.floor(damage * enemy.weakenMultiplier);
   }
+
   if (target === playerStats) {
     playerTakeDamage(damage, enemy);
   }
 
   else if (target === activeAlly) {
-    activeAlly.currentHp -= damage;
+
+    let finalDamage = damage;
+    if (activeAlly.damageReduction) {
+      finalDamage = Math.floor(finalDamage * (1 - activeAlly.damageReduction));
+    }
+
+    activeAlly.currentHp -= finalDamage;
     if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
 
     if (activeAlly.currentHp === 0) {
@@ -6199,7 +6215,6 @@ function normalAttack(enemy, target) {
       activeAlly.attackTimerId = null;
     }
   }
-
   return damage;
 }
 
