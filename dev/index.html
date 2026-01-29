@@ -5455,6 +5455,42 @@ function equipWeapon(type) {
   showTemporaryText(`Equipped ${weaponTypes[type].name}`);
 }
 
+  function applyWeakness(enemy, percent, duration) {
+  if (!enemy || enemy.resistances?.weakness) return;
+
+  const multiplier = 1 - percent;
+
+  if (enemy._weakenTimeout) {
+    clearTimeout(enemy._weakenTimeout);
+    enemy._weakenTimeout = null;
+  }
+
+  enemy.weakened = true;
+  enemy.weakenMultiplier = multiplier;
+
+  enemy._weakenTimeout = setTimeout(() => {
+    if (!enemy || enemy.removed || enemy.currentHp == null) {
+      if (enemy?._weakenTimeout) {
+        clearTimeout(enemy._weakenTimeout);
+        enemy._weakenTimeout = null;
+      }
+      if (enemy) {
+        enemy.weakened = false;
+        enemy.weakenMultiplier = 1;
+      }
+      drawBattleUI();
+      return;
+    }
+
+    enemy.weakened = false;
+    enemy.weakenMultiplier = 1;
+    enemy._weakenTimeout = null;
+    drawBattleUI();
+  }, duration);
+
+  drawBattleUI();
+}
+
       function applyStun(enemy, duration) {
   if (!enemy || enemy.resistances?.stun) return;
 
@@ -6142,63 +6178,38 @@ if (activeAlly.id === 'ally1') {
 // Enemy behaviors
 // normal enemy attack
 function normalAttack(enemy, target) {
-  const damage = enemy.damage || 0;
-   if (typeof normalAttack === 'function') {
-    const _orig_normalAttack = normalAttack;
-    normalAttack = function(enemy, target) {
-      if (target === playerStats) {
-        const dmg = enemy.damage || 0;
-        if (typeof playerTakeDamage === 'function') playerTakeDamage(dmg, enemy);
-        else _orig_normalAttack(enemy, target);
-      } else {
-        _orig_normalAttack(enemy, target);
-      }
-    };
+  let damage = enemy.damage || 0;
+
+  if (enemy.weakened) {
+    damage = Math.floor(damage * enemy.weakenMultiplier);
   }
   if (target === playerStats) {
-    playerTakeDamage(damage);
-    showTemporaryText(`${enemy.name} attacks you for ${damage} damage!`);
-  } else if (target === activeAlly) {
+    playerTakeDamage(damage, enemy);
+  }
+
+  else if (target === activeAlly) {
     activeAlly.currentHp -= damage;
     if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-    showTemporaryText(`${enemy.name} attacks ${activeAlly.name} for ${damage} damage!`);
+
     if (activeAlly.currentHp === 0) {
       showTemporaryText(`${activeAlly.name} has been defeated!`);
       clearInterval(activeAlly.attackTimerId);
       activeAlly.attackTimerId = null;
     }
   }
+
+  return damage;
 }
 
 function sniperAttack(enemy, target) {
-  if (typeof sniperAttack === 'function') {
-    const _orig_sniperAttack = sniperAttack;
-    sniperAttack = function(enemy, target) {
-      const isCritical = Math.random() < 0.3;
-      const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
-      if (target === playerStats) {
-        if (typeof playerTakeDamage === 'function') playerTakeDamage(damage, enemy);
-        else _orig_sniperAttack(enemy, target);
-      } else {
-        _orig_sniperAttack(enemy, target);
-      }
-    };
-  }
   const isCritical = Math.random() < 0.3;
-  const damage = isCritical ? (enemy.damage * 3) : enemy.damage;
-  if (target === playerStats) {
-    playerTakeDamage(damage);
-    showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} for ${damage} damage!`);
-  } else if (target === activeAlly) {
-    activeAlly.currentHp -= damage;
-    if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-    showTemporaryText(`${enemy.name} ${isCritical ? 'snipes critically' : 'attacks'} ${activeAlly.name} for ${damage} damage!`);
-    if (activeAlly.currentHp === 0) {
-      showTemporaryText(`${activeAlly.name} has been defeated!`);
-      clearInterval(activeAlly.attackTimerId);
-      activeAlly.attackTimerId = null;
-    }
-  }
+  const critDamage = isCritical ? enemy.damage * 3 : enemy.damage;
+
+  const originalDamage = enemy.damage;
+  enemy.damage = critDamage;
+  normalAttack(enemy, target);
+
+  enemy.damage = originalDamage;
 }
 
 function bossBehavior(enemy, target) {
@@ -6421,34 +6432,21 @@ function swordBehavior(enemy, target) {
 
 //mortuary boss
 function lifeStealBossBehavior(enemy, target) {
-  if (enemy.shieldActive) {
+  if (enemy.shieldActive || enemy.stunned) {
     return;
   }
 
-  if (!enemy.stunned) {
-    const damage = enemy.damage || 0;
-    if (target === playerStats) {
-      playerTakeDamage(damage);
-      showTemporaryText(`${enemy.name} life steals you for ${damage} damage!`);
-    } else if (target === activeAlly) {
-      activeAlly.currentHp -= damage;
-      if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-      showTemporaryText(`${enemy.name} life steals ${activeAlly.name} for ${damage} damage!`);
-      if (activeAlly.currentHp === 0) {
-        showTemporaryText(`${activeAlly.name} has been defeated!`);
-        clearInterval(activeAlly.attackTimerId);
-        activeAlly.attackTimerId = null;
-      }
-    }
+  const damageDealt = normalAttack(enemy, target);
 
-    enemy.currentHp += damage;
-    if (enemy.currentHp > enemy.maxHp) enemy.currentHp = enemy.maxHp;
-    showTemporaryText(`${enemy.name} heals for ${damage} HP!`);
-
-    drawBattleUI();
-    drawPlayerBattleStatus();
+  if (damageDealt > 0) {
+    enemy.currentHp = Math.min(enemy.currentHp + damageDealt, enemy.maxHp);
+    showTemporaryText(`${enemy.name} heals for ${damageDealt} HP!`);
   }
+
+  drawBattleUI();
+  drawPlayerBattleStatus();
 }
+
 // Cave boss 
 function caveBossBehavior(enemy, target) {
   if (!enemy._shardIntervalId) {
@@ -6478,39 +6476,22 @@ function caveBossBehavior(enemy, target) {
   }
 
   const hpPercent = (enemy.currentHp / enemy.maxHp) * 100;
-  if (hpPercent <= 50) {
-    if (!enemy._blackoutRunning) {
-      enemy._blackoutRunning = true;
+  if (hpPercent <= 50 && !enemy._blackoutRunning) {
+    enemy._blackoutRunning = true;
 
-      enemy._blackoutIntervalId = setInterval(() => {
-        showBattleBlackout();
-        setTimeout(() => {
-          hideBattleBlackout();
-        }, 9000);
-      }, 10000);
-
+    enemy._blackoutIntervalId = setInterval(() => {
       showBattleBlackout();
-      setTimeout(() => {
-        hideBattleBlackout();
-      }, 9000);
-    }
-  }
+      setTimeout(hideBattleBlackout, 9000);
+    }, 10000);
 
+    showBattleBlackout();
+    setTimeout(hideBattleBlackout, 9000);
+  }
   if (!enemy.stunned) {
-    const dmg = enemy.damage || 0;
-    if (target === playerStats) {
-      playerTakeDamage(dmg);
-    } else if (target === activeAlly && activeAlly) {
-      activeAlly.currentHp -= dmg;
-      if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-      if (activeAlly.currentHp === 0) {
-        showTemporaryText(`${activeAlly.name} has been defeated!`);
-        clearInterval(activeAlly.attackTimerId);
-        activeAlly.attackTimerId = null;
-      }
-    }
+    normalAttack(enemy, target);
   }
 }
+  
 //mystic mountain boss
 
   function findMountainBoss() {
@@ -6581,19 +6562,15 @@ function spawnMountainSheep(pen, boss) {
 
   
   setTimeout(() => {
-    // If boss still valid and alive, heal
     if (boss && boss.currentHp != null && boss.currentHp > 0) {
       const heal = Math.max(1, Math.ceil((boss.maxHp || 1) * MOUNTAIN_PEN_CONFIG.sheepHealPercent));
       boss.currentHp = Math.min(boss.maxHp, (boss.currentHp || 0) + heal);
       showTemporaryText(`${boss.name} devours a sheep and heals for ${heal} HP!`);
-      // reflect in UI
       drawPlayerBattleStatus();
     }
 
-    // Remove sheep from activeEnemies
     const si = activeEnemies.indexOf(sheep);
     if (si > -1) activeEnemies.splice(si, 1);
-    // Also remove from pen._spawnedSheep
     if (pen && Array.isArray(pen._spawnedSheep)) {
       pen._spawnedSheep = pen._spawnedSheep.filter(s => s !== sheep);
     }
@@ -6601,12 +6578,10 @@ function spawnMountainSheep(pen, boss) {
   }, MOUNTAIN_PEN_CONFIG.sheepLifetimeMs);
 }
 
-// 
 function startMountainPenCycle(boss) {
   if (!boss || boss._penCycleStarted) return;
   boss._penCycleStarted = true;
 
-  // Make sure pen respawns every penRespawnIntervalMs if none present
   boss._penRespawnInterval = setInterval(() => {
     if (!inBattle || boss.currentHp <= 0) {
       clearInterval(boss._penRespawnInterval);
@@ -6614,14 +6589,12 @@ function startMountainPenCycle(boss) {
       return;
     }
 
-    // If pen already present and alive, skip
     const penPresent = activeEnemies.some(e => e && e._isMountainPen && e._ownerBossId === boss._internalId);
     if (!penPresent) {
       spawnMountainPen(boss);
     }
   }, MOUNTAIN_PEN_CONFIG.penRespawnIntervalMs);
 
-  // Try to spawn a pen immediately
   spawnMountainPen(boss);
 }
 function mountainBossBehavior(enemy, target) {
@@ -6686,26 +6659,18 @@ function mountainBossPenTrigger(enemy) {
 }
 
   
-  const baseDamage = enemy.damage || 0;
-  const finalDamage = enemy.enraged ? baseDamage * 2 : baseDamage;
-
-  let chosen = playerStats;
-  if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.4) chosen = activeAlly;
-
-  if (chosen === playerStats) {
-    playerTakeDamage(finalDamage);
-    showTemporaryText(`${enemy.name} bites and smashes you for ${finalDamage} damage!`);
-  } else {
-    activeAlly.currentHp = Math.max(0, activeAlly.currentHp - finalDamage);
-    showTemporaryText(`${enemy.name} bites ${activeAlly.name} for ${finalDamage} damage!`);
-    if (activeAlly.currentHp === 0) {
-      showTemporaryText(`${activeAlly.name} has been defeated!`);
-      clearInterval(activeAlly.attackTimerId);
-      activeAlly.attackTimerId = null;
-    }
-  }
+let chosen = playerStats;
+if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.4) {
+  chosen = activeAlly;
 }
 
+const originalDamage = enemy.damage;
+enemy.damage = enemy.enraged ? enemy.damage * 2 : enemy.damage;
+
+normalAttack(enemy, chosen);
+
+enemy.damage = originalDamage;
+}
 
 const _orig_handleEnemyDeath = handleEnemyDeath;
 handleEnemyDeath = function(enemy, idx) {
@@ -6906,27 +6871,18 @@ function ghostBossBehavior(enemy, target) {
   // If hidden, behavior is managed by trains and spectral spawner; do nothing per-turn
   if (enemy._isHidden) return;
 
-  // revealed behavior: normal attack like other bosses
-  if (enemy.shieldActive || enemy.stunned) return;
-  const dmg = enemy.damage || 0;
-  let chosen = playerStats;
-  if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) chosen = activeAlly;
-  if (chosen === playerStats) {
-    playerTakeDamage(dmg);
-    showTemporaryText(`${enemy.name} lashes you with ethereal claws for ${dmg} damage!`);
-  } else {
-    activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dmg);
-    showTemporaryText(`${enemy.name} slashes ${activeAlly.name} for ${dmg} damage!`);
-    if (activeAlly.currentHp === 0) {
-      showTemporaryText(`${activeAlly.name} has been defeated!`);
-      clearInterval(activeAlly.attackTimerId);
-      activeAlly.attackTimerId = null;
-    }
-  }
-  drawBattleUI();
-  drawPlayerBattleStatus();
-  drawPartyStatus();
+if (enemy.shieldActive || enemy.stunned) return;
 
+let chosen = playerStats;
+if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) {
+  chosen = activeAlly;
+}
+
+normalAttack(enemy, chosen);
+
+drawBattleUI();
+drawPlayerBattleStatus();
+drawPartyStatus();
 
   if (!enemy._hideTimeoutScheduled && Math.random() < 0.95) {
     enemy._hideTimeoutScheduled = true;
@@ -6987,57 +6943,43 @@ function IslandBossPresent() {
 function islandBossBehavior(enemy, target) {
   if (enemy.shieldActive || enemy.stunned) return;
 
-  // ensure raft exists for this fight; if not, initialize safe default
   if (!window._raft) window._raft = { maxHp: 12, hp: 12 };
 
-  // per-action cooldown so boss doesn't attack every tick (tune ms)
   if (!enemy._lastAction) enemy._lastAction = 0;
   const now = Date.now();
-  if (now - enemy._lastAction < 800) return; // boss acts at most ~once per 800ms
+  if (now - enemy._lastAction < 800) return;
   enemy._lastAction = now;
 
-  // choose target (50/50 preference for ally if present)
-  let chosen = playerStats;
-  if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) chosen = activeAlly;
+let chosen = playerStats;
+if (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) {
+  chosen = activeAlly;
+}
+const isPiercing = Math.random() < 0.25;
 
-  // Attack landing logic only reduces raft when it damages the player (not ally)
-  const isPiercing = Math.random() < 0.25; // 25% piercing
-  const baseDamage = Math.max(0, Number(enemy.damage) || 0);
+const damageDealt = normalAttack(enemy, chosen);
 
-  if (chosen === playerStats) {
-    // damage player
-    playerTakeDamage(baseDamage);
-    // drain raft HP: 1 normal, 2 piercing
-    const drain = isPiercing ? 2 : 1;
-    window._raft.hp = Math.max(0, window._raft.hp - drain);
-    showTemporaryText(`${enemy.name} attacks your raft and you for ${baseDamage} damage! Raft -${drain}.`);
-    // piercing special message
-    if (isPiercing) showTemporaryText(`${enemy.name} pierced through the raft!`);
-    drawPlayerBattleStatus();
-    drawBattleUI();
+if (chosen === playerStats) {
+  const drain = isPiercing ? 2 : 1;
+  window._raft.hp = Math.max(0, window._raft.hp - drain);
 
-    // raft destroyed => player dies immediately
-    if (window._raft.hp <= 0) {
-      showTemporaryText('Your raft breaks apart — you are lost to the sea!');
-      // Force player death/instant lose
-      playerStats.currentHp = 0;
-      updateHp(0);
-      endBattle('lose');
-      return;
+  showTemporaryText(`${enemy.name} attacks your raft and you! Raft -${drain}.`);
+  if (isPiercing) {
+    showTemporaryText(`${enemy.name} pierced through the raft!`);
+  }
+
+  drawPlayerBattleStatus();
+  drawBattleUI();
+
+  if (window._raft.hp <= 0) {
+    showTemporaryText('Your raft breaks apart — you are lost to the sea!');
+    playerStats.currentHp = 0;
+    updateHp(0);
+    endBattle('lose');
+    return;
     }
-  } else {
-    // hit ally only, does not drain raft
-    activeAlly.currentHp = Math.max(0, activeAlly.currentHp - baseDamage);
-    showTemporaryText(`${enemy.name} hits ${activeAlly.name} for ${baseDamage} damage!`);
-    if (activeAlly.currentHp === 0) {
-      showTemporaryText(`${activeAlly.name} has been defeated!`);
-      clearInterval(activeAlly.attackTimerId);
-      activeAlly.attackTimerId = null;
-    }
-    drawPartyStatus();
-    drawBattleUI();
   }
 }
+
 
   function factoryBehavior(enemy, target) {
   // one-time init
@@ -7079,7 +7021,7 @@ function islandBossBehavior(enemy, target) {
     enemy._lifecoreInterval = setInterval(() => {
       if (!inBattle || enemy.currentHp <= 0) return;
 
-      // create a Life Core and link it to the factory as a protector
+      // create a Life Core
       const base = enemyTypes.LifeCore;
       const mult = getDifficultyMultipliers();
       const lc = {
@@ -7100,16 +7042,14 @@ function islandBossBehavior(enemy, target) {
       enemy._spawnedEntities.push(lc);
       activeEnemies.push(lc);
 
-      // when a life core dies, we'll remove references (handled elsewhere)
+      
       drawBattleUI();
     }, 5000);
 
-    // initial shield state: if any lifeCore exists, keep shield active
+    
     enemy.shieldActive = (enemy._lifeCoreRefs.length > 0);
   }
 
-  // Maintain shield while any LifeCore exists
-  // Purge stale refs (in case quality of references changes)
   enemy._lifeCoreRefs = enemy._lifeCoreRefs.filter(ref => ref && ref.currentHp > 0 && activeEnemies.includes(ref));
   const anyLifeCoreAlive = enemy._lifeCoreRefs.length > 0;
 
@@ -7125,29 +7065,20 @@ function islandBossBehavior(enemy, target) {
     }
   }
 
-  // Factory performs occasional direct attacks if not shielded
-  if (!enemy.shieldActive && !enemy.stunned) {
-    // basic attack behaviour: pick a target (player or ally)
+if (!enemy.shieldActive && !enemy.stunned) {
     const now = Date.now();
     if (!enemy._lastAttack || (now - enemy._lastAttack) > 1200) {
-      enemy._lastAttack = now;
-      const chosen = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5) ? activeAlly : playerStats;
-      const dmg = enemy.damage || 0;
-      if (chosen === playerStats) {
-        playerTakeDamage(dmg);
-        showTemporaryText(`${enemy.name} slams you for ${dmg} damage!`);
-      } else {
-        activeAlly.currentHp = Math.max(0, activeAlly.currentHp - dmg);
-        showTemporaryText(`${enemy.name} smashes ${activeAlly.name} for ${dmg} damage!`);
-        if (activeAlly.currentHp === 0) {
-          showTemporaryText(`${activeAlly.name} has been defeated!`);
-          clearInterval(activeAlly.attackTimerId);
-          activeAlly.attackTimerId = null;
-        }
-      }
-      drawBattleUI();
-      drawPlayerBattleStatus();
-      drawPartyStatus();
+        enemy._lastAttack = now;
+
+        const chosen = (activeAlly && activeAlly.currentHp > 0 && Math.random() < 0.5)
+            ? activeAlly
+            : playerStats;
+
+        normalAttack(enemy, chosen);
+
+        drawBattleUI();
+        drawPlayerBattleStatus();
+        drawPartyStatus();
     }
   }
 }
