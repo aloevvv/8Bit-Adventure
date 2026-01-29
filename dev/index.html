@@ -6114,16 +6114,22 @@ playerBattleStatusDiv.appendChild(abilityBtn);
   }
 
     if (targetEnemy.shieldActive) {
-      showTemporaryText(`${activeAlly.name}'s attack was blocked by shield!`);
-    } else {
-      targetEnemy.currentHp -= activeAlly.damage;
+  showTemporaryText(`${activeAlly.name}'s attack was blocked by shield!`);
+} else {
 
-      const enemyIdx = activeEnemies.indexOf(targetEnemy);
-      spawnDamageNumber(enemyIdx, activeAlly.damage);
-
-      if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
-      showTemporaryText(`${activeAlly.name} attacks ${targetEnemy.name} for ${activeAlly.damage} damage!`);
+  let dmg = activeAlly.damage;
+  if (activeAlly.id === "ally3") {
+    if (Math.random() < 0.07) {
+      dmg *= 2;
     }
+  }
+  targetEnemy.currentHp -= dmg;
+
+  const enemyIdx = activeEnemies.indexOf(targetEnemy);
+  spawnDamageNumber(enemyIdx, dmg);
+
+  if (targetEnemy.currentHp < 0) targetEnemy.currentHp = 0;
+}
 
 if (activeAlly.id === 'ally1') {
     targetEnemy.snow = true;
