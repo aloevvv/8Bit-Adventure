@@ -6171,6 +6171,7 @@ if (activeAlly.id === "ally2") {
     applyWeakness(targetEnemy, 0.50, 2000);
   }
 }
+
     if (targetEnemy.currentHp === 0) {
       handleEnemyDeath(targetEnemy);
 
@@ -6234,22 +6235,30 @@ if (activeAlly && activeAlly.isTaunting) {
 
   else if (target === activeAlly) {
 
-    let finalDamage = damage;
-    if (activeAlly.damageReduction) {
-      finalDamage = Math.floor(finalDamage * (1 - activeAlly.damageReduction));
-    }
-
-    activeAlly.currentHp -= finalDamage;
-    if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
-
-    if (activeAlly.currentHp === 0) {
-      showTemporaryText(`${activeAlly.name} has been defeated!`);
-      clearInterval(activeAlly.attackTimerId);
-      activeAlly.attackTimerId = null;
-    }
+  let finalDamage = damage;
+  if (activeAlly.damageReduction) {
+    finalDamage = Math.floor(finalDamage * (1 - activeAlly.damageReduction));
   }
-  return { damage, target };
 
+  if (activeAlly.id === "ally4" && activeAlly.starfishAlive) {
+    activeAlly.starfishHp -= finalDamage;
+
+    if (activeAlly.starfishHp <= 0) {
+      activeAlly.starfishHp = 0;
+      activeAlly.starfishAlive = false;
+    }
+
+    return { damage: finalDamage, target: activeAlly };
+  }
+  activeAlly.currentHp -= finalDamage;
+  if (activeAlly.currentHp < 0) activeAlly.currentHp = 0;
+
+  if (activeAlly.currentHp === 0) {
+    clearInterval(activeAlly.attackTimerId);
+    activeAlly.attackTimerId = null;
+  }
+}
+  return { damage, target };
 }
 
 function sniperAttack(enemy, target) {
@@ -8730,6 +8739,12 @@ setInterval(() => {
   } else {
     activeAlly = null;
   }
+  
+  if (activeAlly.id === "ally4") {
+  activeAlly.starfishHp = Math.floor(activeAlly.maxHp * 0.20);
+  activeAlly.starfishAlive = true;
+}
+
 
   selectedEnemyIndex = 0;
   drawBattleUI();
