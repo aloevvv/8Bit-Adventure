@@ -6195,6 +6195,7 @@ playerBattleStatusDiv.appendChild(abilityBtn);
       dmg *= 2;
     }
   }
+  dmg = Math.floor(dmg);
   targetEnemy.currentHp -= dmg;
 
   const enemyIdx = activeEnemies.indexOf(targetEnemy);
@@ -7536,7 +7537,6 @@ function smokeBehavior(enemy, target) {
     normalAttack(enemy, target);
 }
 
-// Healer: heals all allies every 3 seconds
 function healerBehavior(enemy) {
   if (!enemy.lastHealTime) enemy.lastHealTime = 0;
   const now = Date.now();
@@ -7544,7 +7544,7 @@ function healerBehavior(enemy) {
   if (now - enemy.lastHealTime >= 3000) {
     enemy.lastHealTime = now;
 
-    activeEnemies.forEach(ally => {
+    activeEnemies.forEach(ally => { //maybe rework the names bc allies exist
       if (ally.currentHp < ally.maxHp) {
         const healAmount = Math.floor(ally.maxHp * 0.15); // Heals 15% max HP
         ally.currentHp += healAmount;
@@ -7567,81 +7567,6 @@ function healerBehavior(enemy) {
   sheepHealPercent: 0.05         // heal boss for 5% of its maxHp when a sheep is eaten
 };
   
-// Take enemy turn actions
-function takeTurn() {
-  if (!inBattle) return;
-
-
-  activeEnemies.forEach(enemy => {
-    if (!enemy.stunned) {
-      let target = playerStats;
-      if (activeAlly && activeAlly.currentHp > 0) {
-        target = (Math.random() < 0.5) ? playerStats : activeAlly;
-      }
-
-      const behavior = enemyTypes[enemy.type]?.behavior || 'normalAttack';
-if (behavior === 'normalAttack') {
-  normalAttack(enemy, target);
-} else if (behavior === 'sniperAttack') {
-  sniperAttack(enemy, target);
-} else if (behavior === 'oldBotBehavior') {
-  oldBotBehavior(enemy, target);
-} else if (behavior === 'sandBehavior') {
-  sandBehavior(enemy, target);
-} else if (behavior === 'smokeBehavior') {
-  smokeBehavior(enemy, target);
-} else if (behavior === 'caveBossBehavior') {
-  caveBossBehavior(enemy, target);
-} else if (behavior === 'bossBehavior') {
-  bossBehavior(enemy, target);
-} else if (behavior === 'summonerBehavior') {
-  summonerBehavior(enemy, target);
-} else if (behavior === 'secondStageBossBehavior') {
-  secondStageBossBehavior(enemy, target);
-} else if (behavior === 'factoryBehavior') {
-  factoryBehavior(enemy, target);
-} else if (behavior === 'lifeCoreBehavior') {
-  lifeCoreBehavior(enemy, target);
-} else if (behavior === 'iceBossBehavior') {
-  iceBossBehavior(enemy, target);
-} else if (behavior === 'lifeStealBossBehavior') {
-  lifeStealBossBehavior(enemy, target);
-} else if (behavior === 'critBossBehavior') {
-  critBossBehavior(enemy, target);
-} else if (behavior === 'islandBossBehavior') {
-  islandBossBehavior(enemy, target);
-} else if (behavior === 'mountainBossBehavior') {
-  mountainBossBehavior(enemy, target);
-} else if (behavior === 'ghostBossBehavior') {
-  ghostBossBehavior(enemy, target);
-} else if (behavior === 'finalBossStage1Behavior') {
-  finalBossStage1Behavior(enemy, target);
-} else if (behavior === 'finalBossStage2Behavior') {
-  finalBossStage2Behavior(enemy, target);
-} else if (behavior === 'finalBossStage3Behavior') {
-  finalBossStage3Behavior(enemy, target);
-} else if (behavior === 'shadowOrbBehavior') {
-  shadowOrbBehavior(enemy, target);
-} else if (behavior === 'lightOrbBehavior') {
-  lightOrbBehavior(enemy, target);
-} else if (behavior === 'healerBehavior') {
-  healerBehavior(enemy, target);
-}
-    }
-  if (!canGoBelow1Hp() && playerStats.currentHp <= 1) {
-    playerStats.currentHp = 1;
-  }
-  updateHp(playerStats.currentHp);
-  drawBattleUI();
-  drawPlayerBattleStatus();
-  drawPartyStatus();
-
-  if (playerStats.currentHp <= 0) {
-    endBattle('lose');
-    hideBattleBlackout();
-  }
-    });
-}
 
 function startDarkTimer() {
   if (darkTimerActive) return;
