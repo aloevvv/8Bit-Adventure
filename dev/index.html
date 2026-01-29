@@ -5798,6 +5798,22 @@ function useAllyAbility(ally) {
   drawPlayerBattleStatus();
 }
 
+  function scanEnemy(enemy) {
+  if (!enemy) return;
+
+    const base = enemyTypes[enemy.type] || {};
+    const lines = [];
+  lines.push({ speaker: 'Janet', text: `Max HP: ${enemy.maxHp}`, style: 'dialog' });
+  lines.push({ speaker: 'Janet', text: `Damage: ${enemy.damage}`, style: 'dialog' });
+
+  if (base.info) {
+    lines.push({ speaker: 'Janet', text: base.info, style: 'dialog' });
+  }
+
+  showBattleDialog(lines);
+}
+
+
 
 function drawBattleUI() {
   const battleOverlay = document.getElementById('battle-overlay');
@@ -5815,7 +5831,14 @@ function drawBattleUI() {
 
     const enemyButton = document.createElement('button');
     enemyButton.className = 'enemy-target';
-
+    
+    enemyButton.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      if (activeAlly?.id === "ally5") {
+        scanEnemy(enemy);
+      }
+  });
+    
     if (isFogged) {
       enemyButton.innerHTML = `<h3>${enemy.name}</h3><p>HP: ???/???</p>`;
     } else {
