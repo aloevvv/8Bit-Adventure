@@ -5764,6 +5764,7 @@ const abilityNames = {
 };
 
 let allyAbilityCooldown = 0;
+let allyDodgeChance = 0;
   
 function playAbilitySfx(src, volume = 1) {
   const sound = new Audio(src);
@@ -6195,6 +6196,10 @@ playerBattleStatusDiv.appendChild(abilityBtn);
   if (!activeAlly) return;
   if (activeAlly.attackTimerId) clearInterval(activeAlly.attackTimerId);
 
+  if (activeAlly.id === "ally6") {
+    allyDodgeChance = 0.20;
+}
+
   activeAlly.attackTimerId = setInterval(() => {
     if (!inBattle || !activeAlly || activeAlly.currentHp <= 0) {
       clearInterval(activeAlly.attackTimerId);
@@ -6348,6 +6353,9 @@ if (activeAlly && activeAlly.isTaunting) {
   let finalDamage = damage;
   if (activeAlly.damageReduction) {
     finalDamage = Math.floor(finalDamage * (1 - activeAlly.damageReduction));
+  }
+    if (activeAlly.id === "ally6" && Math.random() < allyDodgeChance) {
+      return;
   }
 
   if (activeAlly.id === "ally4" && activeAlly.starfishAlive) {
@@ -8613,6 +8621,8 @@ function endBattle(outcome) {
     if (ent.isWeakenedTimeout) clearTimeout(ent.isWeakenedTimeout);
     if (ent.isStrongTimeout) clearTimeout(ent.isStrongTimeout);
   });
+
+ allyDodgeChance = 0;
   
   drawPlayerBattleStatus();
 
