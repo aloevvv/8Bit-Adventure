@@ -974,7 +974,6 @@ a:hover,
     <div style="display:flex; justify-content:space-between; align-items:flex-end;">
         <div style="display:flex; gap:5px;">
             <div class="star-power-slot" style="width:40px; height:40px; border:2px solid #555; background:#222; display:flex; align-items:center; justify-content:center; font-size:18px;">🔒</div>
-            <div class="star-power-slot" style="width:40px; height:40px; border:2px solid #555; background:#222; display:flex; align-items:center; justify-content:center; font-size:18px;">🔒</div>
         </div>
         <button id="info-equip-btn" class="item-use-button" style="padding:10px;">EQUIP</button>
     </div>
@@ -1198,7 +1197,7 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
   width: 260px;
   background-color: #002591;
   color: white;
-  border: 4px solid white;
+  border: 1px solid white;
   padding: 15px;
   font-family: 'Press Start 2P', sans-serif;
   z-index: 9000;
@@ -5411,10 +5410,9 @@ function openAllyInfo(index) {
   `LVL ${ally.level} HP ${currentMaxHp} DMG ${currentDamage}`;
   document.getElementById('info-passive').textContent = ally.passive;
   document.getElementById('info-active').textContent = ally.active;
-  const slots = document.querySelectorAll('.star-power-slot');
-  slots.forEach((slot, i) => {
+  const slot = document.querySelectorAll('.star-power-slot');
+  slot.forEach((slot, i) => {
       slot.innerHTML = ally.level >= 30 ? "⭐" : "🔒";
-      slot.title = ally.level >= 30 ? ally.starPowers[i] : "Unlocks at Lvl 30";
   });
   document.getElementById('info-equip-btn').onclick = () => {
     selectedAllyIndex = index;
