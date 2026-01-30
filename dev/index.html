@@ -971,9 +971,13 @@ a:hover,
         </div>
     </div>
 
-   <div style="display:flex; justify-content:flex-end; align-items:center;">
-     <button id="info-equip-btn" class="item-use-button" style="padding:10px;">EQUIP</button>
-   </div>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+        <div style="display:flex; gap:5px;">
+            <div class="star-power-slot" style="width:40px; height:40px; border:2px solid #555; background:#222; display:flex; align-items:center; justify-content:center; font-size:18px;">🔒</div>
+            <div class="star-power-slot" style="width:40px; height:40px; border:2px solid #555; background:#222; display:flex; align-items:center; justify-content:center; font-size:18px;">🔒</div>
+        </div>
+        <button id="info-equip-btn" class="item-use-button" style="padding:10px;">EQUIP</button>
+    </div>
 </div>
   
   <div id="battle-overlay">
@@ -1605,12 +1609,12 @@ let playerStats = {
   baseDamage: 2
 };
 const alliesData = [
-  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Slows target attack time by 20%", active: "Freeze target for 4s (20s)", portrait: "lou_portrait.png" },
+  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Slows target attack time by 20%", active: "Freeze target for 4s (20s)", starPowers: ["xx", "xx"], portrait: "lou_portrait.png" },
   { id: 'ally2', name: 'Buzz', baseMaxHp: 58, baseDamage: 4, attackIntervalMs: 2200, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "20% to shatter the systems of the target per attack, reducing target dmg by 50% for 2s", active: "Taunts enemies to target him for 3s, gaining a 40% shield (15s)", portrait: "buzz_portrait.png"},
   { id: 'ally3', name: 'Colt', baseMaxHp: 23, baseDamage: 6, attackIntervalMs: 3000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "7% chance to deal 2x dmg", active: "Shoots target enemy, dealing 20% of their max hp, or x5 his dmg on bosses (23s)", portrait: "colt_portrait.png" },
   { id: 'ally4', name: 'Otis', baseMaxHp: 45, baseDamage: 4, attackIntervalMs: 2000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Uses Cil as a shield, who has 20% of their max hp and tanks all damage until death", active: "Splatters paint everywhere, giving enemies 35% to miss for 5s (18s)", portrait: "otis_portrait.png" },
-  { id: 'ally5', name: 'Janet', baseMaxHp: 40, baseDamage: 3, attackIntervalMs: 1500, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Right click scans enemies", active: "Powers her and 8-Bit by 25% dmg for 6s (25s)", portrait: "janet_portrait.png" },
-  { id: 'ally6', name: 'Max', baseMaxHp: 36, baseDamage: 4, attackIntervalMs: 1000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "20% to dodge enemy attacks", active: "Heals her and 8-Bit by 10% hp (xs)", portrait: "max_portrait.png" },
+  { id: 'ally5', name: 'Janet', baseMaxHp: 40, baseDamage: 3, attackIntervalMs: 1500, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Right click scans enemies", active: "not in game (25s)", portrait: "janet_portrait.png" },
+  { id: 'ally6', name: 'Max', baseMaxHp: 36, baseDamage: 4, attackIntervalMs: 1000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false },
 ];
 
 let unlockedAllies = new Set();
@@ -1622,7 +1626,6 @@ let allyAttackTimerId = null;
 let inBattle = false;
 
 const enemyTypes = {
-  xpGremlin: { name: "free xp", maxHp: 10, damage: 1, xpReward: 999999999, behavior: "normalAttack" },
   Dummy: { name: "Dummy", maxHp: 32, damage: 1, xpReward: 3, behavior: "normalAttack" },
   Botling: { name: "Botling", maxHp: 10, damage: 1, xpReward: 2, behavior: "normalAttack" },
   Sniperbot: { name: "Sniper", maxHp: 50, attackSpeed: 2500, damage: 1, xpReward: 5, behavior: "sniperAttack" },
@@ -5407,6 +5410,11 @@ function openAllyInfo(index) {
   `LVL ${ally.level} HP ${currentMaxHp} DMG ${currentDamage}`;
   document.getElementById('info-passive').textContent = ally.passive;
   document.getElementById('info-active').textContent = ally.active;
+  const slots = document.querySelectorAll('.star-power-slot');
+  slots.forEach((slot, i) => {
+      slot.innerHTML = ally.level >= 30 ? "⭐" : "🔒";
+      slot.title = ally.level >= 30 ? ally.starPowers[i] : "Unlocks at Lvl 30";
+  });
   document.getElementById('info-equip-btn').onclick = () => {
     selectedAllyIndex = index;
     
