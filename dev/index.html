@@ -4842,7 +4842,7 @@ function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         const nextButton = document.getElementById('dialog-next');
-        const dialogContainer = document.getElementById('dialog-box');
+        const dialogContainer = document.getElementById('dialog-overlay');
 
         if (dialogContainer && dialogContainer.style.display === 'block') {
             nextButton.click();
