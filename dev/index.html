@@ -5855,7 +5855,7 @@ function useAllyAbility(ally) {
     playAbilitySfx("max-ab.mp3");
     const playerHeal = Math.floor(playerStats.maxHp * 0.10);
     const allyHeal = Math.floor(ally.maxHp * 0.10);
-    playerStats.hp = Math.min(playerStats.maxHp, playerStats.hp + playerHeal);
+    playerStats.currentHp = Math.min(playerStats.maxHp, playerStats.currentHp + playerHeal);
     ally.currentHp = Math.min(ally.maxHp, ally.currentHp + allyHeal);
     updateHp(playerStats.currentHp);
   }
