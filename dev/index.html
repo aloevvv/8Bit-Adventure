@@ -12549,9 +12549,24 @@ if (activeAmulets.bullets && playerStats.currentStamina < 3) {
   drawPlayerBattleStatus();
 }
 
+const attackButton = document.getElementById('attack-button');
+
+let CPS = 0;
+let LBOZO = false;
+setInterval(() => {
+    CPS = 0;
+}, 1000);
+
 document.getElementById('attack-button').addEventListener('click', () => {
-  if (activeAmulets.clicking) return; 
-  performPlayerAttack();
+    if (LBOZO) return;
+    CPS++;
+    if (CPS > 15) {
+        LBOZO = true;
+        attackButton.disabled = true;
+        return;
+    }
+    if (activeAmulets.clicking) return;
+    performPlayerAttack();
 });
 
 
