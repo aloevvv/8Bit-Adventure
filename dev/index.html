@@ -8089,7 +8089,6 @@ deathSound.play();
           endBattleWasCalled = true;
           endBattleArgs = args;
           console.log('[FinalBossHook] suppressed endBattle call', args);
-          // do nothing else so battle won't close
         };
 
         try {
@@ -8482,6 +8481,11 @@ if (enemy.weakened) {
     enemy._weakenTimeout = null;
   }
 }
+    if (enemy._stonedTimeout) {
+    clearTimeout(enemy._stonedTimeout);
+    enemy._stonedTimeout = null;
+}
+
     if (enemy._inkTimeout) {
   clearTimeout(enemy._inkTimeout);
   enemy._inkTimeout = null;
@@ -8490,6 +8494,7 @@ if (enemy.weakened) {
   enemy.missChance = 0;
   enemy.stunned = false;
   enemy.poisoned = false;
+  enemt.isStoned = false;
 
   // if no enemies remain, either end the battle round (endBattle('win') will check rounds) or spawn next round is handled in endBattle
   if (activeEnemies.length === 0) {
@@ -9001,9 +9006,10 @@ function unlockAlly(allyId) {
   enemy.isStoned = true;
   drawBattleUI();
 
-  setTimeout(() => {
-    enemy.isStoned = false;
-    drawBattleUI();
+  enemy._stonedTimeout = setTimeout(() => {
+  enemy.isStoned = false;
+  enemy._stonedTimeout = null;
+  drawBattleUI();
   }, 4000);
 }
 
