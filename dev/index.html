@@ -13627,12 +13627,6 @@ function executeDevCommand(input) {
 
     case '/lvlup':
       levelUp();
-      if (typeof selectedAllyIndex !== 'undefined' && selectedAllyIndex !== -1) {
-    levelUpAlly(selectedAllyIndex);
-    if (document.getElementById('party-popup').style.display === 'block') {
-      drawPartyUI();
-    }
-  }
       break;
 
       case '/lvlup5':
@@ -13641,16 +13635,6 @@ function executeDevCommand(input) {
       levelUp();
       levelUp();
       levelUp();
-      if (typeof selectedAllyIndex !== 'undefined' && selectedAllyIndex !== -1) {
-    levelUpAlly(selectedAllyIndex);
-    levelUpAlly(selectedAllyIndex);
-    levelUpAlly(selectedAllyIndex);
-    levelUpAlly(selectedAllyIndex);
-    levelUpAlly(selectedAllyIndex);
-    if (document.getElementById('party-popup').style.display === 'block') {
-      drawPartyUI();
-    }
-  }
       break;
 
     case '/unlockall':
