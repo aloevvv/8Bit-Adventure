@@ -1609,11 +1609,11 @@ let playerStats = {
   baseDamage: 2
 };
 const alliesData = [
-  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Slows target attack time by 20%", active: "Freeze target for 4s (20s)", starPowers: ["xx", "xx"], portrait: "lou_portrait.png" },
+  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Slows target attack time by 20%", active: "Freeze target for 4s (20s)", portrait: "lou_portrait.png" },
   { id: 'ally2', name: 'Buzz', baseMaxHp: 58, baseDamage: 4, attackIntervalMs: 2200, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "20% to shatter the systems of the target per attack, reducing target dmg by 50% for 2s", active: "Taunts enemies to target him for 3s, gaining a 40% shield (15s)", portrait: "buzz_portrait.png"},
   { id: 'ally3', name: 'Colt', baseMaxHp: 23, baseDamage: 6, attackIntervalMs: 3000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "7% chance to deal 2x dmg", active: "Shoots target enemy, dealing 20% of their max hp, or x5 his dmg on bosses (23s)", portrait: "colt_portrait.png" },
   { id: 'ally4', name: 'Otis', baseMaxHp: 45, baseDamage: 4, attackIntervalMs: 2000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Uses Cil as a shield, who has 20% of their max hp and tanks all damage until death", active: "Splatters paint everywhere, giving enemies 35% to miss for 5s (18s)", portrait: "otis_portrait.png" },
-  { id: 'ally5', name: 'Janet', baseMaxHp: 40, baseDamage: 3, attackIntervalMs: 1500, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Right click scans enemies", active: "not in game (25s)", portrait: "janet_portrait.png" },
+  { id: 'ally5', name: 'Janet', baseMaxHp: 40, baseDamage: 3, attackIntervalMs: 1500, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Right click scans enemies", active: "Empowers 8-Bit and her for 6s, increasing dmg by 25% (25s)", portrait: "janet_portrait.png" },
   { id: 'ally6', name: 'Max', baseMaxHp: 36, baseDamage: 4, attackIntervalMs: 1000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false },
 ];
 
@@ -1626,17 +1626,18 @@ let allyAttackTimerId = null;
 let inBattle = false;
 
 const enemyTypes = {
-  Dummy: { name: "Dummy", maxHp: 32, damage: 1, xpReward: 3, behavior: "normalAttack" },
+  xpGremlin: { name: "free xp", maxHp: 10, attackSpeed: 9900, damage: 1, xpReward: 9999999, behavior: "normalAttack", info: "Did you spawn this in yourself? Nice hacks." },
+  Dummy: { name: "Dummy", maxHp: 32, damage: 1, xpReward: 3, behavior: "normalAttack", info: "I don't know why you haven't killed this guy yet." },
   Botling: { name: "Botling", maxHp: 10, damage: 1, xpReward: 2, behavior: "normalAttack" },
-  Sniperbot: { name: "Sniper", maxHp: 50, attackSpeed: 2500, damage: 1, xpReward: 5, behavior: "sniperAttack" },
-  Partybot: { name: "Sniper", maxHp: 120, damage: 1, xpReward: 6, behavior: "sniperAttack" },
-  Partygoers: { name: "Celebrating Bots", maxHp: 500, damage: 2, xpReward: 8, behavior: "normalAttack" },
-  Drunkard: { name: "Drunken Bot", maxHp: 300, attackSpeed: 3000, damage: 5, xpReward: 7, behavior: "normalAttack" },
-  Cookingbot: { name: "The Cook", maxHp: 400, attackSpeed: 1500 ,damage: 2, xpReward: 8, behavior: "normalAttack" },
-  Partyblocker: { name: "Celebrating Bots", maxHp: 500, damage: 2, xpReward: 8, behavior: "normalAttack" },
-  Puncherbot: { name: "Puncher", maxHp: 90, damage: 1, xpReward: 5, behavior: "normalAttack" },
-  Attictank: { name: "Dusty Bot", maxHp: 1500, damage: 1, xpReward: 14, behavior: "normalAttack" },
-  Atticsniper: { name: "Dusty Sniper", maxHp: 1000, attackSpeed: 3000, damage: 3, xpReward: 12, behavior: "sniperAttack" },
+  Sniperbot: { name: "Sniper", maxHp: 50, attackSpeed: 2500, damage: 1, xpReward: 5, behavior: "sniperAttack", info: "Occasionally snipes for 3x damage." },
+  Partybot: { name: "Sniper", maxHp: 120, damage: 1, xpReward: 6, behavior: "sniperAttack", info: "Occasionally snipes for 3x damage." },
+  Partygoers: { name: "Celebrating Bots", maxHp: 500, damage: 2, xpReward: 8, behavior: "normalAttack", info: "These guys like to party." },
+  Drunkard: { name: "Drunken Bot", maxHp: 300, attackSpeed: 3000, damage: 5, xpReward: 7, behavior: "normalAttack", info: "You probably should've killed this guy already by the time you got me." },
+  Cookingbot: { name: "The Cook", maxHp: 400, attackSpeed: 1500 ,damage: 2, xpReward: 8, behavior: "normalAttack", info: "Just another regular enemy." },
+  Partyblocker: { name: "Celebrating Bots", maxHp: 500, damage: 2, xpReward: 8, behavior: "normalAttack", info: "Considering these bot are required to continue, I'm not sure how you were able to scan them with me." },
+  Puncherbot: { name: "Puncher", maxHp: 90, damage: 1, xpReward: 5, behavior: "normalAttack", info: "A basic enemy you should have no problem killing." },
+  Attictank: { name: "Dusty Bot", maxHp: 1500, damage: 1, xpReward: 14, behavior: "normalAttack", info: "Just a basic enemy." },
+  Atticsniper: { name: "Dusty Sniper", maxHp: 1000, attackSpeed: 3000, damage: 3, xpReward: 12, behavior: "sniperAttack", info: "Occasionally snipes for 3x damage." },
   OldBot: { name: "Old Bot", maxHp: 10000, attackSpeed: 5000, damage: 10, xpReward: 200, behavior: "oldBotBehavior" },
   Sandbot: { name: "Sandy Bot", maxHp: 100, attackSpeed: 2000, damage: 3, xpReward: 10, behavior: "sandBehavior" },
   Smokebang: { name: "Smoke Bomb Bot", maxHp: 100, attackSpeed: 2000, damage: 3, xpReward: 10, behavior: "smokeBehavior" },
