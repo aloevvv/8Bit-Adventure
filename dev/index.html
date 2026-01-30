@@ -13255,15 +13255,15 @@ let totalPlaytimeSeconds = 0;
 let playtimeInterval = null;
 let showPlaytime = false;
 
-  const playtimeToggle = document.getElementById("toggle-playtime-counter");
-
-playtimeToggle.addEventListener("change", () => {
-    showPlaytime = playtimeToggle.checked;
-    document.getElementById("playtime-counter").style.display =
-        showPlaytime ? "block" : "none";
+document.addEventListener("DOMContentLoaded", () => {
+    const playtimeToggle = document.getElementById("toggle-playtime-counter");
+    playtimeToggle.addEventListener("change", () => {
+        showPlaytime = playtimeToggle.checked;
+        document.getElementById("playtime-counter").style.display =
+            showPlaytime ? "block" : "none";
+    });
+    startPlaytimeCounter();
 });
-
-startPlaytimeCounter();
   
 function startPlaytimeCounter() {
     playtimeInterval = setInterval(() => {
