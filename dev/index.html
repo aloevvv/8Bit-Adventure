@@ -115,6 +115,19 @@
   border-radius: 4px;
   z-index: 9999;
 }
+    #playtime-counter {
+  position: absolute;
+  top: 30px;
+  left: 10px;
+  font-family: 'Press Start 2P', sans-serif;
+  font-size: 12px;
+  color: white;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 6px;
+  border-radius: 4px;
+  z-index: 9999;
+}
+
     #battle-controls button {
       font-family: "Press Start 2P", sans-serif;
       padding: 10px 20px;
@@ -942,6 +955,7 @@ a:hover,
       <div style="margin:8px 0;">
   <label style="display:block; font-size:10px;">Misc</label>
   <input id="toggle-cps-counter" type="checkbox" /> Show CPS
+  <input id="toggle-playtime-counter" type="checkbox" /> Show Playtime
 </div>
 
       <div style="margin:8px 0;">
@@ -13236,6 +13250,37 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   setInterval(() => {
   draw();
 }, 1000 / 30);
+  
+let totalPlaytimeSeconds = 0;
+let playtimeInterval = null;
+let showPlaytime = false;
+
+  const playtimeToggle = document.getElementById("toggle-playtime-counter");
+
+playtimeToggle.addEventListener("change", () => {
+    showPlaytime = playtimeToggle.checked;
+    document.getElementById("playtime-counter").style.display =
+        showPlaytime ? "block" : "none";
+});
+
+startPlaytimeCounter();
+  
+function startPlaytimeCounter() {
+    playtimeInterval = setInterval(() => {
+        totalPlaytimeSeconds++;
+        updatePlaytimeUI();
+    }, 1000);
+}
+function formatPlaytime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}:${minutes.toString().padStart(2, '0')}`;
+}
+function updatePlaytimeUI() {
+    document.getElementById("playtime-value").textContent =
+        formatPlaytime(totalPlaytimeSeconds);
+}
+
 
 const SETTINGS_KEY = '8bitsAdventureSettings';
 const SAVE_SLOT_PREFIX = '8bitsAdventureSave_slot_'; 
@@ -13282,6 +13327,7 @@ function saveToSlot(slotNumber) {
     gameFlags,
     goodPoints: goodPoints,
     badPoints: badPoints,
+    playtimeSeconds: totalPlaytimeSeconds,
     currentObjective,
     objectiveCompleted,
     alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
@@ -13389,6 +13435,7 @@ levels.forEach(level => {
     drawAchievementsUI();
     drawPartyList();
     drawPartyStatus();
+    startPlaytimeCounter();
 
     showTemporaryText(`Loaded slot ${slotNumber}`);
   } catch (e) {
@@ -13424,6 +13471,7 @@ function saveGame() {
     gameFlags: gameFlags,
     goodPoints: goodPoints,
     badPoints: badPoints,
+    playtimeSeconds: totalPlaytimeSeconds,
     currentObjective: currentObjective,
     objectiveCompleted: objectiveCompleted,
   alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
@@ -13564,6 +13612,7 @@ levels.forEach(level => {
     updateHp(playerStats.currentHp);
     updateStatsPopup();
     drawAchievementsUI();
+    startPlaytimeCounter();
 
     showTemporaryText('Game loaded!');
     console.log('Game loaded:', saveData);
