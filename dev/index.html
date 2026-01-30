@@ -5795,6 +5795,9 @@ function useAllyAbility(ally) {
 
   const cd = allyAbilityCooldowns[ally.id] || 20000;
   if (now < allyAbilityCooldown) return;
+  if (ally.currentHp <= 0) {
+        return; 
+    }
 
   if (ally.id === "ally1") {
   playAbilitySfx("lou-ab.mp3");
@@ -5847,6 +5850,14 @@ function useAllyAbility(ally) {
   playAbilitySfx("janet-ab.wav");
   applyStatusEffect(activeAlly, 'strong', 6000);
   applyStatusEffect(playerStats, 'strong', 6000);
+  }
+    if (ally.id === "ally6") {
+    playAbilitySfx("max-ab.mp3");
+    const playerHeal = Math.floor(playerStats.maxHp * 0.10);
+    const allyHeal = Math.floor(ally.maxHp * 0.10);
+    playerStats.hp = Math.min(playerStats.maxHp, playerStats.hp + playerHeal);
+    ally.currentHp = Math.min(ally.maxHp, ally.currentHp + allyHeal);
+    updateHp(playerStats.currentHp);
   }
   allyAbilityCooldown = now + cd;
   drawPlayerBattleStatus();
