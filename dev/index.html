@@ -972,9 +972,9 @@ a:hover,
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-    <div id="star-power-container" style="display:flex; gap:5px;"></div>
-    <button id="info-equip-btn" class="item-use-button" style="padding:10px;">EQUIP</button>
-  </div>
+        <div style="display:flex; gap:5px;">
+        <button id="info-equip-btn" class="item-use-button" style="padding:10px;">EQUIP</button>
+    </div>
 </div>
   
   <div id="battle-overlay">
@@ -1606,7 +1606,7 @@ let playerStats = {
   baseDamage: 2
 };
 const alliesData = [
-  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Slows target attack time by 20%", active: "Freeze target for 4s (20s)", selectedStarPower: 0, starPowers: [{ name: "Frostbite", desc: "Frozen enemies get dealt 10% of Lou's dmg" }, { name: "Hypothermia", desc: "Frozen enemies deal 25% less dmg" }], portrait: "lou_portrait.png" },
+  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Slows target attack time by 20%", active: "Freeze target for 4s (20s)", portrait: "lou_portrait.png" },
   { id: 'ally2', name: 'Buzz', baseMaxHp: 58, baseDamage: 4, attackIntervalMs: 2200, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "20% to shatter the systems of the target per attack, reducing target dmg by 50% for 2s", active: "Taunts enemies to target him for 3s, gaining a 40% shield (15s)", portrait: "buzz_portrait.png"},
   { id: 'ally3', name: 'Colt', baseMaxHp: 23, baseDamage: 6, attackIntervalMs: 3000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "7% chance to deal 2x dmg", active: "Shoots target enemy, dealing 20% of their max hp, or x5 his dmg on bosses (23s)", portrait: "colt_portrait.png" },
   { id: 'ally4', name: 'Otis', baseMaxHp: 45, baseDamage: 4, attackIntervalMs: 2000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Uses Cil as a shield, who has 20% of their max hp and tanks all damage until death", active: "Splatters paint everywhere, giving enemies 35% to miss for 5s (18s)", portrait: "otis_portrait.png" },
@@ -1623,7 +1623,7 @@ let allyAttackTimerId = null;
 let inBattle = false;
 
 const enemyTypes = {
-  xpGremlin: { name: "free xp", maxHp: 10, damage: 1, xpReward: 9999999999999999999999, behavior: "normalAttack", info: "test for janet ability" },
+  xpGremlin: { name: "free xp", maxHp: 10, damage: 1, xpReward: 999999999, behavior: "normalAttack", info: "test janet ability" },
   Dummy: { name: "Dummy", maxHp: 32, damage: 1, xpReward: 3, behavior: "normalAttack" },
   Botling: { name: "Botling", maxHp: 10, damage: 1, xpReward: 2, behavior: "normalAttack" },
   Sniperbot: { name: "Sniper", maxHp: 50, attackSpeed: 2500, damage: 1, xpReward: 5, behavior: "sniperAttack" },
@@ -5405,46 +5405,21 @@ function openAllyInfo(index) {
   const currentMaxHp = ally.baseMaxHp;
   const currentDamage = ally.baseDamage;
   document.getElementById('info-stats').textContent =
-    `LVL ${ally.level} HP ${currentMaxHp} DMG ${currentDamage}`;
+  `LVL ${ally.level} HP ${currentMaxHp} DMG ${currentDamage}`;
   document.getElementById('info-passive').textContent = ally.passive;
   document.getElementById('info-active').textContent = ally.active;
-  const spContainer = document.getElementById('star-power-container');
-  spContainer.innerHTML = '';
-
-  ally.starPowers.forEach((sp, spIndex) => {
-    const slot = document.createElement('div');
-    slot.className = 'star-power-slot';
-    if (ally.level < 30) {
-      slot.innerHTML = `🔒<br><span style="font-size:8px">Lvl 30</span>`;
-      slot.style.opacity = "0.5";
-    } else {
-      const isSelected = ally.selectedStarPower === spIndex;
-      slot.innerHTML = isSelected ? `⭐<br>${sp.name}` : sp.name;
-      if (isSelected) {
-        slot.style.border = "2px solid #00ffff";
-      }
-      slot.onclick = () => {
-        ally.selectedStarPower = spIndex;
-        openAllyInfo(index);
-      };
-    }
-    spContainer.appendChild(slot);
-  });
-
   document.getElementById('info-equip-btn').onclick = () => {
     selectedAllyIndex = index;
-    window.currentAlly = alliesData[index];
+    
+    window.currentAlly = alliesData[index]; 
     equippedAllyId = ally.id;
-
-    if (window.player) {
-      window.player.equippedAlly = alliesData[index];
-    }
-
+    if(window.player) window.player.equippedAlly = alliesData[index];
     infoPopup.style.display = 'none';
     document.getElementById('party-popup').style.display = 'none';
     showTemporaryText(`${ally.name} equipped!`);
     drawPartyUI();
   };
+
   infoPopup.style.display = 'block';
 }
 
@@ -6290,29 +6265,6 @@ playerBattleStatusDiv.appendChild(abilityBtn);
 if (activeAlly.id === 'ally1') {
     targetEnemy.snow = true;
 
-if (activeAlly.selectedStarPower === 0) {
-    clearInterval(targetEnemy.snowDotInterval);
-
-    targetEnemy.snowDotInterval = setInterval(() => {
-        if (targetEnemy.currentHp <= 0 || !targetEnemy.snow) {
-            clearInterval(targetEnemy.snowDotInterval);
-            targetEnemy.snowDotInterval = null;
-            return;
-        }
-
-        const dotDmg = Math.floor(activeAlly.damage * 0.10);
-        targetEnemy.currentHp -= dotDmg;
-
-        const enemyIdx = activeEnemies.indexOf(targetEnemy);
-        spawnDamageNumber(enemyIdx, dotDmg);
-
-        if (targetEnemy.currentHp <= 0) {
-            targetEnemy.currentHp = 0;
-            handleEnemyDeath(targetEnemy);
-        }
-    }, 1000);
-}
-
     const now = Date.now();
     const timeSinceLast = now - targetEnemy.lastAttackAt;
     const timeRemaining = targetEnemy.attackTime - timeSinceLast;
@@ -6395,10 +6347,6 @@ if (activeAlly && activeAlly.isTaunting) {
   if (enemy.weakened) {
     damage = Math.floor(damage * enemy.weakenMultiplier);
   }
-
-  if (enemy.snow && activeAlly.id === "ally1" && activeAlly.level >= 30 && activeAlly.selectedStarPower === 1) {
-    damage = Math.floor(damage * 0.75);
-}
 
   if (target === playerStats) {
     playerTakeDamage(damage, enemy);
@@ -8530,14 +8478,7 @@ if (enemy.weakened) {
     clearTimeout(enemy._stonedTimeout);
     enemy._stonedTimeout = null;
 }
-if (enemy.snowTimeout) {
-    clearTimeout(enemy.snowTimeout);
-    enemy.snowTimeout = null;
-}
-if (enemy.snowDotInterval) {
-    clearInterval(enemy.snowDotInterval);
-    enemy.snowDotInterval = null;
-}
+
     if (enemy._inkTimeout) {
   clearTimeout(enemy._inkTimeout);
   enemy._inkTimeout = null;
@@ -8546,8 +8487,7 @@ if (enemy.snowDotInterval) {
   enemy.missChance = 0;
   enemy.stunned = false;
   enemy.poisoned = false;
-  enemy.isStoned = false;
-  enemy.snow = false;
+  enemt.isStoned = false;
 
   // if no enemies remain, either end the battle round (endBattle('win') will check rounds) or spawn next round is handled in endBattle
   if (activeEnemies.length === 0) {
@@ -13626,14 +13566,6 @@ function executeDevCommand(input) {
       break;
 
     case '/lvlup':
-      levelUp();
-      break;
-
-      case '/lvlup5':
-      levelUp();
-      levelUp();
-      levelUp();
-      levelUp();
       levelUp();
       break;
 
