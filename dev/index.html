@@ -6395,6 +6395,10 @@ if (activeAlly && activeAlly.isTaunting) {
     damage = Math.floor(damage * enemy.weakenMultiplier);
   }
 
+  if (enemy.snow && activeAlly.id === "ally1" && activeAlly.level >= 30 && activeAlly.selectedStarPower === 1) {
+    damage = Math.floor(damage * 0.75);
+}
+
   if (target === playerStats) {
     playerTakeDamage(damage, enemy);
   }
@@ -13622,6 +13626,20 @@ function executeDevCommand(input) {
 
     case '/lvlup':
       levelUp();
+      levelUpAlly();
+      break;
+
+      case '/lvlup5':
+      levelUp();
+      levelUp();
+      levelUp();
+      levelUp();
+      levelUp();
+      levelUpAlly();
+      levelUpAlly();
+      levelUpAlly();
+      levelUpAlly();
+      levelUpAlly();
       break;
 
     case '/unlockall':
