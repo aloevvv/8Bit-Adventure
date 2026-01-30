@@ -328,6 +328,22 @@
   font-size:14px;
   opacity:0.8;
 }
+    #splatter-container {
+  z-index: 9999;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.splatter {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  opacity: 1;
+  transition: opacity 6s linear;
+}
     .attack-bar-container {
   width: 100%;
   height: 9px;
@@ -1196,7 +1212,7 @@ background:rgba(0,0,0,0.9); align-items:center; justify-content:center; font-fam
   <div id="ach-popup-desc" style="font-size: 8px; line-height: 1.4; opacity: 0.8;"></div>
 </div>
 
-  
+<div id="splatter-container"></div>  
 <div id="battle-blackout" style="display:none; position:fixed; inset:0; z-index:2500; background:black; pointer-events:none;"></div>
   
 <div id="mobile-controls" style="display:none; position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); width: 220px; user-select:none; z-index: 3000;">
@@ -5754,6 +5770,24 @@ function playAbilitySfx(src, volume = 1) {
   sound.volume = volume;
   sound.play();
 }
+  function spawnSplatter() {
+  const container = document.getElementById("splatter-container");
+
+  const img = document.createElement("img");
+  img.src = "splatter.png";
+  img.classList.add("splatter");
+
+  img.style.left = Math.random() * 80 + "%";
+  img.style.top = Math.random() * 80 + "%";
+
+  container.appendChild(img);
+  setTimeout(() => {
+    img.style.opacity = 0;
+  }, 1000);
+  setTimeout(() => {
+    img.remove();
+  }, 7000);
+}
 
 function useAllyAbility(ally) {
   const now = Date.now();
@@ -5797,13 +5831,17 @@ function useAllyAbility(ally) {
     handleEnemyDeath(target);
   }
 }
-
   if (ally.id === "ally4") {
-  playAbilitySfx("otis-ab.mp3");
+  playAbilitySfx("otis-ab.wav");
   for (const enemy of activeEnemies) {
     applyInk(enemy, 0.35, 5000);
   }
+  const splatterCount = Math.floor(Math.random() * 3) + 3;
+  for (let i = 0; i < splatterCount; i++) {
+    spawnSplatter();
+  }
 }
+
   if (ally.id === "ally5") {
   playAbilitySfx("janet-ab.wav");
   applyStatusEffect(activeAlly, 'strong', 6000);
