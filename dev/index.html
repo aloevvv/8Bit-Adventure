@@ -13415,6 +13415,12 @@ levels.forEach(level => {
     } else {
       activeAlly = null;
     }
+  
+alliesData.forEach(ally => {
+    ally.unlocked = unlockedAllies.has(ally.id);
+});
+
+
 
     if (Array.isArray(saveData.achievements)) {
       saveData.achievements.forEach(savedAch => {
@@ -13590,6 +13596,11 @@ levels.forEach(level => {
       });
     }
     unlockedAllies = new Set(saveData.unlockedAllies || []);
+alliesData.forEach(ally => {
+    ally.unlocked = unlockedAllies.has(ally.id);
+});
+
+
     equippedAllyId = saveData.equippedAllyId || null;
     if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
       const allyBase = alliesData.find(a => a.id === equippedAllyId);
