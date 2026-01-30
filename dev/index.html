@@ -6292,6 +6292,29 @@ playerBattleStatusDiv.appendChild(abilityBtn);
 if (activeAlly.id === 'ally1') {
     targetEnemy.snow = true;
 
+if (activeAlly.selectedStarPower === 0) {
+    clearInterval(targetEnemy.snowDotInterval);
+
+    targetEnemy.snowDotInterval = setInterval(() => {
+        if (targetEnemy.currentHp <= 0 || !targetEnemy.snow) {
+            clearInterval(targetEnemy.snowDotInterval);
+            targetEnemy.snowDotInterval = null;
+            return;
+        }
+
+        const dotDmg = Math.floor(activeAlly.damage * 0.10);
+        targetEnemy.currentHp -= dotDmg;
+
+        const enemyIdx = activeEnemies.indexOf(targetEnemy);
+        spawnDamageNumber(enemyIdx, dotDmg);
+
+        if (targetEnemy.currentHp <= 0) {
+            targetEnemy.currentHp = 0;
+            handleEnemyDeath(targetEnemy);
+        }
+    }, 1000);
+}
+
     const now = Date.now();
     const timeSinceLast = now - targetEnemy.lastAttackAt;
     const timeRemaining = targetEnemy.attackTime - timeSinceLast;
@@ -8505,7 +8528,14 @@ if (enemy.weakened) {
     clearTimeout(enemy._stonedTimeout);
     enemy._stonedTimeout = null;
 }
-
+if (enemy.snowTimeout) {
+    clearTimeout(enemy.snowTimeout);
+    enemy.snowTimeout = null;
+}
+if (enemy.snowDotInterval) {
+    clearInterval(enemy.snowDotInterval);
+    enemy.snowDotInterval = null;
+}
     if (enemy._inkTimeout) {
   clearTimeout(enemy._inkTimeout);
   enemy._inkTimeout = null;
@@ -8514,7 +8544,8 @@ if (enemy.weakened) {
   enemy.missChance = 0;
   enemy.stunned = false;
   enemy.poisoned = false;
-  enemt.isStoned = false;
+  enemy.isStoned = false;
+  enemy.snow = false;
 
   // if no enemies remain, either end the battle round (endBattle('win') will check rounds) or spawn next round is handled in endBattle
   if (activeEnemies.length === 0) {
