@@ -1609,7 +1609,7 @@ let playerStats = {
   baseDamage: 2
 };
 const alliesData = [
-  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Slows target attack time by 20%", active: "Freeze target for 4s (20s)", starPowers: ["xx", "xx"], portrait: "lou_portrait.png" },
+  { id: 'ally1', name: 'Lou', baseMaxHp: 35, baseDamage: 3, attackIntervalMs: 1700, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Slows target attack time by 20%", active: "Freeze target for 4s (20s)", selectedStarPower: 0, starPowers: [{ name: "Frostbite", desc: "Frozen enemies get dealt 10% of Lou's dmg" }, { name: "Hypothermia", desc: "Frozen enemies deal 25% less dmg" }], portrait: "lou_portrait.png" },
   { id: 'ally2', name: 'Buzz', baseMaxHp: 58, baseDamage: 4, attackIntervalMs: 2200, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "20% to shatter the systems of the target per attack, reducing target dmg by 50% for 2s", active: "Taunts enemies to target him for 3s, gaining a 40% shield (15s)", portrait: "buzz_portrait.png"},
   { id: 'ally3', name: 'Colt', baseMaxHp: 23, baseDamage: 6, attackIntervalMs: 3000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "7% chance to deal 2x dmg", active: "Shoots target enemy, dealing 20% of their max hp, or x5 his dmg on bosses (23s)", portrait: "colt_portrait.png" },
   { id: 'ally4', name: 'Otis', baseMaxHp: 45, baseDamage: 4, attackIntervalMs: 2000, level: 1, xp: 0, xpToNextLevel: 10, unlocked: false, passive: "Uses Cil as a shield, who has 20% of their max hp and tanks all damage until death", active: "Splatters paint everywhere, giving enemies 35% to miss for 5s (18s)", portrait: "otis_portrait.png" },
@@ -5407,26 +5407,46 @@ function openAllyInfo(index) {
   const currentMaxHp = ally.baseMaxHp;
   const currentDamage = ally.baseDamage;
   document.getElementById('info-stats').textContent =
-  `LVL ${ally.level} HP ${currentMaxHp} DMG ${currentDamage}`;
+    `LVL ${ally.level} HP ${currentMaxHp} DMG ${currentDamage}`;
   document.getElementById('info-passive').textContent = ally.passive;
   document.getElementById('info-active').textContent = ally.active;
-  const slots = document.querySelectorAll('.star-power-slot');
-  slots.forEach((slot, i) => {
-      slot.innerHTML = ally.level >= 30 ? "⭐" : "🔒";
-      slot.title = ally.level >= 30 ? ally.starPowers[i] : "Unlocks at Lvl 30";
+  const spContainer = document.getElementById('star-power-container');
+  spContainer.innerHTML = '';
+
+  ally.starPowers.forEach((sp, spIndex) => {
+    const slot = document.createElement('div');
+    slot.className = 'star-power-slot';
+    if (ally.level < 30) {
+      slot.innerHTML = `🔒<br><span style="font-size:8px">Lvl 30</span>`;
+      slot.style.opacity = "0.5";
+    } else {
+      const isSelected = ally.selectedStarPower === spIndex;
+      slot.innerHTML = isSelected ? `⭐<br>${sp.name}` : sp.name;
+      if (isSelected) {
+        slot.style.border = "2px solid #00ffff";
+      }
+      slot.onclick = () => {
+        ally.selectedStarPower = spIndex;
+        openAllyInfo(index);
+      };
+    }
+    spContainer.appendChild(slot);
   });
+
   document.getElementById('info-equip-btn').onclick = () => {
     selectedAllyIndex = index;
-    
-    window.currentAlly = alliesData[index]; 
+    window.currentAlly = alliesData[index];
     equippedAllyId = ally.id;
-    if(window.player) window.player.equippedAlly = alliesData[index];
+
+    if (window.player) {
+      window.player.equippedAlly = alliesData[index];
+    }
+
     infoPopup.style.display = 'none';
     document.getElementById('party-popup').style.display = 'none';
     showTemporaryText(`${ally.name} equipped!`);
     drawPartyUI();
   };
-
   infoPopup.style.display = 'block';
 }
 
