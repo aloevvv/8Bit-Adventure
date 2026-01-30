@@ -103,6 +103,18 @@
       border: 2px solid red;
       background-color: #555;
     }
+    #cps-counter {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-family: 'Press Start 2P', sans-serif;
+  font-size: 12px;
+  color: white;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 6px;
+  border-radius: 4px;
+  z-index: 9999;
+}
     #battle-controls button {
       font-family: "Press Start 2P", sans-serif;
       padding: 10px 20px;
@@ -926,6 +938,11 @@ a:hover,
   <label style="display:block; font-size:10px;">Mobile Mode</label>
   <input id="toggle-mobile-mode" type="checkbox" /> Enable Mobile Controls
 </div>
+      
+      <div style="margin:8px 0;">
+  <label style="display:block; font-size:10px;">Misc</label>
+  <input id="toggle-cps-counter" type="checkbox" /> Show CPS
+</div>
 
       <div style="margin:8px 0;">
   <label style="display:block; font-size:10px;">Autosave</label>
@@ -1005,7 +1022,10 @@ a:hover,
 </div>
 
   <div id="damage-overlay"></div>
-
+  
+<div id="cps-counter" style="display:none;">
+  CPS: <span id="cps-value">0</span>
+</div>
 
 <div id="export-menu" style="display:none;position:fixed;top:20%;left:50%;transform:translateX(-50%);
      background:#222;color:#fff;padding:20px;border:2px solid #fff;z-index:5000;">
@@ -8642,7 +8662,8 @@ function endBattle(outcome) {
     clearInterval(activeAlly.attackTimerId);
     activeAlly.attackTimerId = null;
   }
-
+  
+  stopCPSCounter();
   toggleAutofire(false); 
   
   for (let key in activeAmulets) {
@@ -8683,6 +8704,7 @@ playerStats.currentHp = Math.min(playerStats.currentHp, playerStats.maxHp);
 
 function initiateBattle(zoneType, zoneObject) {
   inBattle = true;
+  startCPSCounter();
   defeatedZone = { type: zoneType, object: zoneObject };
   resetAbilitiesForBattle();
 
@@ -12552,10 +12574,37 @@ if (activeAmulets.bullets && playerStats.currentStamina < 3) {
 const attackButton = document.getElementById('attack-button');
 
 let CPS = 0;
+let cpsInterval = null;
+let showCPS = false;
 let LBOZO = false;
-setInterval(() => {
+  
+function startCPSCounter() {
     CPS = 0;
-}, 1000);
+    document.getElementById("cps-value").textContent = CPS;
+    if (showCPS) {
+        document.getElementById("cps-counter").style.display = "block";
+    }
+    cpsInterval = setInterval(() => {
+        document.getElementById("cps-value").textContent = CPS;
+        CPS = 0;
+    }, 1000);
+}
+
+function stopCPSCounter() {
+    document.getElementById("cps-counter").style.display = "none";
+    if (cpsInterval) {
+        clearInterval(cpsInterval);
+        cpsInterval = null;
+    }
+    CPS = 0;
+}
+  
+const cpsToggle = document.getElementById("toggle-cps-counter");
+
+cpsToggle.addEventListener("change", () => {
+    showCPS = cpsToggle.checked;
+});
+
 
 document.getElementById('attack-button').addEventListener('click', () => {
     if (LBOZO) return;
