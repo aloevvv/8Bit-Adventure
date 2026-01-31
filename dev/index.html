@@ -954,7 +954,7 @@ a:hover,
       
       <div style="margin:8px 0;">
   <label style="display:block; font-size:10px;">Misc</label>
-  <input id="toggle-cps-counter" type="checkbox" /> Show CPS<br>
+  <input id="toggle-cps-counter" type="checkbox" /> Show CPS
   <input id="toggle-playtime-counter" type="checkbox" /> Show Playtime
 </div>
 
@@ -4856,6 +4856,18 @@ function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
     startTypewriter(line.text, textDiv, line.speaker, line.effect);
   }
 }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const nextButton = document.getElementById('dialog-next');
+        const dialogContainer = document.getElementById('dialog-overlay');
+
+        if (dialogContainer && dialogContainer.style.display === 'block') {
+            nextButton.click();
+            e.preventDefault();
+        }
+    }
+});
 
 function showDialog(textOrLines, idToMark, opts = {}) {
   document.getElementById('dialog-next').style.display = 'inline-block';
@@ -13403,12 +13415,6 @@ levels.forEach(level => {
     } else {
       activeAlly = null;
     }
-  
-alliesData.forEach(ally => {
-    ally.unlocked = unlockedAllies.has(ally.id);
-});
-
-
 
     if (Array.isArray(saveData.achievements)) {
       saveData.achievements.forEach(savedAch => {
@@ -13584,11 +13590,6 @@ levels.forEach(level => {
       });
     }
     unlockedAllies = new Set(saveData.unlockedAllies || []);
-alliesData.forEach(ally => {
-    ally.unlocked = unlockedAllies.has(ally.id);
-});
-
-
     equippedAllyId = saveData.equippedAllyId || null;
     if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
       const allyBase = alliesData.find(a => a.id === equippedAllyId);
