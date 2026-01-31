@@ -115,6 +115,19 @@
   border-radius: 4px;
   z-index: 9999;
 }
+    #playtime-counter {
+  position: absolute;
+  top: 30px;
+  left: 10px;
+  font-family: 'Press Start 2P', sans-serif;
+  font-size: 12px;
+  color: white;
+  background: rgba(0,0,0,0.4);
+  padding: 4px 6px;
+  border-radius: 4px;
+  z-index: 9999;
+}
+
     #battle-controls button {
       font-family: "Press Start 2P", sans-serif;
       padding: 10px 20px;
@@ -941,7 +954,8 @@ a:hover,
       
       <div style="margin:8px 0;">
   <label style="display:block; font-size:10px;">Misc</label>
-  <input id="toggle-cps-counter" type="checkbox" /> Show CPS
+  <input id="toggle-cps-counter" type="checkbox" /> Show CPS<br>
+  <input id="toggle-playtime-counter" type="checkbox" /> Show Playtime
 </div>
 
       <div style="margin:8px 0;">
@@ -1025,6 +1039,10 @@ a:hover,
   
 <div id="cps-counter" style="display:none;">
   CPS: <span id="cps-value">0</span>
+</div>
+
+  <div id="playtime-counter" style="display:none;">
+  Time: <span id="playtime-value">0:00</span>
 </div>
 
 <div id="export-menu" style="display:none;position:fixed;top:20%;left:50%;transform:translateX(-50%);
@@ -4355,6 +4373,141 @@ iceZones: [],
     ],
     interactables: [
       { name: 'democube', x: 246, y: 221, width: 200, height: 200, action: 'democube' },
+    ]
+  },
+  {
+  bgSrc: "arcade21_81.png",
+  walls: [
+    { x: 1, y: 191, width: 18, height: 280 },
+    { x: 10, y: 234, width: 102, height: 234 },
+    { x: 110, y: 272, width: 114, height: 202 },
+    { x: 223, y: 402, width: 240, height: 76 },
+    { x: 42, y: 449, width: 596, height: 28 },
+  ],
+  doors: [
+  { x: 1, y: 5, width: 18, height: 175, destLevel: '80', destX: 580, destY: 100 },
+  { x: 620, y: 0, width: 20, height: 50, destLevel: '82', destX: 50, destY: 25 },
+  { x: 620, y: 50, width: 20, height: 50, destLevel: '82', destX: 50, destY: 75 },
+  { x: 620, y: 100, width: 20, height: 50, destLevel: '82', destX: 50, destY: 125 },
+  { x: 620, y: 150, width: 20, height: 50, destLevel: '82', destX: 50, destY: 175 },
+  { x: 620, y: 200, width: 20, height: 50, destLevel: '82', destX: 50, destY: 225 },
+  { x: 620, y: 250, width: 20, height: 50, destLevel: '82', destX: 50, destY: 275 },
+  { x: 620, y: 300, width: 20, height: 50, destLevel: '82', destX: 50, destY: 325 },
+  { x: 620, y: 350, width: 20, height: 50, destLevel: '82', destX: 50, destY: 375 },
+  { x: 620, y: 400, width: 20, height: 50, destLevel: '82', destX: 50, destY: 425 },
+  { x: 620, y: 450, width: 20, height: 30, destLevel: '82', destX: 50, destY: 465 }
+  ],
+  battleZones: [],
+  interactables: []
+  },
+  {
+  bgSrc: "arcade22_82.png",
+  walls: [
+  { x: 100, y: 397, width: 189, height: 53 },
+  { x: 135, y: 316, width: 119, height: 82 },
+  { x: 180, y: 261, width: 58, height: 57 },
+  { x: 214, y: 220, width: 133, height: 69 },
+  { x: 336, y: 199, width: 146, height: 74 },
+  { x: 620, y: 0, width: 20, height: 480 },
+  { x: 0, y: 460, width: 640, height: 20 },
+],
+  doors: [
+ { x: 0, y: 0, width: 20, height: 50, destLevel: '81', destX: 580, destY: 25 },
+  { x: 0, y: 50, width: 20, height: 50, destLevel: '81', destX: 580, destY: 75 },
+  { x: 0, y: 100, width: 20, height: 50, destLevel: '81', destX: 580, destY: 125 },
+  { x: 0, y: 150, width: 20, height: 50, destLevel: '81', destX: 580, destY: 175 },
+  { x: 0, y: 200, width: 20, height: 50, destLevel: '81', destX: 580, destY: 225 },
+  { x: 0, y: 250, width: 20, height: 50, destLevel: '81', destX: 580, destY: 275 },
+  { x: 0, y: 300, width: 20, height: 50, destLevel: '81', destX: 580, destY: 325 },
+  { x: 0, y: 350, width: 20, height: 50, destLevel: '81', destX: 580, destY: 375 },
+  { x: 0, y: 400, width: 20, height: 50, destLevel: '81', destX: 580, destY: 425 },
+  { x: 0, y: 450, width: 20, height: 30, destLevel: '81', destX: 580, destY: 465 },
+   { x: 0, y: 0, width: 50, height: 20, destLevel: '83', destX: 25, destY: 400 },
+  { x: 50, y: 0, width: 50, height: 20, destLevel: '83', destX: 75, destY: 400 },
+  { x: 100, y: 0, width: 50, height: 20, destLevel: '83', destX: 125, destY: 400 },
+  { x: 150, y: 0, width: 50, height: 20, destLevel: '83', destX: 175, destY: 400 },
+  { x: 200, y: 0, width: 50, height: 20, destLevel: '83', destX: 225, destY: 400 },
+  { x: 250, y: 0, width: 50, height: 20, destLevel: '83', destX: 275, destY: 400 },
+  { x: 300, y: 0, width: 50, height: 20, destLevel: '83', destX: 325, destY: 400 },
+  { x: 350, y: 0, width: 50, height: 20, destLevel: '83', destX: 375, destY: 400 },
+  { x: 400, y: 0, width: 50, height: 20, destLevel: '83', destX: 425, destY: 400 },
+  { x: 450, y: 0, width: 50, height: 20, destLevel: '83', destX: 475, destY: 400 },
+  { x: 500, y: 0, width: 50, height: 20, destLevel: '83', destX: 525, destY: 400 },
+  { x: 550, y: 0, width: 50, height: 20, destLevel: '83', destX: 575, destY: 400 },
+  { x: 600, y: 0, width: 40, height: 20, destLevel: '83', destX: 620, destY: 400 }
+  ],
+  battleZones: [
+  { x: 498, y: 202, width: 64, height: 64, interactRect: { x: 498, y: 202, width: 112, height: 78 }, encounter: [{ type: "Dummy" }], sprite: "fail" }
+  ],
+  interactables: [
+{ id: "chest_005", name: "wooden_chest", x: 380, y: 342, width: 64, height: 64, action: "chest", rewards: [["bandaid",2], ["emp_grenade",2]], opened: false },
+{ id: "chest_006", name: "wooden_chest", x: 529, y: 342, width: 64, height: 64, action: "chest", rewards: [["bandaid",2], ["emp_grenade",2]], opened: false }
+]
+  },
+  {
+    bgSrc: "arcade23_83.png",
+    walls: [
+      { x: 620, y: 0, width: 20, height: 480 },
+    ],
+    doors: [
+    { x: 0, y: 0, width: 50, height: 20, destLevel: '84', destX: 25, destY: 400 },
+  { x: 50, y: 0, width: 50, height: 20, destLevel: '84', destX: 75, destY: 400 },
+  { x: 100, y: 0, width: 50, height: 20, destLevel: '84', destX: 125, destY: 400 },
+  { x: 150, y: 0, width: 50, height: 20, destLevel: '84', destX: 175, destY: 400 },
+  { x: 200, y: 0, width: 50, height: 20, destLevel: '84', destX: 225, destY: 400 },
+  { x: 250, y: 0, width: 50, height: 20, destLevel: '84', destX: 275, destY: 400 },
+  { x: 300, y: 0, width: 50, height: 20, destLevel: '84', destX: 325, destY: 400 },
+  { x: 350, y: 0, width: 50, height: 20, destLevel: '84', destX: 375, destY: 400 },
+  { x: 400, y: 0, width: 50, height: 20, destLevel: '84', destX: 425, destY: 400 },
+  { x: 450, y: 0, width: 50, height: 20, destLevel: '84', destX: 475, destY: 400 },
+  { x: 500, y: 0, width: 50, height: 20, destLevel: '84', destX: 525, destY: 400 },
+  { x: 550, y: 0, width: 50, height: 20, destLevel: '84', destX: 575, destY: 400 },
+  { x: 600, y: 0, width: 40, height: 20, destLevel: '84', destX: 620, destY: 400 },
+    { x: 0, y: 460, width: 50, height: 20, destLevel: '82', destX: 25, destY: 50 },
+  { x: 50, y: 460, width: 50, height: 20, destLevel: '82', destX: 75, destY: 50 },
+  { x: 100, y: 460, width: 50, height: 20, destLevel: '82', destX: 125, destY: 50 },
+  { x: 150, y: 460, width: 50, height: 20, destLevel: '82', destX: 175, destY: 50 },
+  { x: 200, y: 460, width: 50, height: 20, destLevel: '82', destX: 225, destY: 50 },
+  { x: 250, y: 460, width: 50, height: 20, destLevel: '82', destX: 275, destY: 50 },
+  { x: 300, y: 460, width: 50, height: 20, destLevel: '82', destX: 325, destY: 50 },
+  { x: 350, y: 460, width: 50, height: 20, destLevel: '82', destX: 375, destY: 50 },
+  { x: 400, y: 460, width: 50, height: 20, destLevel: '82', destX: 425, destY: 50 },
+  { x: 450, y: 460, width: 50, height: 20, destLevel: '82', destX: 475, destY: 50 },
+  { x: 500, y: 460, width: 50, height: 20, destLevel: '82', destX: 525, destY: 50 },
+  { x: 550, y: 460, width: 50, height: 20, destLevel: '82', destX: 575, destY: 50 },
+  { x: 600, y: 460, width: 40, height: 20, destLevel: '82', destX: 620, destY: 50 }
+    ],
+    darkZones: [],
+    battleZones: [],
+    dialogZones: [],
+    interactables: []
+  },
+  {
+    bgSrc: "arcade24_84.png",
+    walls: [
+      { x: 620, y: 0, width: 20, height: 480 },
+      { x: 267, y: 39, width: 332, height: 221 },
+    ],
+    doors: [
+    { x: 0, y: 460, width: 50, height: 20, destLevel: '83', destX: 25, destY: 50 },
+  { x: 50, y: 460, width: 50, height: 20, destLevel: '83', destX: 75, destY: 50 },
+  { x: 100, y: 460, width: 50, height: 20, destLevel: '83', destX: 125, destY: 50 },
+  { x: 150, y: 460, width: 50, height: 20, destLevel: '83', destX: 175, destY: 50 },
+  { x: 200, y: 460, width: 50, height: 20, destLevel: '83', destX: 225, destY: 50 },
+  { x: 250, y: 460, width: 50, height: 20, destLevel: '83', destX: 275, destY: 50 },
+  { x: 300, y: 460, width: 50, height: 20, destLevel: '83', destX: 325, destY: 50 },
+  { x: 350, y: 460, width: 50, height: 20, destLevel: '83', destX: 375, destY: 50 },
+  { x: 400, y: 460, width: 50, height: 20, destLevel: '83', destX: 425, destY: 50 },
+  { x: 450, y: 460, width: 50, height: 20, destLevel: '83', destX: 475, destY: 50 },
+  { x: 500, y: 460, width: 50, height: 20, destLevel: '83', destX: 525, destY: 50 },
+  { x: 550, y: 460, width: 50, height: 20, destLevel: '83', destX: 575, destY: 50 },
+  { x: 600, y: 460, width: 40, height: 20, destLevel: '83', destX: 620, destY: 50 }
+    ],
+    darkZones: [],
+    battleZones: [],
+    dialogZones: [],
+    interactables: [
+      { name: "rockyshop", x: 241, y: 202, width: 366, height: 128, action: "shop" }
     ]
   }
 ];
@@ -13224,6 +13377,37 @@ if (isInDarkZone(x, y) && (inventory.get("torch") || 0) <= 0) {
   setInterval(() => {
   draw();
 }, 1000 / 30);
+  
+let totalPlaytimeSeconds = 0;
+let playtimeInterval = null;
+let showPlaytime = false;
+
+document.addEventListener("DOMContentLoaded", () => {
+    const playtimeToggle = document.getElementById("toggle-playtime-counter");
+    playtimeToggle.addEventListener("change", () => {
+        showPlaytime = playtimeToggle.checked;
+        document.getElementById("playtime-counter").style.display =
+            showPlaytime ? "block" : "none";
+    });
+    startPlaytimeCounter();
+});
+  
+function startPlaytimeCounter() {
+    playtimeInterval = setInterval(() => {
+        totalPlaytimeSeconds++;
+        updatePlaytimeUI();
+    }, 1000);
+}
+function formatPlaytime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}:${minutes.toString().padStart(2, '0')}`;
+}
+function updatePlaytimeUI() {
+    document.getElementById("playtime-value").textContent =
+        formatPlaytime(totalPlaytimeSeconds);
+}
+
 
 const SETTINGS_KEY = '8bitsAdventureSettings';
 const SAVE_SLOT_PREFIX = '8bitsAdventureSave_slot_'; 
@@ -13270,6 +13454,7 @@ function saveToSlot(slotNumber) {
     gameFlags,
     goodPoints: goodPoints,
     badPoints: badPoints,
+    playtimeSeconds: totalPlaytimeSeconds,
     currentObjective,
     objectiveCompleted,
     alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
@@ -13353,6 +13538,12 @@ levels.forEach(level => {
     } else {
       activeAlly = null;
     }
+  
+alliesData.forEach(ally => {
+    ally.unlocked = unlockedAllies.has(ally.id);
+});
+
+
 
     if (Array.isArray(saveData.achievements)) {
       saveData.achievements.forEach(savedAch => {
@@ -13377,6 +13568,7 @@ levels.forEach(level => {
     drawAchievementsUI();
     drawPartyList();
     drawPartyStatus();
+    startPlaytimeCounter();
 
     showTemporaryText(`Loaded slot ${slotNumber}`);
   } catch (e) {
@@ -13412,6 +13604,7 @@ function saveGame() {
     gameFlags: gameFlags,
     goodPoints: goodPoints,
     badPoints: badPoints,
+    playtimeSeconds: totalPlaytimeSeconds,
     currentObjective: currentObjective,
     objectiveCompleted: objectiveCompleted,
   alliesData: alliesData.filter(a => unlockedAllies.has(a.id)).map(a => ({
@@ -13526,6 +13719,11 @@ levels.forEach(level => {
       });
     }
     unlockedAllies = new Set(saveData.unlockedAllies || []);
+alliesData.forEach(ally => {
+    ally.unlocked = unlockedAllies.has(ally.id);
+});
+
+
     equippedAllyId = saveData.equippedAllyId || null;
     if (equippedAllyId && unlockedAllies.has(equippedAllyId)) {
       const allyBase = alliesData.find(a => a.id === equippedAllyId);
@@ -13552,6 +13750,7 @@ levels.forEach(level => {
     updateHp(playerStats.currentHp);
     updateStatsPopup();
     drawAchievementsUI();
+    startPlaytimeCounter();
 
     showTemporaryText('Game loaded!');
     console.log('Game loaded:', saveData);
