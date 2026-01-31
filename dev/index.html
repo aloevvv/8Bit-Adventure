@@ -4989,18 +4989,6 @@ function showDialogWithOptions(dialogText, options, idToMark, opts = {}) {
   }
 }
 
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const nextButton = document.getElementById('dialog-next');
-        const dialogContainer = document.getElementById('dialog-overlay');
-
-        if (dialogContainer && dialogContainer.style.display === 'block') {
-            nextButton.click();
-            e.preventDefault();
-        }
-    }
-});
-
 function showDialog(textOrLines, idToMark, opts = {}) {
   document.getElementById('dialog-next').style.display = 'inline-block';
   const overlay = document.getElementById('dialog-overlay');
