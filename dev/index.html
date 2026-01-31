@@ -12286,6 +12286,13 @@ if (object.action === "atticletter") {
   openDemo();
   return;
 } 
+
+  if (object.action === "misc") {
+    showDialog([
+      { speaker: '8-Bit', text: "This is a placeholder action name and will eventually be replaced.", style: 'dialog' }
+    ]);
+    return;
+  }
   
 if (object.action === 'target_practice' && object.name === 'target_board') {
   openTargetPractice();
