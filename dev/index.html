@@ -8911,7 +8911,7 @@ setInterval(() => {
     activeAlly = null;
   }
   
-  if (activeAlly.id === "ally4") {
+  if (activeAlly && activeAlly.id === "ally4") {
   activeAlly.starfishHp = Math.floor(activeAlly.maxHp * 0.20);
   activeAlly.starfishAlive = true;
 }
